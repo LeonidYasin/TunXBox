@@ -1,0 +1,146 @@
+name: Pre-release from PR
+
+# Publishes ONE rolling pre-release APK per feature/fix branch so the APK can
+# be downloaded and installed BEFORE the PR is merged.
+#
+# The tag is FIXED per version: vMAJOR.MINOR.PATCH-rc (no run number).
+# Each new build re-points the tag onto the current commit and overwrites the
+# APK inside the same release (gh release upload --clobber), so Releases always
+# shows exactly ONE current pre-release for the branch, with a fresh commit SHA
+# and a fresh publishedAt instead of a growing rc1, rc2, ... rcN pile.
+#
+# Trigger: manual dispatch, or adding the 'publish-rc' label to a PR.
+
+on:
+  pull_request:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch to build (default: current ref)'
+        required: false
+        default: ''
+
+concurrency:
+  group: prerelease-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  build-and-publish-prerelease:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' && github.event.label.name == 'publish-rc')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref || github.event.pull_request.head.ref || github.ref }}
+
+      - name: Read version
+        id: version
+        run: |
+          set -euo pipefail
+          # NekoBox keeps the version in buildScript/init/version.sh
+          if [ -f buildScript/init/version.sh ]; then
+            . buildScript/init/version.sh
+          fi
+          VERSION="${VERSION_NAME:-1.0.0}"
+          TAG="v${VERSION}-rc"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "rc_tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Rolling pre-release tag: $TAG"
+
+      - name: Prepare Android SDK / NDK
+        run: |
+          echo "sdk.dir=${ANDROID_HOME}" > local.properties
+          echo "ndk.dir=${ANDROID_HOME}/ndk/25.0.8775105" >> local.properties
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.gradle
+          key: gradle-rc-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-rc-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build Preview APK
+        env:
+          BUILD_PLUGIN: none
+        run: |
+          export LOCAL_PROPERTIES="${{ secrets.LOCAL_PROPERTIES }}"
+          ./run init action gradle
+          ./gradlew app:assemblePreviewRelease
+
+      - name: Locate APK
+        run: |
+          APK=$(find app/build/outputs/apk -name '*.apk' | head -n 1)
+          echo "APK=$APK" >> $GITHUB_ENV
+          echo "Found APK: $APK"
+
+      - name: Upload APK (artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-preview-rc
+          path: ${{ env.APK }}
+          retention-days: 30
+
+      - name: Publish rolling pre-release to GitHub Releases
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.version.outputs.rc_tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+          BUILD_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          SHORT_SHA="${BUILD_SHA:0:8}"
+          NOTES="Rolling pre-release APK for testing before merge.
+          Version: ${VERSION}
+          Built from commit: ${BUILD_SHA}
+          Branch: ${{ github.event.pull_request.head.ref || github.ref_name }}"
+
+          # Roll the git tag onto the CURRENT commit so the release page shows the
+          # fresh source revision instead of a stale one. Without this, --clobber
+          # updates only the APK asset and the tag keeps pointing at an old SHA.
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -f "$TAG" "$BUILD_SHA"
+          git push -f origin "refs/tags/$TAG"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Pre-release $TAG exists - refreshing notes + overwriting APK with the fresh build."
+            gh release edit "$TAG" --notes "$NOTES" --target "$BUILD_SHA"
+          else
+            gh release create "$TAG" \
+              --title "TunXBox $TAG (rolling pre-release)" \
+              --notes "$NOTES" \
+              --target "$BUILD_SHA" \
+              --prerelease
+          fi
+          gh release upload "$TAG" "$APK#app-preview.apk" --clobber
+          echo "Rolling pre-release ready: $TAG (commit $SHORT_SHA)"
+          echo "Release publishedAt: $(gh release view "$TAG" --json publishedAt -q .publishedAt)"
+          echo "Release tagName: $(gh release view "$TAG" --json tagName -q .tagName)"
+
+      - name: Comment on PR with RC link
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.version.outputs.rc_tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          gh pr comment ${{ github.event.pull_request.number }} --body "Rolling pre-release build is ready.
+
+          Version: $VERSION
+          Tag: $TAG
+          Download: https://github.com/${{ github.repository }}/releases/tag/$TAG
+
+          This release is refreshed on every build - the tag and APK are overwritten in place."
