@@ -274,6 +274,34 @@ class ConfigurationFragment @JvmOverloads constructor(
 
     override fun onKeyDown(ketCode: Int, event: KeyEvent): Boolean {
         val fragment = getCurrentGroupFragment()
+        when (ketCode) {
+            KeyEvent.KEYCODE_DPAD_DOWN -> {
+                // Move focus from toolbar/tabs to profile list
+                fragment?.configurationListView?.apply {
+                    if (!hasFocus()) {
+                        requestFocus()
+                        // Select first item if none selected
+                        if (selectedView == null && adapter?.itemCount ?: 0 > 0) {
+                            smoothScrollToPosition(0)
+                        }
+                    }
+                }
+                return true
+            }
+            KeyEvent.KEYCODE_DPAD_UP -> {
+                // Move focus back to tabs or toolbar
+                tabLayout.requestFocus()
+                return true
+            }
+            KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> {
+                // Activate focused item
+                val focused = currentFocus
+                if (focused != null && focused != view) {
+                    focused.performClick()
+                    return true
+                }
+            }
+        }
         fragment?.configurationListView?.apply {
             if (!hasFocus()) requestFocus()
         }
