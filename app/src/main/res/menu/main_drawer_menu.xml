@@ -57,4 +57,9 @@
             android:title="@string/menu_about" />
     </group>
 
+    <item
+        android:id="@+id/nav_scan_lan"
+        android:icon="@android:drawable/ic_menu_search"
+        android:title="@string/local_network_scan" />
 </menu>
+(конец файла)
