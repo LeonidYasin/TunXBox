@@ -59,6 +59,13 @@ class MainActivity : ThemedActivity(),
     lateinit var navigation: NavigationView
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // TV Device Detection: redirect to Leanback UI
+        if (io.nekohasekai.sagernet.ktx.TvDeviceUtil.isTvDevice(this)) {
+            startActivity(android.content.Intent(this, MainActivityTv::class.java))
+            finish()
+            return
+        }
+        
         super.onCreate(savedInstanceState)
 
         binding = LayoutMainBinding.inflate(layoutInflater)
