@@ -1,6 +1,5 @@
 package io.nekohasekai.sagernet.ui.tv
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
@@ -11,13 +10,13 @@ import androidx.leanback.widget.ListRow
 import androidx.leanback.widget.ListRowPresenter
 import androidx.leanback.widget.OnItemViewClickedListener
 import androidx.leanback.widget.Presenter
-import androidx.leanback.widget.Row
-import androidx.leanback.widget.RowPresenter
 import io.nekohasekai.sagernet.SagerNet
 import io.nekohasekai.sagernet.bg.BaseService
+import io.nekohasekai.sagernet.bg.SagerConnection
 import io.nekohasekai.sagernet.database.DataStore
 import io.nekohasekai.sagernet.database.ProfileManager
 import io.nekohasekai.sagernet.database.ProxyEntity
+import io.nekohasekai.sagernet.database.SagerDatabase
 import io.nekohasekai.sagernet.group.RawUpdater
 import io.nekohasekai.sagernet.ktx.onMainDispatcher
 import io.nekohasekai.sagernet.ktx.runOnDefaultDispatcher
@@ -28,15 +27,13 @@ class MainBrowseFragment : BrowseSupportFragment() {
     private lateinit var profilesAdapter: ArrayObjectAdapter
     private lateinit var actionsAdapter: ArrayObjectAdapter
     
-    // Service connection for start/stop
-    private val connection = SagerNet.connection
+    private val connection = SagerConnection(SagerConnection.CONNECTION_ID_REMOTE)
     private var serviceState = BaseService.State.Idle
 
     companion object {
         const val ACTION_START_PROXY = 1L
         const val ACTION_STOP_PROXY = 2L
         const val ACTION_IMPORT_CLIPBOARD = 3L
-        const val ACTION_SETTINGS = 4L
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -50,16 +47,25 @@ class MainBrowseFragment : BrowseSupportFragment() {
         setupEventListeners()
         loadContent()
         
-        // Connect to service for state updates
-        connection.connect(requireActivity(), object : io.nekohasekai.sagernet.bg.SagerConnection.Callback {
-            override fun onConnected(binder: io.nekohasekai.sagernet.aidl.ISagerNetService) {}
-            override fun onDisconnected() {}
-            override fun onStateChanged(state: BaseService.State, profileName: String?, msg: String?) {
-                serviceState = state
+        // Connect to service
+        connection.connect(requireActivity(), object : SagerConnection.Callback {
+            override fun onServiceConnected(service: io.nekohasekai.sagernet.aidl.ISagerNetService) {
+                runOnDefaultDispatcher {
+                    try {
+                        val stateOrdinal = service.state
+                        serviceState = BaseService.State.values().getOrElse(stateOrdinal) { BaseService.State.Idle }
+                    } catch (_: Exception) {}
+                    onMainDispatcher { updateActionsRow() }
+                }
+            }
+            override fun onServiceDisconnected() {
+                serviceState = BaseService.State.Idle
                 activity?.runOnUiThread { updateActionsRow() }
             }
-            override fun onTrafficUpdated(data: io.nekohasekai.sagernet.aidl.TrafficData) {}
-            override fun onSpeedUpdated(data: io.nekohasekai.sagernet.aidl.SpeedDisplayData) {}
+            override fun onBinderDied() {
+                serviceState = BaseService.State.Idle
+                activity?.runOnUiThread { updateActionsRow() }
+            }
         })
     }
 
@@ -73,12 +79,8 @@ class MainBrowseFragment : BrowseSupportFragment() {
             itemViewHolder, item, rowViewHolder, row ->
             
             when (item) {
-                is ProxyEntity -> {
-                    selectAndStartProxy(item)
-                }
-                is TvAction -> {
-                    handleAction(item)
-                }
+                is ProxyEntity -> selectAndStartProxy(item)
+                is TvAction -> handleAction(item)
             }
         }
     }
@@ -91,33 +93,36 @@ class MainBrowseFragment : BrowseSupportFragment() {
         updateActionsRow()
         rowsAdapter.add(ListRow(HeaderItem("Actions"), actionsAdapter))
 
-        // Row 2: Profiles
+        // Row 2: Profiles — load from DB
         profilesAdapter = ArrayObjectAdapter(ProfileCardPresenter())
-        val profiles = runBlocking { ProfileManager.getAllProfiles() }
-        profiles.forEach { profilesAdapter.add(it) }
-
-        if (profilesAdapter.size() > 0) {
-            val header = HeaderItem("Profiles (${profilesAdapter.size()})")
-            rowsAdapter.add(ListRow(header, profilesAdapter))
-        } else {
-            val emptyAdapter = ArrayObjectAdapter(object : Presenter() {
-                override fun onCreateViewHolder(parent: android.view.ViewGroup): ViewHolder {
-                    val tv = android.widget.TextView(parent.context).apply {
-                        text = "No profiles yet.\nUse \"Import from Clipboard\" or add via phone."
-                        textSize = 18f
-                        setTextColor(0xAAFFFFFF.toInt())
-                        setPadding(48, 48, 48, 48)
-                    }
-                    return ViewHolder(tv)
-                }
-                override fun onBindViewHolder(vh: ViewHolder, item: Any?) {}
-                override fun onUnbindViewHolder(vh: ViewHolder) {}
-            })
-            emptyAdapter.add("")
-            rowsAdapter.add(ListRow(HeaderItem("Getting Started"), emptyAdapter))
-        }
+        loadProfiles()
 
         adapter = rowsAdapter
+    }
+    
+    private fun loadProfiles() {
+        profilesAdapter.clear()
+        runOnDefaultDispatcher {
+            try {
+                val groupId = DataStore.selectedGroup
+                // Get all profile IDs for current group via Room DAO
+                val profileIds = SagerDatabase.proxyDao.getByGroup(groupId).map { it.id }
+                val profiles = ProfileManager.getProfiles(profileIds)
+                
+                onMainDispatcher {
+                    if (profiles.isNotEmpty()) {
+                        profiles.forEach { profilesAdapter.add(it) }
+                    } else {
+                        // Show empty hint
+                        profilesAdapter.add(TvEmptyHint("No profiles in current group.\nUse Import or switch group on phone."))
+                    }
+                }
+            } catch (e: Exception) {
+                onMainDispatcher {
+                    profilesAdapter.add(TvEmptyHint("Error loading profiles: ${e.message}"))
+                }
+            }
+        }
     }
     
     private fun updateActionsRow() {
@@ -125,59 +130,45 @@ class MainBrowseFragment : BrowseSupportFragment() {
         val isConnected = serviceState == BaseService.State.Connected
         
         if (isConnected) {
-            actionsAdapter.add(TvAction(ACTION_STOP_PROXY, " Stop Proxy", "Currently running"))
+            actionsAdapter.add(TvAction(ACTION_STOP_PROXY, "■ Stop Proxy", "Service is running"))
         } else {
-            actionsAdapter.add(TvAction(ACTION_START_PROXY, "▶ Start Proxy", "Select a profile first"))
+            actionsAdapter.add(TvAction(ACTION_START_PROXY, "▶ Start Proxy", "Select a profile below"))
         }
         
-        actionsAdapter.add(TvAction(ACTION_IMPORT_CLIPBOARD, "📋 Import from Clipboard", "Paste proxy link"))
-        actionsAdapter.add(TvAction(ACTION_SETTINGS, "⚙ Settings", "App preferences"))
+        actionsAdapter.add(TvAction(ACTION_IMPORT_CLIPBOARD, "📋 Import Clipboard", "Paste proxy link from phone"))
     }
 
     private fun selectAndStartProxy(profile: ProxyEntity) {
         DataStore.selectedProxy = profile.id
+        Toast.makeText(context, "Selected: ${profile.displayName()}", Toast.LENGTH_SHORT).show()
         
         if (serviceState == BaseService.State.Connected) {
             // Restart with new profile
-            connection.service?.let { svc ->
-                runOnDefaultDispatcher {
-                    try {
-                        svc.restartService()
-                    } catch (e: Exception) {
-                        onMainDispatcher {
-                            Toast.makeText(context, "Failed to restart: ${e.message}", Toast.LENGTH_SHORT).show()
-                        }
+            runOnDefaultDispatcher {
+                try {
+                    connection.service?.restartService()
+                } catch (e: Exception) {
+                    onMainDispatcher {
+                        Toast.makeText(context, "Restart failed: ${e.message}", Toast.LENGTH_SHORT).show()
                     }
                 }
             }
         } else {
-            // Start service
             SagerNet.startService()
         }
-        
-        Toast.makeText(context, "Selected: ${profile.displayName()}", Toast.LENGTH_SHORT).show()
     }
 
     private fun handleAction(action: TvAction) {
         when (action.id) {
             ACTION_START_PROXY -> {
-                val selectedId = DataStore.selectedProxy
-                if (selectedId > 0) {
+                if (DataStore.selectedProxy > 0) {
                     SagerNet.startService()
                 } else {
                     Toast.makeText(context, "Select a profile first", Toast.LENGTH_SHORT).show()
                 }
             }
-            ACTION_STOP_PROXY -> {
-                SagerNet.stopService()
-            }
-            ACTION_IMPORT_CLIPBOARD -> {
-                importFromClipboard()
-            }
-            ACTION_SETTINGS -> {
-                // TODO: GuidedStepSettingsFragment
-                Toast.makeText(context, "Settings coming soon", Toast.LENGTH_SHORT).show()
-            }
+            ACTION_STOP_PROXY -> SagerNet.stopService()
+            ACTION_IMPORT_CLIPBOARD -> importFromClipboard()
         }
     }
 
@@ -193,7 +184,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
                 val proxies = RawUpdater.parseRaw(text)
                 if (proxies.isNullOrEmpty()) {
                     onMainDispatcher {
-                        Toast.makeText(context, "No valid proxy found in clipboard", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "No valid proxy in clipboard", Toast.LENGTH_SHORT).show()
                     }
                 } else {
                     val targetId = DataStore.selectedGroupForImport()
@@ -202,7 +193,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
                     }
                     onMainDispatcher {
                         Toast.makeText(context, "Imported ${proxies.size} profile(s)", Toast.LENGTH_LONG).show()
-                        refreshProfiles()
+                        loadProfiles()
                     }
                 }
             } catch (e: Exception) {
@@ -212,15 +203,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
             }
         }
     }
-
-    fun refreshProfiles() {
-        profilesAdapter.clear()
-        val profiles = runBlocking { ProfileManager.getAllProfiles() }
-        profiles.forEach { profilesAdapter.add(it) }
-    }
 }
 
-/**
- * Simple action item for the Actions row
- */
 data class TvAction(val id: Long, val title: String, val subtitle: String)
+data class TvEmptyHint(val message: String)
