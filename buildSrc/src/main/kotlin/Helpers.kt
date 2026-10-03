@@ -1,4 +1,17 @@
-// MARKER_TEST_LINE_12345
+import com.android.build.api.dsl.ApplicationExtension
+import com.android.build.gradle.AbstractAppExtension
+import com.android.build.gradle.internal.api.BaseVariantOutputImpl
+import org.gradle.api.JavaVersion
+import org.gradle.api.Project
+import org.gradle.api.plugins.ExtensionAware
+import org.gradle.kotlin.dsl.getByName
+import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions
+import java.util.Base64
+import java.util.Properties
+import kotlin.system.exitProcess
+
+private val Project.android get() = extensions.getByName<ApplicationExtension>("android")
+
 private lateinit var metadata: Properties
 private lateinit var localProperties: Properties
 
