@@ -39,7 +39,7 @@ class ProfileCardPresenter : Presenter() {
         when (item) {
             is ProxyEntity -> {
                 holder.name.text = item.displayName() ?: "Unnamed"
-                holder.protocol.text = item.typeName()
+                holder.protocol.text = item.requireBean().javaClass.simpleName.removeSuffix("Bean")
                 holder.statusText.text = item.requireBean().serverAddress
                 holder.statusDot.isVisible = false
             }
