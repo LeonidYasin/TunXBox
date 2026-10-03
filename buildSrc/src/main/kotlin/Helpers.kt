@@ -1,5 +1,4 @@
-private val Project.android get() = extensions.getByName<ApplicationExtension>("android")
-
+// MARKER_TEST_LINE_12345
 private lateinit var metadata: Properties
 private lateinit var localProperties: Properties
 
