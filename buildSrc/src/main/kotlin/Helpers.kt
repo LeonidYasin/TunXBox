@@ -1,4 +1,11 @@
-private val Project.android get() = extensions.getByName<ApplicationExtension>("android")
+import com.android.build.gradle.ApplicationExtension
+import org.gradle.api.JavaVersion
+import org.gradle.api.Project
+import org.gradle.api.plugins.ExtensionAware
+import org.gradle.kotlin.dsl.getByName
+import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions
+import java.util.Base64
+import java.util.Properties
 
 private lateinit var metadata: Properties
 private lateinit var localProperties: Properties
