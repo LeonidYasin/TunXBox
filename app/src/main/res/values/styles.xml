@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Leanback.TunXBox" parent="@style/Theme.Leanback">
+        <item name="android:windowBackground">#FF1B1B1B</item>
+        <item name="defaultBrandColor">#FF6C63FF</item>
+    </style>
+</resources>
