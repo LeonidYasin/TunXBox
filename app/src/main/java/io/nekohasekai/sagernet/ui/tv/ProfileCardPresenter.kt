@@ -22,7 +22,6 @@ class ProfileCardPresenter : Presenter() {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.card_profile_tv, parent, false)
         
-        // Focus animation
         view.setOnFocusChangeListener { v, hasFocus ->
             v.animate()
                 .scaleX(if (hasFocus) 1.08f else 1.0f)
@@ -36,11 +35,21 @@ class ProfileCardPresenter : Presenter() {
 
     override fun onBindViewHolder(viewHolder: ViewHolder, item: Any?) {
         val holder = viewHolder as ProfileCardViewHolder
-        val profile = item as? ProxyEntity ?: return
         
-        holder.name.text = profile.displayName() ?: "Unnamed"
-        holder.protocol.text = profile.typeName()
-        holder.statusText.text = profile.requireBean().serverAddress
+        when (item) {
+            is ProxyEntity -> {
+                holder.name.text = item.displayName() ?: "Unnamed"
+                holder.protocol.text = item.typeName()
+                holder.statusText.text = item.requireBean().serverAddress
+                holder.statusDot.isVisible = false
+            }
+            is TvEmptyHint -> {
+                holder.name.text = item.message
+                holder.protocol.text = ""
+                holder.statusText.text = ""
+                holder.statusDot.isVisible = false
+            }
+        }
     }
 
     override fun onUnbindViewHolder(viewHolder: ViewHolder) {}
