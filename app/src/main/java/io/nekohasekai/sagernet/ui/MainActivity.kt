@@ -1,3 +1,4 @@
+import io.nekohasekai.sagernet.service.NetworkStateMonitor
 package io.nekohasekai.sagernet.ui
 
 import android.Manifest.permission.POST_NOTIFICATIONS
@@ -63,6 +64,7 @@ class MainActivity : ThemedActivity(),
 
         binding = LayoutMainBinding.inflate(layoutInflater)
         binding.fab.initProgress(binding.fabProgress)
+        NetworkStateMonitor(applicationContext) {}.startMonitoring()
         if (themeResId !in intArrayOf(
                 R.style.Theme_SagerNet_Black
             )
@@ -305,6 +307,12 @@ class MainActivity : ThemedActivity(),
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == R.id.nav_scan_lan) {
+            startActivity(Intent(this, ProxyScanActivity::class.java))
+            binding.drawerLayout.closeDrawers()
+            return true
+        }
+
         if (item.isChecked) binding.drawerLayout.closeDrawers() else {
             return displayFragmentWithId(item.itemId)
         }
@@ -478,3 +486,4 @@ class MainActivity : ThemedActivity(),
     }
 
 }
+(конец файла)
