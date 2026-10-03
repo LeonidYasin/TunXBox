@@ -39,6 +39,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           ref: ${{ github.event.inputs.ref || github.event.pull_request.head.ref || github.ref }}
           submodules: recursive
 
