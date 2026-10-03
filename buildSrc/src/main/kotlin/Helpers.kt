@@ -1,15 +1,3 @@
-import com.android.build.api.dsl.ApplicationExtension
-import com.android.build.gradle.AbstractAppExtension
-import com.android.build.gradle.internal.api.BaseVariantOutputImpl
-import org.gradle.api.JavaVersion
-import org.gradle.api.Project
-import org.gradle.api.plugins.ExtensionAware
-import org.gradle.kotlin.dsl.getByName
-import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions
-import java.util.Base64
-import java.util.Properties
-import kotlin.system.exitProcess
-
 private val Project.android get() = extensions.getByName<ApplicationExtension>("android")
 
 private lateinit var metadata: Properties
@@ -197,7 +185,7 @@ fun Project.setupApp() {
                 outputFileName = if (isPreview) {
                     outputFileName.replace(
                         project.name,
-                        "NekoBox-" + requireMetadata().getProperty("PRE_VERSION_NAME")
+                        "TunXBox-" + requireMetadata().getProperty("PRE_VERSION_NAME")
                     ).replace("-preview", "")
                 } else {
                     outputFileName.replace(project.name, "NekoBox-$versionName")
