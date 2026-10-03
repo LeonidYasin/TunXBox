@@ -159,6 +159,17 @@ jobs:
           path: ${{ env.APK }}
           retention-days: 30
 
+
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log-${{ github.run_number }}
+          path: |
+            app/build/outputs/
+            app/build/reports/
+          retention-days: 7
+          if-no-files-found: ignore
       - name: Publish rolling pre-release to GitHub Releases
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
