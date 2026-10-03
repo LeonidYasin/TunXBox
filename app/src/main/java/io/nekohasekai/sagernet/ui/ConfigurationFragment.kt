@@ -276,12 +276,10 @@ class ConfigurationFragment @JvmOverloads constructor(
         val fragment = getCurrentGroupFragment()
         when (ketCode) {
             KeyEvent.KEYCODE_DPAD_DOWN -> {
-                // Move focus from toolbar/tabs to profile list
                 fragment?.configurationListView?.apply {
                     if (!hasFocus()) {
                         requestFocus()
-                        // Select first item if none selected
-                        if (selectedView == null && adapter?.itemCount ?: 0 > 0) {
+                        if (adapter?.itemCount ?: 0 > 0) {
                             smoothScrollToPosition(0)
                         }
                     }
@@ -289,13 +287,11 @@ class ConfigurationFragment @JvmOverloads constructor(
                 return true
             }
             KeyEvent.KEYCODE_DPAD_UP -> {
-                // Move focus back to tabs or toolbar
                 tabLayout.requestFocus()
                 return true
             }
             KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> {
-                // Activate focused item
-                val focused = currentFocus
+                val focused = requireActivity().currentFocus
                 if (focused != null && focused != view) {
                     focused.performClick()
                     return true
