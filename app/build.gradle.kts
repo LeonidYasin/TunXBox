@@ -1,5 +1,3 @@
-@file:Suppress("UnstableApiUsage")
-
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -27,7 +25,7 @@ android {
         viewBinding = true
         aidl = true
     }
-    namespace = "io.nekohasekai.sagernet"
+    namespace = "com.tunxbox.app"
     packaging {
         jniLibs {
             useLegacyPackaging = true
