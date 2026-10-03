@@ -172,8 +172,6 @@ fun Project.setupApp() {
             isUniversalApk = true
             include("armeabi-v7a")
             include("arm64-v8a")
-            include("x86")
-            include("x86_64")
         }
 
         flavorDimensions += "vendor"
