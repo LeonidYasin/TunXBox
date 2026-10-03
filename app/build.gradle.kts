@@ -25,7 +25,7 @@ android {
         viewBinding = true
         aidl = true
     }
-    namespace = "com.tunxbox.app"
+    namespace = "io.nekohasekai.sagernet"
     packaging {
         jniLibs {
             useLegacyPackaging = true
