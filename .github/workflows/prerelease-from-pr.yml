@@ -43,6 +43,11 @@ jobs:
           ref: ${{ github.event.inputs.ref || github.event.pull_request.head.ref || github.ref }}
           submodules: recursive
 
+      - name: Get actual commit SHA
+        id: actual_sha
+        run: |
+          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -162,7 +167,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ steps.version.outputs.rc_tag }}
           VERSION: ${{ steps.version.outputs.version }}
-          BUILD_SHA: ${{ github.sha }}
+          BUILD_SHA: ${{ steps.actual_sha.outputs.sha }}
         run: |
           set -euo pipefail
           SHORT_SHA="${BUILD_SHA:0:8}"
