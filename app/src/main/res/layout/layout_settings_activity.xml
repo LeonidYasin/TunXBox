@@ -2,8 +2,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:focusable="true"
-    android:focusableInTouchMode="true">
+    android:focusable="true">
 
     <include
         layout="@layout/layout_appbar"
@@ -14,14 +13,12 @@
         android:id="@+id/settings"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:focusable="true"
-        android:focusableInTouchMode="true" />
+        android:focusable="true" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/configuration_list"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:focusable="true"
-        android:focusableInTouchMode="true" />
+        android:focusable="true" />
 
 </LinearLayout>

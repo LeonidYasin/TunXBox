@@ -1,1 +1,77 @@
-PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KCjxjb20uZ29vZ2xlLmFuZHJvaWQubWF0ZXJpYWwuY2FyZC5NYXRlcmlhbENhcmRWaWV3IHhtbG5zOmFuZHJvaWQ9Imh0dHA6Ly9zY2hlbWFzLmFuZHJvaWQuY29tL2Fway9yZXMvYW5kcm9pZCIKICAgIHhtbG5zOmFwcD0iaHR0cDovL3NjaGVtYXMuYW5kcm9pZC5jb20vYXBrL3Jlcy1hdXRvIgogICAgeG1sbnM6dG9vbHM9Imh0dHA6Ly9zY2hlbWFzLmFuZHJvaWQuY29tL3Rvb2xzIgogICAgYW5kcm9pZDppZD0iQCtpZC9jb250ZW50IgogICAgYW5kcm9pZDpsYXlvdXRfd2lkdGg9Im1hdGNoX3BhcmVudCIKICAgIGFuZHJvaWQ6bGF5b3V0X2hlaWdodD0id3JhcF9jb250ZW50IgogICAgYW5kcm9pZDpsYXlvdXRfbWFyZ2luPSI0ZHAiCiAgICBhbmRyb2lkOmZvY3VzYWJsZT0idHJ1ZSIKICAgIGFuZHJvaWQ6Y2xpY2thYmxlPSJ0cnVlIgogICAgYW5kcm9pZDpmb3JlZ3JvdW5kPSI/YW5kcm9pZDphdHRyL3NlbGVjdGFibGVJdGVtQmFja2dyb3VuZCIKICAgIGFwcDpjYXJkRWxldmF0aW9uPSIyZHAiCiAgICB0b29sczppZ25vcmU9IlNlbGVjdGFibGVUZXh0Ij4KCiAgICA8TGluZWFyTGF5b3V0CiAgICAgICAgYW5kcm9pZDpsYXlvdXRfd2lkdGg9Im1hdGNoX3BhcmVudCIKICAgICAgICBhbmRyb2lkOmxheW91dF9oZWlnaHQ9Im1hdGNoX3BhcmVudCIKICAgICAgICBhbmRyb2lkOmxheW91dF9tYXJnaW5FbmQ9IjhkcCIKICAgICAgICBhbmRyb2lkOmdyYXZpdHk9ImNlbnRlcl92ZXJ0aWNhbCIKICAgICAgICBhbmRyb2lkOm9yaWVudGF0aW9uPSJob3Jpem9udGFsIgogICAgICAgIGFuZHJvaWQ6cGFkZGluZz0iOGRwIj4KCiAgICAgICAgPEltYWdlVmlldwogICAgICAgICAgICBhbmRyb2lkOmlkPSJAK2lkL2l0ZW1pY29uIgogICAgICAgICAgICBhbmRyb2lkOmxheW91dF93aWR0aD0iNDBkcCIKICAgICAgICAgICAgYW5kcm9pZDpsYXlvdXRfaGVpZ2h0PSI0MGRwIgogICAgICAgICAgICBhbmRyb2lkOmxheW91dF9tYXJnaW5TdGFydD0iOGRwIgogICAgICAgICAgICBhbmRyb2lkOmltcG9ydGFudEZvckFjY2Vzc2liaWxpdHk9Im5vIgogICAgICAgICAgICBhbmRyb2lkOnNjYWxlVHlwZT0iZml0Q2VudGVyIgogICAgICAgICAgICB0b29sczpzcmM9IkBhbmRyb2lkOmRyYXdhYmxlL3N5bV9kZWZfYXBwX2ljb24iIC8+CgogICAgICAgIDxMaW5lYXJMYXlvdXQKICAgICAgICAgICAgYW5kcm9pZDpsYXlvdXRfd2lkdGg9IjBkcCIKICAgICAgICAgICAgYW5kcm9pZDpsYXlvdXRfaGVpZ2h0PSJ3cmFwX2NvbnRlbnQiCiAgICAgICAgICAgIGFuZHJvaWQ6bGF5b3V0X21hcmdpblN0YXJ0PSIxNmRwIgogICAgICAgICAgICBhbmRyb2lkOmxheW91dF9tYXJnaW5Ub3A9IjRkcCIKICAgICAgICAgICAgYW5kcm9pZDpsYXlvdXRfbWFyZ2luRW5kPSI4ZHAiCiAgICAgICAgICAgIGFuZHJvaWQ6bGF5b3V0X21hcmdpbkJvdHRvbT0iNGRwIgogICAgICAgICAgICBhbmRyb2lkOmxheW91dF93ZWlnaHQ9IjEiCiAgICAgICAgICAgIGFuZHJvaWQ6b3JpZW50YXRpb249InZlcnRpY2FsIj4KCiAgICAgICAgICAgIDxUZXh0VmlldwogICAgICAgICAgICAgICAgYW5kcm9pZDppZD0iQCtpZC90aXRsZSIKICAgICAgICAgICAgICAgIGFuZHJvaWQ6bGF5b3V0X3dpZHRoPSJ3cmFwX2NvbnRlbnQiCiAgICAgICAgICAgICAgICBhbmRyb2lkOmxheW91dF9oZWlnaHQ9IndyYXBfY29udGVudCIKICAgICAgICAgICAgICAgIGFuZHJvaWQ6ZWxsaXBzaXplPSJlbmQiCiAgICAgICAgICAgICAgICBhbmRyb2lkOnRleHRDb2xvcj0iP2FuZHJvaWQ6YXR0ci90ZXh0Q29sb3JTZWNvbmRhcnkiCiAgICAgICAgICAgICAgICBhbmRyb2lkOnRleHRTaXplPSIxOHNwIgogICAgICAgICAgICAgICAgdG9vbHM6dGV4dD0iUGFja2FnZSBsYWJlbCIgLz4KCiAgICAgICAgICAgIDxUZXh0VmlldwogICAgICAgICAgICAgICAgYW5kcm9pZDppZD0iQCtpZC9kZXNjIgogICAgICAgICAgICAgICAgYW5kcm9pZDpsYXlvdXRfd2lkdGg9IndyYXBfY29udGVudCIKICAgICAgICAgICAgICAgIGFuZHJvaWQ6bGF5b3V0X2hlaWdodD0id3JhcF9jb250ZW50IgogICAgICAgICAgICAgICAgYW5kcm9pZDpicmVha1N0cmF0ZWd5PSJoaWdoX3F1YWxpdHkiCiAgICAgICAgICAgICAgICBhbmRyb2lkOmVsbGlwc2l6ZT0iZW5kIgogICAgICAgICAgICAgICAgYW5kcm9pZDp0ZXh0Q29sb3I9Ij9hbmRyb2lkOmF0dHIvdGV4dENvbG9yVGVydGlhcnkiCiAgICAgICAgICAgICAgICBhbmRyb2lkOnRleHRTaXplPSIxMnNwIgogICAgICAgICAgICAgICAgdG9vbHM6dGV4dD0iY29tLnBhY2thZ2UubmFtZSAoMTAwMDApIiAvPgoKICAgICAgICA8L0xpbmVhckxheW91dD4KCiAgICAgICAgPGFuZHJvaWR4LmFwcGNvbXBhdC53aWRnZXQuU3dpdGNoQ29tcGF0CiAgICAgICAgICAgIGFuZHJvaWQ6aWQ9IkAraWQvaXRlbWNoZWNrIgogICAgICAgICAgICBhbmRyb2lkOmxheW91dF93aWR0aD0id3JhcF9jb250ZW50IgogICAgICAgICAgICBhbmRyb2lkOmxheW91dF9oZWlnaHQ9IndyYXBfY29udGVudCIKICAgICAgICAgICAgYW5kcm9pZDpjbGlja2FibGU9ImZhbHNlIgogICAgICAgICAgICBhbmRyb2lkOmZvY3VzYWJsZT0iZmFsc2UiCiAgICAgICAgICAgIGFuZHJvaWQ6Zm9jdXNhYmxlSW5Ub3VjaE1vZGU9ImZhbHNlIgogICAgICAgICAgICBhcHA6bGF5b3V0X2NvbnN0cmFpbnRCb3R0b21fdG9Cb3R0b21PZj0icGFyZW50IgogICAgICAgICAgICBhcHA6bGF5b3V0X2NvbnN0cmFpbnRFbmRfdG9FbmRPZj0icGFyZW50IgogICAgICAgICAgICBhcHA6bGF5b3V0X2NvbnN0cmFpbnRUb3BfdG9Ub3BPZj0icGFyZW50IiAvPgoKICAgIDwvTGluZWFyTGF5b3V0PgoKPC9jb20uZ29vZ2xlLmFuZHJvaWQubWF0ZXJpYWwuY2FyZC5NYXRlcmlhbENhcmRWaWV3Pg==
+<?xml version="1.0" encoding="utf-8"?>
+
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/content"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="4dp"
+    android:focusable="true"
+    android:clickable="true"
+    android:foreground="?android:attr/selectableItemBackground"
+    app:cardElevation="2dp"
+    tools:ignore="SelectableText">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginEnd="8dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="8dp">
+
+        <ImageView
+            android:id="@+id/itemicon"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="8dp"
+            android:importantForAccessibility="no"
+            android:scaleType="fitCenter"
+            tools:src="@android:drawable/sym_def_app_icon" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginBottom="4dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="18sp"
+                tools:text="Package label" />
+
+            <TextView
+                android:id="@+id/desc"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:breakStrategy="high_quality"
+                android:ellipsize="end"
+                android:textColor="?android:attr/textColorTertiary"
+                android:textSize="12sp"
+                tools:text="com.package.name (10000)" />
+
+        </LinearLayout>
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/itemcheck"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:clickable="false"
+            android:focusable="false"
+            android:focusableInTouchMode="false"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>

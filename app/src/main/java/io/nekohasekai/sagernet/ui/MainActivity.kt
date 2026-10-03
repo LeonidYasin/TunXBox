@@ -1,1 +1,493 @@
-8J+UlyBodHRwczovL2dpdGh1Yi5jb20vTGVvbmlkWWFzaW4vVHVuWEJveC9ibG9iL2ZlYXR1cmUvdHYtcmVtb3RlLXN1cHBvcnQvYXBwL3NyYy9tYWluL2phdmEvaW8vbmVrb2hhc2VrYWkvc2FnZXJuZXQvdWkvTWFpbkFjdGl2aXR5Lmt0CvCfk4QgaHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL0xlb25pZFlhc2luL1R1blhCb3gvZmVhdHVyZS90di1yZW1vdGUtc3VwcG9ydC9hcHAvc3JjL21haW4vamF2YS9pby9uZWtvaGFzZWthaS9zYWdlcm5ldC91aS9NYWluQWN0aXZpdHkua3QKU0hBOiBhNjAwMTJlMTBhY2IzYWJkOTM2NDUyMTgwNzU3ZWU5NjhlMDRkOGIxCgpwYWNrYWdlIGlvLm5la29oYXNla2FpLnNhZ2VybmV0LnVpCgppbXBvcnQgYW5kcm9pZC5NYW5pZmVzdC5wZXJtaXNzaW9uLlBPU1RfTk9USUZJQ0FUSU9OUwppbXBvcnQgYW5kcm9pZC5hbm5vdGF0aW9uLlN1cHByZXNzTGludAppbXBvcnQgYW5kcm9pZC5jb250ZW50LkludGVudAppbXBvcnQgYW5kcm9pZC5jb250ZW50LnBtLlBhY2thZ2VNYW5hZ2VyCmltcG9ydCBhbmRyb2lkLm5ldC5VcmkKaW1wb3J0IGFuZHJvaWQub3MuQnVpbGQKaW1wb3J0IGFuZHJvaWQub3MuQnVuZGxlCmltcG9ydCBhbmRyb2lkLm9zLlJlbW90ZUV4Y2VwdGlvbgppbXBvcnQgYW5kcm9pZC52aWV3LktleUV2ZW50CmltcG9ydCBhbmRyb2lkLnZpZXcuTWVudUl0ZW0KaW1wb3J0IGFuZHJvaWR4LmFjdGl2aXR5LmFkZENhbGxiYWNrCmltcG9ydCBhbmRyb2lkeC5hbm5vdGF0aW9uLklkUmVzCmltcG9ydCBhbmRyb2lkeC5jb3JlLmFwcC5BY3Rpdml0eUNvbXBhdAppbXBvcnQgYW5kcm9pZHguY29yZS5jb250ZW50LkNvbnRleHRDb21wYXQKaW1wb3J0IGFuZHJvaWR4LnByZWZlcmVuY2UuUHJlZmVyZW5jZURhdGFTdG9yZQppbXBvcnQgY29tLmdvb2dsZS5hbmRyb2lkLm1hdGVyaWFsLmRpYWxvZy5NYXRlcmlhbEFsZXJ0RGlhbG9nQnVpbGRlcgppbXBvcnQgY29tLmdvb2dsZS5hbmRyb2lkLm1hdGVyaWFsLm5hdmlnYXRpb24uTmF2aWdhdGlvblZpZXcKaW1wb3J0IGNvbS5nb29nbGUuYW5kcm9pZC5tYXRlcmlhbC5zbmFja2Jhci5TbmFja2JhcgppbXBvcnQgaW8ubmVrb2hhc2VrYWkuc2FnZXJuZXQuQnVpbGRDb25maWcKaW1wb3J0IGlvLm5la29oYXNla2FpLnNhZ2VybmV0Lkdyb3VwVHlwZQppbXBvcnQgaW8ubmVrb2hhc2VrYWkuc2FnZXJuZXQuS2V5CmltcG9ydCBpby5uZWtvaGFzZWthaS5zYWdlcm5ldC5SCmltcG9ydCBpby5uZWtvaGFzZWthaS5zYWdlcm5ldC5TYWdlck5ldAppbXBvcnQgaW8ubmVrb2hhc2VrYWkuc2FnZXJuZXQuYWlkbC5JU2FnZXJOZXRTZXJ2aWNlCmltcG9ydCBpby5uZWtvaGFzZWthaS5zYWdlcm5ldC5haWRsLlNwZWVkRGlzcGxheURhdGEKaW1wb3J0IGlvLm5la29oYXNla2FpLnNhZ2VybmV0LmFpZGwuVHJhZmZpY0RhdGEKaW1wb3J0IGlvLm5la29oYXNla2FpLnNhZ2VybmV0LmJnLkJhc2VTZXJ2aWNlCmltcG9ydCBpby5uZWtvaGFzZWthaS5zYWdlcm5ldC5iZy5TYWdlckNvbm5lY3Rpb24KaW1wb3J0IGlvLm5la29oYXNla2FpLnNhZ2VybmV0LmRhdGFiYXNlLkRhdGFTdG9yZQppbXBvcnQgaW8ubmVrb2hhc2VrYWkuc2FnZXJuZXQuZGF0YWJhc2UuR3JvdXBNYW5hZ2VyCmltcG9ydCBpby5uZWtvaGFzZWthaS5zYWdlcm5ldC5kYXRhYmFzZS5Qcm9maWxlTWFuYWdlcgppbXBvcnQgaW8ubmVrb2hhc2VrYWkuc2FnZXJuZXQuZGF0YWJhc2UuUHJveHlHcm91cAppbXBvcnQgaW8ubmVrb2hhc2VrYWkuc2FnZXJuZXQuZGF0YWJhc2UuU3Vic2NyaXB0aW9uQmVhbgppbXBvcnQgaW8ubmVrb2hhc2VrYWkuc2FnZXJuZXQuZGF0YWJhc2UucHJlZmVyZW5jZS5PblByZWZlcmVuY2VEYXRhU3RvcmVDaGFuZ2VMaXN0ZW5lcgppbXBvcnQgaW8ubmVrb2hhc2VrYWkuc2FnZXJuZXQuZGF0YWJpbmRpbmcuTGF5b3V0TWFpbkJpbmRpbmcKaW1wb3J0IGlvLm5la29oYXNla2FpLnNhZ2VybmV0LmZtdC5BYnN0cmFjdEJlYW4KaW1wb3J0IGlvLm5la29oYXNla2FpLnNhZ2VybmV0LmZtdC5LcnlvQ29udmVydGVycwppbXBvcnQgaW8ubmVrb2hhc2VrYWkuc2FnZXJuZXQuZm10LlBsdWdpbkVudHJ5CmltcG9ydCBpby5uZWtvaGFzZWthaS5zYWdlcm5ldC5ncm91cC5Hcm91cEludGVyZmFjZUFkYXB0ZXIKaW1wb3J0IGlvLm5la29oYXNla2FpLnNhZ2VybmV0Lmdyb3VwLkdyb3VwVXBkYXRlcgppbXBvcnQgaW8ubmVrb2hhc2VrYWkuc2FnZXJuZXQua3R4LmFsZXJ0CmltcG9ydCBpby5uZWtvaGFzZWthaS5zYWdlcm5ldC5rdHguaXNQbGF5CmltcG9ydCBpby5uZWtvaGFzZWthaS5zYWdlcm5ldC5rdHguaXNQcmV2aWV3CmltcG9ydCBpby5uZWtvaGFzZWthaS5zYWdlcm5ldC5rdHgubGF1bmNoQ3VzdG9tVGFiCmltcG9ydCBpby5uZWtvaGFzZWthaS5zYWdlcm5ldC5rdHgub25NYWluRGlzcGF0Y2hlcgppbXBvcnQgaW8ubmVrb2hhc2VrYWkuc2FnZXJuZXQua3R4LnBhcnNlUHJveGllcwppbXBvcnQgaW8ubmVrb2hhc2VrYWkuc2FnZXJuZXQua3R4LnJlYWRhYmxlTWVzc2FnZQppbXBvcnQgaW8ubmVrb2hhc2VrYWkuc2FnZXJuZXQua3R4LnJ1bk9uRGVmYXVsdERpc3BhdGNoZXIKaW1wb3J0IG1vZS5tYXRzdXJpLm5iNGEudXRpbHMuVXRpbAoKY2xhc3MgTWFpbkFjdGl2aXR5IDogVGhlbWVkQWN0aXZpdHkoKSwKICAgIFNhZ2VyQ29ubmVjdGlvbi5DYWxsYmFjaywKICAgIE9uUHJlZmVyZW5jZURhdGFTdG9yZUNoYW5nZUxpc3RlbmVyLAogICAgTmF2aWdhdGlvblZpZXcuT25OYXZpZ2F0aW9uSXRlbVNlbGVjdGVkTGlzdGVuZXIgewoKICAgIGxhdGVpbml0IHZhciBiaW5kaW5nOiBMYXlvdXRNYWluQmluZGluZwogICAgbGF0ZWluaXQgdmFyIG5hdmlnYXRpb246IE5hdmlnYXRpb25WaWV3CgogICAgb3ZlcnJpZGUgZnVuIG9uQ3JlYXRlKHNhdmVkSW5zdGFuY2VTdGF0ZTogQnVuZGxlPykgewogICAgICAgIHN1cGVyLm9uQ3JlYXRlKHNhdmVkSW5zdGFuY2VTdGF0ZSkKCiAgICAgICAgYmluZGluZyA9IExheW91dE1haW5CaW5kaW5nLmluZmxhdGUobGF5b3V0SW5mbGF0ZXIpCiAgICAgICAgYmluZGluZy5mYWIuaW5pdFByb2dyZXNzKGJpbmRpbmcuZmFiUHJvZ3Jlc3MpCiAgICAgICAgaWYgKHRoZW1lUmVzSWQgIWluIGludEFycmF5T2YoCiAgICAgICAgICAgICAgICBSLnN0eWxlLlRoZW1lX1NhZ2VyTmV0X0JsYWNrCiAgICAgICAgICAgICkKICAgICAgICApIHsKICAgICAgICAgICAgbmF2aWdhdGlvbiA9IGJpbmRpbmcubmF2VmlldwogICAgICAgICAgICBiaW5kaW5nLmRyYXdlckxheW91dC5yZW1vdmVWaWV3KGJpbmRpbmcubmF2Vmlld0JsYWNrKQogICAgICAgIH0gZWxzZSB7CiAgICAgICAgICAgIG5hdmlnYXRpb24gPSBiaW5kaW5nLm5hdlZpZXdCbGFjawogICAgICAgICAgICBiaW5kaW5nLmRyYXdlckxheW91dC5yZW1vdmVWaWV3KGJpbmRpbmcubmF2VmlldykKICAgICAgICB9CiAgICAgICAgbmF2aWdhdGlvbi5zZXROYXZpZ2F0aW9uSXRlbVNlbGVjdGVkTGlzdGVuZXIodGhpcykKCiAgICAgICAgaWYgKHNhdmVkSW5zdGFuY2VTdGF0ZSA9PSBudWxsKSB7CiAgICAgICAgICAgIGRpc3BsYXlGcmFnbWVudFdpdGhJZChSLmlkLm5hdl9jb25maWd1cmF0aW9uKQogICAgICAgIH0KICAgICAgICBvbkJhY2tQcmVzc2VkRGlzcGF0Y2hlci5hZGRDYWxsYmFjayB7CiAgICAgICAgICAgIGlmIChzdXBwb3J0RnJhZ21lbnRNYW5hZ2VyLmZpbmRGcmFnbWVudEJ5SWQoUi5pZC5mcmFnbWVudF9ob2xkZXIpIGlzIENvbmZpZ3VyYXRpb25GcmFnbWVudCkgewogICAgICAgICAgICAgICAgbW92ZVRhc2tUb0JhY2sodHJ1ZSkKICAgICAgICAgICAgfSBlbHNlIHsKICAgICAgICAgICAgICAgIGRpc3BsYXlGcmFnbWVudFdpdGhJZChSLmlkLm5hdl9jb25maWd1cmF0aW9uKQogICAgICAgICAgICB9CiAgICAgICAgfQoKICAgICAgICBiaW5kaW5nLmZhYi5zZXRPbkNsaWNrTGlzdGVuZXIgewogICAgICAgICAgICBpZiAoRGF0YVN0b3JlLnNlcnZpY2VTdGF0ZS5jYW5TdG9wKSBTYWdlck5ldC5zdG9wU2VydmljZSgpIGVsc2UgY29ubmVjdC5sYXVuY2goCiAgICAgICAgICAgICAgICBudWxsCiAgICAgICAgICAgICkKICAgICAgICB9CiAgICAgICAgYmluZGluZy5zdGF0cy5zZXRPbkNsaWNrTGlzdGVuZXIgeyBpZiAoRGF0YVN0b3JlLnNlcnZpY2VTdGF0ZS5jb25uZWN0ZWQpIGJpbmRpbmcuc3RhdHMudGVzdENvbm5lY3Rpb24oKSB9CgogICAgICAgIHNldENvbnRlbnRWaWV3KGJpbmRpbmcucm9vdCkKICAgICAgICBjaGFuZ2VTdGF0ZShCYXNlU2VydmljZS5TdGF0ZS5JZGxlKQogICAgICAgIGNvbm5lY3Rpb24uY29ubmVjdCh0aGlzLCB0aGlzKQogICAgICAgIERhdGFTdG9yZS5jb25maWd1cmF0aW9uU3RvcmUucmVnaXN0ZXJDaGFuZ2VMaXN0ZW5lcih0aGlzKQogICAgICAgIEdyb3VwTWFuYWdlci51c2VySW50ZXJmYWNlID0gR3JvdXBJbnRlcmZhY2VBZGFwdGVyKHRoaXMpCgogICAgICAgIGlmIChpbnRlbnQ/LmFjdGlvbiA9PSBJbnRlbnQuQUNUSU9OX1ZJRVcpIHsKICAgICAgICAgICAgb25OZXdJbnRlbnQoaW50ZW50KQogICAgICAgIH0KCiAgICAgICAgcmVmcmVzaE5hdk1lbnUoRGF0YVN0b3JlLmVuYWJsZUNsYXNoQVBJKQoKICAgICAgICAvLyBzZGsgMzMgbm90aWZpY2F0aW9uCiAgICAgICAgaWYgKEJ1aWxkLlZFUlNJT04uU0RLX0lOVCA+PSAzMykgewogICAgICAgICAgICB2YWwgY2hlY2tQZXJtaXNzaW9uID0KICAgICAgICAgICAgICAgIENvbnRleHRDb21wYXQuY2hlY2tTZWxmUGVybWlzc2lvbih0aGlzQE1haW5BY3Rpdml0eSwgUE9TVF9OT1RJRklDQVRJT05TKQogICAgICAgICAgICBpZiAoY2hlY2tQZXJtaXNzaW9uICE9IFBhY2thZ2VNYW5hZ2VyLlBFUk1JU1NJT05fR1JBTlRFRCkgewogICAgICAgICAgICAgICAgLy/liqjmgIHnlLPor7cKICAgICAgICAgICAgICAgIEFjdGl2aXR5Q29tcGF0LnJlcXVlc3RQZXJtaXNzaW9ucygKICAgICAgICAgICAgICAgICAgICB0aGlzQE1haW5BY3Rpdml0eSwgYXJyYXlPZihQT1NUX05PVElGSUNBVElPTlMpLCAwCiAgICAgICAgICAgICAgICApCiAgICAgICAgICAgIH0KICAgICAgICB9CgogICAgICAgIGlmIChpc1ByZXZpZXcpIHsKICAgICAgICAgICAgTWF0ZXJpYWxBbGVydERpYWxvZ0J1aWxkZXIodGhpcykKICAgICAgICAgICAgICAgIC5zZXRUaXRsZShCdWlsZENvbmZpZy5QUkVfVkVSU0lPTl9OQU1FKQogICAgICAgICAgICAgICAgLnNldE1lc3NhZ2UoUi5zdHJpbmcucHJldmlld192ZXJzaW9uX2hpbnQpCiAgICAgICAgICAgICAgICAuc2V0UG9zaXRpdmVCdXR0b24oYW5kcm9pZC5SLnN0cmluZy5vaywgbnVsbCkKICAgICAgICAgICAgICAgIC5zaG93KCkKICAgICAgICB9CiAgICB9CgogICAgZnVuIHJlZnJlc2hOYXZNZW51KGNsYXNoQXBpOiBCb29sZWFuKSB7CiAgICAgICAgaWYgKDo6bmF2aWdhdGlvbi5pc0luaXRpYWxpemVkKSB7CiAgICAgICAgICAgIG5hdmlnYXRpb24ubWVudS5maW5kSXRlbShSLmlkLm5hdl90cmFmZmljKT8uaXNWaXNpYmxlID0gY2xhc2hBcGkKICAgICAgICAgICAgbmF2aWdhdGlvbi5tZW51LmZpbmRJdGVtKFIuaWQubmF2X3R1aWd1YW5nKT8uaXNWaXNpYmxlID0gIWlzUGxheQogICAgICAgIH0KICAgIH0KCiAgICBvdmVycmlkZSBmdW4gb25OZXdJbnRlbnQoaW50ZW50OiBJbnRlbnQpIHsKICAgICAgICBzdXBlci5vbk5ld0ludGVudChpbnRlbnQpCgogICAgICAgIHZhbCB1cmkgPSBpbnRlbnQuZGF0YSA/OiByZXR1cm4KCiAgICAgICAgcnVuT25EZWZhdWx0RGlzcGF0Y2hlciB7CiAgICAgICAgICAgIGlmICh1cmkuc2NoZW1lID09ICJzbiIgJiYgdXJpLmhvc3QgPT0gInN1YnNjcmlwdGlvbiIgfHwgdXJpLnNjaGVtZSA9PSAiY2xhc2giKSB7CiAgICAgICAgICAgICAgICBpbXBvcnRTdWJzY3JpcHRpb24odXJpKQogICAgICAgICAgICB9IGVsc2UgewogICAgICAgICAgICAgICAgaW1wb3J0UHJvZmlsZSh1cmkpCiAgICAgICAgICAgIH0KICAgICAgICB9CiAgICB9CgogICAgZnVuIHVybFRlc3QoKTogSW50IHsKICAgICAgICBpZiAoIURhdGFTdG9yZS5zZXJ2aWNlU3RhdGUuY29ubmVjdGVkIHx8IGNvbm5lY3Rpb24uc2VydmljZSA9PSBudWxsKSB7CiAgICAgICAgICAgIGVycm9yKCJub3Qgc3RhcnRlZCIpCiAgICAgICAgfQogICAgICAgIHJldHVybiBjb25uZWN0aW9uLnNlcnZpY2UhIS51cmxUZXN0KCkKICAgIH0KCiAgICBzdXNwZW5kIGZ1biBpbXBvcnRTdWJzY3JpcHRpb24odXJpOiBVcmkpIHsKICAgICAgICB2YWwgZ3JvdXA6IFByb3h5R3JvdXAKCiAgICAgICAgdmFsIHVybCA9IHVyaS5nZXRRdWVyeVBhcmFtZXRlcigidXJsIikKICAgICAgICBpZiAoIXVybC5pc051bGxPckJsYW5rKCkpIHsKICAgICAgICAgICAgZ3JvdXAgPSBQcm94eUdyb3VwKHR5cGUgPSBHcm91cFR5cGUuU1VCU0NSSVBUSU9OKQogICAgICAgICAgICB2YWwgc3Vic2NyaXB0aW9uID0gU3Vic2NyaXB0aW9uQmVhbigpCiAgICAgICAgICAgIGdyb3VwLnN1YnNjcmlwdGlvbiA9IHN1YnNjcmlwdGlvbgoKICAgICAgICAgICAgLy8gY2xlYXJ0ZXh0IGZvcm1hdAogICAgICAgICAgICBzdWJzY3JpcHRpb24ubGluayA9IHVybAogICAgICAgICAgICBncm91cC5uYW1lID0gdXJpLmdldFF1ZXJ5UGFyYW1ldGVyKCJuYW1lIikKICAgICAgICB9IGVsc2UgewogICAgICAgICAgICB2YWwgZGF0YSA9IHVyaS5lbmNvZGVkUXVlcnkudGFrZUlmIHsgIWl0LmlzTnVsbE9yQmxhbmsoKSB9ID86IHJldHVybgogICAgICAgICAgICB0cnkgewogICAgICAgICAgICAgICAgZ3JvdXAgPSBLcnlvQ29udmVydGVycy5kZXNlcmlhbGl6ZSgKICAgICAgICAgICAgICAgICAgICBQcm94eUdyb3VwKCkuYXBwbHkgeyBleHBvcnQgPSB0cnVlIH0sIFV0aWwuemxpYkRlY29tcHJlc3MoVXRpbC5iNjREZWNvZGUoZGF0YSkpCiAgICAgICAgICAgICAgICApLmFwcGx5IHsKICAgICAgICAgICAgICAgICAgICBleHBvcnQgPSBmYWxzZQogICAgICAgICAgICAgICAgfQogICAgICAgICAgICB9IGNhdGNoIChlOiBFeGNlcHRpb24pIHsKICAgICAgICAgICAgICAgIG9uTWFpbkRpc3BhdGNoZXIgewogICAgICAgICAgICAgICAgICAgIGFsZXJ0KGUucmVhZGFibGVNZXNzYWdlKS5zaG93KCkKICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgICAgIHJldHVybgogICAgICAgICAgICB9CiAgICAgICAgfQoKICAgICAgICB2YWwgbmFtZSA9IGdyb3VwLm5hbWUudGFrZUlmIHsgIWl0LmlzTnVsbE9yQmxhbmsoKSB9ID86IGdyb3VwLnN1YnNjcmlwdGlvbj8ubGluawogICAgICAgID86IGdyb3VwLnN1YnNjcmlwdGlvbj8udG9rZW4KICAgICAgICBpZiAobmFtZS5pc051bGxPckJsYW5rKCkpIHJldHVybgoKICAgICAgICBncm91cC5uYW1lID0gZ3JvdXAubmFtZS50YWtlSWYgeyAhaXQuaXNOdWxsT3JCbGFuaygpIH0KICAgICAgICAgICAgPzogKCJTdWJzY3JpcHRpb24gIyIgKyBTeXN0ZW0uY3VycmVudFRpbWVNaWxsaXMoKSkKCiAgICAgICAgb25NYWluRGlzcGF0Y2hlciB7CgogICAgICAgICAgICBkaXNwbGF5RnJhZ21lbnRXaXRoSWQoUi5pZC5uYXZfZ3JvdXApCgogICAgICAgICAgICBNYXRlcmlhbEFsZXJ0RGlhbG9nQnVpbGRlcih0aGlzQE1haW5BY3Rpdml0eSkuc2V0VGl0bGUoUi5zdHJpbmcuc3Vic2NyaXB0aW9uX2ltcG9ydCkKICAgICAgICAgICAgICAgIC5zZXRNZXNzYWdlKGdldFN0cmluZyhSLnN0cmluZy5zdWJzY3JpcHRpb25faW1wb3J0X21lc3NhZ2UsIG5hbWUpKQogICAgICAgICAgICAgICAgLnNldFBvc2l0aXZlQnV0dG9uKFIuc3RyaW5nLnllcykgeyBfLCBfIC0+CiAgICAgICAgICAgICAgICAgICAgcnVuT25EZWZhdWx0RGlzcGF0Y2hlciB7CiAgICAgICAgICAgICAgICAgICAgICAgIGZpbmlzaEltcG9ydFN1YnNjcmlwdGlvbihncm91cCkKICAgICAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgICAgICAuc2V0TmVnYXRpdmVCdXR0b24oYW5kcm9pZC5SLnN0cmluZy5jYW5jZWwsIG51bGwpCiAgICAgICAgICAgICAgICAuc2hvdygpCgogICAgICAgIH0KCiAgICB9CgogICAgcHJpdmF0ZSBzdXNwZW5kIGZ1biBmaW5pc2hJbXBvcnRTdWJzY3JpcHRpb24oc3Vic2NyaXB0aW9uOiBQcm94eUdyb3VwKSB7CiAgICAgICAgR3JvdXBNYW5hZ2VyLmNyZWF0ZUdyb3VwKHN1YnNjcmlwdGlvbikKICAgICAgICBHcm91cFVwZGF0ZXIuc3RhcnRVcGRhdGUoc3Vic2NyaXB0aW9uLCB0cnVlKQogICAgfQoKICAgIHN1c3BlbmQgZnVuIGltcG9ydFByb2ZpbGUodXJpOiBVcmkpIHsKICAgICAgICB2YWwgcHJvZmlsZSA9IHRyeSB7CiAgICAgICAgICAgIHBhcnNlUHJveGllcyh1cmkudG9TdHJpbmcoKSkuZ2V0T3JOdWxsKDApID86IGVycm9yKGdldFN0cmluZyhSLnN0cmluZy5ub19wcm94aWVzX2ZvdW5kKSkKICAgICAgICB9IGNhdGNoIChlOiBFeGNlcHRpb24pIHsKICAgICAgICAgICAgb25NYWluRGlzcGF0Y2hlciB7CiAgICAgICAgICAgICAgICBhbGVydChlLnJlYWRhYmxlTWVzc2FnZSkuc2hvdygpCiAgICAgICAgICAgIH0KICAgICAgICAgICAgcmV0dXJuCiAgICAgICAgfQoKICAgICAgICBvbk1haW5EaXNwYXRjaGVyIHsKICAgICAgICAgICAgTWF0ZXJpYWxBbGVydERpYWxvZ0J1aWxkZXIodGhpc0BNYWluQWN0aXZpdHkpLnNldFRpdGxlKFIuc3RyaW5nLnByb2ZpbGVfaW1wb3J0KQogICAgICAgICAgICAgICAgLnNldE1lc3NhZ2UoZ2V0U3RyaW5nKFIuc3RyaW5nLnByb2ZpbGVfaW1wb3J0X21lc3NhZ2UsIHByb2ZpbGUuZGlzcGxheU5hbWUoKSkpCiAgICAgICAgICAgICAgICAuc2V0UG9zaXRpdmVCdXR0b24oUi5zdHJpbmcueWVzKSB7IF8sIF8gLT4KICAgICAgICAgICAgICAgICAgICBydW5PbkRlZmF1bHREaXNwYXRjaGVyIHsKICAgICAgICAgICAgICAgICAgICAgICAgZmluaXNoSW1wb3J0UHJvZmlsZShwcm9maWxlKQogICAgICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgICAgIC5zZXROZWdhdGl2ZUJ1dHRvbihhbmRyb2lkLlIuc3RyaW5nLmNhbmNlbCwgbnVsbCkKICAgICAgICAgICAgICAgIC5zaG93KCkKICAgICAgICB9CgogICAgfQoKICAgIHByaXZhdGUgc3VzcGVuZCBmdW4gZmluaXNoSW1wb3J0UHJvZmlsZShwcm9maWxlOiBBYnN0cmFjdEJlYW4pIHsKICAgICAgICB2YWwgdGFyZ2V0SWQgPSBEYXRhU3RvcmUuc2VsZWN0ZWRHcm91cEZvckltcG9ydCgpCgogICAgICAgIFByb2ZpbGVNYW5hZ2VyLmNyZWF0ZVByb2ZpbGUodGFyZ2V0SWQsIHByb2ZpbGUpCgogICAgICAgIG9uTWFpbkRpc3BhdGNoZXIgewogICAgICAgICAgICBkaXNwbGF5RnJhZ21lbnRXaXRoSWQoUi5pZC5uYXZfY29uZmlndXJhdGlvbikKCiAgICAgICAgICAgIHNuYWNrYmFyKHJlc291cmNlcy5nZXRRdWFudGl0eVN0cmluZyhSLnBsdXJhbHMuYWRkZWQsIDEsIDEpKS5zaG93KCkKICAgICAgICB9CiAgICB9CgogICAgb3ZlcnJpZGUgZnVuIG1pc3NpbmdQbHVnaW4ocHJvZmlsZU5hbWU6IFN0cmluZywgcGx1Z2luTmFtZTogU3RyaW5nKSB7CiAgICAgICAgdmFsIHBsdWdpbkVudGl0eSA9IFBsdWdpbkVudHJ5LmZpbmQocGx1Z2luTmFtZSkKCiAgICAgICAgLy8gdW5rbm93biBleGUgb3IgbmVrbyBwbHVnaW4KICAgICAgICBpZiAocGx1Z2luRW50aXR5ID09IG51bGwpIHsKICAgICAgICAgICAgc25hY2tiYXIoZ2V0U3RyaW5nKFIuc3RyaW5nLnBsdWdpbl91bmtub3duLCBwbHVnaW5OYW1lKSkuc2hvdygpCiAgICAgICAgICAgIHJldHVybgogICAgICAgIH0KCiAgICAgICAgLy8gb2ZmaWNpYWwgZXhlCgogICAgICAgIE1hdGVyaWFsQWxlcnREaWFsb2dCdWlsZGVyKHRoaXMpLnNldFRpdGxlKFIuc3RyaW5nLm1pc3NpbmdfcGx1Z2luKQogICAgICAgICAgICAuc2V0TWVzc2FnZSgKICAgICAgICAgICAgICAgIGdldFN0cmluZygKICAgICAgICAgICAgICAgICAgICBSLnN0cmluZy5wcm9maWxlX3JlcXVpcmluZ19wbHVnaW4sIHByb2ZpbGVOYW1lLCBwbHVnaW5FbnRpdHkuZGlzcGxheU5hbWUKICAgICAgICAgICAgICAgICkKICAgICAgICAgICAgKQogICAgICAgICAgICAuc2V0UG9zaXRpdmVCdXR0b24oUi5zdHJpbmcuYWN0aW9uX2Rvd25sb2FkKSB7IF8sIF8gLT4KICAgICAgICAgICAgICAgIHNob3dEb3dubG9hZERpYWxvZyhwbHVnaW5FbnRpdHkpCiAgICAgICAgICAgIH0KICAgICAgICAgICAgLnNldE5ldXRyYWxCdXR0b24oYW5kcm9pZC5SLnN0cmluZy5jYW5jZWwsIG51bGwpCiAgICAgICAgICAgIC5zZXROZXV0cmFsQnV0dG9uKFIuc3RyaW5nLmFjdGlvbl9sZWFybl9tb3JlKSB7IF8sIF8gLT4KICAgICAgICAgICAgICAgIGxhdW5jaEN1c3RvbVRhYigiaHR0cHM6Ly9tYXRzdXJpZGF5by5naXRodWIuaW8vbmI0YS1wbHVnaW4vIikKICAgICAgICAgICAgfQogICAgICAgICAgICAuc2hvdygpCiAgICB9CgogICAgcHJpdmF0ZSBmdW4gc2hvd0Rvd25sb2FkRGlhbG9nKHBsdWdpbkVudHJ5OiBQbHVnaW5FbnRyeSkgewogICAgICAgIHZhciBpbmRleCA9IDAKICAgICAgICB2YXIgcGxheUluZGV4ID0gLTEKICAgICAgICB2YXIgZmRyb2lkSW5kZXggPSAtMQoKICAgICAgICB2YWwgaXRlbXMgPSBtdXRhYmxlTGlzdE9mPFN0cmluZz4oKQogICAgICAgIGlmIChwbHVnaW5FbnRyeS5kb3dubG9hZFNvdXJjZS5wbGF5U3RvcmUpIHsKICAgICAgICAgICAgaXRlbXMuYWRkKGdldFN0cmluZyhSLnN0cmluZy5pbnN0YWxsX2Zyb21fcGxheV9zdG9yZSkpCiAgICAgICAgICAgIHBsYXlJbmRleCA9IGluZGV4KysKICAgICAgICB9CiAgICAgICAgaWYgKHBsdWdpbkVudHJ5LmRvd25sb2FkU291cmNlLmZkcm9pZCkgewogICAgICAgICAgICBpdGVtcy5hZGQoZ2V0U3RyaW5nKFIuc3RyaW5nLmluc3RhbGxfZnJvbV9mZHJvaWQpKQogICAgICAgICAgICBmZHJvaWRJbmRleCA9IGluZGV4KysKICAgICAgICB9CgogICAgICAgIGl0ZW1zLmFkZChnZXRTdHJpbmcoUi5zdHJpbmcuZG93bmxvYWQpKQogICAgICAgIHZhbCBkb3dubG9hZEluZGV4ID0gaW5kZXgKCiAgICAgICAgTWF0ZXJpYWxBbGVydERpYWxvZ0J1aWxkZXIodGhpcykuc2V0VGl0bGUocGx1Z2luRW50cnkubmFtZSkKICAgICAgICAgICAgLnNldEl0ZW1zKGl0ZW1zLnRvVHlwZWRBcnJheSgpKSB7IF8sIHdoaWNoIC0+CiAgICAgICAgICAgICAgICB3aGVuICh3aGljaCkgewogICAgICAgICAgICAgICAgICAgIHBsYXlJbmRleCAtPiBsYXVuY2hDdXN0b21UYWIoImh0dHBzOi8vcGxheS5nb29nbGUuY29tL3N0b3JlL2FwcHMvZGV0YWlscz9pZD0ke3BsdWdpbkVudHJ5LnBhY2thZ2VOYW1lfSIpCiAgICAgICAgICAgICAgICAgICAgZmRyb2lkSW5kZXggLT4gbGF1bmNoQ3VzdG9tVGFiKCJodHRwczovL2YtZHJvaWQub3JnL3BhY2thZ2VzLyR7cGx1Z2luRW50cnkucGFja2FnZU5hbWV9LyIpCiAgICAgICAgICAgICAgICAgICAgZG93bmxvYWRJbmRleCAtPiBsYXVuY2hDdXN0b21UYWIocGx1Z2luRW50cnkuZG93bmxvYWRTb3VyY2UuZG93bmxvYWRMaW5rKQogICAgICAgICAgICAgICAgfQogICAgICAgICAgICB9CiAgICAgICAgICAgIC5zaG93KCkKICAgIH0KCiAgICBvdmVycmlkZSBmdW4gb25OYXZpZ2F0aW9uSXRlbVNlbGVjdGVkKGl0ZW06IE1lbnVJdGVtKTogQm9vbGVhbiB7CiAgICAgICAgaWYgKGl0ZW0uaXNDaGVja2VkKSBiaW5kaW5nLmRyYXdlckxheW91dC5jbG9zZURyYXdlcnMoKSBlbHNlIHsKICAgICAgICAgICAgcmV0dXJuIGRpc3BsYXlGcmFnbWVudFdpdGhJZChpdGVtLml0ZW1JZCkKICAgICAgICB9CiAgICAgICAgcmV0dXJuIHRydWUKICAgIH0KCgogICAgQFN1cHByZXNzTGludCgiQ29tbWl0VHJhbnNhY3Rpb24iKQogICAgZnVuIGRpc3BsYXlGcmFnbWVudChmcmFnbWVudDogVG9vbGJhckZyYWdtZW50KSB7CiAgICAgICAgaWYgKGZyYWdtZW50IGlzIENvbmZpZ3VyYXRpb25GcmFnbWVudCkgewogICAgICAgICAgICBiaW5kaW5nLnN0YXRzLmFsbG93U2hvdyA9IHRydWUKICAgICAgICAgICAgYmluZGluZy5mYWIuc2hvdygpCiAgICAgICAgfSBlbHNlIGlmICghRGF0YVN0b3JlLnNob3dCb3R0b21CYXIpIHsKICAgICAgICAgICAgYmluZGluZy5zdGF0cy5hbGxvd1Nob3cgPSBmYWxzZQogICAgICAgICAgICBiaW5kaW5nLnN0YXRzLnBlcmZvcm1IaWRlKCkKICAgICAgICAgICAgYmluZGluZy5mYWIuaGlkZSgpCiAgICAgICAgfQogICAgICAgIHN1cHBvcnRGcmFnbWVudE1hbmFnZXIuYmVnaW5UcmFuc2FjdGlvbigpCiAgICAgICAgICAgIC5yZXBsYWNlKFIuaWQuZnJhZ21lbnRfaG9sZGVyLCBmcmFnbWVudCkKICAgICAgICAgICAgLmNvbW1pdEFsbG93aW5nU3RhdGVMb3NzKCkKICAgICAgICBiaW5kaW5nLmRyYXdlckxheW91dC5jbG9zZURyYXdlcnMoKQogICAgfQoKICAgIGZ1biBkaXNwbGF5RnJhZ21lbnRXaXRoSWQoQElkUmVzIGlkOiBJbnQpOiBCb29sZWFuIHsKICAgICAgICB3aGVuIChpZCkgewogICAgICAgICAgICBSLmlkLm5hdl9jb25maWd1cmF0aW9uIC0+IHsKICAgICAgICAgICAgICAgIGRpc3BsYXlGcmFnbWVudChDb25maWd1cmF0aW9uRnJhZ21lbnQoKSkKICAgICAgICAgICAgfQoKICAgICAgICAgICAgUi5pZC5uYXZfZ3JvdXAgLT4gZGlzcGxheUZyYWdtZW50KEdyb3VwRnJhZ21lbnQoKSkKICAgICAgICAgICAgUi5pZC5uYXZfcm91dGUgLT4gZGlzcGxheUZyYWdtZW50KFJvdXRlRnJhZ21lbnQoKSkKICAgICAgICAgICAgUi5pZC5uYXZfc2V0dGluZ3MgLT4gZGlzcGxheUZyYWdtZW50KFNldHRpbmdzRnJhZ21lbnQoKSkKICAgICAgICAgICAgUi5pZC5uYXZfdHJhZmZpYyAtPiBkaXNwbGF5RnJhZ21lbnQoV2Vidmlld0ZyYWdtZW50KCkpCiAgICAgICAgICAgIFIuaWQubmF2X3Rvb2xzIC0+IGRpc3BsYXlGcmFnbWVudChUb29sc0ZyYWdtZW50KCkpCiAgICAgICAgICAgIFIuaWQubmF2X2xvZ2NhdCAtPiBkaXNwbGF5RnJhZ21lbnQoTG9nY2F0RnJhZ21lbnQoKSkKICAgICAgICAgICAgUi5pZC5uYXZfZmFxIC0+IHsKICAgICAgICAgICAgICAgIGxhdW5jaEN1c3RvbVRhYigiaHR0cHM6Ly9tYXRzdXJpZGF5by5naXRodWIuaW8vIikKICAgICAgICAgICAgICAgIHJldHVybiBmYWxzZQogICAgICAgICAgICB9CgogICAgICAgICAgICBSLmlkLm5hdl9hYm91dCAtPiBkaXNwbGF5RnJhZ21lbnQoQWJvdXRGcmFnbWVudCgpKQogICAgICAgICAgICBSLmlkLm5hdl90dWlndWFuZyAtPiB7CiAgICAgICAgICAgICAgICBsYXVuY2hDdXN0b21UYWIoImh0dHBzOi8vbmVrby1ib3gucGFnZXMuZGV2L+WWtSIpCiAgICAgICAgICAgICAgICByZXR1cm4gZmFsc2UKICAgICAgICAgICAgfQoKICAgICAgICAgICAgZWxzZSAtPiByZXR1cm4gZmFsc2UKICAgICAgICB9CiAgICAgICAgbmF2aWdhdGlvbi5tZW51LmZpbmRJdGVtKGlkKS5pc0NoZWNrZWQgPSB0cnVlCiAgICAgICAgcmV0dXJuIHRydWUKICAgIH0KCiAgICBwcml2YXRlIGZ1biBjaGFuZ2VTdGF0ZSgKICAgICAgICBzdGF0ZTogQmFzZVNlcnZpY2UuU3RhdGUsCiAgICAgICAgbXNnOiBTdHJpbmc/ID0gbnVsbCwKICAgICAgICBhbmltYXRlOiBCb29sZWFuID0gZmFsc2UsCiAgICApIHsKICAgICAgICBEYXRhU3RvcmUuc2VydmljZVN0YXRlID0gc3RhdGUKCiAgICAgICAgYmluZGluZy5mYWIuY2hhbmdlU3RhdGUoc3RhdGUsIERhdGFTdG9yZS5zZXJ2aWNlU3RhdGUsIGFuaW1hdGUpCiAgICAgICAgYmluZGluZy5zdGF0cy5jaGFuZ2VTdGF0ZShzdGF0ZSkKICAgICAgICBpZiAobXNnICE9IG51bGwpIHNuYWNrYmFyKGdldFN0cmluZyhSLnN0cmluZy52cG5fZXJyb3IsIG1zZykpLnNob3coKQogICAgfQoKICAgIG92ZXJyaWRlIGZ1biBzbmFja2JhckludGVybmFsKHRleHQ6IENoYXJTZXF1ZW5jZSk6IFNuYWNrYmFyIHsKICAgICAgICByZXR1cm4gU25hY2tiYXIubWFrZShiaW5kaW5nLmNvb3JkaW5hdG9yLCB0ZXh0LCBTbmFja2Jhci5MRU5HVEhfTE9ORykuYXBwbHkgewogICAgICAgICAgICBpZiAoYmluZGluZy5mYWIuaXNTaG93bikgewogICAgICAgICAgICAgICAgYW5jaG9yVmlldyA9IGJpbmRpbmcuZmFiCiAgICAgICAgICAgIH0KICAgICAgICAgICAgLy8gVE9ETwogICAgICAgIH0KICAgIH0KCiAgICBvdmVycmlkZSBmdW4gc3RhdGVDaGFuZ2VkKHN0YXRlOiBCYXNlU2VydmljZS5TdGF0ZSwgcHJvZmlsZU5hbWU6IFN0cmluZz8sIG1zZzogU3RyaW5nPykgewogICAgICAgIGNoYW5nZVN0YXRlKHN0YXRlLCBtc2csIHRydWUpCiAgICB9CgogICAgdmFsIGNvbm5lY3Rpb24gPSBTYWdlckNvbm5lY3Rpb24oU2FnZXJDb25uZWN0aW9uLkNPTk5FQ1RJT05fSURfTUFJTl9BQ1RJVklUWV9GT1JFR1JPVU5ELCB0cnVlKQogICAgb3ZlcnJpZGUgZnVuIG9uU2VydmljZUNvbm5lY3RlZChzZXJ2aWNlOiBJU2FnZXJOZXRTZXJ2aWNlKSA9IGNoYW5nZVN0YXRlKAogICAgICAgIHRyeSB7CiAgICAgICAgICAgIEJhc2VTZXJ2aWNlLlN0YXRlLnZhbHVlcygpW3NlcnZpY2Uuc3RhdGVdCiAgICAgICAgfSBjYXRjaCAoXzogUmVtb3RlRXhjZXB0aW9uKSB7CiAgICAgICAgICAgIEJhc2VTZXJ2aWNlLlN0YXRlLklkbGUKICAgICAgICB9CiAgICApCgogICAgb3ZlcnJpZGUgZnVuIG9uU2VydmljZURpc2Nvbm5lY3RlZCgpID0gY2hhbmdlU3RhdGUoQmFzZVNlcnZpY2UuU3RhdGUuSWRsZSkKICAgIG92ZXJyaWRlIGZ1biBvbkJpbmRlckRpZWQoKSB7CiAgICAgICAgY29ubmVjdGlvbi5kaXNjb25uZWN0KHRoaXMpCiAgICAgICAgY29ubmVjdGlvbi5jb25uZWN0KHRoaXMsIHRoaXMpCiAgICB9CgogICAgcHJpdmF0ZSB2YWwgY29ubmVjdCA9IHJlZ2lzdGVyRm9yQWN0aXZpdHlSZXN1bHQoVnBuUmVxdWVzdEFjdGl2aXR5LlN0YXJ0U2VydmljZSgpKSB7CiAgICAgICAgaWYgKGl0KSBzbmFja2JhcihSLnN0cmluZy52cG5fcGVybWlzc2lvbl9kZW5pZWQpLnNob3coKQogICAgfQoKICAgIC8vIG1heSBOT1QgY2FsbGVkIHdoZW4gYXBwIGlzIGluIGJhY2tncm91bmQKICAgIC8vIE9OTFkgZG8gVUkgdXBkYXRlIGhlcmUsIHdyaXRlIERCIGluIGJnIHByb2Nlc3MKICAgIG92ZXJyaWRlIGZ1biBjYlNwZWVkVXBkYXRlKHN0YXRzOiBTcGVlZERpc3BsYXlEYXRhKSB7CiAgICAgICAgYmluZGluZy5zdGF0cy51cGRhdGVTcGVlZChzdGF0cy50eFJhdGVQcm94eSwgc3RhdHMucnhSYXRlUHJveHkpCiAgICB9CgogICAgb3ZlcnJpZGUgZnVuIGNiVHJhZmZpY1VwZGF0ZShkYXRhOiBUcmFmZmljRGF0YSkgewogICAgICAgIHJ1bk9uRGVmYXVsdERpc3BhdGNoZXIgewogICAgICAgICAgICBQcm9maWxlTWFuYWdlci5wb3N0VXBkYXRlKGRhdGEpCiAgICAgICAgfQogICAgfQoKICAgIG92ZXJyaWRlIGZ1biBjYlNlbGVjdG9yVXBkYXRlKGlkOiBMb25nKSB7CiAgICAgICAgdmFsIG9sZCA9IERhdGFTdG9yZS5zZWxlY3RlZFByb3h5CiAgICAgICAgRGF0YVN0b3JlLnNlbGVjdGVkUHJveHkgPSBpZAogICAgICAgIERhdGFTdG9yZS5jdXJyZW50UHJvZmlsZSA9IGlkCiAgICAgICAgcnVuT25EZWZhdWx0RGlzcGF0Y2hlciB7CiAgICAgICAgICAgIFByb2ZpbGVNYW5hZ2VyLnBvc3RVcGRhdGUob2xkLCB0cnVlKQogICAgICAgICAgICBQcm9maWxlTWFuYWdlci5wb3N0VXBkYXRlKGlkLCB0cnVlKQogICAgICAgIH0KICAgIH0KCiAgICBvdmVycmlkZSBmdW4gb25QcmVmZXJlbmNlRGF0YVN0b3JlQ2hhbmdlZChzdG9yZTogUHJlZmVyZW5jZURhdGFTdG9yZSwga2V5OiBTdHJpbmcpIHsKICAgICAgICB3aGVuIChrZXkpIHsKICAgICAgICAgICAgS2V5LlNFUlZJQ0VfTU9ERSAtPiBvbkJpbmRlckRpZWQoKQogICAgICAgICAgICBLZXkuUFJPWFlfQVBQUywgS2V5LkJZUEFTU19NT0RFLCBLZXkuSU5ESVZJRFVBTCAtPiB7CiAgICAgICAgICAgICAgICBpZiAoRGF0YVN0b3JlLnNlcnZpY2VTdGF0ZS5jYW5TdG9wKSB7CiAgICAgICAgICAgICAgICAgICAgc25hY2tiYXIoZ2V0U3RyaW5nKFIuc3RyaW5nLm5lZWRfcmVsb2FkKSkuc2V0QWN0aW9uKFIuc3RyaW5nLmFwcGx5KSB7CiAgICAgICAgICAgICAgICAgICAgICAgIFNhZ2VyTmV0LnJlbG9hZFNlcnZpY2UoKQogICAgICAgICAgICAgICAgICAgIH0uc2hvdygpCiAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgIH0KICAgICAgICB9CiAgICB9CgogICAgb3ZlcnJpZGUgZnVuIG9uU3RhcnQoKSB7CiAgICAgICAgY29ubmVjdGlvbi51cGRhdGVDb25uZWN0aW9uSWQoU2FnZXJDb25uZWN0aW9uLkNPTk5FQ1RJT05fSURfTUFJTl9BQ1RJVklUWV9GT1JFR1JPVU5EKQogICAgICAgIHN1cGVyLm9uU3RhcnQoKQogICAgfQoKICAgIG92ZXJyaWRlIGZ1biBvblN0b3AoKSB7CiAgICAgICAgY29ubmVjdGlvbi51cGRhdGVDb25uZWN0aW9uSWQoU2FnZXJDb25uZWN0aW9uLkNPTk5FQ1RJT05fSURfTUFJTl9BQ1RJVklUWV9CQUNLR1JPVU5EKQogICAgICAgIHN1cGVyLm9uU3RvcCgpCiAgICB9CgogICAgb3ZlcnJpZGUgZnVuIG9uRGVzdHJveSgpIHsKICAgICAgICBzdXBlci5vbkRlc3Ryb3koKQogICAgICAgIEdyb3VwTWFuYWdlci51c2VySW50ZXJmYWNlID0gbnVsbAogICAgICAgIERhdGFTdG9yZS5jb25maWd1cmF0aW9uU3RvcmUudW5yZWdpc3RlckNoYW5nZUxpc3RlbmVyKHRoaXMpCiAgICAgICAgY29ubmVjdGlvbi5kaXNjb25uZWN0KHRoaXMpCiAgICB9CgogICAgb3ZlcnJpZGUgZnVuIG9uS2V5RG93bihrZXlDb2RlOiBJbnQsIGV2ZW50OiBLZXlFdmVudCk6IEJvb2xlYW4gewogICAgICAgIHdoZW4gKGtleUNvZGUpIHsKICAgICAgICAgICAgS2V5RXZlbnQuS0VZQ09ERV9EUEFEX0xFRlQgLT4gewogICAgICAgICAgICAgICAgaWYgKHN1cGVyLm9uS2V5RG93bihrZXlDb2RlLCBldmVudCkpIHJldHVybiB0cnVlCiAgICAgICAgICAgICAgICBiaW5kaW5nLmRyYXdlckxheW91dC5vcGVuKCkKICAgICAgICAgICAgICAgIG5hdmlnYXRpb24ucmVxdWVzdEZvY3VzKCkKICAgICAgICAgICAgfQoKICAgICAgICAgICAgS2V5RXZlbnQuS0VZQ09ERV9EUEFEX1JJR0hUIC0+IHsKICAgICAgICAgICAgICAgIGlmIChiaW5kaW5nLmRyYXdlckxheW91dC5pc09wZW4pIHsKICAgICAgICAgICAgICAgICAgICBiaW5kaW5nLmRyYXdlckxheW91dC5jbG9zZSgpCiAgICAgICAgICAgICAgICAgICAgcmV0dXJuIHRydWUKICAgICAgICAgICAgICAgIH0KICAgICAgICAgICAgfQogICAgICAgIH0KCiAgICAgICAgaWYgKHN1cGVyLm9uS2V5RG93bihrZXlDb2RlLCBldmVudCkpIHJldHVybiB0cnVlCiAgICAgICAgaWYgKGJpbmRpbmcuZHJhd2VyTGF5b3V0LmlzT3BlbikgcmV0dXJuIGZhbHNlCgogICAgICAgIHZhbCBmcmFnbWVudCA9CiAgICAgICAgICAgIHN1cHBvcnRGcmFnbWVudE1hbmFnZXIuZmluZEZyYWdtZW50QnlJZChSLmlkLmZyYWdtZW50X2hvbGRlcikgYXM/IFRvb2xiYXJGcmFnbWVudAogICAgICAgIHJldHVybiBmcmFnbWVudCAhPSBudWxsICYmIGZyYWdtZW50Lm9uS2V5RG93bihrZXlDb2RlLCBldmVudCkKICAgIH0KCgogICAgb3ZlcnJpZGUgZnVuIGRpc3BhdGNoS2V5RXZlbnQoZXZlbnQ6IEtleUV2ZW50KTogQm9vbGVhbiB7CiAgICAgICAgaWYgKGV2ZW50LmFjdGlvbiA9PSBLZXlFdmVudC5BQ1RJT05fRE9XTikgewogICAgICAgICAgICB3aGVuIChldmVudC5rZXlDb2RlKSB7CiAgICAgICAgICAgICAgICBLZXlFdmVudC5LRVlDT0RFX0RQQURfQ0VOVEVSLAogICAgICAgICAgICAgICAgS2V5RXZlbnQuS0VZQ09ERV9FTlRFUiAtPiB7CiAgICAgICAgICAgICAgICAgICAgdmFsIGZvY3VzZWRWaWV3ID0gY3VycmVudEZvY3VzCiAgICAgICAgICAgICAgICAgICAgLy8g0JXRgdC70Lgg0YTQvtC60YPRgSDQvdCwINC60L3QvtC/0LrQtSDQv9C+0LTQutC70Y7Rh9C10L3QuNGPINC40LvQuCDQv9Cw0L3QtdC70Lgg0YHRgtCw0YLQuNGB0YLQuNC60LggLSDQv9C10YDQtdC60LvRjtGH0LDQtdC8IFZQTgogICAgICAgICAgICAgICAgICAgIGlmIChmb2N1c2VkVmlldz8uaWQgPT0gUi5pZC5mYWIgfHwgZm9jdXNlZFZpZXc/LmlkID09IFIuaWQuc3RhdHMpIHsKICAgICAgICAgICAgICAgICAgICAgICAgLy8g0JLRi9C30YvQstCw0LXQvCDQvNC10YLQvtC0INC/0LXRgNC10LrQu9GO0YfQtdC90LjRjyDRgdC+0YHRgtC+0Y/QvdC40Y8g0YHQtdGA0LLQuNGB0LAKICAgICAgICAgICAgICAgICAgICAgICAgc2VydmljZUJpbmRlcj8udG9nZ2xlKCkgCiAgICAgICAgICAgICAgICAgICAgICAgIHJldHVybiB0cnVlCiAgICAgICAgICAgICAgICAgICAgfQogICAgICAgICAgICAgICAgfQogICAgICAgICAgICAgICAgLy8g0J7Qv9GG0LjQvtC90LDQu9GM0L3Qvjog0LrQvdC+0L/QutCwIFBsYXkvUGF1c2Ug0L3QsCDQv9GD0LvRjNGC0LUg0YLQvtC20LUg0LzQvtC20LXRgiDQstC60LvRjtGH0LDRgtGMIFZQTgogICAgICAgICAgICAgICAgS2V5RXZlbnQuS0VZQ09ERV9NRURJQV9QTEFZX1BBVVNFIC0+IHsKICAgICAgICAgICAgICAgICAgICBzZXJ2aWNlQmluZGVyPy50b2dnbGUoKQogICAgICAgICAgICAgICAgICAgIHJldHVybiB0cnVlCiAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgIH0KICAgICAgICB9CiAgICAgICAgcmV0dXJuIHN1cGVyLmRpc3BhdGNoS2V5RXZlbnQoZXZlbnQpCiAgICB9Cgp9Cg==
+package io.nekohasekai.sagernet.ui
+
+import android.Manifest.permission.POST_NOTIFICATIONS
+import android.annotation.SuppressLint
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
+import android.os.Bundle
+import android.os.RemoteException
+import android.view.KeyEvent
+import android.view.MenuItem
+import androidx.activity.addCallback
+import androidx.annotation.IdRes
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.preference.PreferenceDataStore
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.navigation.NavigationView
+import com.google.android.material.snackbar.Snackbar
+import io.nekohasekai.sagernet.BuildConfig
+import io.nekohasekai.sagernet.GroupType
+import io.nekohasekai.sagernet.Key
+import io.nekohasekai.sagernet.R
+import io.nekohasekai.sagernet.SagerNet
+import io.nekohasekai.sagernet.aidl.ISagerNetService
+import io.nekohasekai.sagernet.aidl.SpeedDisplayData
+import io.nekohasekai.sagernet.aidl.TrafficData
+import io.nekohasekai.sagernet.bg.BaseService
+import io.nekohasekai.sagernet.bg.SagerConnection
+import io.nekohasekai.sagernet.database.DataStore
+import io.nekohasekai.sagernet.database.GroupManager
+import io.nekohasekai.sagernet.database.ProfileManager
+import io.nekohasekai.sagernet.database.ProxyGroup
+import io.nekohasekai.sagernet.database.SubscriptionBean
+import io.nekohasekai.sagernet.database.preference.OnPreferenceDataStoreChangeListener
+import io.nekohasekai.sagernet.databinding.LayoutMainBinding
+import io.nekohasekai.sagernet.fmt.AbstractBean
+import io.nekohasekai.sagernet.fmt.KryoConverters
+import io.nekohasekai.sagernet.fmt.PluginEntry
+import io.nekohasekai.sagernet.group.GroupInterfaceAdapter
+import io.nekohasekai.sagernet.group.GroupUpdater
+import io.nekohasekai.sagernet.ktx.alert
+import io.nekohasekai.sagernet.ktx.isPlay
+import io.nekohasekai.sagernet.ktx.isPreview
+import io.nekohasekai.sagernet.ktx.launchCustomTab
+import io.nekohasekai.sagernet.ktx.onMainDispatcher
+import io.nekohasekai.sagernet.ktx.parseProxies
+import io.nekohasekai.sagernet.ktx.readableMessage
+import io.nekohasekai.sagernet.ktx.runOnDefaultDispatcher
+import moe.matsuri.nb4a.utils.Util
+
+class MainActivity : ThemedActivity(),
+    SagerConnection.Callback,
+    OnPreferenceDataStoreChangeListener,
+    NavigationView.OnNavigationItemSelectedListener {
+
+    lateinit var binding: LayoutMainBinding
+    lateinit var navigation: NavigationView
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        binding = LayoutMainBinding.inflate(layoutInflater)
+        binding.fab.initProgress(binding.fabProgress)
+        if (themeResId !in intArrayOf(
+                R.style.Theme_SagerNet_Black
+            )
+        ) {
+            navigation = binding.navView
+            binding.drawerLayout.removeView(binding.navViewBlack)
+        } else {
+            navigation = binding.navViewBlack
+            binding.drawerLayout.removeView(binding.navView)
+        }
+        navigation.setNavigationItemSelectedListener(this)
+
+        if (savedInstanceState == null) {
+            displayFragmentWithId(R.id.nav_configuration)
+        }
+        onBackPressedDispatcher.addCallback {
+            if (supportFragmentManager.findFragmentById(R.id.fragment_holder) is ConfigurationFragment) {
+                moveTaskToBack(true)
+            } else {
+                displayFragmentWithId(R.id.nav_configuration)
+            }
+        }
+
+        binding.fab.setOnClickListener { toggleService() }
+        binding.stats.setOnClickListener { if (DataStore.serviceState.connected) binding.stats.testConnection() }
+
+        setContentView(binding.root)
+        changeState(BaseService.State.Idle)
+        connection.connect(this, this)
+        DataStore.configurationStore.registerChangeListener(this)
+        GroupManager.userInterface = GroupInterfaceAdapter(this)
+
+        if (intent?.action == Intent.ACTION_VIEW) {
+            onNewIntent(intent)
+        }
+
+        refreshNavMenu(DataStore.enableClashAPI)
+
+        // sdk 33 notification
+        if (Build.VERSION.SDK_INT >= 33) {
+            val checkPermission =
+                ContextCompat.checkSelfPermission(this@MainActivity, POST_NOTIFICATIONS)
+            if (checkPermission != PackageManager.PERMISSION_GRANTED) {
+                //动态申请
+                ActivityCompat.requestPermissions(
+                    this@MainActivity, arrayOf(POST_NOTIFICATIONS), 0
+                )
+            }
+        }
+
+        if (isPreview) {
+            MaterialAlertDialogBuilder(this)
+                .setTitle(BuildConfig.PRE_VERSION_NAME)
+                .setMessage(R.string.preview_version_hint)
+                .setPositiveButton(android.R.string.ok, null)
+                .show()
+        }
+    }
+
+    fun refreshNavMenu(clashApi: Boolean) {
+        if (::navigation.isInitialized) {
+            navigation.menu.findItem(R.id.nav_traffic)?.isVisible = clashApi
+            navigation.menu.findItem(R.id.nav_tuiguang)?.isVisible = !isPlay
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+
+        val uri = intent.data ?: return
+
+        runOnDefaultDispatcher {
+            if (uri.scheme == "sn" && uri.host == "subscription" || uri.scheme == "clash") {
+                importSubscription(uri)
+            } else {
+                importProfile(uri)
+            }
+        }
+    }
+
+    fun urlTest(): Int {
+        if (!DataStore.serviceState.connected || connection.service == null) {
+            error("not started")
+        }
+        return connection.service!!.urlTest()
+    }
+
+    suspend fun importSubscription(uri: Uri) {
+        val group: ProxyGroup
+
+        val url = uri.getQueryParameter("url")
+        if (!url.isNullOrBlank()) {
+            group = ProxyGroup(type = GroupType.SUBSCRIPTION)
+            val subscription = SubscriptionBean()
+            group.subscription = subscription
+
+            // cleartext format
+            subscription.link = url
+            group.name = uri.getQueryParameter("name")
+        } else {
+            val data = uri.encodedQuery.takeIf { !it.isNullOrBlank() } ?: return
+            try {
+                group = KryoConverters.deserialize(
+                    ProxyGroup().apply { export = true }, Util.zlibDecompress(Util.b64Decode(data))
+                ).apply {
+                    export = false
+                }
+            } catch (e: Exception) {
+                onMainDispatcher {
+                    alert(e.readableMessage).show()
+                }
+                return
+            }
+        }
+
+        val name = group.name.takeIf { !it.isNullOrBlank() } ?: group.subscription?.link
+        ?: group.subscription?.token
+        if (name.isNullOrBlank()) return
+
+        group.name = group.name.takeIf { !it.isNullOrBlank() }
+            ?: ("Subscription #" + System.currentTimeMillis())
+
+        onMainDispatcher {
+
+            displayFragmentWithId(R.id.nav_group)
+
+            MaterialAlertDialogBuilder(this@MainActivity).setTitle(R.string.subscription_import)
+                .setMessage(getString(R.string.subscription_import_message, name))
+                .setPositiveButton(R.string.yes) { _, _ ->
+                    runOnDefaultDispatcher {
+                        finishImportSubscription(group)
+                    }
+                }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
+
+        }
+
+    }
+
+    private suspend fun finishImportSubscription(subscription: ProxyGroup) {
+        GroupManager.createGroup(subscription)
+        GroupUpdater.startUpdate(subscription, true)
+    }
+
+    suspend fun importProfile(uri: Uri) {
+        val profile = try {
+            parseProxies(uri.toString()).getOrNull(0) ?: error(getString(R.string.no_proxies_found))
+        } catch (e: Exception) {
+            onMainDispatcher {
+                alert(e.readableMessage).show()
+            }
+            return
+        }
+
+        onMainDispatcher {
+            MaterialAlertDialogBuilder(this@MainActivity).setTitle(R.string.profile_import)
+                .setMessage(getString(R.string.profile_import_message, profile.displayName()))
+                .setPositiveButton(R.string.yes) { _, _ ->
+                    runOnDefaultDispatcher {
+                        finishImportProfile(profile)
+                    }
+                }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
+        }
+
+    }
+
+    private suspend fun finishImportProfile(profile: AbstractBean) {
+        val targetId = DataStore.selectedGroupForImport()
+
+        ProfileManager.createProfile(targetId, profile)
+
+        onMainDispatcher {
+            displayFragmentWithId(R.id.nav_configuration)
+
+            snackbar(resources.getQuantityString(R.plurals.added, 1, 1)).show()
+        }
+    }
+
+    override fun missingPlugin(profileName: String, pluginName: String) {
+        val pluginEntity = PluginEntry.find(pluginName)
+
+        // unknown exe or neko plugin
+        if (pluginEntity == null) {
+            snackbar(getString(R.string.plugin_unknown, pluginName)).show()
+            return
+        }
+
+        // official exe
+
+        MaterialAlertDialogBuilder(this).setTitle(R.string.missing_plugin)
+            .setMessage(
+                getString(
+                    R.string.profile_requiring_plugin, profileName, pluginEntity.displayName
+                )
+            )
+            .setPositiveButton(R.string.action_download) { _, _ ->
+                showDownloadDialog(pluginEntity)
+            }
+            .setNeutralButton(android.R.string.cancel, null)
+            .setNeutralButton(R.string.action_learn_more) { _, _ ->
+                launchCustomTab("https://matsuridayo.github.io/nb4a-plugin/")
+            }
+            .show()
+    }
+
+    private fun showDownloadDialog(pluginEntry: PluginEntry) {
+        var index = 0
+        var playIndex = -1
+        var fdroidIndex = -1
+
+        val items = mutableListOf<String>()
+        if (pluginEntry.downloadSource.playStore) {
+            items.add(getString(R.string.install_from_play_store))
+            playIndex = index++
+        }
+        if (pluginEntry.downloadSource.fdroid) {
+            items.add(getString(R.string.install_from_fdroid))
+            fdroidIndex = index++
+        }
+
+        items.add(getString(R.string.download))
+        val downloadIndex = index
+
+        MaterialAlertDialogBuilder(this).setTitle(pluginEntry.name)
+            .setItems(items.toTypedArray()) { _, which ->
+                when (which) {
+                    playIndex -> launchCustomTab("https://play.google.com/store/apps/details?id=${pluginEntry.packageName}")
+                    fdroidIndex -> launchCustomTab("https://f-droid.org/packages/${pluginEntry.packageName}/")
+                    downloadIndex -> launchCustomTab(pluginEntry.downloadSource.downloadLink)
+                }
+            }
+            .show()
+    }
+
+    override fun onNavigationItemSelected(item: MenuItem): Boolean {
+        if (item.isChecked) binding.drawerLayout.closeDrawers() else {
+            return displayFragmentWithId(item.itemId)
+        }
+        return true
+    }
+
+
+    @SuppressLint("CommitTransaction")
+    fun displayFragment(fragment: ToolbarFragment) {
+        if (fragment is ConfigurationFragment) {
+            binding.stats.allowShow = true
+            binding.fab.show()
+        } else if (!DataStore.showBottomBar) {
+            binding.stats.allowShow = false
+            binding.stats.performHide()
+            binding.fab.hide()
+        }
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.fragment_holder, fragment)
+            .commitAllowingStateLoss()
+        binding.drawerLayout.closeDrawers()
+    }
+
+    fun displayFragmentWithId(@IdRes id: Int): Boolean {
+        when (id) {
+            R.id.nav_configuration -> {
+                displayFragment(ConfigurationFragment())
+            }
+
+            R.id.nav_group -> displayFragment(GroupFragment())
+            R.id.nav_route -> displayFragment(RouteFragment())
+            R.id.nav_settings -> displayFragment(SettingsFragment())
+            R.id.nav_traffic -> displayFragment(WebviewFragment())
+            R.id.nav_tools -> displayFragment(ToolsFragment())
+            R.id.nav_logcat -> displayFragment(LogcatFragment())
+            R.id.nav_faq -> {
+                launchCustomTab("https://matsuridayo.github.io/")
+                return false
+            }
+
+            R.id.nav_about -> displayFragment(AboutFragment())
+            R.id.nav_tuiguang -> {
+                launchCustomTab("https://neko-box.pages.dev/喵")
+                return false
+            }
+
+            else -> return false
+        }
+        navigation.menu.findItem(id).isChecked = true
+        return true
+    }
+
+    private fun changeState(
+        state: BaseService.State,
+        msg: String? = null,
+        animate: Boolean = false,
+    ) {
+        DataStore.serviceState = state
+
+        binding.fab.changeState(state, DataStore.serviceState, animate)
+        binding.stats.changeState(state)
+        if (msg != null) snackbar(getString(R.string.vpn_error, msg)).show()
+    }
+
+    override fun snackbarInternal(text: CharSequence): Snackbar {
+        return Snackbar.make(binding.coordinator, text, Snackbar.LENGTH_LONG).apply {
+            if (binding.fab.isShown) {
+                anchorView = binding.fab
+            }
+            // TODO
+        }
+    }
+
+    override fun stateChanged(state: BaseService.State, profileName: String?, msg: String?) {
+        changeState(state, msg, true)
+    }
+
+    val connection = SagerConnection(SagerConnection.CONNECTION_ID_MAIN_ACTIVITY_FOREGROUND, true)
+    override fun onServiceConnected(service: ISagerNetService) = changeState(
+        try {
+            BaseService.State.values()[service.state]
+        } catch (_: RemoteException) {
+            BaseService.State.Idle
+        }
+    )
+
+    override fun onServiceDisconnected() = changeState(BaseService.State.Idle)
+    override fun onBinderDied() {
+        connection.disconnect(this)
+        connection.connect(this, this)
+    }
+
+    private val connect = registerForActivityResult(VpnRequestActivity.StartService()) {
+        if (it) snackbar(R.string.vpn_permission_denied).show()
+    }
+
+    // may NOT called when app is in background
+    // ONLY do UI update here, write DB in bg process
+    override fun cbSpeedUpdate(stats: SpeedDisplayData) {
+        binding.stats.updateSpeed(stats.txRateProxy, stats.rxRateProxy)
+    }
+
+    override fun cbTrafficUpdate(data: TrafficData) {
+        runOnDefaultDispatcher {
+            ProfileManager.postUpdate(data)
+        }
+    }
+
+    override fun cbSelectorUpdate(id: Long) {
+        val old = DataStore.selectedProxy
+        DataStore.selectedProxy = id
+        DataStore.currentProfile = id
+        runOnDefaultDispatcher {
+            ProfileManager.postUpdate(old, true)
+            ProfileManager.postUpdate(id, true)
+        }
+    }
+
+    override fun onPreferenceDataStoreChanged(store: PreferenceDataStore, key: String) {
+        when (key) {
+            Key.SERVICE_MODE -> onBinderDied()
+            Key.PROXY_APPS, Key.BYPASS_MODE, Key.INDIVIDUAL -> {
+                if (DataStore.serviceState.canStop) {
+                    snackbar(getString(R.string.need_reload)).setAction(R.string.apply) {
+                        SagerNet.reloadService()
+                    }.show()
+                }
+            }
+        }
+    }
+
+    override fun onStart() {
+        connection.updateConnectionId(SagerConnection.CONNECTION_ID_MAIN_ACTIVITY_FOREGROUND)
+        super.onStart()
+    }
+
+    override fun onStop() {
+        connection.updateConnectionId(SagerConnection.CONNECTION_ID_MAIN_ACTIVITY_BACKGROUND)
+        super.onStop()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        GroupManager.userInterface = null
+        DataStore.configurationStore.unregisterChangeListener(this)
+        connection.disconnect(this)
+    }
+
+    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
+        when (keyCode) {
+            KeyEvent.KEYCODE_DPAD_LEFT -> {
+                if (super.onKeyDown(keyCode, event)) return true
+                binding.drawerLayout.open()
+                navigation.requestFocus()
+            }
+
+            KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                if (binding.drawerLayout.isOpen) {
+                    binding.drawerLayout.close()
+                    return true
+                }
+            }
+        }
+
+        if (super.onKeyDown(keyCode, event)) return true
+        if (binding.drawerLayout.isOpen) return false
+
+        val fragment =
+            supportFragmentManager.findFragmentById(R.id.fragment_holder) as? ToolbarFragment
+        return fragment != null && fragment.onKeyDown(keyCode, event)
+    }
+
+
+    // Remote control: the Play/Pause key toggles the VPN from any screen.
+    // (DPAD_CENTER/ENTER on the focused FAB already triggers its click handler.)
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0 &&
+            event.keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE
+        ) {
+            toggleService()
+            return true
+        }
+        return super.dispatchKeyEvent(event)
+    }
+
+    private fun toggleService() {
+        if (DataStore.serviceState.canStop) SagerNet.stopService() else connect.launch(null)
+    }
+
+}
