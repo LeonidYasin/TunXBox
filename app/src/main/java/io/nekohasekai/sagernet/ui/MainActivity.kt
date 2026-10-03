@@ -98,6 +98,11 @@ class MainActivity : ThemedActivity(),
         if (intent?.action == Intent.ACTION_VIEW) {
             onNewIntent(intent)
         }
+        
+        // TV Remote: ensure FAB is reachable via D-pad
+        binding.fab.post {
+            binding.fab.requestFocus()
+        }
 
         refreshNavMenu(DataStore.enableClashAPI)
 
