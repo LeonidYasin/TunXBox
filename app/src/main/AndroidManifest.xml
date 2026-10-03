@@ -342,6 +342,12 @@
             android:name="androidx.room.MultiInstanceInvalidationService"
             android:process=":bg" />
 
+    
+        <activity
+            android:name=".ui.ProxyScanActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.NoActionBar" />
     </application>
 
 </manifest>
+(конец файла)

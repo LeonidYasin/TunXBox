@@ -49,6 +49,7 @@ import io.nekohasekai.sagernet.ktx.parseProxies
 import io.nekohasekai.sagernet.ktx.readableMessage
 import io.nekohasekai.sagernet.ktx.runOnDefaultDispatcher
 import moe.matsuri.nb4a.utils.Util
+import io.nekohasekai.sagernet.service.NetworkStateMonitor
 
 class MainActivity : ThemedActivity(),
     SagerConnection.Callback,
@@ -63,6 +64,11 @@ class MainActivity : ThemedActivity(),
 
         binding = LayoutMainBinding.inflate(layoutInflater)
         binding.fab.initProgress(binding.fabProgress)
+
+        // Network State Monitor for auto-connect
+        val networkMonitor = NetworkStateMonitor(this)
+        networkMonitor.startMonitoring()
+
         if (themeResId !in intArrayOf(
                 R.style.Theme_SagerNet_Black
             )
@@ -305,6 +311,11 @@ class MainActivity : ThemedActivity(),
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
+                if (item.itemId == R.id.nav_scan_lan) {
+            startActivity(Intent(this, ProxyScanActivity::class.java))
+            binding.drawerLayout.closeDrawers()
+            return true
+        }
         if (item.isChecked) binding.drawerLayout.closeDrawers() else {
             return displayFragmentWithId(item.itemId)
         }
@@ -478,3 +489,4 @@ class MainActivity : ThemedActivity(),
     }
 
 }
+(конец файла)
