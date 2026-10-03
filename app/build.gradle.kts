@@ -26,6 +26,9 @@ android {
         aidl = true
     }
     namespace = "io.nekohasekai.sagernet"
+    defaultConfig {
+        applicationId = "com.tunxbox.app"
+    }
     packaging {
         jniLibs {
             useLegacyPackaging = true
