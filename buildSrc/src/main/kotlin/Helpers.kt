@@ -6,7 +6,6 @@ import org.gradle.kotlin.dsl.getByName
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions
 import java.util.Base64
 import java.util.Properties
-
 private lateinit var metadata: Properties
 private lateinit var localProperties: Properties
 
