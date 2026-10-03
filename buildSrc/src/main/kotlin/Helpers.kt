@@ -135,6 +135,15 @@ fun Project.setupAppCommon() {
             if (key != null) {
                 getByName("release").signingConfig = key
                 getByName("debug").signingConfig = key
+            } else {
+                // Fallback to debug signing for CI builds without release keystore
+                val debugKey = signingConfigs.findByName("debug")
+                if (debugKey != null) {
+                    getByName("release").signingConfig = debugKey
+                    names.filter { it != "release" && it != "debug" }.forEach { name ->
+                        findByName(name)?.signingConfig = debugKey
+                    }
+                }
             }
         }
     }
