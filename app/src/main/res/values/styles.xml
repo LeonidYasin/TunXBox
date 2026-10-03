@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- TV Leanback Theme (Deep Ocean) -->
     <style name="Theme.Leanback.TunXBox" parent="@style/Theme.Leanback">
-        <item name="android:windowBackground">#FF1B1B1B</item>
-        <item name="defaultBrandColor">#FF6C63FF</item>
+        <item name="android:windowBackground">#FF0F172A</item>
+        <item name="defaultBrandColor">#FF0EA5E9</item>
+        <item name="defaultSearchColor">#FF06B6D4</item>
+        <item name="defaultSearchIconColor">#FFFFFFFF</item>
     </style>
 </resources>
