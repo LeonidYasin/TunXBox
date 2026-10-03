@@ -94,7 +94,7 @@ fun Project.setupCommon() {
                     }
                 }
                 getByName("debug") {
-                    applicationIdSuffix = "debug"
+                    // applicationIdSuffix removed for TV compatibility
                     debuggable(true)
                     jniDebuggable(true)
                 }
