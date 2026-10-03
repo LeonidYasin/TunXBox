@@ -290,4 +290,13 @@
 
     <color name="preference_simple_menu_background">#FAFAFA</color>
 
+
+    <!-- TunXBox Brand Colors (Deep Ocean Tech) -->
+    <color name="tunxbox_primary">#FF0EA5E9</color>
+    <color name="tunxbox_primary_dark">#FF0369A1</color>
+    <color name="tunxbox_accent">#FF06B6D4</color>
+    <color name="tunxbox_surface">#FF0F172A</color>
+    <color name="tunxbox_on_surface">#FFF1F5F9</color>
+    <color name="tunxbox_gradient_start">#FF0EA5E9</color>
+    <color name="tunxbox_gradient_end">#FF06B6D4</color>
 </resources>
