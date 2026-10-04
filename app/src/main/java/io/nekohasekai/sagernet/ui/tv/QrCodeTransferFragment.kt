@@ -113,10 +113,10 @@ class QrCodeTransferFragment : Fragment() {
                         onMainDispatcher {
                             statusText.text = "✅ Imported $count profile(s)!"
                             statusText.setTextColor(Color.parseColor("#FF4CAF50"))
-                            Toast.makeText(context, "Successfully imported $count profiles", Toast.LENGTH_LONG).show()
+                            Toast.makeText(requireContext(), "Successfully imported $count profiles", Toast.LENGTH_LONG).show()
                             
                             // Возвращаемся назад через 3 секунды
-                            view?.postDelayed({
+                            requireView().postDelayed({
                                 parentFragmentManager.popBackStack()
                             }, 3000)
                         }
