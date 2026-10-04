@@ -38,6 +38,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
         const val ACTION_IMPORT_URL = 5L
         const val ACTION_IMPORT_FILE = 6L
         const val ACTION_SWITCH_MODE = 7L
+        const val ACTION_QR_TRANSFER = 8L
     }
 
     // File picker for import
@@ -146,6 +147,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
         actionsAdapter.add(TvAction(ACTION_IMPORT_URL, "🌐 From URL", "Subscription or direct link"))
         actionsAdapter.add(TvAction(ACTION_IMPORT_FILE, "📁 From File", "JSON/YAML/Conf file"))
         actionsAdapter.add(TvAction(ACTION_ADD_PROFILE, "➕ Manual", "Enter details via dialog"))
+        actionsAdapter.add(TvAction(ACTION_QR_TRANSFER, "📲 QR Transfer", "Send from phone via QR"))
         actionsAdapter.add(TvAction(ACTION_SWITCH_MODE, "📱 Phone Mode", "Switch to mobile UI"))
     }
 
@@ -175,6 +177,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
             ACTION_IMPORT_URL -> showUrlImportDialog()
             ACTION_IMPORT_FILE -> importFileLauncher.launch("*/*")
             ACTION_ADD_PROFILE -> showManualAddDialog()
+            ACTION_QR_TRANSFER -> showQrTransfer()
             ACTION_SWITCH_MODE -> switchToPhoneMode()
         }
     }
@@ -229,6 +232,14 @@ class MainBrowseFragment : BrowseSupportFragment() {
                     Toast.LENGTH_LONG).show()
             }
             .show()
+    }
+    
+    private fun showQrTransfer() {
+        // Заменяем текущий фрагмент на QR transfer
+        parentFragmentManager.beginTransaction()
+            .replace(android.R.id.content, QrCodeTransferFragment())
+            .addToBackStack("qr_transfer")
+            .commit()
     }
     
     private fun switchToPhoneMode() {
