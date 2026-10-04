@@ -5,6 +5,7 @@ import io.nekohasekai.sagernet.database.DataStore
 import io.nekohasekai.sagernet.database.ProfileManager
 import io.nekohasekai.sagernet.group.RawUpdater
 import io.nekohasekai.sagernet.ktx.Logs
+import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
 import java.io.IOException
 import java.util.UUID
@@ -21,7 +22,6 @@ class TvTransferServer(
     private val sessionToken = UUID.randomUUID().toString().substring(0, 8)
     
     init {
-        // Async start
         try {
             start(SOCKET_READ_TIMEOUT, false)
             Logs.i("TvTransferServer started on port 8765, token=$sessionToken")
@@ -30,23 +30,21 @@ class TvTransferServer(
         }
     }
 
-    override fun serve(session: IHTTPSession): Response {
-        // CORS headers для WebView на телефоне
-        val headers = mapOf(
-            "Access-Control-Allow-Origin" to "*",
-            "Access-Control-Allow-Methods" to "POST, OPTIONS",
-            "Access-Control-Allow-Headers" to "Content-Type, X-Session-Token"
-        )
+    private fun addCorsHeaders(response: Response): Response {
+        response.addHeader("Access-Control-Allow-Origin", "*")
+        response.addHeader("Access-Control-Allow-Methods", "POST, OPTIONS")
+        response.addHeader("Access-Control-Allow-Headers", "Content-Type, X-Session-Token")
+        return response
+    }
 
+    override fun serve(session: IHTTPSession): Response {
         return when {
             session.method == Method.OPTIONS -> {
-                newFixedLengthResponse(Response.Status.OK, "text/plain", "OK").apply {
-                    headers.forEach { (k, v) -> addHeader(k, v) }
-                }
+                addCorsHeaders(newFixedLengthResponse(Response.Status.OK, "text/plain", "OK"))
             }
             
             session.uri == "/import" && session.method == Method.POST -> {
-                handleImport(session, headers)
+                handleImport(session)
             }
             
             session.uri == "/status" -> {
@@ -55,34 +53,32 @@ class TvTransferServer(
                     put("session", sessionToken)
                     put("device", "TunXBox-TV")
                 }
-                newFixedLengthResponse(Response.Status.OK, "application/json", json.toString()).apply {
-                    headers.forEach { (k, v) -> addHeader(k, v) }
-                }
+                addCorsHeaders(newFixedLengthResponse(Response.Status.OK, "application/json", json.toString()))
             }
             
             else -> {
-                newFixedLengthResponse(Response.Status.NOT_FOUND, "text/plain", "Not Found").apply {
-                    headers.forEach { (k, v) -> addHeader(k, v) }
-                }
+                addCorsHeaders(newFixedLengthResponse(Response.Status.NOT_FOUND, "text/plain", "Not Found"))
             }
         }
     }
 
-    private fun handleImport(session: IHTTPSession, headers: Map<String, String>): Response {
+    private fun handleImport(session: IHTTPSession): Response {
         try {
             // Проверяем session token
             val token = session.headers["x-session-token"] ?: ""
             if (token != sessionToken) {
-                return newFixedLengthResponse(Response.Status.FORBIDDEN, "text/plain", "Invalid session").apply {
-                    this@apply.headers.forEach { (k, v) -> addHeader(k, v) }
-                }
+                return addCorsHeaders(newFixedLengthResponse(Response.Status.FORBIDDEN, "text/plain", "Invalid session"))
             }
 
             // Читаем тело запроса
-            val contentLength = session.headers["content-length"]?.toIntOrNull() ?: 0
-            val buffer = ByteArray(contentLength)
-            session.inputStream.read(buffer)
-            val body = String(buffer)
+            val bodyMap = HashMap<String, String>()
+            session.parseBody(bodyMap)
+            val body = bodyMap["postData"] ?: ""
+
+            if (body.isBlank()) {
+                return addCorsHeaders(newFixedLengthResponse(Response.Status.BAD_REQUEST, "application/json",
+                    JSONObject().apply { put("error", "Empty body") }.toString()))
+            }
 
             // Парсим JSON
             val json = JSONObject(body)
@@ -92,7 +88,6 @@ class TvTransferServer(
             var importedCount = 0
 
             if (profilesData.isNotBlank()) {
-                // Импорт из списка ссылок (ss://, vmess://...)
                 val links = profilesData.split("\n").filter { it.isNotBlank() }
                 val targetId = DataStore.selectedGroupForImport()
                 
@@ -101,7 +96,10 @@ class TvTransferServer(
                         val proxies = RawUpdater.parseRaw(link)
                         if (!proxies.isNullOrEmpty()) {
                             for (proxy in proxies) {
-                                ProfileManager.createProfile(targetId, proxy)
+                                // Используем runBlocking т.к. NanoHTTPD serve() не suspend
+                                runBlocking {
+                                    ProfileManager.createProfile(targetId, proxy)
+                                }
                                 importedCount++
                             }
                         }
@@ -110,24 +108,22 @@ class TvTransferServer(
                     }
                 }
             } else if (subscriptionUrl.isNotBlank()) {
-                // Импорт по URL подписки
                 try {
                     val text = java.net.URL(subscriptionUrl).readText()
                     val proxies = RawUpdater.parseRaw(text)
                     if (!proxies.isNullOrEmpty()) {
                         val targetId = DataStore.selectedGroupForImport()
                         for (proxy in proxies) {
-                            ProfileManager.createProfile(targetId, proxy)
+                            runBlocking {
+                                ProfileManager.createProfile(targetId, proxy)
+                            }
                             importedCount++
                         }
                     }
                 } catch (e: Exception) {
                     Logs.w("Failed to import from URL: $subscriptionUrl", e)
-                    return newFixedLengthResponse(Response.Status.BAD_REQUEST, "application/json", 
-                        JSONObject().apply { put("error", e.message) }.toString()
-                    ).apply {
-                        headers.forEach { (k, v) -> addHeader(k, v) }
-                    }
+                    return addCorsHeaders(newFixedLengthResponse(Response.Status.BAD_REQUEST, "application/json", 
+                        JSONObject().apply { put("error", e.message) }.toString()))
                 }
             }
 
@@ -137,26 +133,18 @@ class TvTransferServer(
                     put("status", "success")
                     put("imported", importedCount)
                 }
-                return newFixedLengthResponse(Response.Status.OK, "application/json", response.toString()).apply {
-                    headers.forEach { (k, v) -> addHeader(k, v) }
-                }
+                return addCorsHeaders(newFixedLengthResponse(Response.Status.OK, "application/json", response.toString()))
             } else {
                 onImportError("No valid profiles found")
-                return newFixedLengthResponse(Response.Status.BAD_REQUEST, "application/json",
-                    JSONObject().apply { put("error", "No valid profiles") }.toString()
-                ).apply {
-                    headers.forEach { (k, v) -> addHeader(k, v) }
-                }
+                return addCorsHeaders(newFixedLengthResponse(Response.Status.BAD_REQUEST, "application/json",
+                    JSONObject().apply { put("error", "No valid profiles") }.toString()))
             }
 
         } catch (e: Exception) {
             Logs.e("Import error", e)
             onImportError(e.message ?: "Unknown error")
-            return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "application/json",
-                JSONObject().apply { put("error", e.message) }.toString()
-            ).apply {
-                headers.forEach { (k, v) -> addHeader(k, v) }
-            }
+            return addCorsHeaders(newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "application/json",
+                JSONObject().apply { put("error", e.message) }.toString()))
         }
     }
 
@@ -181,6 +169,6 @@ class TvTransferServer(
         } catch (e: Exception) {
             Logs.e("Failed to get IP", e)
         }
-        return "192.168.1.100" // fallback
+        return "192.168.1.100"
     }
 }
