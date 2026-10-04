@@ -139,7 +139,7 @@ class QrCodeTransferFragment : Fragment() {
                     val writer = QRCodeWriter()
                     val bitMatrix = writer.encode(qrData, BarcodeFormat.QR_CODE, QR_SIZE, QR_SIZE)
                     
-                    val bitmap = Bitmap.createBitmap(QR_SIZE, QR_SIZE, Bitmap.Config.RGB_565)
+                    var bitmap = Bitmap.createBitmap(QR_SIZE, QR_SIZE, Bitmap.Config.RGB_565)
                     for (x in 0 until QR_SIZE) {
                         for (y in 0 until QR_SIZE) {
                             bitmap.setPixel(x, y, if (bitMatrix[x, y]) Color.BLACK else Color.WHITE)
