@@ -12,7 +12,6 @@ import java.util.UUID
 
 /**
  * Локальный HTTP сервер на TV для приёма профилей с телефона.
- * Запускается на порту 8765, принимает POST /import с JSON данными.
  */
 class TvTransferServer(
     private val onImportSuccess: (count: Int) -> Unit,
@@ -30,21 +29,25 @@ class TvTransferServer(
         }
     }
 
-    private fun addCorsHeaders(response: Response): Response {
-        response.addHeader("Access-Control-Allow-Origin", "*")
-        response.addHeader("Access-Control-Allow-Methods", "POST, OPTIONS")
-        response.addHeader("Access-Control-Allow-Headers", "Content-Type, X-Session-Token")
-        return response
-    }
-
     override fun serve(session: IHTTPSession): Response {
+        val corsHeaders = mapOf(
+            "Access-Control-Allow-Origin" to "*",
+            "Access-Control-Allow-Methods" to "POST, OPTIONS",
+            "Access-Control-Allow-Headers" to "Content-Type, X-Session-Token"
+        )
+
+        fun Response.addCors(): Response {
+            corsHeaders.forEach { (k, v) -> addHeader(k, v) }
+            return this
+        }
+
         return when {
             session.method == Method.OPTIONS -> {
-                addCorsHeaders(newFixedLengthResponse(Response.Status.OK, "text/plain", "OK"))
+                newFixedLengthResponse(Response.Status.OK, "text/plain", "OK").addCors()
             }
             
             session.uri == "/import" && session.method == Method.POST -> {
-                handleImport(session)
+                handleImport(session, corsHeaders)
             }
             
             session.uri == "/status" -> {
@@ -53,77 +56,71 @@ class TvTransferServer(
                     put("session", sessionToken)
                     put("device", "TunXBox-TV")
                 }
-                addCorsHeaders(newFixedLengthResponse(Response.Status.OK, "application/json", json.toString()))
+                newFixedLengthResponse(Response.Status.OK, "application/json", json.toString()).addCors()
             }
             
             else -> {
-                addCorsHeaders(newFixedLengthResponse(Response.Status.NOT_FOUND, "text/plain", "Not Found"))
+                newFixedLengthResponse(Response.Status.NOT_FOUND, "text/plain", "Not Found").addCors()
             }
         }
     }
 
-    private fun handleImport(session: IHTTPSession): Response {
+    private fun handleImport(session: IHTTPSession, corsHeaders: Map<String, String>): Response {
+        fun Response.addCors(): Response {
+            corsHeaders.forEach { (k, v) -> addHeader(k, v) }
+            return this
+        }
+        
         try {
-            // Проверяем session token
             val token = session.headers["x-session-token"] ?: ""
             if (token != sessionToken) {
-                return addCorsHeaders(newFixedLengthResponse(Response.Status.FORBIDDEN, "text/plain", "Invalid session"))
+                return newFixedLengthResponse(Response.Status.FORBIDDEN, "text/plain", "Invalid session").addCors()
             }
 
-            // Читаем тело запроса
-            val bodyMap = HashMap<String, String>()
-            session.parseBody(bodyMap)
-            val body = bodyMap["postData"] ?: ""
+            val contentLength = session.headers["content-length"]?.toIntOrNull() ?: 0
+            val buffer = ByteArray(contentLength)
+            session.inputStream.read(buffer)
+            val body = String(buffer)
 
-            if (body.isBlank()) {
-                return addCorsHeaders(newFixedLengthResponse(Response.Status.BAD_REQUEST, "application/json",
-                    JSONObject().apply { put("error", "Empty body") }.toString()))
-            }
-
-            // Парсим JSON
             val json = JSONObject(body)
             val profilesData = json.optString("profiles", "")
             val subscriptionUrl = json.optString("subscription_url", "")
 
             var importedCount = 0
 
-            if (profilesData.isNotBlank()) {
-                val links = profilesData.split("\n").filter { it.isNotBlank() }
-                val targetId = DataStore.selectedGroupForImport()
-                
-                for (link in links) {
-                    try {
-                        val proxies = RawUpdater.parseRaw(link)
-                        if (!proxies.isNullOrEmpty()) {
-                            for (proxy in proxies) {
-                                // Используем runBlocking т.к. NanoHTTPD serve() не suspend
-                                runBlocking {
+            // Используем runBlocking для вызова suspend функций из синхронного контекста NanoHTTPD
+            runBlocking {
+                if (profilesData.isNotBlank()) {
+                    val links = profilesData.split("\n").filter { it.isNotBlank() }
+                    val targetId = DataStore.selectedGroupForImport()
+                    
+                    for (link in links) {
+                        try {
+                            val proxies = RawUpdater.parseRaw(link)
+                            if (!proxies.isNullOrEmpty()) {
+                                for (proxy in proxies) {
                                     ProfileManager.createProfile(targetId, proxy)
+                                    importedCount++
                                 }
+                            }
+                        } catch (e: Exception) {
+                            Logs.w("Failed to import profile: $link", e)
+                        }
+                    }
+                } else if (subscriptionUrl.isNotBlank()) {
+                    try {
+                        val text = java.net.URL(subscriptionUrl).readText()
+                        val proxies = RawUpdater.parseRaw(text)
+                        if (!proxies.isNullOrEmpty()) {
+                            val targetId = DataStore.selectedGroupForImport()
+                            for (proxy in proxies) {
+                                ProfileManager.createProfile(targetId, proxy)
                                 importedCount++
                             }
                         }
                     } catch (e: Exception) {
-                        Logs.w("Failed to import profile: $link", e)
+                        Logs.w("Failed to import from URL: $subscriptionUrl", e)
                     }
-                }
-            } else if (subscriptionUrl.isNotBlank()) {
-                try {
-                    val text = java.net.URL(subscriptionUrl).readText()
-                    val proxies = RawUpdater.parseRaw(text)
-                    if (!proxies.isNullOrEmpty()) {
-                        val targetId = DataStore.selectedGroupForImport()
-                        for (proxy in proxies) {
-                            runBlocking {
-                                ProfileManager.createProfile(targetId, proxy)
-                            }
-                            importedCount++
-                        }
-                    }
-                } catch (e: Exception) {
-                    Logs.w("Failed to import from URL: $subscriptionUrl", e)
-                    return addCorsHeaders(newFixedLengthResponse(Response.Status.BAD_REQUEST, "application/json", 
-                        JSONObject().apply { put("error", e.message) }.toString()))
                 }
             }
 
@@ -133,18 +130,20 @@ class TvTransferServer(
                     put("status", "success")
                     put("imported", importedCount)
                 }
-                return addCorsHeaders(newFixedLengthResponse(Response.Status.OK, "application/json", response.toString()))
+                return newFixedLengthResponse(Response.Status.OK, "application/json", response.toString()).addCors()
             } else {
                 onImportError("No valid profiles found")
-                return addCorsHeaders(newFixedLengthResponse(Response.Status.BAD_REQUEST, "application/json",
-                    JSONObject().apply { put("error", "No valid profiles") }.toString()))
+                return newFixedLengthResponse(Response.Status.BAD_REQUEST, "application/json",
+                    JSONObject().apply { put("error", "No valid profiles") }.toString()
+                ).addCors()
             }
 
         } catch (e: Exception) {
             Logs.e("Import error", e)
             onImportError(e.message ?: "Unknown error")
-            return addCorsHeaders(newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "application/json",
-                JSONObject().apply { put("error", e.message) }.toString()))
+            return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "application/json",
+                JSONObject().apply { put("error", e.message) }.toString()
+            ).addCors()
         }
     }
 
