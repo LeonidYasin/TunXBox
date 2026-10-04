@@ -59,13 +59,16 @@ class MainActivity : ThemedActivity(),
     lateinit var navigation: NavigationView
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // DEBUG: Force TV mode for testing on any device
+        val debugForceTv = io.nekohasekai.sagernet.database.DataStore.profileCacheStore.getBoolean("debug_force_tv", false)
+        
         // Check for forced phone mode (from TV UI switcher)
         val forcePhoneMode = intent.getBooleanExtra("force_phone_mode", false)
         val uiOverride = io.nekohasekai.sagernet.database.DataStore.profileCacheStore.getString("ui_mode_override")
         
         // TV Device Detection: redirect to Leanback UI unless overridden
         if (!forcePhoneMode && uiOverride != "phone" && 
-            io.nekohasekai.sagernet.ktx.TvDeviceUtil.isTvDevice(this)) {
+            (debugForceTv || io.nekohasekai.sagernet.ktx.TvDeviceUtil.isTvDevice(this))) {
             startActivity(android.content.Intent(this, MainActivityTv::class.java))
             finish()
             return
@@ -510,6 +513,25 @@ class MainActivity : ThemedActivity(),
 
     private fun toggleService() {
         if (DataStore.serviceState.canStop) SagerNet.stopService() else connect.launch(null)
+    }
+
+
+    override fun onCreateOptionsMenu(menu: android.view.Menu): Boolean {
+        menuInflater.inflate(R.menu.main_options_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: android.view.MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.action_switch_tv_mode -> {
+                // Переключаем в TV режим
+                io.nekohasekai.sagernet.database.DataStore.profileCacheStore.putBoolean("debug_force_tv", true)
+                startActivity(android.content.Intent(this, MainActivityTv::class.java))
+                finish()
+                return true
+            }
+        }
+        return super.onOptionsItemSelected(item)
     }
 
 }
