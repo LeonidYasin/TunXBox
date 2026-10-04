@@ -80,7 +80,7 @@ class QrCodeTransferFragment : Fragment() {
             setTextColor(Color.parseColor("#88FFFFFF"))
             gravity = android.view.Gravity.CENTER
             setPadding(0, 32, 0, 0)
-            lineSpacingMultiplier = 1.4f
+            setLineSpacing(0f, 1.4f)
         }
 
         layout.addView(title)
