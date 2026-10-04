@@ -30,6 +30,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
         const val ACTION_START_PROXY = 1L
         const val ACTION_STOP_PROXY = 2L
         const val ACTION_IMPORT_CLIPBOARD = 3L
+        const val ACTION_ADD_PROFILE = 4L
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -108,6 +109,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
         }
         
         actionsAdapter.add(TvAction(ACTION_IMPORT_CLIPBOARD, "📋 Import Clipboard", "Paste proxy link"))
+        actionsAdapter.add(TvAction(ACTION_ADD_PROFILE, "➕ Add Profile", "Manual or scan QR"))
     }
 
     private fun selectAndStartProxy(profile: ProxyEntity) {
@@ -133,7 +135,23 @@ class MainBrowseFragment : BrowseSupportFragment() {
             }
             ACTION_STOP_PROXY -> SagerNet.stopService()
             ACTION_IMPORT_CLIPBOARD -> importFromClipboard()
+            ACTION_ADD_PROFILE -> showAddProfileOptions()
         }
+    }
+    
+    private fun showAddProfileOptions() {
+        // Показываем простой диалог с вариантами добавления
+        val options = arrayOf("Import from Clipboard", "Scan QR Code (via phone)", "Manual Entry (via phone)")
+        android.app.AlertDialog.Builder(requireContext())
+            .setTitle("Add Profile")
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> importFromClipboard()
+                    1 -> Toast.makeText(requireContext(), "Use phone to scan QR, then Import here", Toast.LENGTH_LONG).show()
+                    2 -> Toast.makeText(requireContext(), "Use phone app to add manually, then sync", Toast.LENGTH_LONG).show()
+                }
+            }
+            .show()
     }
 
     private fun importFromClipboard() {
