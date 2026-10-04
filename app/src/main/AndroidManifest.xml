@@ -351,7 +351,7 @@
         <!-- TV Leanback Activity -->
         <activity
             android:name=".ui.MainActivityTv"
-            android:exported="true"
+            android:exported="false"
             android:theme="@style/Theme.Leanback.TunXBox"
             android:screenOrientation="landscape">
             <intent-filter>
