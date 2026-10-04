@@ -13,50 +13,43 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
-import io.nekohasekai.sagernet.SagerNet
-import io.nekohasekai.sagernet.database.DataStore
-import io.nekohasekai.sagernet.database.ProfileManager
-import io.nekohasekai.sagernet.database.ProxyEntity
-import io.nekohasekai.sagernet.database.SagerDatabase
+import io.nekohasekai.sagernet.ktx.onMainDispatcher
 import io.nekohasekai.sagernet.ktx.runOnDefaultDispatcher
-import kotlinx.coroutines.runBlocking
 
 /**
- * Показывает QR код с данными для передачи подписки на TV.
+ * Показывает QR код для передачи подписки С ТЕЛЕФОНА НА TV.
  * 
- * Протокол передачи:
- * 1. TV генерирует случайный session ID и показывает QR: tunxbox://transfer?session=<uuid>&device=TV
- * 2. Телефон сканирует QR, получает session ID
- * 3. Телефон отправляет POST на локальный HTTP сервер TV (или через Firebase/cloud)
- * 4. TV получает данные и импортирует профили
- * 
- * Упрощённая версия (без сервера):
- * - QR содержит прямую ссылку на подписку или список профилей в формате JSON
- * - Телефон сканирует и открывает ссылку / импортирует данные
+ * Протокол:
+ * 1. TV запускает локальный HTTP сервер на порту 8765
+ * 2. TV показывает QR: tunxbox://transfer?ip=<TV_IP>&port=8765&session=<token>
+ * 3. Телефон сканирует QR → отправляет POST http://<TV_IP>:8765/import с профилями
+ * 4. TV получает данные → импортирует → показывает успех
  */
 class QrCodeTransferFragment : Fragment() {
 
     private lateinit var qrImageView: ImageView
     private lateinit var statusText: TextView
-    
+    private lateinit var ipText: TextView
+    private var transferServer: TvTransferServer? = null
+
     companion object {
-        const val QR_SIZE = 800 // pixels for TV display
+        const val QR_SIZE = 700
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         val layout = LinearLayout(requireContext()).apply {
             orientation = LinearLayout.VERTICAL
             gravity = android.view.Gravity.CENTER
-            setPadding(64, 64, 64, 64)
+            setPadding(64, 48, 64, 48)
             setBackgroundColor(Color.parseColor("#FF0F172A"))
         }
 
         val title = TextView(requireContext()).apply {
-            text = "Transfer Subscription from Phone"
-            textSize = 28f
+            text = " Transfer Subscription to TV"
+            textSize = 32f
             setTextColor(Color.WHITE)
             gravity = android.view.Gravity.CENTER
-            setPadding(0, 0, 0, 32)
+            setPadding(0, 0, 0, 24)
         }
 
         qrImageView = ImageView(requireContext()).apply {
@@ -64,25 +57,37 @@ class QrCodeTransferFragment : Fragment() {
             scaleType = ImageView.ScaleType.FIT_CENTER
         }
 
+        ipText = TextView(requireContext()).apply {
+            textSize = 20f
+            setTextColor(Color.parseColor("#FF0EA5E9"))
+            gravity = android.view.Gravity.CENTER
+            setPadding(0, 24, 0, 8)
+            text = "Starting server..."
+        }
+
         statusText = TextView(requireContext()).apply {
-            text = "Generating QR code..."
+            text = "Waiting for phone to scan..."
             textSize = 18f
             setTextColor(Color.parseColor("#AAFFFFFF"))
             gravity = android.view.Gravity.CENTER
-            setPadding(0, 32, 0, 0)
+            setPadding(0, 8, 0, 0)
         }
 
         val hint = TextView(requireContext()).apply {
-            text = "1. Open TunXBox on your phone\n2. Tap \"Scan QR\" in subscription menu\n3. Point camera at this screen"
+            text = "1. Open TunXBox on your phone\n" +
+                   "2. Go to Subscriptions → Scan QR\n" +
+                   "3. Point camera at this screen\n" +
+                   "4. Select profiles to send"
             textSize = 16f
             setTextColor(Color.parseColor("#88FFFFFF"))
             gravity = android.view.Gravity.CENTER
-            setPadding(0, 24, 0, 0)
-            lineSpacingMultiplier = 1.3f
+            setPadding(0, 32, 0, 0)
+            lineSpacingMultiplier = 1.4f
         }
 
         layout.addView(title)
         layout.addView(qrImageView)
+        layout.addView(ipText)
         layout.addView(statusText)
         layout.addView(hint)
 
@@ -91,18 +96,48 @@ class QrCodeTransferFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        generateQrCode()
+        startTransferServer()
     }
 
-    private fun generateQrCode() {
+    override fun onDestroyView() {
+        transferServer?.stop()
+        transferServer = null
+        super.onDestroyView()
+    }
+
+    private fun startTransferServer() {
         runOnDefaultDispatcher {
             try {
-                // Собираем данные для передачи
-                val transferData = buildTransferPayload()
+                transferServer = TvTransferServer(
+                    onImportSuccess = { count ->
+                        onMainDispatcher {
+                            statusText.text = "✅ Imported $count profile(s)!"
+                            statusText.setTextColor(Color.parseColor("#FF4CAF50"))
+                            Toast.makeText(context, "Successfully imported $count profiles", Toast.LENGTH_LONG).show()
+                            
+                            // Возвращаемся назад через 3 секунды
+                            view?.postDelayed({
+                                parentFragmentManager.popBackStack()
+                            }, 3000)
+                        }
+                    },
+                    onImportError = { error ->
+                        onMainDispatcher {
+                            statusText.text = "❌ Error: $error"
+                            statusText.setTextColor(Color.parseColor("#FFF44336"))
+                        }
+                    }
+                )
+
+                val ip = transferServer?.getLocalIpAddress() ?: "unknown"
+                val token = transferServer?.getSessionToken() ?: ""
+                val port = 8765
+
+                // Генерируем QR с данными для телефона
+                val qrData = "tunxbox://transfer?ip=$ip&port=$port&session=$token"
                 
-                // Генерируем QR
                 val writer = QRCodeWriter()
-                val bitMatrix = writer.encode(transferData, BarcodeFormat.QR_CODE, QR_SIZE, QR_SIZE)
+                val bitMatrix = writer.encode(qrData, BarcodeFormat.QR_CODE, QR_SIZE, QR_SIZE)
                 
                 val bitmap = Bitmap.createBitmap(QR_SIZE, QR_SIZE, Bitmap.Config.RGB_565)
                 for (x in 0 until QR_SIZE) {
@@ -111,50 +146,20 @@ class QrCodeTransferFragment : Fragment() {
                     }
                 }
 
-                activity?.runOnUiThread {
+                onMainDispatcher {
                     qrImageView.setImageBitmap(bitmap)
-                    statusText.text = "Ready to scan (${transferData.length} chars)"
+                    ipText.text = "TV IP: $ip:$port"
+                    statusText.text = "Ready! Scan this QR with your phone"
+                    statusText.setTextColor(Color.parseColor("#AAFFFFFF"))
                 }
-            } catch (e: Exception) {
-                activity?.runOnUiThread {
-                    statusText.text = "Error: ${e.message}"
-                    Toast.makeText(context, "QR generation failed", Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
-    }
 
-    private fun buildTransferPayload(): String {
-        // Вариант 1: Если есть URL подписки в буфере — используем его
-        val clipboard = SagerNet.getClipboardText()
-        if (clipboard.startsWith("http")) {
-            return "tunxbox://subscribe?url=${java.net.URLEncoder.encode(clipboard, "UTF-8")}"
-        }
-        
-        // Вариант 2: Экспортируем все профили текущей группы как JSON
-        val groupId = DataStore.selectedGroup
-        val profiles = runBlocking { SagerDatabase.proxyDao.getByGroup(groupId) }
-        
-        if (profiles.isEmpty()) {
-            return "tunxbox://empty?msg=No profiles to transfer"
-        }
-        
-        // Формируем компактный JSON с профилями
-        val profileLinks = profiles.mapNotNull { proxy ->
-            try {
-                proxy.toStdLink() // ss://..., vmess://... etc
-            } catch (_: Exception) {
-                null
+            } catch (e: Exception) {
+                onMainDispatcher {
+                    statusText.text = "❌ Server failed: ${e.message}"
+                    statusText.setTextColor(Color.parseColor("#FFF44336"))
+                    Toast.makeText(context, "Failed to start transfer server", Toast.LENGTH_SHORT).show()
+                }
             }
         }
-        
-        if (profileLinks.isEmpty()) {
-            return "tunxbox://error?msg=Cannot export profiles"
-        }
-        
-        // tunxbox://profiles?data=<base64 encoded links joined by newline>
-        val combined = profileLinks.joinToString("\n")
-        val encoded = android.util.Base64.encodeToString(combined.toByteArray(), android.util.Base64.NO_WRAP)
-        return "tunxbox://profiles?count=${profileLinks.size}&data=$encoded"
     }
 }
