@@ -13,17 +13,14 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
-import io.nekohasekai.sagernet.ktx.onMainDispatcher
-import io.nekohasekai.sagernet.ktx.runOnDefaultDispatcher
+import io.nekohasekai.sagernet.ktx.Logs
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Показывает QR код для передачи подписки С ТЕЛЕФОНА НА TV.
- * 
- * Протокол:
- * 1. TV запускает локальный HTTP сервер на порту 8765
- * 2. TV показывает QR: tunxbox://transfer?ip=<TV_IP>&port=8765&session=<token>
- * 3. Телефон сканирует QR → отправляет POST http://<TV_IP>:8765/import с профилями
- * 4. TV получает данные → импортирует → показывает успех
  */
 class QrCodeTransferFragment : Fragment() {
 
@@ -31,6 +28,7 @@ class QrCodeTransferFragment : Fragment() {
     private lateinit var statusText: TextView
     private lateinit var ipText: TextView
     private var transferServer: TvTransferServer? = null
+    private val fragmentScope = CoroutineScope(Dispatchers.Main)
 
     companion object {
         const val QR_SIZE = 700
@@ -106,59 +104,61 @@ class QrCodeTransferFragment : Fragment() {
     }
 
     private fun startTransferServer() {
-        runOnDefaultDispatcher {
+        fragmentScope.launch {
             try {
-                transferServer = TvTransferServer(
-                    onImportSuccess = { count ->
-                        onMainDispatcher {
-                            statusText.text = "✅ Imported $count profile(s)!"
-                            statusText.setTextColor(Color.parseColor("#FF4CAF50"))
-                            Toast.makeText(requireContext(), "Successfully imported $count profiles", Toast.LENGTH_LONG).show()
-                            
-                            // Возвращаемся назад через 3 секунды
-                            requireView().postDelayed({
-                                parentFragmentManager.popBackStack()
-                            }, 3000)
+                withContext(Dispatchers.IO) {
+                    transferServer = TvTransferServer(
+                        onImportSuccess = { count ->
+                            // Callback вызывается из NanoHTTPD потока — переключаемся на Main
+                            fragmentScope.launch {
+                                statusText.text = "✅ Imported $count profile(s)!"
+                                statusText.setTextColor(Color.parseColor("#FF4CAF50"))
+                                Toast.makeText(context, "Successfully imported $count profiles", Toast.LENGTH_LONG).show()
+                                
+                                view?.postDelayed({
+                                    parentFragmentManager.popBackStack()
+                                }, 3000)
+                            }
+                        },
+                        onImportError = { error ->
+                            fragmentScope.launch {
+                                statusText.text = "❌ Error: $error"
+                                statusText.setTextColor(Color.parseColor("#FFF44336"))
+                            }
                         }
-                    },
-                    onImportError = { error ->
-                        onMainDispatcher {
-                            statusText.text = "❌ Error: $error"
-                            statusText.setTextColor(Color.parseColor("#FFF44336"))
-                        }
-                    }
-                )
+                    )
+                }
 
                 val ip = transferServer?.getLocalIpAddress() ?: "unknown"
                 val token = transferServer?.getSessionToken() ?: ""
                 val port = 8765
 
-                // Генерируем QR с данными для телефона
                 val qrData = "tunxbox://transfer?ip=$ip&port=$port&session=$token"
                 
-                val writer = QRCodeWriter()
-                val bitMatrix = writer.encode(qrData, BarcodeFormat.QR_CODE, QR_SIZE, QR_SIZE)
-                
-                val bitmap = Bitmap.createBitmap(QR_SIZE, QR_SIZE, Bitmap.Config.RGB_565)
-                for (x in 0 until QR_SIZE) {
-                    for (y in 0 until QR_SIZE) {
-                        bitmap.setPixel(x, y, if (bitMatrix[x, y]) Color.BLACK else Color.WHITE)
+                withContext(Dispatchers.Default) {
+                    val writer = QRCodeWriter()
+                    val bitMatrix = writer.encode(qrData, BarcodeFormat.QR_CODE, QR_SIZE, QR_SIZE)
+                    
+                    val bitmap = Bitmap.createBitmap(QR_SIZE, QR_SIZE, Bitmap.Config.RGB_565)
+                    for (x in 0 until QR_SIZE) {
+                        for (y in 0 until QR_SIZE) {
+                            bitmap.setPixel(x, y, if (bitMatrix[x, y]) Color.BLACK else Color.WHITE)
+                        }
+                    }
+                    
+                    withContext(Dispatchers.Main) {
+                        qrImageView.setImageBitmap(bitmap)
+                        ipText.text = "TV IP: $ip:$port"
+                        statusText.text = "Ready! Scan this QR with your phone"
+                        statusText.setTextColor(Color.parseColor("#AAFFFFFF"))
                     }
                 }
 
-                onMainDispatcher {
-                    qrImageView.setImageBitmap(bitmap)
-                    ipText.text = "TV IP: $ip:$port"
-                    statusText.text = "Ready! Scan this QR with your phone"
-                    statusText.setTextColor(Color.parseColor("#AAFFFFFF"))
-                }
-
             } catch (e: Exception) {
-                onMainDispatcher {
-                    statusText.text = "❌ Server failed: ${e.message}"
-                    statusText.setTextColor(Color.parseColor("#FFF44336"))
-                    Toast.makeText(context, "Failed to start transfer server", Toast.LENGTH_SHORT).show()
-                }
+                Logs.e("QR Transfer error", e)
+                statusText.text = "❌ Server failed: ${e.message}"
+                statusText.setTextColor(Color.parseColor("#FFF44336"))
+                Toast.makeText(context, "Failed to start transfer server", Toast.LENGTH_SHORT).show()
             }
         }
     }
