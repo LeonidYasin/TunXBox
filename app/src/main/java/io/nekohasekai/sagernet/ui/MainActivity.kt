@@ -59,92 +59,23 @@ class MainActivity : ThemedActivity(),
     lateinit var navigation: NavigationView
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // DEBUG: Force TV mode for testing on any device
-        val debugForceTv = io.nekohasekai.sagernet.database.DataStore.profileCacheStore.getBoolean("debug_force_tv", false)
-        
-        // Check for forced phone mode (from TV UI switcher)
+        // TV Mode is DEFAULT for all devices
+        // Only switch to Phone Mode if user explicitly requested it
         val forcePhoneMode = intent.getBooleanExtra("force_phone_mode", false)
         val uiOverride = io.nekohasekai.sagernet.database.DataStore.profileCacheStore.getString("ui_mode_override")
         
-        // TV Device Detection: redirect to Leanback UI unless overridden
-        if (!forcePhoneMode && uiOverride != "phone" && 
-            (debugForceTv || io.nekohasekai.sagernet.ktx.TvDeviceUtil.isTvDevice(this))) {
-            startActivity(android.content.Intent(this, MainActivityTv::class.java))
-            finish()
+        if (forcePhoneMode || uiOverride == "phone") {
+            // User explicitly chose Phone Mode - use mobile UI
+            if (forcePhoneMode) {
+                io.nekohasekai.sagernet.database.DataStore.profileCacheStore.remove("ui_mode_override")
+            }
+            super.onCreate(savedInstanceState)
             return
         }
         
-        // Clear override after use so next launch respects device detection
-        if (forcePhoneMode) {
-            io.nekohasekai.sagernet.database.DataStore.profileCacheStore.remove("ui_mode_override")
-        }
-        
-        super.onCreate(savedInstanceState)
-
-        binding = LayoutMainBinding.inflate(layoutInflater)
-        binding.fab.initProgress(binding.fabProgress)
-        if (themeResId !in intArrayOf(
-                R.style.Theme_SagerNet_Black
-            )
-        ) {
-            navigation = binding.navView
-            binding.drawerLayout.removeView(binding.navViewBlack)
-        } else {
-            navigation = binding.navViewBlack
-            binding.drawerLayout.removeView(binding.navView)
-        }
-        navigation.setNavigationItemSelectedListener(this)
-
-        if (savedInstanceState == null) {
-            displayFragmentWithId(R.id.nav_configuration)
-        }
-        onBackPressedDispatcher.addCallback {
-            if (supportFragmentManager.findFragmentById(R.id.fragment_holder) is ConfigurationFragment) {
-                moveTaskToBack(true)
-            } else {
-                displayFragmentWithId(R.id.nav_configuration)
-            }
-        }
-
-        binding.fab.setOnClickListener { toggleService() }
-        binding.stats.setOnClickListener { if (DataStore.serviceState.connected) binding.stats.testConnection() }
-
-        setContentView(binding.root)
-        changeState(BaseService.State.Idle)
-        connection.connect(this, this)
-        DataStore.configurationStore.registerChangeListener(this)
-        GroupManager.userInterface = GroupInterfaceAdapter(this)
-
-        if (intent?.action == Intent.ACTION_VIEW) {
-            onNewIntent(intent)
-        }
-        
-        // TV Remote: ensure FAB is reachable via D-pad
-        binding.fab.post {
-            binding.fab.requestFocus()
-        }
-
-        refreshNavMenu(DataStore.enableClashAPI)
-
-        // sdk 33 notification
-        if (Build.VERSION.SDK_INT >= 33) {
-            val checkPermission =
-                ContextCompat.checkSelfPermission(this@MainActivity, POST_NOTIFICATIONS)
-            if (checkPermission != PackageManager.PERMISSION_GRANTED) {
-                //动态申请
-                ActivityCompat.requestPermissions(
-                    this@MainActivity, arrayOf(POST_NOTIFICATIONS), 0
-                )
-            }
-        }
-
-        if (isPreview) {
-            MaterialAlertDialogBuilder(this)
-                .setTitle(BuildConfig.PRE_VERSION_NAME)
-                .setMessage(R.string.preview_version_hint)
-                .setPositiveButton(android.R.string.ok, null)
-                .show()
-        }
+        // Default: redirect to TV Leanback UI on ALL devices
+        startActivity(android.content.Intent(this, MainActivityTv::class.java))
+        finish()
     }
 
     fun refreshNavMenu(clashApi: Boolean) {
@@ -516,22 +447,6 @@ class MainActivity : ThemedActivity(),
     }
 
 
-    override fun onCreateOptionsMenu(menu: android.view.Menu): Boolean {
-        menuInflater.inflate(R.menu.main_options_menu, menu)
-        return true
-    }
 
-    override fun onOptionsItemSelected(item: android.view.MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.action_switch_tv_mode -> {
-                // Переключаем в TV режим
-                io.nekohasekai.sagernet.database.DataStore.profileCacheStore.putBoolean("debug_force_tv", true)
-                startActivity(android.content.Intent(this, MainActivityTv::class.java))
-                finish()
-                return true
-            }
-        }
-        return super.onOptionsItemSelected(item)
-    }
 
 }
