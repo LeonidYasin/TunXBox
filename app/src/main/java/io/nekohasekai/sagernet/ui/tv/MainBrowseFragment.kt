@@ -1,8 +1,10 @@
 package io.nekohasekai.sagernet.ui.tv
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.leanback.app.BrowseSupportFragment
 import androidx.leanback.widget.ArrayObjectAdapter
 import androidx.leanback.widget.HeaderItem
@@ -18,6 +20,8 @@ import io.nekohasekai.sagernet.database.SagerDatabase
 import io.nekohasekai.sagernet.group.RawUpdater
 import io.nekohasekai.sagernet.ktx.onMainDispatcher
 import io.nekohasekai.sagernet.ktx.runOnDefaultDispatcher
+import io.nekohasekai.sagernet.ui.MainActivity
+import java.net.URL
 
 class MainBrowseFragment : BrowseSupportFragment() {
 
@@ -31,6 +35,37 @@ class MainBrowseFragment : BrowseSupportFragment() {
         const val ACTION_STOP_PROXY = 2L
         const val ACTION_IMPORT_CLIPBOARD = 3L
         const val ACTION_ADD_PROFILE = 4L
+        const val ACTION_IMPORT_URL = 5L
+        const val ACTION_IMPORT_FILE = 6L
+        const val ACTION_SWITCH_MODE = 7L
+    }
+
+    // File picker for import
+    private val importFileLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) {
+            runOnDefaultDispatcher {
+                try {
+                    val text = requireContext().contentResolver.openInputStream(uri)?.bufferedReader()?.readText()
+                    if (text.isNullOrBlank()) {
+                        onMainDispatcher { Toast.makeText(requireContext(), "Empty file", Toast.LENGTH_SHORT).show() }
+                        return@runOnDefaultDispatcher
+                    }
+                    val proxies = RawUpdater.parseRaw(text)
+                    if (proxies.isNullOrEmpty()) {
+                        onMainDispatcher { Toast.makeText(requireContext(), "No valid proxy in file", Toast.LENGTH_SHORT).show() }
+                    } else {
+                        val targetId = DataStore.selectedGroupForImport()
+                        proxies.forEach { ProfileManager.createProfile(targetId, it) }
+                        onMainDispatcher {
+                            Toast.makeText(requireContext(), "Imported ${proxies.size} profile(s)", Toast.LENGTH_LONG).show()
+                            loadProfiles()
+                        }
+                    }
+                } catch (e: Exception) {
+                    onMainDispatcher { Toast.makeText(requireContext(), "Import failed: ${e.message}", Toast.LENGTH_SHORT).show() }
+                }
+            }
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -47,7 +82,6 @@ class MainBrowseFragment : BrowseSupportFragment() {
 
     override fun onResume() {
         super.onResume()
-        // Refresh service state from DataStore
         serviceState = if (DataStore.serviceState.connected) BaseService.State.Connected else BaseService.State.Idle
         if (::actionsAdapter.isInitialized) updateActionsRow()
     }
@@ -87,7 +121,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
                     if (allProfiles.isNotEmpty()) {
                         allProfiles.forEach { profilesAdapter.add(it) }
                     } else {
-                        profilesAdapter.add(TvEmptyHint("No profiles. Use Import or add via phone."))
+                        profilesAdapter.add(TvEmptyHint("No profiles. Use Import or Add below."))
                     }
                 }
             } catch (e: Exception) {
@@ -108,8 +142,11 @@ class MainBrowseFragment : BrowseSupportFragment() {
             actionsAdapter.add(TvAction(ACTION_START_PROXY, "▶ Start Proxy", "Select profile below"))
         }
         
-        actionsAdapter.add(TvAction(ACTION_IMPORT_CLIPBOARD, "📋 Import Clipboard", "Paste proxy link"))
-        actionsAdapter.add(TvAction(ACTION_ADD_PROFILE, "➕ Add Profile", "Manual or scan QR"))
+        actionsAdapter.add(TvAction(ACTION_IMPORT_CLIPBOARD, "📋 Clipboard", "Paste link from phone"))
+        actionsAdapter.add(TvAction(ACTION_IMPORT_URL, "🌐 From URL", "Subscription or direct link"))
+        actionsAdapter.add(TvAction(ACTION_IMPORT_FILE, "📁 From File", "JSON/YAML/Conf file"))
+        actionsAdapter.add(TvAction(ACTION_ADD_PROFILE, "➕ Manual", "Enter details via dialog"))
+        actionsAdapter.add(TvAction(ACTION_SWITCH_MODE, "📱 Phone Mode", "Switch to mobile UI"))
     }
 
     private fun selectAndStartProxy(profile: ProxyEntity) {
@@ -135,23 +172,11 @@ class MainBrowseFragment : BrowseSupportFragment() {
             }
             ACTION_STOP_PROXY -> SagerNet.stopService()
             ACTION_IMPORT_CLIPBOARD -> importFromClipboard()
-            ACTION_ADD_PROFILE -> showAddProfileOptions()
+            ACTION_IMPORT_URL -> showUrlImportDialog()
+            ACTION_IMPORT_FILE -> importFileLauncher.launch("*/*")
+            ACTION_ADD_PROFILE -> showManualAddDialog()
+            ACTION_SWITCH_MODE -> switchToPhoneMode()
         }
-    }
-    
-    private fun showAddProfileOptions() {
-        // Показываем простой диалог с вариантами добавления
-        val options = arrayOf("Import from Clipboard", "Scan QR Code (via phone)", "Manual Entry (via phone)")
-        android.app.AlertDialog.Builder(requireContext())
-            .setTitle("Add Profile")
-            .setItems(options) { _, which ->
-                when (which) {
-                    0 -> importFromClipboard()
-                    1 -> Toast.makeText(requireContext(), "Use phone to scan QR, then Import here", Toast.LENGTH_LONG).show()
-                    2 -> Toast.makeText(requireContext(), "Use phone app to add manually, then sync", Toast.LENGTH_LONG).show()
-                }
-            }
-            .show()
     }
 
     private fun importFromClipboard() {
@@ -160,13 +185,78 @@ class MainBrowseFragment : BrowseSupportFragment() {
             Toast.makeText(requireContext(), "Clipboard empty", Toast.LENGTH_SHORT).show()
             return
         }
+        importProxiesFromText(text)
+    }
+    
+    private fun showUrlImportDialog() {
+        val input = android.widget.EditText(requireContext()).apply {
+            hint = "https://example.com/sub.yaml or ss://..."
+            setPadding(48, 32, 48, 32)
+        }
         
+        android.app.AlertDialog.Builder(requireContext())
+            .setTitle("Import from URL")
+            .setView(input)
+            .setPositiveButton("Import") { _, _ ->
+                val url = input.text.toString().trim()
+                if (url.isBlank()) {
+                    Toast.makeText(requireContext(), "URL required", Toast.LENGTH_SHORT).show()
+                    return@setPositiveButton
+                }
+                runOnDefaultDispatcher {
+                    try {
+                        val text = URL(url).readText()
+                        importProxiesFromText(text)
+                    } catch (e: Exception) {
+                        onMainDispatcher {
+                            Toast.makeText(requireContext(), "Failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+    
+    private fun showManualAddDialog() {
+        val protocols = arrayOf("Shadowsocks", "VMess", "VLESS", "Trojan", "SOCKS5", "HTTP")
+        android.app.AlertDialog.Builder(requireContext())
+            .setTitle("Add Profile (Manual)")
+            .setItems(protocols) { _, which ->
+                val protocol = protocols[which]
+                Toast.makeText(requireContext(), 
+                    "$protocol: Use phone app to configure, then sync via clipboard/URL", 
+                    Toast.LENGTH_LONG).show()
+            }
+            .show()
+    }
+    
+    private fun switchToPhoneMode() {
+        android.app.AlertDialog.Builder(requireContext())
+            .setTitle("Switch to Phone Mode")
+            .setMessage("This will restart the app in mobile interface mode.\n\nYou can switch back to TV mode from Settings.")
+            .setPositiveButton("Switch") { _, _ ->
+                // Сохраняем предпочтение и перезапускаем в режиме телефона
+                DataStore.profileCacheStore.putString("ui_mode_override", "phone")
+                
+                val intent = Intent(requireContext(), MainActivity::class.java).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+                    putExtra("force_phone_mode", true)
+                }
+                startActivity(intent)
+                requireActivity().finish()
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+    
+    private fun importProxiesFromText(text: String) {
         runOnDefaultDispatcher {
             try {
                 val proxies = RawUpdater.parseRaw(text)
                 if (proxies.isNullOrEmpty()) {
                     onMainDispatcher {
-                        Toast.makeText(requireContext(), "No valid proxy in clipboard", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(requireContext(), "No valid proxy found", Toast.LENGTH_SHORT).show()
                     }
                 } else {
                     val targetId = DataStore.selectedGroupForImport()
