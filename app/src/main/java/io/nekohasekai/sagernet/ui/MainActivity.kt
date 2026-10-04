@@ -59,11 +59,21 @@ class MainActivity : ThemedActivity(),
     lateinit var navigation: NavigationView
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // TV Device Detection: redirect to Leanback UI
-        if (io.nekohasekai.sagernet.ktx.TvDeviceUtil.isTvDevice(this)) {
+        // Check for forced phone mode (from TV UI switcher)
+        val forcePhoneMode = intent.getBooleanExtra("force_phone_mode", false)
+        val uiOverride = io.nekohasekai.sagernet.database.DataStore.profileCacheStore.getString("ui_mode_override")
+        
+        // TV Device Detection: redirect to Leanback UI unless overridden
+        if (!forcePhoneMode && uiOverride != "phone" && 
+            io.nekohasekai.sagernet.ktx.TvDeviceUtil.isTvDevice(this)) {
             startActivity(android.content.Intent(this, MainActivityTv::class.java))
             finish()
             return
+        }
+        
+        // Clear override after use so next launch respects device detection
+        if (forcePhoneMode) {
+            io.nekohasekai.sagernet.database.DataStore.profileCacheStore.remove("ui_mode_override")
         }
         
         super.onCreate(savedInstanceState)
