@@ -244,10 +244,9 @@ class MainBrowseFragment : BrowseSupportFragment() {
     
     private fun switchToPhoneMode() {
         android.app.AlertDialog.Builder(requireContext())
-            .setTitle("Switch to Phone Mode")
-            .setMessage("This will restart the app in mobile interface mode.\n\nYou can switch back to TV mode from Settings.")
-            .setPositiveButton("Switch") { _, _ ->
-                // Сохраняем предпочтение и перезапускаем в режиме телефона
+            .setTitle("📱 Switch to Phone Mode")
+            .setMessage("Restart app with mobile interface?\n\n• Use phone/tablet touch UI\n• To return to TV mode: clear app data or reinstall")
+            .setPositiveButton("Switch to Phone") { _, _ ->
                 DataStore.profileCacheStore.putString("ui_mode_override", "phone")
                 
                 val intent = Intent(requireContext(), MainActivity::class.java).apply {
@@ -257,7 +256,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
                 startActivity(intent)
                 requireActivity().finish()
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton("Keep TV Mode", null)
             .show()
     }
     
