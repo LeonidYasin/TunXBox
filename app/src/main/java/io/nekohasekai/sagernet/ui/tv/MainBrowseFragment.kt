@@ -2,6 +2,7 @@ package io.nekohasekai.sagernet.ui.tv
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.RemoteException
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
@@ -11,8 +12,11 @@ import androidx.leanback.widget.HeaderItem
 import androidx.leanback.widget.ListRow
 import androidx.leanback.widget.ListRowPresenter
 import androidx.leanback.widget.OnItemViewClickedListener
+import io.nekohasekai.sagernet.R
 import io.nekohasekai.sagernet.SagerNet
+import io.nekohasekai.sagernet.aidl.ISagerNetService
 import io.nekohasekai.sagernet.bg.BaseService
+import io.nekohasekai.sagernet.bg.SagerConnection
 import io.nekohasekai.sagernet.database.DataStore
 import io.nekohasekai.sagernet.database.ProfileManager
 import io.nekohasekai.sagernet.database.ProxyEntity
@@ -21,6 +25,7 @@ import io.nekohasekai.sagernet.group.RawUpdater
 import io.nekohasekai.sagernet.ktx.onMainDispatcher
 import io.nekohasekai.sagernet.ktx.runOnDefaultDispatcher
 import io.nekohasekai.sagernet.ui.MainActivity
+import io.nekohasekai.sagernet.ui.VpnRequestActivity
 import java.net.URL
 
 class MainBrowseFragment : BrowseSupportFragment() {
@@ -29,6 +34,38 @@ class MainBrowseFragment : BrowseSupportFragment() {
     private lateinit var actionsAdapter: ArrayObjectAdapter
     
     private var serviceState = BaseService.State.Idle
+
+    // Same service connection the phone UI uses: keeps Start/Stop in sync with the real VPN state.
+    private val connection = SagerConnection(SagerConnection.CONNECTION_ID_MAIN_ACTIVITY_FOREGROUND, true)
+    private val connectionCallback = object : SagerConnection.Callback {
+        override fun stateChanged(state: BaseService.State, profileName: String?, msg: String?) {
+            onServiceState(state, msg)
+        }
+
+        override fun onServiceConnected(service: ISagerNetService) {
+            onServiceState(
+                try {
+                    BaseService.State.values()[service.state]
+                } catch (_: RemoteException) {
+                    BaseService.State.Idle
+                }
+            )
+        }
+
+        override fun onServiceDisconnected() = onServiceState(BaseService.State.Idle)
+
+        override fun onBinderDied() {
+            val activity = activity ?: return
+            connection.disconnect(activity)
+            connection.connect(activity, this)
+        }
+    }
+
+    // Starting the VPN needs the system consent dialog on first run; SagerNet.startService() alone
+    // fails silently without it. Same contract as MainActivity.
+    private val connect = registerForActivityResult(VpnRequestActivity.StartService()) {
+        if (it) Toast.makeText(requireContext(), R.string.vpn_permission_denied, Toast.LENGTH_LONG).show()
+    }
 
     companion object {
         const val ACTION_START_PROXY = 1L
@@ -69,22 +106,53 @@ class MainBrowseFragment : BrowseSupportFragment() {
         }
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        // Must be set before onCreateView: flipping the headers state on an already inflated
+        // BrowseSupportFragment leaves the rows laid out for the "headers visible" case.
+        headersState = HEADERS_DISABLED
+        isHeadersTransitionOnBackEnabled = false
+        connection.connect(requireActivity(), connectionCallback)
+    }
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         title = "TunXBox"
-        headersState = HEADERS_DISABLED
-        isHeadersTransitionOnBackEnabled = false
         brandColor = 0xFF0EA5E9.toInt()
-        
+
         setupEventListeners()
         loadContent()
     }
 
+    override fun onStart() {
+        connection.updateConnectionId(SagerConnection.CONNECTION_ID_MAIN_ACTIVITY_FOREGROUND)
+        super.onStart()
+    }
+
+    override fun onStop() {
+        connection.updateConnectionId(SagerConnection.CONNECTION_ID_MAIN_ACTIVITY_BACKGROUND)
+        super.onStop()
+    }
+
+    override fun onDestroy() {
+        activity?.let { connection.disconnect(it) }
+        super.onDestroy()
+    }
+
     override fun onResume() {
         super.onResume()
-        serviceState = if (DataStore.serviceState.connected) BaseService.State.Connected else BaseService.State.Idle
+        serviceState = DataStore.serviceState
         if (::actionsAdapter.isInitialized) updateActionsRow()
+        // Profiles may have been added from the phone UI / by an import.
+        if (::profilesAdapter.isInitialized) loadProfiles()
+    }
+
+    private fun onServiceState(state: BaseService.State, msg: String? = null) {
+        DataStore.serviceState = state
+        serviceState = state
+        if (::actionsAdapter.isInitialized) updateActionsRow()
+        if (msg != null && isAdded) Toast.makeText(requireContext(), msg, Toast.LENGTH_LONG).show()
     }
 
     private fun setupEventListeners() {
@@ -106,36 +174,34 @@ class MainBrowseFragment : BrowseSupportFragment() {
         rowsAdapter.add(ListRow(HeaderItem("Actions"), actionsAdapter))
 
         profilesAdapter = ArrayObjectAdapter(ProfileCardPresenter())
+        rowsAdapter.add(ListRow(HeaderItem("Profiles"), profilesAdapter))
         loadProfiles()
 
         adapter = rowsAdapter
     }
     
     private fun loadProfiles() {
-        profilesAdapter.clear()
         runOnDefaultDispatcher {
-            try {
+            val items: List<Any> = try {
                 val groupId = DataStore.selectedGroup
                 val allProfiles = SagerDatabase.proxyDao.getByGroup(groupId)
-                
-                onMainDispatcher {
-                    if (allProfiles.isNotEmpty()) {
-                        allProfiles.forEach { profilesAdapter.add(it) }
-                    } else {
-                        profilesAdapter.add(TvEmptyHint("No profiles. Use Import or Add below."))
-                    }
-                }
+                if (allProfiles.isNotEmpty()) allProfiles
+                else listOf(TvEmptyHint("No profiles. Use Import or Add below."))
             } catch (e: Exception) {
-                onMainDispatcher {
-                    profilesAdapter.add(TvEmptyHint("Error: ${e.message}"))
-                }
+                listOf(TvEmptyHint("Error: ${e.message}"))
+            }
+            // Replace the content in one step on the main thread, so overlapping reloads
+            // cannot interleave and duplicate cards.
+            onMainDispatcher {
+                profilesAdapter.clear()
+                profilesAdapter.addAll(0, items)
             }
         }
     }
     
     private fun updateActionsRow() {
         actionsAdapter.clear()
-        val isConnected = serviceState == BaseService.State.Connected
+        val isConnected = serviceState.canStop
         
         if (isConnected) {
             actionsAdapter.add(TvAction(ACTION_STOP_PROXY, "■ Stop Proxy", "Service running"))
@@ -154,12 +220,11 @@ class MainBrowseFragment : BrowseSupportFragment() {
     private fun selectAndStartProxy(profile: ProxyEntity) {
         DataStore.selectedProxy = profile.id
         Toast.makeText(requireContext(), "Selected: ${profile.displayName()}", Toast.LENGTH_SHORT).show()
-        
-        if (serviceState == BaseService.State.Connected) {
-            SagerNet.stopService()
-            SagerNet.startService()
+
+        if (serviceState.canStop) {
+            SagerNet.reloadService()
         } else {
-            SagerNet.startService()
+            connect.launch(null)
         }
     }
 
@@ -167,7 +232,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
         when (action.id) {
             ACTION_START_PROXY -> {
                 if (DataStore.selectedProxy > 0) {
-                    SagerNet.startService()
+                    connect.launch(null)
                 } else {
                     Toast.makeText(requireContext(), "Select a profile first", Toast.LENGTH_SHORT).show()
                 }
@@ -237,7 +302,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
     private fun showQrTransfer() {
         // Заменяем текущий фрагмент на QR transfer
         parentFragmentManager.beginTransaction()
-            .replace(android.R.id.content, QrCodeTransferFragment())
+            .replace(R.id.tv_container, QrCodeTransferFragment())
             .addToBackStack("qr_transfer")
             .commit()
     }

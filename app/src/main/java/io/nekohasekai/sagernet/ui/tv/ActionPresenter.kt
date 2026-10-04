@@ -17,10 +17,12 @@ class ActionPresenter : Presenter() {
     }
 
     override fun onCreateViewHolder(parent: ViewGroup): ViewHolder {
+        val density = parent.resources.displayMetrics.density
+        fun dp(v: Int) = (v * density).toInt()
         val layout = LinearLayout(parent.context).apply {
             orientation = LinearLayout.VERTICAL
-            layoutParams = ViewGroup.LayoutParams(320, 120)
-            setPadding(24, 16, 24, 16)
+            layoutParams = ViewGroup.LayoutParams(dp(240), dp(100))
+            setPadding(dp(16), dp(12), dp(16), dp(12))
             gravity = Gravity.CENTER_VERTICAL
             setBackgroundResource(R.drawable.card_background_tv)
             isFocusable = true
@@ -52,7 +54,7 @@ class ActionPresenter : Presenter() {
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply { topMargin = 4 }
+            ).apply { topMargin = dp(4) }
         }
 
         layout.addView(title)
