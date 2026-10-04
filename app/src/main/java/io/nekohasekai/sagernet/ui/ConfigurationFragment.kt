@@ -275,29 +275,16 @@ class ConfigurationFragment @JvmOverloads constructor(
     override fun onKeyDown(ketCode: Int, event: KeyEvent): Boolean {
         val fragment = getCurrentGroupFragment()
         when (ketCode) {
-            KeyEvent.KEYCODE_DPAD_DOWN -> {
-                fragment?.configurationListView?.apply {
-                    if (!hasFocus()) {
-                        requestFocus()
-                        if (adapter?.itemCount ?: 0 > 0) {
-                            smoothScrollToPosition(0)
-                        }
-                    }
-                }
-                return true
-            }
-            KeyEvent.KEYCODE_DPAD_UP -> {
-                tabLayout.requestFocus()
-                return true
-            }
-            KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER -> {
-                val focused = requireActivity().currentFocus
-                if (focused != null && focused != view) {
-                    focused.performClick()
-                    return true
-                }
+            KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_DPAD_UP -> {
+                // Do NOT consume these keys: returning true here stops the framework's own focus
+                // search, so the cursor could never move between profiles. Only give focus to the
+                // list when nothing has it yet, then let the framework handle the move.
+                val list = fragment?.configurationListView
+                if (list != null && requireActivity().currentFocus == null) list.requestFocus()
+                return false
             }
         }
+        // DPAD_CENTER / ENTER are left to the focused view: click on key-up, long-press on hold.
         fragment?.configurationListView?.apply {
             if (!hasFocus()) requestFocus()
         }
