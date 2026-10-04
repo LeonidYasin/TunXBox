@@ -59,23 +59,66 @@ class MainActivity : ThemedActivity(),
     lateinit var navigation: NavigationView
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        
         // TV Mode is DEFAULT for all devices
-        // Only switch to Phone Mode if user explicitly requested it
+        // Only use Phone Mode if user explicitly requested it
         val forcePhoneMode = intent.getBooleanExtra("force_phone_mode", false)
         val uiOverride = io.nekohasekai.sagernet.database.DataStore.profileCacheStore.getString("ui_mode_override")
         
-        if (forcePhoneMode || uiOverride == "phone") {
-            // User explicitly chose Phone Mode - use mobile UI
-            if (forcePhoneMode) {
-                io.nekohasekai.sagernet.database.DataStore.profileCacheStore.remove("ui_mode_override")
+        if (!forcePhoneMode && uiOverride != "phone") {
+            // Redirect to TV UI using explicit component name (no implicit intent)
+            val tvIntent = android.content.Intent().apply {
+                component = android.content.ComponentName(this@MainActivity, MainActivityTv::class.java)
+                addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
             }
-            super.onCreate(savedInstanceState)
+            startActivity(tvIntent)
+            finish()
             return
         }
         
-        // Default: redirect to TV Leanback UI on ALL devices
-        startActivity(android.content.Intent(this, MainActivityTv::class.java))
-        finish()
+        // Phone Mode: continue with normal mobile UI initialization
+        if (forcePhoneMode) {
+            io.nekohasekai.sagernet.database.DataStore.profileCacheStore.remove("ui_mode_override")
+        }
+        
+        binding = LayoutMainBinding.inflate(layoutInflater)
+        binding.fab.initProgress(binding.fabProgress)
+        if (themeResId !in intArrayOf(R.style.Theme_SagerNet_Black)) {
+            navigation = binding.navView
+            binding.drawerLayout.removeView(binding.navViewBlack)
+        } else {
+            navigation = binding.navViewBlack
+            binding.drawerLayout.removeView(binding.navView)
+        }
+        navigation.setNavigationItemSelectedListener(this)
+
+        if (savedInstanceState == null) {
+            displayFragmentWithId(R.id.nav_configuration)
+        }
+        onBackPressedDispatcher.addCallback {
+            if (supportFragmentManager.findFragmentById(R.id.fragment_holder) is ConfigurationFragment) {
+                moveTaskToBack(true)
+            } else {
+                displayFragmentWithId(R.id.nav_configuration)
+            }
+        }
+
+        binding.fab.setOnClickListener { toggleService() }
+        binding.stats.setOnClickListener { if (DataStore.serviceState.connected) binding.stats.testConnection() }
+
+        setContentView(binding.root)
+        changeState(BaseService.State.Idle)
+        connection.connect(this, this)
+        DataStore.configurationStore.registerChangeListener(this)
+        GroupManager.userInterface = GroupInterfaceAdapter(this)
+
+        if (intent?.action == Intent.ACTION_VIEW) {
+            onNewIntent(intent)
+        }
+        
+        // TV Mode button in options menu
+        invalidateOptionsMenu()
     }
 
     fun refreshNavMenu(clashApi: Boolean) {
