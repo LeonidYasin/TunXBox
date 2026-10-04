@@ -21,10 +21,4 @@ class MainActivityTv : FragmentActivity() {
                 .commit()
         }
     }
-    
-    override fun onNewIntent(intent: android.content.Intent?) {
-        super.onNewIntent(intent)
-        // Clear any incoming intent to prevent share sheet
-        setIntent(android.content.Intent())
-    }
 }
