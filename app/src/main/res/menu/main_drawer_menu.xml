@@ -57,4 +57,13 @@
             android:title="@string/menu_about" />
     </group>
 
+    <group
+        android:id="@+id/tv_mode"
+        android:checkableBehavior="none">
+        <item
+            android:id="@+id/nav_switch_tv_mode"
+            android:icon="@drawable/ic_baseline_tv_24"
+            android:title="@string/switch_tv_mode" />
+    </group>
+
 </menu>
