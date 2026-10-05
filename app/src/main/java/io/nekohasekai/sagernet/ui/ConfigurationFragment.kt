@@ -378,12 +378,6 @@ class ConfigurationFragment @JvmOverloads constructor(
         dialog.showAllowingStateLoss(parentFragmentManager, "send_to_tv_qr")
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        transferServer?.stop()
-        transferServer = null
-    }
-
     override fun onMenuItemClick(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.action_scan_qr_code -> {
