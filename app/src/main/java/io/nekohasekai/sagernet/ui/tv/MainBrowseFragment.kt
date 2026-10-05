@@ -310,7 +310,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
     private fun switchToPhoneMode() {
         android.app.AlertDialog.Builder(requireContext())
             .setTitle("📱 Switch to Phone Mode")
-            .setMessage("Restart app with mobile interface?\n\n• Use phone/tablet touch UI\n• To return to TV mode: clear app data or reinstall")
+            .setMessage("Restart app with mobile interface?\n\n• Touch-optimized phone/tablet UI\n• To return to TV mode: open the side drawer and tap '📺 Switch to TV Mode'")
             .setPositiveButton("Switch to Phone") { _, _ ->
                 DataStore.profileCacheStore.putString("ui_mode_override", "phone")
                 
