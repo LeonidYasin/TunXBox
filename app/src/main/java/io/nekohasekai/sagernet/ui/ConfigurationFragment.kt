@@ -375,8 +375,8 @@ class ConfigurationFragment @JvmOverloads constructor(
         dialog.showAllowingStateLoss(parentFragmentManager, "send_to_tv_qr")
     }
 
-    override fun onPause() {
-        super.onPause()
+    override fun onDestroy() {
+        super.onDestroy()
         transferServer?.stop()
         transferServer = null
     }
