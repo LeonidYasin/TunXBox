@@ -35,7 +35,6 @@ class MainBrowseFragment : BrowseSupportFragment() {
     
     private var serviceState = BaseService.State.Idle
 
-    // Same service connection the phone UI uses: keeps Start/Stop in sync with the real VPN state.
     private val connection = SagerConnection(SagerConnection.CONNECTION_ID_MAIN_ACTIVITY_FOREGROUND, true)
     private val connectionCallback = object : SagerConnection.Callback {
         override fun stateChanged(state: BaseService.State, profileName: String?, msg: String?) {
@@ -61,8 +60,6 @@ class MainBrowseFragment : BrowseSupportFragment() {
         }
     }
 
-    // Starting the VPN needs the system consent dialog on first run; SagerNet.startService() alone
-    // fails silently without it. Same contract as MainActivity.
     private val connect = registerForActivityResult(VpnRequestActivity.StartService()) {
         if (it) Toast.makeText(requireContext(), R.string.vpn_permission_denied, Toast.LENGTH_LONG).show()
     }
@@ -76,9 +73,9 @@ class MainBrowseFragment : BrowseSupportFragment() {
         const val ACTION_IMPORT_FILE = 6L
         const val ACTION_SWITCH_MODE = 7L
         const val ACTION_QR_SEND = 8L
+        const val ACTION_QR_SCAN = 9L
     }
 
-    // File picker for import
     private val importFileLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         if (uri != null) {
             runOnDefaultDispatcher {
@@ -108,8 +105,6 @@ class MainBrowseFragment : BrowseSupportFragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Must be set before onCreateView: flipping the headers state on an already inflated
-        // BrowseSupportFragment leaves the rows laid out for the "headers visible" case.
         headersState = HEADERS_DISABLED
         isHeadersTransitionOnBackEnabled = false
         connection.connect(requireActivity(), connectionCallback)
@@ -144,7 +139,6 @@ class MainBrowseFragment : BrowseSupportFragment() {
         super.onResume()
         serviceState = DataStore.serviceState
         if (::actionsAdapter.isInitialized) updateActionsRow()
-        // Profiles may have been added from the phone UI / by an import / by scanning.
         if (::profilesAdapter.isInitialized) loadProfiles()
     }
 
@@ -190,8 +184,6 @@ class MainBrowseFragment : BrowseSupportFragment() {
             } catch (e: Exception) {
                 listOf(TvEmptyHint("Error: ${e.message}"))
             }
-            // Replace the content in one step on the main thread, so overlapping reloads
-            // cannot interleave and duplicate cards.
             onMainDispatcher {
                 profilesAdapter.clear()
                 profilesAdapter.addAll(0, items)
@@ -213,7 +205,8 @@ class MainBrowseFragment : BrowseSupportFragment() {
         actionsAdapter.add(TvAction(ACTION_IMPORT_URL, "🌐 From URL", "Subscription or direct link"))
         actionsAdapter.add(TvAction(ACTION_IMPORT_FILE, "📁 From File", "JSON/YAML/Conf file"))
         actionsAdapter.add(TvAction(ACTION_ADD_PROFILE, "➕ Manual", "Enter details via dialog"))
-        actionsAdapter.add(TvAction(ACTION_QR_SEND, "📲 Receive from Phone", "Show QR — phone scans and sends profiles"))
+        actionsAdapter.add(TvAction(ACTION_QR_SCAN, "📷 Scan QR", "Camera/image — get profiles from phone"))
+        actionsAdapter.add(TvAction(ACTION_QR_SEND, "📲 Show QR", "Phone scans to send profiles here"))
         actionsAdapter.add(TvAction(ACTION_SWITCH_MODE, "📱 Phone Mode", "Switch to mobile UI"))
     }
 
@@ -242,6 +235,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
             ACTION_IMPORT_URL -> showUrlImportDialog()
             ACTION_IMPORT_FILE -> importFileLauncher.launch("*/*")
             ACTION_ADD_PROFILE -> showManualAddDialog()
+            ACTION_QR_SCAN -> showQrScan()
             ACTION_QR_SEND -> showQrSend()
             ACTION_SWITCH_MODE -> switchToPhoneMode()
         }
@@ -298,9 +292,15 @@ class MainBrowseFragment : BrowseSupportFragment() {
             }
             .show()
     }
+
+    private fun showQrScan() {
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.tv_container, TvScannerFragment())
+            .addToBackStack("qr_scan")
+            .commit()
+    }
     
     private fun showQrSend() {
-        // Shows QR code on TV screen — phone scans this QR and sends its profiles to this TV
         parentFragmentManager.beginTransaction()
             .replace(R.id.tv_container, QrCodeTransferFragment())
             .addToBackStack("qr_send")

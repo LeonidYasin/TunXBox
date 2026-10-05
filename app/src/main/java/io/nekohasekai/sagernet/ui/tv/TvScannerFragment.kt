@@ -36,11 +36,10 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * TV-compatible QR code scanner fragment.
  * 
- * Scans QR codes via camera (if available on the TV device) or from image files.
- * Imports proxy profiles directly into the database.
- * 
- * This mirrors the phone's ScannerActivity but as a Fragment for the Leanback TV UI.
- * If the TV device has no camera, the "Import from image" fallback is available.
+ * Handles three types of QR codes:
+ * 1. tunxbox://transfer — connects to remote device and GETs profiles via /export
+ * 2. Standard proxy links (ss://, vmess://, etc.) — imports directly
+ * 3. Subscription URLs (sn://subscription) — delegates to MainActivity
  */
 class TvScannerFragment : Fragment(), CameraScan.OnScanResultCallback {
 
@@ -61,6 +60,7 @@ class TvScannerFragment : Fragment(), CameraScan.OnScanResultCallback {
             try {
                 var totalImported = 0
                 var qrFound = false
+                var transferDone = false
                 
                 uris.forEach { uri ->
                     try {
@@ -79,7 +79,12 @@ class TvScannerFragment : Fragment(), CameraScan.OnScanResultCallback {
                         val result = CodeUtils.parseCodeResult(bitmap)
                         if (result != null) {
                             qrFound = true
-                            totalImported += importFromQrText(result.text)
+                            if (result.text.startsWith("tunxbox://transfer")) {
+                                handleTvTransfer(result.text)
+                                transferDone = true
+                            } else {
+                                totalImported += importFromQrText(result.text)
+                            }
                         }
                     } catch (e: Exception) {
                         Logs.w("Failed to decode QR from image", e)
@@ -87,7 +92,9 @@ class TvScannerFragment : Fragment(), CameraScan.OnScanResultCallback {
                 }
                 
                 onMainDispatcher {
-                    if (totalImported > 0) {
+                    if (transferDone) {
+                        parentFragmentManager.popBackStack()
+                    } else if (totalImported > 0) {
                         Toast.makeText(requireContext(), 
                             "Imported $totalImported profile(s)", 
                             Toast.LENGTH_LONG).show()
@@ -149,7 +156,6 @@ class TvScannerFragment : Fragment(), CameraScan.OnScanResultCallback {
     }
     
     private fun initCameraScan() {
-        // Use requireActivity() (FragmentActivity) for compatibility with DefaultCameraScan
         cameraScan = DefaultCameraScan(requireActivity(), previewView)
         cameraScan.setAnalyzer(QRCodeAnalyzer())
         cameraScan.setOnScanResultCallback(this)
@@ -195,6 +201,13 @@ class TvScannerFragment : Fragment(), CameraScan.OnScanResultCallback {
         runOnDefaultDispatcher {
             try {
                 val text = result?.text ?: throw Exception("QR code not found")
+
+                // Check for TV transfer QR: scanned another device's QR -> GET profiles from it
+                if (text.startsWith("tunxbox://transfer")) {
+                    handleTvTransfer(text)
+                    return@runOnDefaultDispatcher
+                }
+
                 val count = importFromQrText(text)
                 
                 onMainDispatcher {
@@ -205,7 +218,7 @@ class TvScannerFragment : Fragment(), CameraScan.OnScanResultCallback {
                         parentFragmentManager.popBackStack()
                     } else {
                         Toast.makeText(requireContext(), R.string.action_import_err, Toast.LENGTH_SHORT).show()
-                        finished.set(false) // Allow retry
+                        finished.set(false)
                     }
                 }
             } catch (e: SubscriptionFoundException) {
@@ -249,6 +262,95 @@ class TvScannerFragment : Fragment(), CameraScan.OnScanResultCallback {
             count++
         }
         return count
+    }
+
+    /**
+     * Scanned a tunxbox://transfer QR from another device.
+     * Parse the URL, connect to the remote device's /export endpoint,
+     * and import the profiles it serves.
+     */
+    private fun handleTvTransfer(qrText: String) {
+        try {
+            val uri = java.net.URI(qrText)
+            val params = uri.query?.split("&")?.associate {
+                val parts = it.split("=")
+                parts[0] to (parts.getOrNull(1) ?: "")
+            } ?: emptyMap()
+
+            val ip = params["ip"] ?: throw Exception("Missing 'ip' in QR")
+            val port = params["port"]?.toIntOrNull() ?: 8765
+            val session = params["session"] ?: throw Exception("Missing 'session' in QR")
+
+            onMainDispatcher {
+                Toast.makeText(requireContext(), "📡 Connecting to $ip:$port...", Toast.LENGTH_SHORT).show()
+            }
+
+            val url = java.net.URL("http://$ip:$port/export?session=$session")
+            val connection = url.openConnection() as java.net.HttpURLConnection
+            connection.requestMethod = "GET"
+            connection.connectTimeout = 10000
+            connection.readTimeout = 10000
+
+            val responseCode = connection.responseCode
+            if (responseCode !in 200..299) {
+                val error = connection.errorStream?.bufferedReader()?.readText() ?: "HTTP $responseCode"
+                throw Exception("Remote device returned error: $error")
+            }
+
+            val responseBody = connection.inputStream.bufferedReader().readText()
+            connection.disconnect()
+
+            val json = org.json.JSONObject(responseBody)
+            val profilesData = json.optString("profiles", "")
+            val remoteCount = json.optInt("count", 0)
+
+            if (profilesData.isBlank()) {
+                onMainDispatcher {
+                    Toast.makeText(requireContext(), "Remote device has no profiles", Toast.LENGTH_LONG).show()
+                    finished.set(false)
+                }
+                return
+            }
+
+            val links = profilesData.split("\n").filter { it.isNotBlank() }
+            val targetId = DataStore.selectedGroupForImport()
+            var importedCount = 0
+
+            for (link in links) {
+                try {
+                    val proxies = RawUpdater.parseRaw(link)
+                    if (!proxies.isNullOrEmpty()) {
+                        for (proxy in proxies) {
+                            ProfileManager.createProfile(targetId, proxy)
+                            importedCount++
+                        }
+                    }
+                } catch (e: Exception) {
+                    Logs.w("Failed to import profile from remote: $link", e)
+                }
+            }
+
+            onMainDispatcher {
+                if (importedCount > 0) {
+                    Toast.makeText(requireContext(),
+                        "✅ Imported $importedCount profile(s) from remote device ($remoteCount available)",
+                        Toast.LENGTH_LONG).show()
+                    parentFragmentManager.popBackStack()
+                } else {
+                    Toast.makeText(requireContext(), "No valid profiles found on remote device", Toast.LENGTH_LONG).show()
+                    finished.set(false)
+                }
+            }
+
+        } catch (e: Exception) {
+            Logs.e("TV transfer import failed", e)
+            onMainDispatcher {
+                Toast.makeText(requireContext(),
+                    "❌ Failed to receive profiles: ${e.readableMessage}",
+                    Toast.LENGTH_LONG).show()
+                finished.set(false)
+            }
+        }
     }
     
     override fun onDestroyView() {
