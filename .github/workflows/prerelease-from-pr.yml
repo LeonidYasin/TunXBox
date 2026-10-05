@@ -1,9 +1,9 @@
-# Publishes ONE rolling pre-release APK per feature/fix branch so the APK can
+# Publishes one rolling pre-release with verified ARM APKs so builds can
 # be downloaded and installed BEFORE the PR is merged.
 #
 # The tag is FIXED per version: vMAJOR.MINOR.PATCH-rc (no run number).
 # Each new build re-points the tag onto the current commit and overwrites the
-# APK inside the same release (gh release upload --clobber), so Releases always
+# APK set inside the same release, so Releases always
 # shows exactly ONE current pre-release for the branch, with a fresh commit SHA
 # and a fresh publishedAt instead of a growing rc1, rc2, ... rcN pile.
 #
@@ -144,24 +144,27 @@ jobs:
       - name: Test transfer protocol
         run: ./gradlew app:testPreviewDebugUnitTest --stacktrace
 
-      - name: Locate APK
+      - name: Package verified APKs
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          BUILD_SHA: ${{ steps.actual_sha.outputs.sha }}
         run: |
-          APK=$(find app/build/outputs/apk -name '*.apk' | head -n 1)
-          if [ -z "$APK" ]; then
-            echo "No APK found under app/build/outputs/apk"
-            find app/build/outputs -type f || true
-            exit 1
-          fi
-          echo "APK=$APK" >> $GITHUB_ENV
-          echo "Found APK: $APK"
+          set -euo pipefail
+          python3 buildScript/test_package_preview_apks.py
+          python3 buildScript/package_preview_apks.py \
+            --apk-dir app/build/outputs/apk/preview/release \
+            --output-dir dist \
+            --version "$VERSION" \
+            --commit "$BUILD_SHA" \
+            --apksigner "$ANDROID_HOME/build-tools/35.0.1/apksigner"
 
-      - name: Upload APK (artifact)
+      - name: Upload APKs (artifact)
         uses: actions/upload-artifact@v4
         with:
-          name: app-preview-rc
-          path: ${{ env.APK }}
+          name: TunXBox-android-preview-release-${{ steps.actual_sha.outputs.sha }}
+          path: dist/*
+          if-no-files-found: error
           retention-days: 30
-
 
       - name: Upload build log on failure
         if: failure()
@@ -185,7 +188,12 @@ jobs:
           NOTES="Rolling pre-release APK for testing before merge.
           Version: ${VERSION}
           Built from commit: ${BUILD_SHA}
-          Branch: ${{ github.event.pull_request.head.ref || github.ref_name }}"
+          Branch: ${{ github.event.pull_request.head.ref || github.ref_name }}
+          Platform: Android 5.0+; TV and phone interfaces in the same APK.
+          APK choices: arm64-v8a (64-bit ARM), armeabi-v7a (32-bit ARM), and combined APK (see actual ABI list in apk-manifest.json).
+          All APK signatures are verified. Preview release may use the CI debug signing key.
+          Universal APK includes all four bundled ABIs: ARM32, ARM64, x86 and x86_64 when confirmed by apk-manifest.json.
+          Actual filenames match Assets and download filenames; see SHA256SUMS.txt and apk-manifest.json."
 
           # Roll the git tag onto the CURRENT commit so the release page shows the
           # fresh source revision instead of a stale one. Without this, --clobber
@@ -205,7 +213,49 @@ jobs:
               --target "$BUILD_SHA" \
               --prerelease
           fi
-          gh release upload "$TAG" "$APK#TunXBox-${VERSION}-${SHORT_SHA}.apk" --clobber
+          # Upload the REAL names; #label changes only GitHub display text, not download names.
+          gh release upload "$TAG" dist/*.apk dist/SHA256SUMS.txt dist/apk-manifest.json --clobber
+
+          # Verify uploaded bytes before removing superseded APKs from this rolling release.
+          gh release view "$TAG" --json assets > /tmp/release-assets.json
+          mkdir -p verification
+          while IFS= read -r name; do
+            gh release download "$TAG" --pattern "$name" --dir verification
+          done < <(python3 -c 'import json; print("\n".join(a["name"] for a in json.load(open("dist/apk-manifest.json"))["apks"]))')
+          python3 - <<'PYVERIFY'
+          import json, pathlib, hashlib
+          manifest = json.loads(pathlib.Path('dist/apk-manifest.json').read_text())
+          assets = json.loads(pathlib.Path('/tmp/release-assets.json').read_text())['assets']
+          by_name = {asset['name']: asset for asset in assets}
+          for expected in manifest['apks']:
+              asset = by_name[expected['name']]
+              assert asset['size'] == expected['size'], expected['name']
+              with (pathlib.Path('verification') / expected['name']).open('rb') as downloaded:
+                  digest = hashlib.file_digest(downloaded, 'sha256').hexdigest()
+              assert digest == expected['sha256'], 'Uploaded checksum mismatch: ' + expected['name']
+          print('All uploaded APK checksums verified')
+          PYVERIFY
+          while IFS= read -r name; do
+            if [ ! -f "dist/$name" ]; then
+              gh release delete-asset "$TAG" "$name" --yes
+            fi
+          done < <(gh release view "$TAG" --json assets -q '.assets[].name | select(endswith(".apk"))')
+          # Finally verify visible names, stored asset names and HTTP download filenames agree.
+          gh api "repos/${{ github.repository }}/releases/tags/$TAG" > /tmp/release-final.json
+          python3 - <<'PYNAMES'
+          import json, pathlib, urllib.parse
+          release = json.loads(pathlib.Path('/tmp/release-final.json').read_text())
+          expected = {item['name'] for item in json.loads(pathlib.Path('dist/apk-manifest.json').read_text())['apks']}
+          actual = set()
+          for asset in release['assets']:
+              if not asset['name'].endswith('.apk'):
+                  continue
+              assert asset.get('label') in (None, '', asset['name']), 'Misleading display label'
+              assert urllib.parse.unquote(asset['browser_download_url'].rsplit('/', 1)[-1]) == asset['name']
+              actual.add(asset['name'])
+          assert actual == expected, 'Rolling release contains stale or missing APKs'
+          print('Asset names and download URLs agree; no obsolete APKs')
+          PYNAMES
           echo "Rolling pre-release ready: $TAG (commit $SHORT_SHA)"
           echo "Release publishedAt: $(gh release view "$TAG" --json publishedAt -q .publishedAt)"
           echo "Release tagName: $(gh release view "$TAG" --json tagName -q .tagName)"
@@ -224,4 +274,4 @@ jobs:
           Tag: $TAG
           Download: https://github.com/${{ github.repository }}/releases/tag/$TAG
 
-          This release is refreshed on every build - the tag and APK are overwritten in place."
+          This release is refreshed on every build. APKs are signature/checksum verified; obsolete APKs are removed after successful upload."
