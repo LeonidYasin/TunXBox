@@ -26,7 +26,6 @@ class ActionPresenter : Presenter() {
             gravity = Gravity.CENTER_VERTICAL
             setBackgroundResource(R.drawable.card_background_tv)
             isFocusable = true
-            isFocusableInTouchMode = true
             
             setOnFocusChangeListener { v, hasFocus ->
                 v.animate()
