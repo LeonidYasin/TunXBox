@@ -72,7 +72,7 @@ class TvScannerFragment : Fragment(), CameraScan.OnScanResultCallback {
                                 decoder.isMutableRequired = true
                             }
                         } else {
-                            @Suppress(\"DEPRECATION\") MediaStore.Images.Media.getBitmap(
+                            @Suppress("DEPRECATION") MediaStore.Images.Media.getBitmap(
                                 requireContext().contentResolver, uri
                             )
                         }
@@ -82,27 +82,27 @@ class TvScannerFragment : Fragment(), CameraScan.OnScanResultCallback {
                             totalImported += importFromQrText(result.text)
                         }
                     } catch (e: Exception) {
-                        Logs.w(\"Failed to decode QR from image\", e)
+                        Logs.w("Failed to decode QR from image", e)
                     }
                 }
                 
                 onMainDispatcher {
                     if (totalImported > 0) {
                         Toast.makeText(requireContext(), 
-                            \"Imported $totalImported profile(s)\", 
+                            "Imported $totalImported profile(s)", 
                             Toast.LENGTH_LONG).show()
                         parentFragmentManager.popBackStack()
                     } else if (qrFound) {
-                        Toast.makeText(requireContext(), \"QR found but no valid proxy data\", Toast.LENGTH_LONG).show()
+                        Toast.makeText(requireContext(), "QR found but no valid proxy data", Toast.LENGTH_LONG).show()
                         parentFragmentManager.popBackStack()
                     } else {
-                        Toast.makeText(requireContext(), \"No QR code found in image(s)\", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(requireContext(), "No QR code found in image(s)", Toast.LENGTH_SHORT).show()
                     }
                 }
             } catch (e: Exception) {
-                Logs.w(\"Import image failed\", e)
+                Logs.w("Import image failed", e)
                 onMainDispatcher {
-                    Toast.makeText(requireContext(), \"Import failed: ${e.readableMessage}\", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "Import failed: ${e.readableMessage}", Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -115,9 +115,10 @@ class TvScannerFragment : Fragment(), CameraScan.OnScanResultCallback {
             startCamera()
         } else {
             Toast.makeText(requireContext(), 
-                \"Camera permission denied. Use \\\"Import from image\\\" instead.\", 
+                "Camera permission denied. Use \"Import from image\" instead.", 
                 Toast.LENGTH_LONG).show()
-            hintText.text = \"Camera not available. Use the image import button above.\"\n            previewView.visibility = View.GONE
+            hintText.text = "Camera not available. Use the image import button above."
+            previewView.visibility = View.GONE
         }
     }
 
@@ -158,10 +159,11 @@ class TvScannerFragment : Fragment(), CameraScan.OnScanResultCallback {
     private fun startCamera() {
         try {
             cameraScan.startCamera()
-            hintText.text = \"Point camera at QR code to import proxy profile\"
+            hintText.text = "Point camera at QR code to import proxy profile"
         } catch (e: Exception) {
-            Logs.w(\"Camera start failed\", e)
-            hintText.text = \"Camera not available. Use the image import button.\"\n            previewView.visibility = View.GONE
+            Logs.w("Camera start failed", e)
+            hintText.text = "Camera not available. Use the image import button."
+            previewView.visibility = View.GONE
         }
     }
     
@@ -171,19 +173,19 @@ class TvScannerFragment : Fragment(), CameraScan.OnScanResultCallback {
             cameraScan.enableTorch(!isTorch)
             flashlightBtn.isSelected = !isTorch
         } catch (e: Exception) {
-            Logs.w(\"Flashlight toggle failed\", e)
+            Logs.w("Flashlight toggle failed", e)
         }
     }
     
     private fun importFromImage() {
-        importImageLauncher.launch(\"image/*\")
+        importImageLauncher.launch("image/*")
     }
     
     private fun releaseCamera() {
         try {
             cameraScan.release()
         } catch (e: Exception) {
-            Logs.w(\"Camera release failed\", e)
+            Logs.w("Camera release failed", e)
         }
     }
     
@@ -192,13 +194,13 @@ class TvScannerFragment : Fragment(), CameraScan.OnScanResultCallback {
         
         runOnDefaultDispatcher {
             try {
-                val text = result?.text ?: throw Exception(\"QR code not found\")
+                val text = result?.text ?: throw Exception("QR code not found")
                 val count = importFromQrText(text)
                 
                 onMainDispatcher {
                     if (count > 0) {
                         Toast.makeText(requireContext(), 
-                            \"Imported $count profile(s)\", 
+                            "Imported $count profile(s)", 
                             Toast.LENGTH_LONG).show()
                         parentFragmentManager.popBackStack()
                     } else {
@@ -219,7 +221,7 @@ class TvScannerFragment : Fragment(), CameraScan.OnScanResultCallback {
                 Logs.w(e)
                 onMainDispatcher {
                     var text = getString(R.string.action_import_err)
-                    text += \"\\n\" + e.readableMessage
+                    text += "\n" + e.readableMessage
                     Toast.makeText(requireContext(), text, Toast.LENGTH_SHORT).show()
                     finished.set(false)
                 }
