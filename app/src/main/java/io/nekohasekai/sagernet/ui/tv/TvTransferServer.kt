@@ -148,55 +148,6 @@ class TvTransferServer(
         }
     }
 
-    private fun handleExport(session: IHTTPSession, corsHeaders: Map<String, String>): Response {
-        fun Response.addCors(): Response {
-            corsHeaders.forEach { (k, v) -> addHeader(k, v) }
-            return this
-        }
-        
-        try {
-            val token = session.parameters["session"]?.firstOrNull() ?: ""
-            if (token != sessionToken) {
-                return newFixedLengthResponse(Response.Status.FORBIDDEN, "text/plain", "Invalid session").addCors()
-            }
-
-            // Get all profiles from current group
-            val groupId = DataStore.selectedGroup
-            val profiles = SagerDatabase.proxyDao.getByGroup(groupId)
-            
-            val profilesList = profiles.mapNotNull { profile ->
-                try {
-                    val link = profile.toStdLink()
-                    if (link.isNotBlank()) {
-                        JSONObject().apply {
-                            put("name", profile.displayName())
-                            put("type", profile.displayType())
-                            put("link", link)
-                        }
-                    } else null
-                } catch (e: Exception) {
-                    Logs.w("Failed to export profile: ${profile.displayName()}", e)
-                    null
-                }
-            }
-
-            val json = JSONObject().apply {
-                put("status", "success")
-                put("device", "TunXBox-TV")
-                put("profiles", org.json.JSONArray(profilesList))
-                put("count", profilesList.size)
-            }
-
-            return newFixedLengthResponse(Response.Status.OK, "application/json", json.toString()).addCors()
-
-        } catch (e: Exception) {
-            Logs.e("Export error", e)
-            return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "application/json",
-                JSONObject().apply { put("error", e.message) }.toString()
-            ).addCors()
-        }
-    }
-
     fun getSessionToken(): String = sessionToken
     
     fun getLocalIpAddress(): String {
