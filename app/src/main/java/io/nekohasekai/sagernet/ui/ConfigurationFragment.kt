@@ -355,6 +355,25 @@ class ConfigurationFragment @JvmOverloads constructor(
 
     }
 
+    /**
+     * Starts a local transfer server and shows a QR code dialog.
+     * Another device (TV or phone) can scan this QR to pull profiles from this device.
+     * The server is stopped when the dialog is dismissed.
+     */
+    private fun showSendToTvDialog() {
+        val server = TvTransferServer()
+        val ip = server.getLocalIpAddress()
+        val port = 8765
+        val token = server.getSessionToken()
+        val qrData = "tunxbox://transfer?ip=$ip&port=$port&session=$token"
+
+        val dialog = QRCodeDialog(qrData, getString(R.string.action_send_to_tv_qr_hint))
+        dialog.setOnDismissListener {
+            try { server.stop() } catch (_: Exception) {}
+        }
+        dialog.showAllowingStateLoss(parentFragmentManager, "send_to_tv_qr")
+    }
+
     override fun onMenuItemClick(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.action_scan_qr_code -> {
