@@ -75,8 +75,8 @@ class MainBrowseFragment : BrowseSupportFragment() {
         const val ACTION_IMPORT_URL = 5L
         const val ACTION_IMPORT_FILE = 6L
         const val ACTION_SWITCH_MODE = 7L
-        const val ACTION_QR_TRANSFER = 8L
-        const val ACTION_SCAN_QR = 9L
+        const val ACTION_QR_SEND = 8L
+        const val ACTION_QR_RECEIVE = 9L
     }
 
     // File picker for import
@@ -213,9 +213,9 @@ class MainBrowseFragment : BrowseSupportFragment() {
         actionsAdapter.add(TvAction(ACTION_IMPORT_CLIPBOARD, "📋 Clipboard", "Paste link from phone"))
         actionsAdapter.add(TvAction(ACTION_IMPORT_URL, "🌐 From URL", "Subscription or direct link"))
         actionsAdapter.add(TvAction(ACTION_IMPORT_FILE, "📁 From File", "JSON/YAML/Conf file"))
-        actionsAdapter.add(TvAction(ACTION_SCAN_QR, "📷 Scan QR", "Camera or image file"))
+        actionsAdapter.add(TvAction(ACTION_QR_RECEIVE, "📷 Receive via QR", "Scan QR from remote device"))
         actionsAdapter.add(TvAction(ACTION_ADD_PROFILE, "➕ Manual", "Enter details via dialog"))
-        actionsAdapter.add(TvAction(ACTION_QR_TRANSFER, "📲 QR Transfer", "Receive from phone via QR"))
+        actionsAdapter.add(TvAction(ACTION_QR_SEND, "📲 Send QR Code", "Show QR for phone to scan"))
         actionsAdapter.add(TvAction(ACTION_SWITCH_MODE, "📱 Phone Mode", "Switch to mobile UI"))
     }
 
@@ -243,9 +243,9 @@ class MainBrowseFragment : BrowseSupportFragment() {
             ACTION_IMPORT_CLIPBOARD -> importFromClipboard()
             ACTION_IMPORT_URL -> showUrlImportDialog()
             ACTION_IMPORT_FILE -> importFileLauncher.launch("*/*")
-            ACTION_SCAN_QR -> showScanner()
+            ACTION_QR_RECEIVE -> showQrReceive()
             ACTION_ADD_PROFILE -> showManualAddDialog()
-            ACTION_QR_TRANSFER -> showQrTransfer()
+            ACTION_QR_SEND -> showQrSend()
             ACTION_SWITCH_MODE -> switchToPhoneMode()
         }
     }
@@ -302,18 +302,19 @@ class MainBrowseFragment : BrowseSupportFragment() {
             .show()
     }
     
-    private fun showScanner() {
+    private fun showQrReceive() {
+        // Scans QR from remote device to RECEIVE profiles
         parentFragmentManager.beginTransaction()
-            .replace(R.id.tv_container, TvScannerFragment())
-            .addToBackStack("scanner")
+            .replace(R.id.tv_container, TvQrReceiveFragment())
+            .addToBackStack("qr_receive")
             .commit()
     }
     
-    private fun showQrTransfer() {
-        // Заменяем текущий фрагмент на QR transfer (TV shows QR, phone sends profiles)
+    private fun showQrSend() {
+        // Shows QR code for remote device to scan and SEND profiles to this TV
         parentFragmentManager.beginTransaction()
             .replace(R.id.tv_container, QrCodeTransferFragment())
-            .addToBackStack("qr_transfer")
+            .addToBackStack("qr_send")
             .commit()
     }
     
