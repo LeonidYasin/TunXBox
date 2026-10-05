@@ -13,6 +13,8 @@
     <string name="menu_configuration">Configuration</string>
     <string name="menu_group">Group</string>
     <string name="menu_about">About</string>
+    <string name="switch_tv_mode">📺 Switch to TV Mode</string>
+    <string name="switch_phone_mode">📱 Switch to Phone Mode</string>
     <string name="theme">Theme</string>
     <string name="document">Document</string>
     <string name="group_default">Ungrouped</string>
