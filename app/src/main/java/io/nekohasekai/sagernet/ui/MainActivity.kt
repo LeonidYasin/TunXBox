@@ -137,9 +137,6 @@ class MainActivity : ThemedActivity(),
                 .setPositiveButton(android.R.string.ok, null)
                 .show()
         }
-
-        // TV Mode button in options menu
-        invalidateOptionsMenu()
     }
 
     fun refreshNavMenu(clashApi: Boolean) {
