@@ -163,7 +163,7 @@ class ScannerActivity : ThemedActivity(),
      * Phone scanned TV's QR code. Parse tunxbox://transfer URL, collect all profiles
      * from the current group, and POST them to the TV's HTTP server.
      */
-    private fun handleTvTransfer(qrText: String) {
+    private suspend fun handleTvTransfer(qrText: String) {
         try {
             val uri = java.net.URI(qrText)
             val params = uri.query?.split("&")?.associate {
