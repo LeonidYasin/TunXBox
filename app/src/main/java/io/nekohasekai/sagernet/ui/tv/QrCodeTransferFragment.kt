@@ -20,7 +20,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * Показывает QR код для передачи подписки С ТЕЛЕФОНА НА TV.
+ * Shows a QR code on TV so that a phone can scan it and send proxy profiles to the TV.
+ * 
+ * The QR contains a tunxbox://transfer URL with the TV's IP, port and session token.
+ * The phone app scans this, connects to the TV's HTTP server, and POSTs proxy configs.
+ * The TV's TvTransferServer receives and imports them.
  */
 class QrCodeTransferFragment : Fragment() {
 
@@ -43,7 +47,7 @@ class QrCodeTransferFragment : Fragment() {
         }
 
         val title = TextView(requireContext()).apply {
-            text = " Transfer Subscription to TV"
+            text = "📲 Receive Profiles from Phone"
             textSize = 32f
             setTextColor(Color.WHITE)
             gravity = android.view.Gravity.CENTER
@@ -73,9 +77,9 @@ class QrCodeTransferFragment : Fragment() {
 
         val hint = TextView(requireContext()).apply {
             text = "1. Open TunXBox on your phone\n" +
-                   "2. Go to Subscriptions → Scan QR\n" +
-                   "3. Point camera at this screen\n" +
-                   "4. Select profiles to send"
+                   "2. Use \"Scan QR\" or any QR scanner\n" +
+                   "3. Point phone camera at this screen\n" +
+                   "4. Phone will send profiles to this TV"
             textSize = 16f
             setTextColor(Color.parseColor("#88FFFFFF"))
             gravity = android.view.Gravity.CENTER
@@ -109,7 +113,7 @@ class QrCodeTransferFragment : Fragment() {
                 withContext(Dispatchers.IO) {
                     transferServer = TvTransferServer(
                         onImportSuccess = { count ->
-                            // Callback вызывается из NanoHTTPD потока — переключаемся на Main
+                            // Callback is called from NanoHTTPD thread — switch to Main
                             fragmentScope.launch {
                                 statusText.text = "✅ Imported $count profile(s)!"
                                 statusText.setTextColor(Color.parseColor("#FF4CAF50"))
@@ -139,7 +143,7 @@ class QrCodeTransferFragment : Fragment() {
                     val writer = QRCodeWriter()
                     val bitMatrix = writer.encode(qrData, BarcodeFormat.QR_CODE, QR_SIZE, QR_SIZE)
                     
-                    var bitmap = Bitmap.createBitmap(QR_SIZE, QR_SIZE, Bitmap.Config.RGB_565)
+                    val bitmap = Bitmap.createBitmap(QR_SIZE, QR_SIZE, Bitmap.Config.RGB_565)
                     for (x in 0 until QR_SIZE) {
                         for (y in 0 until QR_SIZE) {
                             bitmap.setPixel(x, y, if (bitMatrix[x, y]) Color.BLACK else Color.WHITE)
