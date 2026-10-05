@@ -18,15 +18,18 @@ import io.nekohasekai.sagernet.aidl.ISagerNetService
 import io.nekohasekai.sagernet.bg.BaseService
 import io.nekohasekai.sagernet.bg.SagerConnection
 import io.nekohasekai.sagernet.database.DataStore
-import io.nekohasekai.sagernet.database.ProfileManager
 import io.nekohasekai.sagernet.database.ProxyEntity
 import io.nekohasekai.sagernet.database.SagerDatabase
-import io.nekohasekai.sagernet.group.RawUpdater
 import io.nekohasekai.sagernet.ktx.onMainDispatcher
 import io.nekohasekai.sagernet.ktx.runOnDefaultDispatcher
 import io.nekohasekai.sagernet.ui.MainActivity
 import io.nekohasekai.sagernet.ui.VpnRequestActivity
-import java.net.URL
+import android.net.Uri
+import io.nekohasekai.sagernet.ui.profile.HttpSettingsActivity
+import io.nekohasekai.sagernet.ui.profile.ShadowsocksSettingsActivity
+import io.nekohasekai.sagernet.ui.profile.SocksSettingsActivity
+import io.nekohasekai.sagernet.ui.profile.TrojanSettingsActivity
+import io.nekohasekai.sagernet.ui.profile.VMessSettingsActivity
 
 class MainBrowseFragment : BrowseSupportFragment() {
 
@@ -80,19 +83,18 @@ class MainBrowseFragment : BrowseSupportFragment() {
         if (uri != null) {
             runOnDefaultDispatcher {
                 try {
-                    val text = requireContext().contentResolver.openInputStream(uri)?.bufferedReader()?.readText()
+                    val text = requireContext().contentResolver.openInputStream(uri)?.use { stream ->
+                        val data = stream.readBytesLimited()
+                        String(data, Charsets.UTF_8)
+                    }
                     if (text.isNullOrBlank()) {
                         onMainDispatcher { Toast.makeText(requireContext(), "Empty file", Toast.LENGTH_SHORT).show() }
                         return@runOnDefaultDispatcher
                     }
-                    val proxies = RawUpdater.parseRaw(text)
-                    if (proxies.isNullOrEmpty()) {
-                        onMainDispatcher { Toast.makeText(requireContext(), "No valid proxy in file", Toast.LENGTH_SHORT).show() }
-                    } else {
-                        val targetId = DataStore.selectedGroupForImport()
-                        proxies.forEach { ProfileManager.createProfile(targetId, it) }
-                        onMainDispatcher {
-                            Toast.makeText(requireContext(), "Imported ${proxies.size} profile(s)", Toast.LENGTH_LONG).show()
+                    val count = TvProfileImporter.importProfiles(text)
+                    onMainDispatcher {
+                        if (isAdded && view != null) {
+                            Toast.makeText(requireContext(), "Imported $count profile(s)", Toast.LENGTH_LONG).show()
                             loadProfiles()
                         }
                     }
@@ -185,8 +187,10 @@ class MainBrowseFragment : BrowseSupportFragment() {
                 listOf(TvEmptyHint("Error: ${e.message}"))
             }
             onMainDispatcher {
-                profilesAdapter.clear()
-                profilesAdapter.addAll(0, items)
+                if (isAdded && view != null) {
+                    profilesAdapter.clear()
+                    profilesAdapter.addAll(0, items)
+                }
             }
         }
     }
@@ -202,11 +206,11 @@ class MainBrowseFragment : BrowseSupportFragment() {
         }
         
         actionsAdapter.add(TvAction(ACTION_IMPORT_CLIPBOARD, "📋 Clipboard", "Paste link from phone"))
-        actionsAdapter.add(TvAction(ACTION_IMPORT_URL, "🌐 From URL", "Subscription or direct link"))
+        actionsAdapter.add(TvAction(ACTION_IMPORT_URL, "🌐 From URL / Link", "Subscription URL or proxy link"))
         actionsAdapter.add(TvAction(ACTION_IMPORT_FILE, "📁 From File", "JSON/YAML/Conf file"))
-        actionsAdapter.add(TvAction(ACTION_ADD_PROFILE, "➕ Manual", "Enter details via dialog"))
+        actionsAdapter.add(TvAction(ACTION_ADD_PROFILE, "➕ Manual", "Full profile editor"))
         actionsAdapter.add(TvAction(ACTION_QR_SCAN, "📷 Scan QR", "Camera/image — get profiles from phone"))
-        actionsAdapter.add(TvAction(ACTION_QR_SEND, "📲 Show QR", "Phone scans to send profiles here"))
+        actionsAdapter.add(TvAction(ACTION_QR_SEND, "📲 Import from phone", "Browser: paste a link or upload a file"))
         actionsAdapter.add(TvAction(ACTION_SWITCH_MODE, "📱 Phone Mode", "Switch to mobile UI"))
     }
 
@@ -250,6 +254,18 @@ class MainBrowseFragment : BrowseSupportFragment() {
         importProxiesFromText(text)
     }
     
+    private fun java.io.InputStream.readBytesLimited(): ByteArray {
+        val output = java.io.ByteArrayOutputStream()
+        val buffer = ByteArray(8192)
+        while (true) {
+            val n = read(buffer)
+            if (n < 0) break
+            require(output.size() + n <= TransferProtocol.MAX_BODY_BYTES) { "File exceeds 2 MiB" }
+            output.write(buffer, 0, n)
+        }
+        return output.toByteArray()
+    }
+
     private fun showUrlImportDialog() {
         val input = android.widget.EditText(requireContext()).apply {
             hint = "https://example.com/sub.yaml or ss://..."
@@ -265,17 +281,36 @@ class MainBrowseFragment : BrowseSupportFragment() {
                     Toast.makeText(requireContext(), "URL required", Toast.LENGTH_SHORT).show()
                     return@setPositiveButton
                 }
-                runOnDefaultDispatcher {
-                    try {
-                        val text = URL(url).readText()
-                        importProxiesFromText(text)
-                    } catch (e: Exception) {
-                        onMainDispatcher {
-                            Toast.makeText(requireContext(), "Failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                val uri = Uri.parse(url)
+                if (uri.scheme == "sn" || uri.scheme == "clash") {
+                    // Retain upstream confirmation and compressed subscription link support.
+                    startActivity(Intent(requireContext(), MainActivity::class.java).apply {
+                        action = Intent.ACTION_VIEW
+                        data = uri
+                        putExtra("force_phone_mode", true)
+                    })
+                } else if (uri.scheme == "http" || uri.scheme == "https") {
+                    runOnDefaultDispatcher {
+                        try {
+                            val count = TvProfileImporter.importSubscription(url)
+                            onMainDispatcher {
+                                if (isAdded) {
+                                    Toast.makeText(requireContext(), "Subscription imported: $count profile(s)", Toast.LENGTH_LONG).show()
+                                    loadProfiles()
+                                }
+                            }
+                        } catch (e: Exception) {
+                            onMainDispatcher {
+                                if (isAdded) Toast.makeText(requireContext(), "Subscription import failed. Check the URL and connection.", Toast.LENGTH_LONG).show()
+                            }
                         }
                     }
+                } else {
+                    // ss://, vmess://, vless://, trojan:// etc. are profile DATA, not URLs to fetch.
+                    importProxiesFromText(url)
                 }
             }
+            .setNeutralButton("Use phone instead") { _, _ -> showQrSend() }
             .setNegativeButton("Cancel", null)
             .show()
     }
@@ -283,12 +318,19 @@ class MainBrowseFragment : BrowseSupportFragment() {
     private fun showManualAddDialog() {
         val protocols = arrayOf("Shadowsocks", "VMess", "VLESS", "Trojan", "SOCKS5", "HTTP")
         android.app.AlertDialog.Builder(requireContext())
-            .setTitle("Add Profile (Manual)")
+            .setTitle("Add Profile (Manual) — easier: Import from phone")
             .setItems(protocols) { _, which ->
-                val protocol = protocols[which]
-                Toast.makeText(requireContext(), 
-                    "$protocol: Use phone app to configure, then sync via clipboard/URL", 
-                    Toast.LENGTH_LONG).show()
+                // Same editors and VLESS flag as upstream ConfigurationFragment.
+                val editor = when (which) {
+                    0 -> ShadowsocksSettingsActivity::class.java
+                    1, 2 -> VMessSettingsActivity::class.java
+                    3 -> TrojanSettingsActivity::class.java
+                    4 -> SocksSettingsActivity::class.java
+                    else -> HttpSettingsActivity::class.java
+                }
+                startActivity(Intent(requireContext(), editor).apply {
+                    if (which == 2) putExtra("vless", true)
+                })
             }
             .show()
     }
@@ -312,7 +354,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
             .setTitle("📱 Switch to Phone Mode")
             .setMessage("Restart app with mobile interface?\n\n• Touch-optimized phone/tablet UI\n• To return to TV mode: open the side drawer and tap '📺 Switch to TV Mode'")
             .setPositiveButton("Switch to Phone") { _, _ ->
-                DataStore.profileCacheStore.putString("ui_mode_override", "phone")
+                TvUiPreferences.phoneMode = true
                 
                 val intent = Intent(requireContext(), MainActivity::class.java).apply {
                     addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -328,28 +370,21 @@ class MainBrowseFragment : BrowseSupportFragment() {
     private fun importProxiesFromText(text: String) {
         runOnDefaultDispatcher {
             try {
-                val proxies = RawUpdater.parseRaw(text)
-                if (proxies.isNullOrEmpty()) {
-                    onMainDispatcher {
-                        Toast.makeText(requireContext(), "No valid proxy found", Toast.LENGTH_SHORT).show()
-                    }
-                } else {
-                    val targetId = DataStore.selectedGroupForImport()
-                    for (proxy in proxies) {
-                        ProfileManager.createProfile(targetId, proxy)
-                    }
-                    onMainDispatcher {
-                        Toast.makeText(requireContext(), "Imported ${proxies.size} profile(s)", Toast.LENGTH_LONG).show()
+                val count = TvProfileImporter.importProfiles(text)
+                onMainDispatcher {
+                    if (isAdded && view != null) {
+                        Toast.makeText(requireContext(), "Imported $count profile(s)", Toast.LENGTH_LONG).show()
                         loadProfiles()
                     }
                 }
             } catch (e: Exception) {
                 onMainDispatcher {
-                    Toast.makeText(requireContext(), "Import failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                    if (isAdded && view != null) Toast.makeText(requireContext(), "Import failed. Check configuration (maximum 2 MiB).", Toast.LENGTH_LONG).show()
                 }
             }
         }
     }
+
 }
 
 data class TvAction(val id: Long, val title: String, val subtitle: String)

@@ -2,229 +2,149 @@ package io.nekohasekai.sagernet.ui.tv
 
 import fi.iki.elonen.NanoHTTPD
 import io.nekohasekai.sagernet.database.DataStore
-import io.nekohasekai.sagernet.database.ProfileManager
 import io.nekohasekai.sagernet.database.SagerDatabase
-import io.nekohasekai.sagernet.group.RawUpdater
-import io.nekohasekai.sagernet.ktx.Logs
+import io.nekohasekai.sagernet.ktx.app
 import kotlinx.coroutines.runBlocking
 import org.json.JSONObject
-import java.io.IOException
-import java.util.UUID
+import java.io.EOFException
+import java.net.Inet4Address
+import java.net.NetworkInterface
+import java.util.Collections
 
-/**
- * Local HTTP server for bidirectional profile transfer between devices.
- * Used on both TV and phone sides.
- *
- * Endpoints:
- * - POST /import  — receive profiles (JSON body with "profiles" as newline-separated links)
- * - GET  /export  — serve profiles from current group as newline-separated links
- * - GET  /status  — health check
+/** Temporary LAN-only pairing server. The QR is the only source of the secret token.
+ * HTTP is not encrypted: use only a trusted LAN, never port-forward this service.
+ * Export is opt-in and is not enabled on a receiving TV.
  */
 class TvTransferServer(
-    private val onImportSuccess: ((count: Int) -> Unit)? = null,
-    private val onImportError: ((error: String) -> Unit)? = null
-) : NanoHTTPD(8765) {
+    private val onImportSuccess: ((Int) -> Unit)? = null,
+    private val onImportError: ((String) -> Unit)? = null,
+    private val allowExport: Boolean = false,
+    private val bindAddress: String = findLanAddress()
+) : NanoHTTPD(bindAddress, PORT) {
+    private val sessionToken = TransferProtocol.newToken()
+    private val startedNanos = System.nanoTime()
+    private val importLock = Any()
 
-    private val sessionToken = UUID.randomUUID().toString().substring(0, 8)
-    
     init {
-        try {
-            start(SOCKET_READ_TIMEOUT, false)
-            Logs.i("TvTransferServer started on port 8765, token=$sessionToken")
-        } catch (e: IOException) {
-            Logs.e("Failed to start TvTransferServer", e)
-        }
+        // Propagate bind errors so the UI never displays a QR for a nonexistent server.
+        start(SOCKET_READ_TIMEOUT, true)
     }
+
+    private fun expired() = (System.nanoTime() - startedNanos) / 1_000_000 >= TransferProtocol.SESSION_MILLIS
+
+    private fun reply(status: Response.Status, message: String): Response =
+        newFixedLengthResponse(status, "application/json; charset=utf-8", message).apply {
+            addHeader("Cache-Control", "no-store")
+            addHeader("Referrer-Policy", "no-referrer")
+            addHeader("X-Content-Type-Options", "nosniff")
+        }
+
+    private fun error(status: Response.Status, message: String) =
+        reply(status, JSONObject().put("error", message).toString())
 
     override fun serve(session: IHTTPSession): Response {
-        val corsHeaders = mapOf(
-            "Access-Control-Allow-Origin" to "*",
-            "Access-Control-Allow-Methods" to "POST, GET, OPTIONS",
-            "Access-Control-Allow-Headers" to "Content-Type, X-Session-Token"
-        )
-
-        fun Response.addCors(): Response {
-            corsHeaders.forEach { (k, v) -> addHeader(k, v) }
-            return this
+        val expectedHost = "$bindAddress:$PORT"
+        // Prevent DNS rebinding and cross-origin browser requests. No wildcard CORS.
+        if (session.headers["host"] != expectedHost) {
+            return error(Response.Status.FORBIDDEN, "Invalid host")
         }
-
-        return when {
-            session.method == Method.OPTIONS -> {
-                newFixedLengthResponse(Response.Status.OK, "text/plain", "OK").addCors()
-            }
-            
-            session.uri == "/import" && session.method == Method.POST -> {
-                handleImport(session, corsHeaders)
-            }
-
-            session.uri == "/export" && session.method == Method.GET -> {
-                handleExport(session, corsHeaders)
-            }
-            
-            session.uri == "/status" -> {
-                val json = JSONObject().apply {
-                    put("status", "ready")
-                    put("session", sessionToken)
-                    put("device", "TunXBox")
-                }
-                newFixedLengthResponse(Response.Status.OK, "application/json", json.toString()).addCors()
-            }
-            
-            else -> {
-                newFixedLengthResponse(Response.Status.NOT_FOUND, "text/plain", "Not Found").addCors()
+        val origin = session.headers["origin"]
+        if (origin != null && origin != "http://$expectedHost") {
+            return error(Response.Status.FORBIDDEN, "Cross-origin access denied")
+        }
+        if (session.uri == "/" && session.method == Method.GET) {
+            val html = app.assets.open("tv-transfer.html").bufferedReader().use { it.readText() }
+            return newFixedLengthResponse(Response.Status.OK, "text/html; charset=utf-8", html).apply {
+                addHeader("Cache-Control", "no-store")
+                addHeader("Referrer-Policy", "no-referrer")
+                addHeader("X-Frame-Options", "DENY")
+                addHeader("X-Content-Type-Options", "nosniff")
+                addHeader("Content-Security-Policy", "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'")
             }
         }
+        if (session.uri == "/status" && session.method == Method.GET) {
+            // Never include the pairing token or any profile data here.
+            return reply(Response.Status.OK, JSONObject().put("status", if (expired()) "expired" else "ready").toString())
+        }
+        if (session.uri != "/import" && session.uri != "/export") {
+            return error(Response.Status.NOT_FOUND, "Not found")
+        }
+        if (expired() || !TransferProtocol.tokenMatches(sessionToken, session.headers["x-session-token"] ?: "")) {
+            return error(Response.Status.FORBIDDEN, "Invalid or expired pairing. Scan the QR again.")
+        }
+        if (session.uri == "/export" && session.method == Method.GET) {
+            if (!allowExport) return error(Response.Status.FORBIDDEN, "Export is disabled on this receiver")
+            return handleExport()
+        }
+        if (session.uri == "/import" && session.method == Method.POST) return handleImport(session)
+        return error(Response.Status.METHOD_NOT_ALLOWED, "Method not allowed")
     }
 
-    /**
-     * GET /export?session=TOKEN
-     * Returns all profiles from the current group as newline-separated standard links.
-     */
-    private fun handleExport(session: IHTTPSession, corsHeaders: Map<String, String>): Response {
-        fun Response.addCors(): Response {
-            corsHeaders.forEach { (k, v) -> addHeader(k, v) }
-            return this
+    private fun handleExport(): Response = try {
+        val profiles = runBlocking { SagerDatabase.proxyDao.getByGroup(DataStore.selectedGroup) }
+        val links = profiles.mapNotNull {
+            try { it.toStdLink().takeIf(String::isNotBlank) } catch (_: Exception) { null }
         }
-
-        // Session token can come from query param or header
-        val queryToken = session.parameters?.get("session")?.firstOrNull() ?: ""
-        val headerToken = session.headers["x-session-token"] ?: ""
-        val token = queryToken.ifBlank { headerToken }
-
-        if (token != sessionToken) {
-            return newFixedLengthResponse(Response.Status.FORBIDDEN, "text/plain", "Invalid session").addCors()
-        }
-
-        val profiles = runBlocking {
-            try {
-                val groupId = DataStore.selectedGroup
-                SagerDatabase.proxyDao.getByGroup(groupId)
-            } catch (e: Exception) {
-                Logs.w("Failed to load profiles for export", e)
-                emptyList()
-            }
-        }
-
-        val links = profiles.mapNotNull { profile ->
-            try {
-                profile.toStdLink().takeIf { it.isNotBlank() }
-            } catch (e: Exception) {
-                Logs.w("Failed to export profile", e)
-                null
-            }
-        }
-
-        val responseBody = links.joinToString("\n")
-        val responseJson = JSONObject().apply {
-            put("status", "ok")
-            put("profiles", responseBody)
-            put("count", links.size)
-        }
-        return newFixedLengthResponse(Response.Status.OK, "application/json", responseJson.toString()).addCors()
+        val json = JSONObject().put("status", "ok").put("profiles", links.joinToString("\n")).put("count", links.size)
+        if (json.toString().toByteArray(Charsets.UTF_8).size > TransferProtocol.MAX_BODY_BYTES) {
+            error(Response.Status.PAYLOAD_TOO_LARGE, "Profiles exceed 2 MiB. Transfer a smaller group.")
+        } else reply(Response.Status.OK, json.toString())
+    } catch (_: Exception) {
+        error(Response.Status.INTERNAL_ERROR, "Could not export profiles")
     }
 
-    private fun handleImport(session: IHTTPSession, corsHeaders: Map<String, String>): Response {
-        fun Response.addCors(): Response {
-            corsHeaders.forEach { (k, v) -> addHeader(k, v) }
-            return this
+    private fun handleImport(session: IHTTPSession): Response {
+        if (session.headers["transfer-encoding"] != null) {
+            return error(Response.Status.BAD_REQUEST, "Chunked requests are not supported; supply Content-Length")
         }
-        
-        try {
-            val token = session.headers["x-session-token"] ?: ""
-            if (token != sessionToken) {
-                return newFixedLengthResponse(Response.Status.FORBIDDEN, "text/plain", "Invalid session").addCors()
-            }
-
-            val contentLength = session.headers["content-length"]?.toIntOrNull() ?: 0
-            val buffer = ByteArray(contentLength)
-            session.inputStream.read(buffer)
-            val body = String(buffer)
-
-            val json = JSONObject(body)
-            val profilesData = json.optString("profiles", "")
-            val subscriptionUrl = json.optString("subscription_url", "")
-
-            var importedCount = 0
-
-            runBlocking {
-                if (profilesData.isNotBlank()) {
-                    val links = profilesData.split("\n").filter { it.isNotBlank() }
-                    val targetId = DataStore.selectedGroupForImport()
-                    
-                    for (link in links) {
-                        try {
-                            val proxies = RawUpdater.parseRaw(link)
-                            if (!proxies.isNullOrEmpty()) {
-                                for (proxy in proxies) {
-                                    ProfileManager.createProfile(targetId, proxy)
-                                    importedCount++
-                                }
-                            }
-                        } catch (e: Exception) {
-                            Logs.w("Failed to import profile: $link", e)
-                        }
-                    }
-                } else if (subscriptionUrl.isNotBlank()) {
-                    try {
-                        val text = java.net.URL(subscriptionUrl).readText()
-                        val proxies = RawUpdater.parseRaw(text)
-                        if (!proxies.isNullOrEmpty()) {
-                            val targetId = DataStore.selectedGroupForImport()
-                            for (proxy in proxies) {
-                                ProfileManager.createProfile(targetId, proxy)
-                                importedCount++
-                            }
-                        }
-                    } catch (e: Exception) {
-                        Logs.w("Failed to import from URL: $subscriptionUrl", e)
-                    }
+        if (session.headers["content-type"]?.substringBefore(';')?.trim() != "application/json") {
+            return error(Response.Status.UNSUPPORTED_MEDIA_TYPE, "Use application/json")
+        }
+        val length = session.headers["content-length"]?.toLongOrNull()
+            ?: return error(Response.Status.BAD_REQUEST, "Content-Length required")
+        if (length > TransferProtocol.MAX_BODY_BYTES) {
+            return error(Response.Status.PAYLOAD_TOO_LARGE, "Maximum payload is 2 MiB")
+        }
+        if (length <= 0) return error(Response.Status.BAD_REQUEST, "Empty body")
+        return try {
+            val body = TransferProtocol.readBody(session.inputStream, length.toInt())
+            val json = JSONObject(String(body, Charsets.UTF_8))
+            val profiles = json.optString("profiles", "").trim()
+            val subscription = json.optString("subscription_url", "").trim()
+            require(profiles.isNotBlank() xor subscription.isNotBlank()) { "Supply profiles OR a subscription URL" }
+            val imported = synchronized(importLock) {
+                runBlocking {
+                    if (profiles.isNotBlank()) TvProfileImporter.importProfiles(profiles)
+                    else TvProfileImporter.importSubscription(subscription)
                 }
             }
-
-            if (importedCount > 0) {
-                onImportSuccess?.invoke(importedCount)
-                val response = JSONObject().apply {
-                    put("status", "success")
-                    put("imported", importedCount)
-                }
-                return newFixedLengthResponse(Response.Status.OK, "application/json", response.toString()).addCors()
-            } else {
-                onImportError?.invoke("No valid profiles found")
-                return newFixedLengthResponse(Response.Status.BAD_REQUEST, "application/json",
-                    JSONObject().apply { put("error", "No valid profiles") }.toString()
-                ).addCors()
-            }
-
-        } catch (e: Exception) {
-            Logs.e("Import error", e)
-            onImportError?.invoke(e.message ?: "Unknown error")
-            return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "application/json",
-                JSONObject().apply { put("error", e.message) }.toString()
-            ).addCors()
+            onImportSuccess?.invoke(imported)
+            reply(Response.Status.OK, JSONObject().put("status", "success").put("imported", imported).toString())
+        } catch (_: EOFException) {
+            error(Response.Status.BAD_REQUEST, "Incomplete request body")
+        } catch (_: Exception) {
+            // Configurations, tokens and subscription credentials must not enter logs/errors.
+            val message = "Import failed. Check the configuration, subscription URL and network."
+            onImportError?.invoke(message)
+            error(Response.Status.BAD_REQUEST, message)
         }
     }
 
     fun getSessionToken(): String = sessionToken
-    
-    fun getLocalIpAddress(): String {
-        try {
-            val interfaces = java.net.NetworkInterface.getNetworkInterfaces()
-            while (interfaces.hasMoreElements()) {
-                val intf = interfaces.nextElement()
-                val addrs = intf.inetAddresses
-                while (addrs.hasMoreElements()) {
-                    val addr = addrs.nextElement()
-                    if (!addr.isLoopbackAddress && addr is java.net.InetAddress) {
-                        val hostAddr = addr.hostAddress
-                        if (hostAddr != null && hostAddr.contains(".")) {
-                            return hostAddr
-                        }
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            Logs.e("Failed to get IP", e)
+    fun getLocalIpAddress(): String = bindAddress
+    fun getAppQrData(): String = "tunxbox://transfer?ip=$bindAddress&port=$PORT&session=$sessionToken"
+    // Fragment stays in the browser: it is not sent in HTTP requests or Referer headers.
+    fun getBrowserQrData(): String = "http://$bindAddress:$PORT/#session=$sessionToken"
+
+    companion object {
+        const val PORT = 8765
+        private fun findLanAddress(): String {
+            val interfaces = Collections.list(NetworkInterface.getNetworkInterfaces())
+                .filter { it.isUp && !it.isLoopback && !it.name.startsWith("tun") && !it.name.startsWith("tap") && !it.name.startsWith("wg") }
+                .sortedBy { if (it.name.startsWith("wlan") || it.name.startsWith("eth")) 0 else 1 }
+            return interfaces.flatMap { Collections.list(it.inetAddresses) }
+                .filterIsInstance<Inet4Address>().firstOrNull { it.isSiteLocalAddress }?.hostAddress
+                ?: error("No private LAN IPv4 address. Connect both devices to the same Wi-Fi/Ethernet network.")
         }
-        return "192.168.1.100"
     }
 }

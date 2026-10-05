@@ -13,6 +13,13 @@ class MainActivityTv : FragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (io.nekohasekai.sagernet.ui.tv.TvUiPreferences.phoneMode) {
+            startActivity(android.content.Intent(this, MainActivity::class.java).apply {
+                putExtra("force_phone_mode", true)
+            })
+            finish()
+            return
+        }
         setContentView(R.layout.activity_main_tv)
 
         if (savedInstanceState == null) {

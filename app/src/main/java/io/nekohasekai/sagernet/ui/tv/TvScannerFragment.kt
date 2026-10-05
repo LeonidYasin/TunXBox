@@ -280,14 +280,17 @@ class TvScannerFragment : Fragment(), CameraScan.OnScanResultCallback {
             val ip = params["ip"] ?: throw Exception("Missing 'ip' in QR")
             val port = params["port"]?.toIntOrNull() ?: 8765
             val session = params["session"] ?: throw Exception("Missing 'session' in QR")
+            TransferProtocol.requireLanAddress(ip, port)
 
             onMainDispatcher {
                 Toast.makeText(requireContext(), "📡 Connecting to $ip:$port...", Toast.LENGTH_SHORT).show()
             }
 
-            val url = java.net.URL("http://$ip:$port/export?session=$session")
+            val url = java.net.URL("http://$ip:$port/export")
             val connection = url.openConnection() as java.net.HttpURLConnection
             connection.requestMethod = "GET"
+            connection.setRequestProperty("X-Session-Token", session)
+            connection.instanceFollowRedirects = false
             connection.connectTimeout = 10000
             connection.readTimeout = 10000
 
@@ -326,7 +329,7 @@ class TvScannerFragment : Fragment(), CameraScan.OnScanResultCallback {
                         }
                     }
                 } catch (e: Exception) {
-                    Logs.w("Failed to import profile from remote: $link", e)
+                    Logs.w("Failed to import profile from remote")
                 }
             }
 

@@ -262,6 +262,13 @@ class ConfigurationFragment @JvmOverloads constructor(
         }
     }
 
+    override fun onStop() {
+        transferServer?.stop()
+        transferServer = null
+        (parentFragmentManager.findFragmentByTag("send_to_tv_qr") as? QRCodeDialog)?.dismissAllowingStateLoss()
+        super.onStop()
+    }
+
     override fun onDestroy() {
         DataStore.profileCacheStore.unregisterChangeListener(this)
 
@@ -367,15 +374,21 @@ class ConfigurationFragment @JvmOverloads constructor(
 
     private fun showSendToTvDialog() {
         transferServer?.stop()
-        val server = TvTransferServer()
-        transferServer = server
-        val ip = server.getLocalIpAddress()
-        val port = 8765
-        val token = server.getSessionToken()
-        val qrData = "tunxbox://transfer?ip=$ip&port=$port&session=$token"
-
-        val dialog = QRCodeDialog(qrData, getString(R.string.action_send_to_tv_qr_hint))
-        dialog.showAllowingStateLoss(parentFragmentManager, "send_to_tv_qr")
+        try {
+            val server = TvTransferServer(allowExport = true)
+            transferServer = server
+            val dialog = QRCodeDialog(server.getAppQrData(),
+                getString(R.string.action_send_to_tv_qr_hint) + "\nTrusted LAN only. Session expires in 10 minutes.")
+            dialog.onDismissCallback = {
+                server.stop()
+                if (transferServer === server) transferServer = null
+            }
+            dialog.showAllowingStateLoss(parentFragmentManager, "send_to_tv_qr")
+        } catch (e: Exception) {
+            transferServer?.stop()
+            transferServer = null
+            android.widget.Toast.makeText(requireContext(), "Transfer unavailable. Check LAN connection and port 8765.", android.widget.Toast.LENGTH_LONG).show()
+        }
     }
 
     override fun onMenuItemClick(item: MenuItem): Boolean {

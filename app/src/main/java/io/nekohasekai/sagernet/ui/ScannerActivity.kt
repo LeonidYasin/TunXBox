@@ -174,6 +174,7 @@ class ScannerActivity : ThemedActivity(),
             val ip = params["ip"] ?: throw Exception("Missing 'ip' in QR")
             val port = params["port"]?.toIntOrNull() ?: 8765
             val session = params["session"] ?: throw Exception("Missing 'session' in QR")
+            io.nekohasekai.sagernet.ui.tv.TransferProtocol.requireLanAddress(ip, port)
 
             onMainDispatcher {
                 Toast.makeText(app, "📡 Connecting to TV at $ip:$port...", Toast.LENGTH_SHORT).show()
@@ -209,13 +210,17 @@ class ScannerActivity : ThemedActivity(),
             val url = java.net.URL("http://$ip:$port/import")
             val connection = url.openConnection() as java.net.HttpURLConnection
             connection.requestMethod = "POST"
+            connection.instanceFollowRedirects = false
             connection.connectTimeout = 10000
             connection.readTimeout = 10000
             connection.doOutput = true
             connection.setRequestProperty("Content-Type", "application/json")
             connection.setRequestProperty("X-Session-Token", session)
 
-            connection.outputStream.use { it.write(jsonBody.toString().toByteArray()) }
+            val payload = jsonBody.toString().toByteArray(Charsets.UTF_8)
+            require(payload.size <= io.nekohasekai.sagernet.ui.tv.TransferProtocol.MAX_BODY_BYTES) { "Profiles exceed 2 MiB" }
+            connection.setFixedLengthStreamingMode(payload.size)
+            connection.outputStream.use { it.write(payload) }
 
             val responseCode = connection.responseCode
             val responseBody = if (responseCode in 200..299) {

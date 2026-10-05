@@ -3,168 +3,145 @@ package io.nekohasekai.sagernet.ui.tv
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.os.Bundle
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
-import io.nekohasekai.sagernet.ktx.Logs
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/**
- * Shows a QR code on TV so that a phone can scan it and send proxy profiles to the TV.
- * 
- * The QR contains a tunxbox://transfer URL with the TV's IP, port and session token.
- * The phone app scans this, connects to the TV's HTTP server, and POSTs proxy configs.
- * The TV's TvTransferServer receives and imports them.
- */
+/** Scan with a normal phone camera to open a local import form, or with TunXBox to
+ * transfer an existing group. The receiver never offers its own profiles for export. */
 class QrCodeTransferFragment : Fragment() {
-
     private lateinit var qrImageView: ImageView
     private lateinit var statusText: TextView
     private lateinit var ipText: TextView
+    private lateinit var hintText: TextView
     private var transferServer: TvTransferServer? = null
-    private val fragmentScope = CoroutineScope(Dispatchers.Main)
-
-    companion object {
-        const val QR_SIZE = 700
-    }
+    private var qrJob: Job? = null
+    private var appQr = false
+    private var qrSize = 400
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        val layout = LinearLayout(requireContext()).apply {
+        val context = requireContext()
+        val metrics = resources.displayMetrics
+        fun dp(value: Int) = (value * metrics.density).toInt()
+        qrSize = (minOf(metrics.widthPixels, metrics.heightPixels) * 0.5f).toInt().coerceAtLeast(200)
+        val layout = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            gravity = android.view.Gravity.CENTER
-            setPadding(64, 48, 64, 48)
-            setBackgroundColor(Color.parseColor("#FF0F172A"))
+            gravity = Gravity.CENTER_HORIZONTAL
+            setPadding(dp(24), dp(16), dp(24), dp(16))
         }
-
-        val title = TextView(requireContext()).apply {
-            text = "📲 Receive Profiles from Phone"
-            textSize = 32f
+        layout.addView(TextView(context).apply {
+            text = "Import from phone / computer"
+            textSize = 24f
             setTextColor(Color.WHITE)
-            gravity = android.view.Gravity.CENTER
-            setPadding(0, 0, 0, 24)
-        }
-
-        qrImageView = ImageView(requireContext()).apply {
-            layoutParams = LinearLayout.LayoutParams(QR_SIZE, QR_SIZE)
+            gravity = Gravity.CENTER
+        })
+        qrImageView = ImageView(context).apply {
+            layoutParams = LinearLayout.LayoutParams(qrSize, qrSize)
             scaleType = ImageView.ScaleType.FIT_CENTER
         }
-
-        ipText = TextView(requireContext()).apply {
-            textSize = 20f
-            setTextColor(Color.parseColor("#FF0EA5E9"))
-            gravity = android.view.Gravity.CENTER
-            setPadding(0, 24, 0, 8)
-            text = "Starting server..."
-        }
-
-        statusText = TextView(requireContext()).apply {
-            text = "Waiting for phone to scan..."
-            textSize = 18f
-            setTextColor(Color.parseColor("#AAFFFFFF"))
-            gravity = android.view.Gravity.CENTER
-            setPadding(0, 8, 0, 0)
-        }
-
-        val hint = TextView(requireContext()).apply {
-            text = "How it works:\n\n" +
-                   "1. Open TunXBox on your phone (switch to Phone Mode)\n" +
-                   "2. On phone: tap + → Scan QR code\n" +
-                   "3. Point phone camera at this TV screen\n" +
-                   "4. Phone sends all its profiles to this TV"
-            textSize = 16f
-            setTextColor(Color.parseColor("#88FFFFFF"))
-            gravity = android.view.Gravity.CENTER
-            setPadding(0, 32, 0, 0)
-            setLineSpacing(0f, 1.4f)
-        }
-
-        layout.addView(title)
         layout.addView(qrImageView)
+        ipText = TextView(context).apply { textSize = 16f; setTextColor(Color.CYAN); gravity = Gravity.CENTER }
+        statusText = TextView(context).apply { textSize = 16f; setTextColor(Color.WHITE); gravity = Gravity.CENTER }
+        hintText = TextView(context).apply { textSize = 14f; setTextColor(Color.LTGRAY); gravity = Gravity.CENTER }
         layout.addView(ipText)
         layout.addView(statusText)
-        layout.addView(hint)
-
-        return layout
+        layout.addView(hintText)
+        layout.addView(Button(context).apply {
+            text = "Switch QR: browser / TunXBox app"
+            isFocusable = true
+            setOnClickListener { appQr = !appQr; renderQr() }
+        })
+        layout.addView(Button(context).apply {
+            text = "Close transfer"
+            isFocusable = true
+            setOnClickListener { parentFragmentManager.popBackStack() }
+        })
+        return ScrollView(context).apply {
+            setBackgroundColor(Color.rgb(15, 23, 42))
+            addView(layout)
+        }
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        startTransferServer()
+    override fun onStart() {
+        super.onStart()
+        try {
+            transferServer = TvTransferServer(
+                onImportSuccess = { count ->
+                    view?.post {
+                        if (view != null) {
+                            statusText.text = "Imported $count profile(s). You can close this screen."
+                            statusText.setTextColor(Color.GREEN)
+                        }
+                    }
+                },
+                onImportError = { message ->
+                    view?.post {
+                        if (view != null) {
+                            statusText.text = message
+                            statusText.setTextColor(Color.RED)
+                        }
+                    }
+                }
+            )
+            statusText.text = "Ready. Session expires in 10 minutes."
+            renderQr()
+        } catch (_: Exception) {
+            statusText.text = "Cannot start transfer. Connect to Wi-Fi/Ethernet; check port 8765."
+            statusText.setTextColor(Color.RED)
+            qrImageView.setImageDrawable(null)
+        }
+    }
+
+    private fun renderQr() {
+        val server = transferServer ?: return
+        val data = if (appQr) server.getAppQrData() else server.getBrowserQrData()
+        ipText.text = "LAN address: ${server.getLocalIpAddress()}:${TvTransferServer.PORT}"
+        hintText.text = if (appQr) {
+            "On phone: TunXBox → Phone Mode → + → Scan QR. Sends the current group.\nTrusted LAN only: HTTP is not encrypted."
+        } else {
+            "Scan with your phone camera → open browser → paste configuration, upload a file, or enter a subscription URL. No phone app required.\nBoth devices must be on the same trusted LAN. HTTP is not encrypted."
+        }
+        qrJob?.cancel()
+        qrJob = viewLifecycleOwner.lifecycleScope.launch {
+            val bitmap = withContext(Dispatchers.Default) {
+                val bits = QRCodeWriter().encode(data, BarcodeFormat.QR_CODE, qrSize, qrSize)
+                Bitmap.createBitmap(qrSize, qrSize, Bitmap.Config.RGB_565).apply {
+                    val pixels = IntArray(qrSize * qrSize) { index ->
+                        if (bits[index % qrSize, index / qrSize]) Color.BLACK else Color.WHITE
+                    }
+                    setPixels(pixels, 0, qrSize, 0, 0, qrSize, qrSize)
+                }
+            }
+            qrImageView.setImageBitmap(bitmap)
+        }
+    }
+
+    override fun onStop() {
+        qrJob?.cancel()
+        transferServer?.stop()
+        transferServer = null
+        qrImageView.setImageDrawable(null)
+        super.onStop()
     }
 
     override fun onDestroyView() {
+        qrJob?.cancel()
         transferServer?.stop()
         transferServer = null
         super.onDestroyView()
-    }
-
-    private fun startTransferServer() {
-        fragmentScope.launch {
-            try {
-                withContext(Dispatchers.IO) {
-                    transferServer = TvTransferServer(
-                        onImportSuccess = { count ->
-                            // Callback is called from NanoHTTPD thread — switch to Main
-                            fragmentScope.launch {
-                                statusText.text = "✅ Imported $count profile(s)!"
-                                statusText.setTextColor(Color.parseColor("#FF4CAF50"))
-                                Toast.makeText(context, "Successfully imported $count profiles", Toast.LENGTH_LONG).show()
-                                
-                                view?.postDelayed({
-                                    parentFragmentManager.popBackStack()
-                                }, 3000)
-                            }
-                        },
-                        onImportError = { error ->
-                            fragmentScope.launch {
-                                statusText.text = "❌ Error: $error"
-                                statusText.setTextColor(Color.parseColor("#FFF44336"))
-                            }
-                        }
-                    )
-                }
-
-                val ip = transferServer?.getLocalIpAddress() ?: "unknown"
-                val token = transferServer?.getSessionToken() ?: ""
-                val port = 8765
-
-                val qrData = "tunxbox://transfer?ip=$ip&port=$port&session=$token"
-                
-                withContext(Dispatchers.Default) {
-                    val writer = QRCodeWriter()
-                    val bitMatrix = writer.encode(qrData, BarcodeFormat.QR_CODE, QR_SIZE, QR_SIZE)
-                    
-                    val bitmap = Bitmap.createBitmap(QR_SIZE, QR_SIZE, Bitmap.Config.RGB_565)
-                    for (x in 0 until QR_SIZE) {
-                        for (y in 0 until QR_SIZE) {
-                            bitmap.setPixel(x, y, if (bitMatrix[x, y]) Color.BLACK else Color.WHITE)
-                        }
-                    }
-                    
-                    withContext(Dispatchers.Main) {
-                        qrImageView.setImageBitmap(bitmap)
-                        ipText.text = "TV IP: $ip:$port"
-                        statusText.text = "Ready! Scan this QR with your phone"
-                        statusText.setTextColor(Color.parseColor("#AAFFFFFF"))
-                    }
-                }
-
-            } catch (e: Exception) {
-                Logs.e("QR Transfer error", e)
-                statusText.text = "❌ Server failed: ${e.message}"
-                statusText.setTextColor(Color.parseColor("#FFF44336"))
-                Toast.makeText(context, "Failed to start transfer server", Toast.LENGTH_SHORT).show()
-            }
-        }
     }
 }

@@ -64,7 +64,7 @@ class MainActivity : ThemedActivity(),
         // TV Mode is DEFAULT for all devices
         // Only use Phone Mode if user explicitly requested it
         val forcePhoneMode = intent.getBooleanExtra("force_phone_mode", false)
-        val uiOverride = io.nekohasekai.sagernet.database.DataStore.profileCacheStore.getString("ui_mode_override")
+        val preferPhoneMode = io.nekohasekai.sagernet.ui.tv.TvUiPreferences.phoneMode
         
         // Deep links (sn://subscription, clash://install-config, ss://, vmess://, trojan://, etc.)
         // must be processed in phone mode because the TV UI doesn't have the subscription/profile
@@ -72,7 +72,7 @@ class MainActivity : ThemedActivity(),
         // The upstream onNewIntent() handler processes these links via importSubscription/importProfile.
         val isDeepLink = intent?.action == Intent.ACTION_VIEW && intent?.data != null
         
-        if (!forcePhoneMode && uiOverride != "phone" && !isDeepLink) {
+        if (!forcePhoneMode && !preferPhoneMode && !isDeepLink) {
             // Redirect to TV UI using explicit component name (no implicit intent)
             val tvIntent = android.content.Intent().apply {
                 component = android.content.ComponentName(this@MainActivity, MainActivityTv::class.java)
@@ -84,8 +84,8 @@ class MainActivity : ThemedActivity(),
         }
         
         // Phone Mode: continue with normal mobile UI initialization
-        if (forcePhoneMode) {
-            io.nekohasekai.sagernet.database.DataStore.profileCacheStore.remove("ui_mode_override")
+        if (forcePhoneMode && !isDeepLink) {
+            io.nekohasekai.sagernet.ui.tv.TvUiPreferences.phoneMode = true
         }
         
         binding = LayoutMainBinding.inflate(layoutInflater)
@@ -329,7 +329,7 @@ class MainActivity : ThemedActivity(),
                 R.id.nav_switch_tv_mode -> {
                     binding.drawerLayout.closeDrawers()
                     // Clear phone-mode override so next launch goes to TV UI
-                    io.nekohasekai.sagernet.database.DataStore.profileCacheStore.remove("ui_mode_override")
+                    io.nekohasekai.sagernet.ui.tv.TvUiPreferences.phoneMode = false
                     val tvIntent = android.content.Intent(this, MainActivityTv::class.java).apply {
                         addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
                     }
@@ -480,9 +480,11 @@ class MainActivity : ThemedActivity(),
 
     override fun onDestroy() {
         super.onDestroy()
-        GroupManager.userInterface = null
-        DataStore.configurationStore.unregisterChangeListener(this)
-        connection.disconnect(this)
+        if (::binding.isInitialized) {
+            GroupManager.userInterface = null
+            DataStore.configurationStore.unregisterChangeListener(this)
+            connection.disconnect(this)
+        }
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {

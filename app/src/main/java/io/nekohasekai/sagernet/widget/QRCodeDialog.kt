@@ -1,5 +1,6 @@
 package io.nekohasekai.sagernet.widget
 
+import android.content.DialogInterface
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.os.Bundle
@@ -24,6 +25,13 @@ import java.nio.charset.StandardCharsets
 import kotlin.math.roundToInt
 
 class QRCodeDialog() : DialogFragment() {
+    var onDismissCallback: (() -> Unit)? = null
+
+    override fun onDismiss(dialog: DialogInterface) {
+        onDismissCallback?.invoke()
+        onDismissCallback = null
+        super.onDismiss(dialog)
+    }
 
     companion object {
         private const val KEY_URL = "io.nekohasekai.sagernet.QRCodeDialog.KEY_URL"

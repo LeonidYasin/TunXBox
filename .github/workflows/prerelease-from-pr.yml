@@ -141,6 +141,9 @@ jobs:
           ./run init action gradle
           ./gradlew app:assemblePreviewRelease --stacktrace
 
+      - name: Test transfer protocol
+        run: ./gradlew app:testPreviewDebugUnitTest --stacktrace
+
       - name: Locate APK
         run: |
           APK=$(find app/build/outputs/apk -name '*.apk' | head -n 1)

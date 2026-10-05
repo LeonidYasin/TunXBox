@@ -89,11 +89,6 @@
             </intent-filter>
 
             <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
-            </intent-filter>
-            <intent-filter>
                 <action android:name="android.service.quicksettings.action.QS_TILE_PREFERENCES" />
             </intent-filter>
 
@@ -351,7 +346,7 @@
         <!-- TV Leanback Activity -->
         <activity
             android:name=".ui.MainActivityTv"
-            android:exported="false"
+            android:exported="true"
             android:theme="@style/Theme.Leanback.TunXBox"
             android:screenOrientation="landscape">
             <intent-filter>

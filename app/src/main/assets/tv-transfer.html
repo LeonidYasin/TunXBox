@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>TunXBox — передача на TV</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,sans-serif;background:#0f172a;color:#f1f5f9}
+body{max-width:640px;margin:auto;padding:24px}h1{font-size:26px}label{display:block;margin-top:18px}
+textarea,input,select,button{box-sizing:border-box;width:100%;font:inherit;border-radius:10px;padding:12px;margin-top:8px;border:1px solid #475569;background:#1e293b;color:inherit}
+textarea{min-height:170px}button{background:#0369a1;border:0;font-weight:600;cursor:pointer}button:disabled{opacity:.5}
+p,small{color:#cbd5e1;line-height:1.5}#status{white-space:pre-wrap}details{margin-top:24px}input[type=file]{padding:8px}
+</style>
+</head>
+<body>
+<h1>Передать конфигурацию на TV</h1>
+<p>Телефон и телевизор должны находиться в одной доверенной локальной сети. Данные идут напрямую на TV, без облака. HTTP не шифрует передачу. QR действует 10 минут; закрытие экрана на TV завершает сеанс.</p>
+<form id="transfer">
+<label for="profiles">Ссылки профилей или конфигурация JSON / YAML / sing-box</label>
+<textarea id="profiles" placeholder="Вставьте ss://, vless://, vmess://… или содержимое конфигурации" spellcheck="false" autocomplete="off"></textarea>
+<label for="file">Или выберите файл конфигурации (до 2 МиБ)</label>
+<input id="file" type="file" accept=".json,.yaml,.yml,.txt,.conf,.ini">
+<label for="subscription">Или ссылка подписки HTTP(S)</label>
+<input id="subscription" type="url" placeholder="https://…" autocomplete="off" spellcheck="false">
+<small>Подписка сохраняется как отдельная группа с возможностью дальнейшего обновления. Отправляйте только один вариант: конфигурацию или подписку.</small>
+<button id="send" type="submit">Отправить на TV</button>
+</form>
+<details>
+<summary>Создать простой профиль SOCKS5 / HTTP на телефоне</summary>
+<p>Для сложных протоколов вставьте готовую ссылку или используйте редактор профиля в TunXBox.</p>
+<label for="protocol">Протокол</label><select id="protocol"><option value="socks">SOCKS5</option><option value="http">HTTP</option></select>
+<label for="host">Адрес сервера</label><input id="host" autocomplete="off" placeholder="proxy.example.com">
+<label for="port">Порт</label><input id="port" type="number" min="1" max="65535" value="1080">
+<label for="user">Логин (необязательно)</label><input id="user" autocomplete="off">
+<label for="password">Пароль (необязательно)</label><input id="password" type="password" autocomplete="off">
+<button id="create" type="button">Добавить в конфигурацию выше</button>
+</details>
+<p id="status" role="status" aria-live="polite"></p>
+<script>
+'use strict';
+const token = new URLSearchParams(location.hash.slice(1)).get('session') || '';
+history.replaceState(null, '', location.pathname);
+const el = id => document.getElementById(id);
+const limit = 2 * 1024 * 1024;
+if (!token) { el('status').textContent = 'Нет ключа сеанса. Отсканируйте QR на TV заново.'; el('send').disabled = true; }
+el('file').addEventListener('change', async () => {
+  const file = el('file').files[0]; if (!file) return;
+  if (file.size > limit) { el('status').textContent = 'Файл больше 2 МиБ.'; el('file').value = ''; return; }
+  try { el('profiles').value = await file.text(); el('subscription').value = ''; el('status').textContent = 'Файл готов к отправке.'; }
+  catch (_) { el('status').textContent = 'Не удалось прочитать файл.'; }
+});
+el('create').addEventListener('click', () => {
+  try {
+    let host = el('host').value.trim(); const port = Number(el('port').value);
+    if (!host || /[\s/@?#]/.test(host) || !Number.isInteger(port) || port < 1 || port > 65535) throw Error('Проверьте адрес и порт.');
+    if (host.includes(':') && !host.startsWith('[')) host = '[' + host + ']';
+    const user = el('user').value; const pass = el('password').value;
+    if (pass && !user) throw Error('Укажите логин для пароля.');
+    const auth = user ? encodeURIComponent(user) + ':' + encodeURIComponent(pass) + '@' : '';
+    const link = el('protocol').value + '://' + auth + host + ':' + port;
+    el('profiles').value = (el('profiles').value.trim() + '\n' + link).trim();
+    el('subscription').value = ''; el('password').value = ''; el('status').textContent = 'Профиль добавлен. Нажмите «Отправить на TV».';
+  } catch (error) { el('status').textContent = error.message; }
+});
+el('transfer').addEventListener('submit', async event => {
+  event.preventDefault();
+  const profiles = el('profiles').value.trim(); const subscription = el('subscription').value.trim();
+  if (Boolean(profiles) === Boolean(subscription)) { el('status').textContent = 'Укажите конфигурацию ИЛИ ссылку подписки.'; return; }
+  if (subscription && !/^https?:\/\//i.test(subscription)) { el('status').textContent = 'Подписка должна использовать HTTP(S).'; return; }
+  const body = JSON.stringify(profiles ? { profiles } : { subscription_url: subscription });
+  if (new TextEncoder().encode(body).length > limit) { el('status').textContent = 'Данные больше 2 МиБ. Выберите меньшую группу.'; return; }
+  el('send').disabled = true; el('status').textContent = 'Передача…';
+  const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), 120000);
+  try {
+    const response = await fetch('/import', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Session-Token': token }, body, signal: controller.signal, credentials: 'omit' });
+    const result = await response.json();
+    if (!response.ok) throw Error(result.error || 'Ошибка передачи');
+    el('status').textContent = 'Готово: импортировано профилей — ' + result.imported;
+    el('profiles').value = ''; el('subscription').value = ''; el('file').value = '';
+  } catch (error) { el('status').textContent = error.name === 'AbortError' ? 'Истекло время ожидания. Проверьте результат на TV перед повторной отправкой.' : error.message; }
+  finally { clearTimeout(timer); el('send').disabled = false; }
+});
+</script>
+</body>
+</html>
