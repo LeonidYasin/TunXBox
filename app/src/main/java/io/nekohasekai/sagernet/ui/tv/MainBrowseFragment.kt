@@ -76,6 +76,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
         const val ACTION_IMPORT_FILE = 6L
         const val ACTION_SWITCH_MODE = 7L
         const val ACTION_QR_TRANSFER = 8L
+        const val ACTION_SCAN_QR = 9L
     }
 
     // File picker for import
@@ -144,7 +145,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
         super.onResume()
         serviceState = DataStore.serviceState
         if (::actionsAdapter.isInitialized) updateActionsRow()
-        // Profiles may have been added from the phone UI / by an import.
+        // Profiles may have been added from the phone UI / by an import / by scanning.
         if (::profilesAdapter.isInitialized) loadProfiles()
     }
 
@@ -186,7 +187,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
                 val groupId = DataStore.selectedGroup
                 val allProfiles = SagerDatabase.proxyDao.getByGroup(groupId)
                 if (allProfiles.isNotEmpty()) allProfiles
-                else listOf(TvEmptyHint("No profiles. Use Import or Add below."))
+                else listOf(TvEmptyHint("No profiles. Use Import or Scan below."))
             } catch (e: Exception) {
                 listOf(TvEmptyHint("Error: ${e.message}"))
             }
@@ -212,8 +213,9 @@ class MainBrowseFragment : BrowseSupportFragment() {
         actionsAdapter.add(TvAction(ACTION_IMPORT_CLIPBOARD, "📋 Clipboard", "Paste link from phone"))
         actionsAdapter.add(TvAction(ACTION_IMPORT_URL, "🌐 From URL", "Subscription or direct link"))
         actionsAdapter.add(TvAction(ACTION_IMPORT_FILE, "📁 From File", "JSON/YAML/Conf file"))
+        actionsAdapter.add(TvAction(ACTION_SCAN_QR, "📷 Scan QR", "Camera or image file"))
         actionsAdapter.add(TvAction(ACTION_ADD_PROFILE, "➕ Manual", "Enter details via dialog"))
-        actionsAdapter.add(TvAction(ACTION_QR_TRANSFER, "📲 QR Transfer", "Send from phone via QR"))
+        actionsAdapter.add(TvAction(ACTION_QR_TRANSFER, "📲 QR Transfer", "Receive from phone via QR"))
         actionsAdapter.add(TvAction(ACTION_SWITCH_MODE, "📱 Phone Mode", "Switch to mobile UI"))
     }
 
@@ -241,6 +243,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
             ACTION_IMPORT_CLIPBOARD -> importFromClipboard()
             ACTION_IMPORT_URL -> showUrlImportDialog()
             ACTION_IMPORT_FILE -> importFileLauncher.launch("*/*")
+            ACTION_SCAN_QR -> showScanner()
             ACTION_ADD_PROFILE -> showManualAddDialog()
             ACTION_QR_TRANSFER -> showQrTransfer()
             ACTION_SWITCH_MODE -> switchToPhoneMode()
@@ -299,8 +302,15 @@ class MainBrowseFragment : BrowseSupportFragment() {
             .show()
     }
     
+    private fun showScanner() {
+        parentFragmentManager.beginTransaction()
+            .replace(R.id.tv_container, TvScannerFragment())
+            .addToBackStack("scanner")
+            .commit()
+    }
+    
     private fun showQrTransfer() {
-        // Заменяем текущий фрагмент на QR transfer
+        // Заменяем текущий фрагмент на QR transfer (TV shows QR, phone sends profiles)
         parentFragmentManager.beginTransaction()
             .replace(R.id.tv_container, QrCodeTransferFragment())
             .addToBackStack("qr_transfer")
