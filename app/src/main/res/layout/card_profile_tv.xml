@@ -5,8 +5,7 @@
     android:orientation="vertical"
     android:padding="16dp"
     android:background="@drawable/card_background_tv"
-    android:focusable="true"
-    android:focusableInTouchMode="true">
+    android:focusable="true">
 
     <TextView
         android:id="@+id/profile_name"
