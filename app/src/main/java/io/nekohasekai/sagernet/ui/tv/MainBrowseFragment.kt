@@ -299,16 +299,8 @@ class MainBrowseFragment : BrowseSupportFragment() {
             .show()
     }
     
-    private fun showQrReceive() {
-        // Scans QR from remote device to RECEIVE profiles
-        parentFragmentManager.beginTransaction()
-            .replace(R.id.tv_container, TvQrReceiveFragment())
-            .addToBackStack("qr_receive")
-            .commit()
-    }
-    
     private fun showQrSend() {
-        // Shows QR code for remote device to scan and SEND profiles to this TV
+        // Shows QR code on TV screen — phone scans this QR and sends its profiles to this TV
         parentFragmentManager.beginTransaction()
             .replace(R.id.tv_container, QrCodeTransferFragment())
             .addToBackStack("qr_send")
