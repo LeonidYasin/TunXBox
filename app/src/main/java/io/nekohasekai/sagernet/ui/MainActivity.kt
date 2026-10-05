@@ -66,7 +66,13 @@ class MainActivity : ThemedActivity(),
         val forcePhoneMode = intent.getBooleanExtra("force_phone_mode", false)
         val uiOverride = io.nekohasekai.sagernet.database.DataStore.profileCacheStore.getString("ui_mode_override")
         
-        if (!forcePhoneMode && uiOverride != "phone") {
+        // Deep links (sn://subscription, clash://install-config, ss://, vmess://, trojan://, etc.)
+        // must be processed in phone mode because the TV UI doesn't have the subscription/profile
+        // import dialogs. If we redirect to TV mode, the intent data is lost and the import fails.
+        // The upstream onNewIntent() handler processes these links via importSubscription/importProfile.
+        val isDeepLink = intent?.action == Intent.ACTION_VIEW && intent?.data != null
+        
+        if (!forcePhoneMode && uiOverride != "phone" && !isDeepLink) {
             // Redirect to TV UI using explicit component name (no implicit intent)
             val tvIntent = android.content.Intent().apply {
                 component = android.content.ComponentName(this@MainActivity, MainActivityTv::class.java)
