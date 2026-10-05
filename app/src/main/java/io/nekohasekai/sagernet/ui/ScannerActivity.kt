@@ -119,6 +119,13 @@ class ScannerActivity : ThemedActivity(),
         runOnDefaultDispatcher {
             try {
                 val text = result?.text ?: throw Exception("QR code not found")
+
+                // Check for TV transfer QR: phone scanned TV's QR → send profiles to TV
+                if (text.startsWith("tunxbox://transfer")) {
+                    handleTvTransfer(text)
+                    return@runOnDefaultDispatcher
+                }
+
                 val results = RawUpdater.parseRaw(text)
                 if (!results.isNullOrEmpty()) {
                     val currentGroupId = DataStore.selectedGroupForImport()
@@ -150,6 +157,93 @@ class ScannerActivity : ThemedActivity(),
             }
         }
         return true
+    }
+
+    /**
+     * Phone scanned TV's QR code. Parse tunxbox://transfer URL, collect all profiles
+     * from the current group, and POST them to the TV's HTTP server.
+     */
+    private fun handleTvTransfer(qrText: String) {
+        try {
+            val uri = java.net.URI(qrText)
+            val params = uri.query?.split("&")?.associate {
+                val parts = it.split("=")
+                parts[0] to (parts.getOrNull(1) ?: "")
+            } ?: emptyMap()
+
+            val ip = params["ip"] ?: throw Exception("Missing 'ip' in QR")
+            val port = params["port"]?.toIntOrNull() ?: 8765
+            val session = params["session"] ?: throw Exception("Missing 'session' in QR")
+
+            onMainDispatcher {
+                Toast.makeText(app, "📡 Connecting to TV at $ip:$port...", Toast.LENGTH_SHORT).show()
+            }
+
+            // Collect all profiles from current group
+            val groupId = DataStore.selectedGroup
+            val profiles = io.nekohasekai.sagernet.database.SagerDatabase.proxyDao.getByGroup(groupId)
+
+            val links = profiles.mapNotNull { profile ->
+                try {
+                    val link = profile.toStdLink()
+                    if (link.isNotBlank()) link else null
+                } catch (e: Exception) {
+                    Logs.w("Failed to export profile for TV transfer", e)
+                    null
+                }
+            }
+
+            if (links.isEmpty()) {
+                onMainDispatcher {
+                    Toast.makeText(app, "No profiles to send — current group is empty", Toast.LENGTH_LONG).show()
+                }
+                return
+            }
+
+            // POST profiles to TV server
+            val profilesString = links.joinToString("\n")
+            val jsonBody = org.json.JSONObject().apply {
+                put("profiles", profilesString)
+            }
+
+            val url = java.net.URL("http://$ip:$port/import")
+            val connection = url.openConnection() as java.net.HttpURLConnection
+            connection.requestMethod = "POST"
+            connection.connectTimeout = 10000
+            connection.readTimeout = 10000
+            connection.doOutput = true
+            connection.setRequestProperty("Content-Type", "application/json")
+            connection.setRequestProperty("X-Session-Token", session)
+
+            connection.outputStream.use { it.write(jsonBody.toString().toByteArray()) }
+
+            val responseCode = connection.responseCode
+            val responseBody = if (responseCode in 200..299) {
+                connection.inputStream.bufferedReader().readText()
+            } else {
+                connection.errorStream?.bufferedReader()?.readText() ?: ""
+            }
+            connection.disconnect()
+
+            if (responseCode == 200) {
+                val responseJson = org.json.JSONObject(responseBody)
+                val imported = responseJson.optInt("imported", links.size)
+                importedN.addAndGet(imported)
+                onMainDispatcher {
+                    Toast.makeText(app, "✅ Sent $imported profile(s) to TV!", Toast.LENGTH_LONG).show()
+                }
+            } else {
+                throw Exception("TV returned HTTP $responseCode: $responseBody")
+            }
+
+        } catch (e: Exception) {
+            Logs.e("TV transfer failed", e)
+            onMainDispatcher {
+                Toast.makeText(app, "❌ Failed to send profiles: ${e.readableMessage}", Toast.LENGTH_LONG).show()
+            }
+            // Allow retry
+            finished.set(false)
+        }
     }
 
     /**
