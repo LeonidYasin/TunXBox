@@ -269,7 +269,7 @@ class TvScannerFragment : Fragment(), CameraScan.OnScanResultCallback {
      * Parse the URL, connect to the remote device's /export endpoint,
      * and import the profiles it serves.
      */
-    private fun handleTvTransfer(qrText: String) {
+    private suspend fun handleTvTransfer(qrText: String) {
         try {
             val uri = java.net.URI(qrText)
             val params = uri.query?.split("&")?.associate {
