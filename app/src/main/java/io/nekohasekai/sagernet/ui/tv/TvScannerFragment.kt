@@ -247,7 +247,7 @@ class TvScannerFragment : Fragment(), CameraScan.OnScanResultCallback {
      * Parse QR text and import profiles. Returns the number of profiles imported.
      * Throws SubscriptionFoundException if the QR contains a subscription URL.
      */
-    private fun importFromQrText(text: String): Int {
+    private suspend fun importFromQrText(text: String): Int {
         val results = RawUpdater.parseRaw(text)
         if (results.isNullOrEmpty()) return 0
         
