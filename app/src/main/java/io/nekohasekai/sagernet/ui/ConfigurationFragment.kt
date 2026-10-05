@@ -270,6 +270,9 @@ class ConfigurationFragment @JvmOverloads constructor(
             ProfileManager.removeListener(adapter)
         }
 
+        transferServer?.stop()
+        transferServer = null
+
         super.onDestroy()
     }
 
