@@ -523,29 +523,4 @@ class MainActivity : ThemedActivity(),
         if (DataStore.serviceState.canStop) SagerNet.stopService() else connect.launch(null)
     }
 
-
-
-
-
-    override fun onCreateOptionsMenu(menu: android.view.Menu): Boolean {
-        menuInflater.inflate(R.menu.main_phone_menu, menu)
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: android.view.MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.action_switch_tv_mode -> {
-                // Переключаем в TV режим
-                io.nekohasekai.sagernet.database.DataStore.profileCacheStore.remove("ui_mode_override")
-                
-                val intent = android.content.Intent(this, MainActivityTv::class.java).apply {
-                    addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                }
-                startActivity(intent)
-                finish()
-                return true
-            }
-        }
-        return super.onOptionsItemSelected(item)
-    }
 }
