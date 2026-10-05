@@ -76,7 +76,6 @@ class MainBrowseFragment : BrowseSupportFragment() {
         const val ACTION_IMPORT_FILE = 6L
         const val ACTION_SWITCH_MODE = 7L
         const val ACTION_QR_SEND = 8L
-        const val ACTION_QR_RECEIVE = 9L
     }
 
     // File picker for import
