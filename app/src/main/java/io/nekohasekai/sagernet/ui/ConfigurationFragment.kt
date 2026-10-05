@@ -386,6 +386,10 @@ class ConfigurationFragment @JvmOverloads constructor(
                 startFilesForResult(importFile, "*/*")
             }
 
+            R.id.action_send_to_tv -> {
+                showSendToTvDialog()
+            }
+
             R.id.action_new_socks -> {
                 startActivity(Intent(requireActivity(), SocksSettingsActivity::class.java))
             }
