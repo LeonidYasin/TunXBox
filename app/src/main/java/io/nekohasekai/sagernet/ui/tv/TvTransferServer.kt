@@ -168,11 +168,19 @@ class TvTransferServer(
             val groupId = DataStore.selectedGroup
             val profiles = SagerDatabase.proxyDao.getByGroup(groupId)
             
-            val profilesList = profiles.map { profile ->
-                JSONObject().apply {
-                    put("name", profile.displayName())
-                    put("type", profile.requireBean().javaClass.simpleName.removeSuffix("Bean"))
-                    put("config", profile.requireBean().buildFullConfig())
+            val profilesList = profiles.mapNotNull { profile ->
+                try {
+                    val link = profile.toStdLink()
+                    if (link.isNotBlank()) {
+                        JSONObject().apply {
+                            put("name", profile.displayName())
+                            put("type", profile.displayType())
+                            put("link", link)
+                        }
+                    } else null
+                } catch (e: Exception) {
+                    Logs.w("Failed to export profile: ${profile.displayName()}", e)
+                    null
                 }
             }
 
@@ -180,7 +188,7 @@ class TvTransferServer(
                 put("status", "success")
                 put("device", "TunXBox-TV")
                 put("profiles", org.json.JSONArray(profilesList))
-                put("count", profiles.size)
+                put("count", profilesList.size)
             }
 
             return newFixedLengthResponse(Response.Status.OK, "application/json", json.toString()).addCors()
