@@ -40,7 +40,6 @@
             android:nextFocusDown="@+id/stats"
             android:nextFocusUp="@+id/configuration_list"
             android:focusable="true"
-            android:focusableInTouchMode="true"
             app:backgroundTint="?fabColorBackground"
             app:layout_anchor="@id/stats"
             app:pressedTranslationZ="6dp"
