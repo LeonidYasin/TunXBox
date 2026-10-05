@@ -3,6 +3,7 @@ package io.nekohasekai.sagernet.ui.tv
 import fi.iki.elonen.NanoHTTPD
 import io.nekohasekai.sagernet.database.DataStore
 import io.nekohasekai.sagernet.database.ProfileManager
+import io.nekohasekai.sagernet.database.SagerDatabase
 import io.nekohasekai.sagernet.group.RawUpdater
 import io.nekohasekai.sagernet.ktx.Logs
 import kotlinx.coroutines.runBlocking
@@ -32,7 +33,7 @@ class TvTransferServer(
     override fun serve(session: IHTTPSession): Response {
         val corsHeaders = mapOf(
             "Access-Control-Allow-Origin" to "*",
-            "Access-Control-Allow-Methods" to "POST, OPTIONS",
+            "Access-Control-Allow-Methods" to "POST, GET, OPTIONS",
             "Access-Control-Allow-Headers" to "Content-Type, X-Session-Token"
         )
 
@@ -48,6 +49,10 @@ class TvTransferServer(
             
             session.uri == "/import" && session.method == Method.POST -> {
                 handleImport(session, corsHeaders)
+            }
+            
+            session.uri == "/export" && session.method == Method.GET -> {
+                handleExport(session, corsHeaders)
             }
             
             session.uri == "/status" -> {
@@ -141,6 +146,47 @@ class TvTransferServer(
         } catch (e: Exception) {
             Logs.e("Import error", e)
             onImportError(e.message ?: "Unknown error")
+            return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "application/json",
+                JSONObject().apply { put("error", e.message) }.toString()
+            ).addCors()
+        }
+    }
+
+    private fun handleExport(session: IHTTPSession, corsHeaders: Map<String, String>): Response {
+        fun Response.addCors(): Response {
+            corsHeaders.forEach { (k, v) -> addHeader(k, v) }
+            return this
+        }
+        
+        try {
+            val token = session.parameters["session"]?.firstOrNull() ?: ""
+            if (token != sessionToken) {
+                return newFixedLengthResponse(Response.Status.FORBIDDEN, "text/plain", "Invalid session").addCors()
+            }
+
+            // Get all profiles from current group
+            val groupId = DataStore.selectedGroup
+            val profiles = SagerDatabase.proxyDao.getByGroup(groupId)
+            
+            val profilesList = profiles.map { profile ->
+                JSONObject().apply {
+                    put("name", profile.displayName())
+                    put("type", profile.requireBean().javaClass.simpleName.removeSuffix("Bean"))
+                    put("config", profile.requireBean().buildFullConfig())
+                }
+            }
+
+            val json = JSONObject().apply {
+                put("status", "success")
+                put("device", "TunXBox-TV")
+                put("profiles", org.json.JSONArray(profilesList))
+                put("count", profiles.size)
+            }
+
+            return newFixedLengthResponse(Response.Status.OK, "application/json", json.toString()).addCors()
+
+        } catch (e: Exception) {
+            Logs.e("Export error", e)
             return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, "application/json",
                 JSONObject().apply { put("error", e.message) }.toString()
             ).addCors()
