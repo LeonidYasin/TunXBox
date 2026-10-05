@@ -212,9 +212,8 @@ class MainBrowseFragment : BrowseSupportFragment() {
         actionsAdapter.add(TvAction(ACTION_IMPORT_CLIPBOARD, "📋 Clipboard", "Paste link from phone"))
         actionsAdapter.add(TvAction(ACTION_IMPORT_URL, "🌐 From URL", "Subscription or direct link"))
         actionsAdapter.add(TvAction(ACTION_IMPORT_FILE, "📁 From File", "JSON/YAML/Conf file"))
-        actionsAdapter.add(TvAction(ACTION_QR_RECEIVE, "📷 Receive via QR", "Scan QR from remote device"))
         actionsAdapter.add(TvAction(ACTION_ADD_PROFILE, "➕ Manual", "Enter details via dialog"))
-        actionsAdapter.add(TvAction(ACTION_QR_SEND, "📲 Send QR Code", "Show QR for phone to scan"))
+        actionsAdapter.add(TvAction(ACTION_QR_SEND, "📲 Receive from Phone", "Show QR — phone scans and sends profiles"))
         actionsAdapter.add(TvAction(ACTION_SWITCH_MODE, "📱 Phone Mode", "Switch to mobile UI"))
     }
 
