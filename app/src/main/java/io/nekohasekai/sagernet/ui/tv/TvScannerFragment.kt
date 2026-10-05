@@ -294,14 +294,13 @@ class TvScannerFragment : Fragment(), CameraScan.OnScanResultCallback {
             connection.connectTimeout = 10000
             connection.readTimeout = 10000
 
-            val responseCode = connection.responseCode
-            if (responseCode !in 200..299) {
-                val error = connection.errorStream?.bufferedReader()?.readText() ?: "HTTP $responseCode"
-                throw Exception("Remote device returned error: $error")
+            val responseBody = try {
+                val responseCode = connection.responseCode
+                require(responseCode in 200..299) { "Remote device returned HTTP $responseCode" }
+                connection.inputStream.use { String(TransferProtocol.readLimited(it), Charsets.UTF_8) }
+            } finally {
+                connection.disconnect()
             }
-
-            val responseBody = connection.inputStream.bufferedReader().readText()
-            connection.disconnect()
 
             val json = org.json.JSONObject(responseBody)
             val profilesData = json.optString("profiles", "")
@@ -346,7 +345,7 @@ class TvScannerFragment : Fragment(), CameraScan.OnScanResultCallback {
             }
 
         } catch (e: Exception) {
-            Logs.e("TV transfer import failed", e)
+            Logs.e("TV transfer import failed")
             onMainDispatcher {
                 Toast.makeText(requireContext(),
                     "❌ Failed to receive profiles: ${e.readableMessage}",

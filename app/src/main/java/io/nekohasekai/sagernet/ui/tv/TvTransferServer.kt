@@ -70,7 +70,7 @@ class TvTransferServer(
             return error(Response.Status.NOT_FOUND, "Not found")
         }
         if (expired() || !TransferProtocol.tokenMatches(sessionToken, session.headers["x-session-token"] ?: "")) {
-            return error(Response.Status.FORBIDDEN, "Invalid or expired pairing. Scan the QR again.")
+            return error(Response.Status.FORBIDDEN, "Invalid or expired pairing. Reopen the TV transfer screen and scan the new QR.")
         }
         if (session.uri == "/export" && session.method == Method.GET) {
             if (!allowExport) return error(Response.Status.FORBIDDEN, "Export is disabled on this receiver")

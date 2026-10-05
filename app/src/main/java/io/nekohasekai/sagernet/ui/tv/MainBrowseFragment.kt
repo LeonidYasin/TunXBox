@@ -84,7 +84,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
             runOnDefaultDispatcher {
                 try {
                     val text = requireContext().contentResolver.openInputStream(uri)?.use { stream ->
-                        val data = stream.readBytesLimited()
+                        val data = TransferProtocol.readLimited(stream)
                         String(data, Charsets.UTF_8)
                     }
                     if (text.isNullOrBlank()) {
@@ -254,18 +254,6 @@ class MainBrowseFragment : BrowseSupportFragment() {
         importProxiesFromText(text)
     }
     
-    private fun java.io.InputStream.readBytesLimited(): ByteArray {
-        val output = java.io.ByteArrayOutputStream()
-        val buffer = ByteArray(8192)
-        while (true) {
-            val n = read(buffer)
-            if (n < 0) break
-            require(output.size() + n <= TransferProtocol.MAX_BODY_BYTES) { "File exceeds 2 MiB" }
-            output.write(buffer, 0, n)
-        }
-        return output.toByteArray()
-    }
-
     private fun showUrlImportDialog() {
         val input = android.widget.EditText(requireContext()).apply {
             hint = "https://example.com/sub.yaml or ss://..."
@@ -328,6 +316,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
                     4 -> SocksSettingsActivity::class.java
                     else -> HttpSettingsActivity::class.java
                 }
+                DataStore.selectedGroup = DataStore.selectedGroupForImport()
                 startActivity(Intent(requireContext(), editor).apply {
                     if (which == 2) putExtra("vless", true)
                 })

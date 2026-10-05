@@ -47,9 +47,7 @@
         </intent>
     </queries>
 
-        <!-- TV Support -->
-    <uses-feature android:name="android.software.leanback" android:required="false" />
-    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+    <!-- Optional on TV boxes without a simulated touch device. -->
     <uses-feature android:name="android.hardware.faketouch" android:required="false" />
 
     <application

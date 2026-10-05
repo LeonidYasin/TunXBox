@@ -35,6 +35,25 @@ object TransferProtocol {
         return body
     }
 
+    fun readLimited(input: InputStream): ByteArray {
+        val output = java.io.ByteArrayOutputStream()
+        val buffer = ByteArray(8192)
+        while (true) {
+            val n = input.read(buffer)
+            if (n < 0) break
+            if (n == 0) {
+                val byte = input.read()
+                if (byte < 0) break
+                require(output.size() < MAX_BODY_BYTES) { "Response exceeds 2 MiB" }
+                output.write(byte)
+            } else {
+                require(output.size() + n <= MAX_BODY_BYTES) { "Response exceeds 2 MiB" }
+                output.write(buffer, 0, n)
+            }
+        }
+        return output.toByteArray()
+    }
+
     /** Do not let a scanned QR redirect credential-bearing requests onto the public Internet. */
     fun requireLanAddress(host: String, port: Int) {
         require(port in 1..65535) { "Invalid port" }

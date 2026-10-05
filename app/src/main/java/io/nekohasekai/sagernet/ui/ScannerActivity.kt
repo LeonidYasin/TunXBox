@@ -220,15 +220,17 @@ class ScannerActivity : ThemedActivity(),
             val payload = jsonBody.toString().toByteArray(Charsets.UTF_8)
             require(payload.size <= io.nekohasekai.sagernet.ui.tv.TransferProtocol.MAX_BODY_BYTES) { "Profiles exceed 2 MiB" }
             connection.setFixedLengthStreamingMode(payload.size)
-            connection.outputStream.use { it.write(payload) }
-
-            val responseCode = connection.responseCode
-            val responseBody = if (responseCode in 200..299) {
-                connection.inputStream.bufferedReader().readText()
-            } else {
-                connection.errorStream?.bufferedReader()?.readText() ?: ""
+            val (responseCode, responseBody) = try {
+                connection.outputStream.use { it.write(payload) }
+                val code = connection.responseCode
+                val stream = if (code in 200..299) connection.inputStream else connection.errorStream
+                val body = stream?.use {
+                    String(io.nekohasekai.sagernet.ui.tv.TransferProtocol.readLimited(it), Charsets.UTF_8)
+                } ?: ""
+                code to body
+            } finally {
+                connection.disconnect()
             }
-            connection.disconnect()
 
             if (responseCode == 200) {
                 val responseJson = org.json.JSONObject(responseBody)
@@ -242,7 +244,7 @@ class ScannerActivity : ThemedActivity(),
             }
 
         } catch (e: Exception) {
-            Logs.e("TV transfer failed", e)
+            Logs.e("TV transfer failed")
             onMainDispatcher {
                 Toast.makeText(app, "❌ Failed to send profiles: ${e.readableMessage}", Toast.LENGTH_LONG).show()
             }

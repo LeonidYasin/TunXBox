@@ -39,6 +39,12 @@ class TransferProtocolTest {
         assertFalse(TransferProtocol.tokenMatches(token, ""))
         assertFalse(TransferProtocol.tokenMatches(token, "0".repeat(64)))
     }
+    @Test fun readsBoundedResponse() {
+        assertArrayEquals(byteArrayOf(1, 2, 3), TransferProtocol.readLimited(ByteArrayInputStream(byteArrayOf(1, 2, 3))))
+    }
+    @Test(expected = IllegalArgumentException::class) fun rejectsOversizedResponse() {
+        TransferProtocol.readLimited(ByteArrayInputStream(ByteArray(TransferProtocol.MAX_BODY_BYTES + 1)))
+    }
     @Test fun acceptsPrivateLanAddress() {
         TransferProtocol.requireLanAddress("192.168.1.2", 8765)
         TransferProtocol.requireLanAddress("10.0.0.2", 8765)
