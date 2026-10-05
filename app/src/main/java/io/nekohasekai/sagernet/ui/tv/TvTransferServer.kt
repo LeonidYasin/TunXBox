@@ -51,10 +51,6 @@ class TvTransferServer(
                 handleImport(session, corsHeaders)
             }
             
-            session.uri == "/export" && session.method == Method.GET -> {
-                handleExport(session, corsHeaders)
-            }
-            
             session.uri == "/status" -> {
                 val json = JSONObject().apply {
                     put("status", "ready")
