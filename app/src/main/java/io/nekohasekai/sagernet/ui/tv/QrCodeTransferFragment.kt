@@ -76,10 +76,11 @@ class QrCodeTransferFragment : Fragment() {
         }
 
         val hint = TextView(requireContext()).apply {
-            text = "1. Open TunXBox on your phone\n" +
-                   "2. Use \"Scan QR\" or any QR scanner\n" +
-                   "3. Point phone camera at this screen\n" +
-                   "4. Phone will send profiles to this TV"
+            text = "How it works:\n\n" +
+                   "1. Open TunXBox on your phone (switch to Phone Mode)\n" +
+                   "2. On phone: tap + → Scan QR code\n" +
+                   "3. Point phone camera at this TV screen\n" +
+                   "4. Phone sends all its profiles to this TV"
             textSize = 16f
             setTextColor(Color.parseColor("#88FFFFFF"))
             gravity = android.view.Gravity.CENTER
