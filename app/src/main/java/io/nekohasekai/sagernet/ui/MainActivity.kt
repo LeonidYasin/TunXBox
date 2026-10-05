@@ -322,7 +322,20 @@ class MainActivity : ThemedActivity(),
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         if (item.isChecked) binding.drawerLayout.closeDrawers() else {
-            return displayFragmentWithId(item.itemId)
+            when (item.itemId) {
+                R.id.nav_switch_tv_mode -> {
+                    binding.drawerLayout.closeDrawers()
+                    // Clear phone-mode override so next launch goes to TV UI
+                    io.nekohasekai.sagernet.database.DataStore.profileCacheStore.remove("ui_mode_override")
+                    val tvIntent = android.content.Intent(this, MainActivityTv::class.java).apply {
+                        addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    startActivity(tvIntent)
+                    finish()
+                    return true
+                }
+                else -> return displayFragmentWithId(item.itemId)
+            }
         }
         return true
     }
