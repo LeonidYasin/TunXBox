@@ -499,4 +499,12 @@
         <item name="colorMaterial100">@color/material_light_blue_100</item>
         <item name="colorMaterial300">@color/material_light_blue_300</item>
     </style>
+
+    <!-- Leanback TV Theme for MainActivityTv -->
+    <style name="Theme.Leanback.TunXBox" parent="Theme.Leanback">
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="android:colorPrimary">@color/material_light_blue_500</item>
+        <item name="android:colorAccent">@color/material_cyan_accent_200</item>
+    </style>
 </resources>
