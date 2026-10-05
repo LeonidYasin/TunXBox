@@ -241,7 +241,6 @@ class MainBrowseFragment : BrowseSupportFragment() {
             ACTION_IMPORT_CLIPBOARD -> importFromClipboard()
             ACTION_IMPORT_URL -> showUrlImportDialog()
             ACTION_IMPORT_FILE -> importFileLauncher.launch("*/*")
-            ACTION_QR_RECEIVE -> showQrReceive()
             ACTION_ADD_PROFILE -> showManualAddDialog()
             ACTION_QR_SEND -> showQrSend()
             ACTION_SWITCH_MODE -> switchToPhoneMode()
