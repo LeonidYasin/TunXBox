@@ -32,7 +32,7 @@ class ModeSelectionActivity : ComponentActivity() {
         val column = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         val available = resources.configuration.screenWidthDp - 48
         center.addView(column, LinearLayout.LayoutParams(dp(available.coerceIn(160, 640)), -2))
-        scroll.addView(center, ScrollView.LayoutParams(-1, -1))
+        scroll.addView(center, android.widget.FrameLayout.LayoutParams(-1, -1))
         fun text(value: String, size: Float, color: Int) = TextView(this).apply {
             text = value; textSize = size; setTextColor(color)
         }
