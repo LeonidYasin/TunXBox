@@ -7,6 +7,8 @@ out="build/emulator-results/$pages"
 mkdir -p "$out"
 collect() {
   adb logcat -d > "$out/logcat.txt" || true
+  adb logcat -b crash -d > "$out/crash-log.txt" || true
+  tail -n 160 "$out/crash-log.txt" || true
   adb logcat -d -s TunXBoxSmoke:I "*:S" > "$out/smoke-ui-log.txt" || true
   adb shell getprop > "$out/device-properties.txt" || true
   adb shell getconf PAGESIZE > "$out/page-size.txt" || true

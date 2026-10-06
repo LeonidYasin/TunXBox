@@ -7,7 +7,6 @@ import io.nekohasekai.sagernet.fmt.TypeMap
 import io.nekohasekai.sagernet.fmt.KryoConverters
 import io.nekohasekai.sagernet.ktx.applyDefaultValues
 import moe.matsuri.nb4a.utils.Util
-import io.nekohasekai.sagernet.fmt.toUniversalLink
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -17,6 +16,7 @@ data class TransferExport(val profiles: String, val count: Int)
  * IDs are local to a device: validate all dependencies first, then remap atomically.
  */
 object TvGroupTransfer {
+    private val knownTypes = TypeMap.values.toSet() + setOf(ProxyEntity.TYPE_CHAIN, ProxyEntity.TYPE_SHADOWTLS)
     private fun validateChains(ids: Set<Long>, chains: Map<Long, List<Long>>) {
         require(chains.values.flatten().all { it in ids })
         val ready = (ids - chains.keys).toMutableSet()
@@ -41,11 +41,13 @@ object TvGroupTransfer {
         val entries = JSONArray()
         var rawBytes = 0
         for (profile in profiles) {
-            rawBytes += KryoConverters.serialize(profile.requireBean()).size
+            require(profile.type in knownTypes)
+            val bytes = KryoConverters.serialize(profile.requireBean())
+            rawBytes += bytes.size
             require(rawBytes <= TransferProtocol.MAX_BODY_BYTES)
-            require(profile.chainBean?.proxies?.all { it in ids } != false)
-            // Universal format supports custom configs/internal beans too; never silently skip a profile.
-            entries.put(JSONObject().put("sourceId", profile.id).put("link", profile.requireBean().toUniversalLink()))
+            // The internal codec covers chains/ShadowTLS, which have no standalone universal-link alias.
+            entries.put(JSONObject().put("sourceId", profile.id).put("type", profile.type)
+                .put("data", Util.b64EncodeUrlSafe(Util.zlibCompress(bytes, 9))))
         }
         val data = JSONObject().put("tunxbox_group", 1).put("name", group.displayName())
             .put("isSelector", group.isSelector).put("order", group.order).put("frontProxy", group.frontProxy)
@@ -63,10 +65,8 @@ object TvGroupTransfer {
         val decoded = (0 until entries.length()).map { index ->
             val entry = entries.getJSONObject(index)
             val id = entry.getLong("sourceId"); require(id > 0)
-            val link = entry.getString("link"); require(link.startsWith("sn://") && !link.startsWith("sn://subscription"))
-            require(link.contains("?"))
-            val type = requireNotNull(TypeMap[link.substringAfter("sn://").substringBefore("?")])
-            val bytes = java.util.zip.InflaterInputStream(java.io.ByteArrayInputStream(Util.b64Decode(link.substringAfter("?"))))
+            val type = entry.getInt("type"); require(type in knownTypes)
+            val bytes = java.util.zip.InflaterInputStream(java.io.ByteArrayInputStream(Util.b64Decode(entry.getString("data"))))
                 .use { TransferProtocol.readLimited(it) }
             decodedBytes += bytes.size; require(decodedBytes <= TransferProtocol.MAX_BODY_BYTES)
             val bean = ProxyEntity(type = type).apply { putByteArray(bytes) }.requireBean().applyDefaultValues()
