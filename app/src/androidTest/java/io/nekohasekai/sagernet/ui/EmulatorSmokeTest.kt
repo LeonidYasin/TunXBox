@@ -89,7 +89,14 @@ class EmulatorSmokeTest {
     }
     private fun assertChooser() {
         visibleText(text(R.string.add_profile))
-        for (entry in TvProfileAddCatalog.entries(context)) visibleText(entry.title)
+        // The full catalog may exceed a small portrait/landscape viewport. Assert reachability,
+        // not simultaneous visibility; every entry still has to be found on the real device.
+        val list = UiScrollable(UiSelector().className("android.widget.ListView"))
+        for (entry in TvProfileAddCatalog.entries(context)) {
+            assertTrue("Unreachable add method: ${entry.title}", list.scrollIntoView(UiSelector().text(entry.title)))
+            visibleText(entry.title)
+        }
+        list.scrollToBeginning(5)
         assertFalse("QR transfer must not open before explicit selection", device.hasObject(By.text(text(R.string.tv_qr_title))))
     }
 
