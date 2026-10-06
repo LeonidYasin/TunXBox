@@ -10,6 +10,16 @@ collect() {
   adb shell getprop > "$out/device-properties.txt" || true
   adb shell getconf PAGESIZE > "$out/page-size.txt" || true
   adb pull /sdcard/Android/data/com.tunxbox.app/files/smoke-artifacts "$out/screens" >/dev/null 2>&1 || true
+  # Synthetic/offline test data only, before signing secrets: concise UI failure evidence.
+  python3 - "$out" <<'PYUI'
+import pathlib,sys,xml.etree.ElementTree as ET
+for path in sorted(pathlib.Path(sys.argv[1]).glob('screens/**/*.xml')):
+    print('UI hierarchy:',path.name)
+    for node in ET.parse(path).iter('node'):
+        a=node.attrib
+        if a.get('text') or a.get('content-desc') or a.get('focused')=='true':
+            print({k:a.get(k) for k in ('resource-id','text','content-desc','focused','bounds')})
+PYUI
   if [ -d app/build/reports/androidTests/connected ]; then cp -a app/build/reports/androidTests/connected "$out/reports"; fi
   if [ -d app/build/outputs/androidTest-results/connected ]; then cp -a app/build/outputs/androidTest-results/connected "$out/results"; fi
 }
