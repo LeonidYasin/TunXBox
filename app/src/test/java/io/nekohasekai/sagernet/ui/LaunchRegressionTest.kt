@@ -9,6 +9,14 @@ import io.nekohasekai.sagernet.ui.tv.MainBrowseFragment
 import io.nekohasekai.sagernet.ui.tv.TvUiPreferences
 import org.junit.Assert.*
 import org.junit.Test
+import org.junit.Before
+import org.junit.After
+import android.content.ComponentName
+import io.nekohasekai.sagernet.Action
+import io.nekohasekai.sagernet.bg.VpnService
+import androidx.room.MultiInstanceInvalidationService
+import org.robolectric.RuntimeEnvironment
+import org.robolectric.android.controller.ServiceController
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
@@ -28,6 +36,21 @@ class StartupApplicationShadow : org.robolectric.shadows.ShadowApplication() {
 @RunWith(RobolectricTestRunner::class)
 @Config(application = SagerNet::class, shadows = [StartupApplicationShadow::class], sdk = [28], qualifiers = "land")
 class LaunchRegressionTest {
+    private lateinit var room: ServiceController<MultiInstanceInvalidationService>
+    private lateinit var vpn: ServiceController<VpnService>
+    @Before fun realServiceBinders() {
+        val app = RuntimeEnvironment.getApplication()
+        val shadow = shadowOf(app)
+        room = Robolectric.buildService(MultiInstanceInvalidationService::class.java).create()
+        val roomIntent = Intent(app, MultiInstanceInvalidationService::class.java)
+        shadow.setComponentNameAndServiceForBindService(ComponentName(app, MultiInstanceInvalidationService::class.java), room.get().onBind(roomIntent))
+        vpn = Robolectric.buildService(VpnService::class.java).create()
+        val vpnIntent = Intent(app, VpnService::class.java).setAction(Action.SERVICE)
+        shadow.setComponentNameAndServiceForBindServiceForIntent(vpnIntent, ComponentName(app, VpnService::class.java), vpn.get().onBind(vpnIntent))
+        shadow.setUnbindServiceCallsOnServiceDisconnected(false)
+    }
+    @After fun closeServices() { if (::vpn.isInitialized) vpn.destroy(); if (::room.isInitialized) room.destroy() }
+
     @Test fun coldTvLaunchCreatesBrowseAndNeverStartsChooser() {
         TvUiPreferences.phoneMode = false
         val controller = Robolectric.buildActivity(MainActivityTv::class.java)
