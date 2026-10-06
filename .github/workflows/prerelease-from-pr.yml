@@ -48,6 +48,25 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event.inputs.ref || github.event.pull_request.head.ref || github.ref }}
           submodules: recursive
+      - name: Restore native shell executable modes
+        env:
+          REPAIR_BRANCH: feature/tv-remote-support
+        run: |
+          set -euo pipefail
+          # The MCP file writer can replace executable files with mode 100644.
+          # Restore the two edited native scripts; never alter master/main.
+          chmod +x buildScript/lib/core/build.sh libcore/build.sh
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.ref_name }}" = "$REPAIR_BRANCH" ]; then
+            if ! git diff --quiet -- buildScript/lib/core/build.sh libcore/build.sh; then
+              git config user.name "github-actions[bot]"
+              git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+              git add buildScript/lib/core/build.sh libcore/build.sh
+              git commit -m "Restore executable bits on native build scripts"
+              # Normal fast-forward push: a concurrent branch edit causes a safe failure.
+              git push origin "HEAD:$REPAIR_BRANCH"
+            fi
+          fi
+
       - name: Get actual commit SHA
         id: actual_sha
         run: |
