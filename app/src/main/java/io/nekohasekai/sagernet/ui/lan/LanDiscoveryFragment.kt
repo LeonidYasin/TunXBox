@@ -34,7 +34,7 @@ class LanDiscoveryFragment : ToolbarFragment(R.layout.layout_lan_discovery) {
     private lateinit var networkButton: Button
     private lateinit var results: LinearLayout
     private val callback = object : ConnectivityManager.NetworkCallback() {
-        override fun onLost(network: Network) = changed()
+        override fun onLost(network: Network) { view?.post { if (selected?.network == network) invalidateNetwork() } }
         override fun onLinkPropertiesChanged(network: Network, linkProperties: LinkProperties) = changed()
         override fun onCapabilitiesChanged(network: Network, caps: NetworkCapabilities) = changed()
         private fun changed() { view?.post { selected?.let { if (!environment.current(it)) invalidateNetwork() } } }
@@ -119,7 +119,7 @@ class LanDiscoveryFragment : ToolbarFragment(R.layout.layout_lan_discovery) {
                 }
             } catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) { status.setText(R.string.lan_failed) }
-            finally { if (scan === coroutineContext[Job]) { scan = null; controls() } }
+            finally { if (scan === coroutineContext[Job]) { scan = null; controls(); if (isResumed) scanButton.requestFocus() } }
         }.also { it.start() }
         controls(); cancelButton.requestFocus()
     }

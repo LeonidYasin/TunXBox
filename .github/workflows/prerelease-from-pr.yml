@@ -370,7 +370,7 @@ jobs:
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release download "$TAG" --pattern apk-manifest.json --dir previous-release
           else
-            STABLE_TAG=$(gh release view --json tagName -q .tagName)
+            STABLE_TAG=$(gh api "repos/${{ github.repository }}/releases/latest" --jq .tag_name)
             test -n "$STABLE_TAG"
             gh release download "$STABLE_TAG" --pattern apk-manifest.json --dir previous-release
           fi
