@@ -361,7 +361,8 @@ jobs:
           APKs use the pinned persistent TunXBox signing key. New builds have increasing Android versionCode.
           Legacy builds signed with temporary keys require one-time export/backup and uninstall before this signing migration; later updates preserve app data.
           Universal APK includes all four bundled ABIs: ARM32, ARM64, x86 and x86_64 when confirmed by apk-manifest.json.
-          Actual filenames match Assets and download filenames; see SHA256SUMS.txt and apk-manifest.json."
+          Actual filenames match Assets and download filenames; see SHA256SUMS.txt and apk-manifest.json.
+          LAN UI PNGs are synthetic PreviewDebug emulator evidence, not physical-device or signed Release screenshots."
 
           # Fail closed: a NEW RC series must also upgrade over the current stable release.
           # An existing RC must retain a readable manifest; a download failure is not a new series.
@@ -398,6 +399,15 @@ jobs:
           fi
           # Upload the REAL names; #label changes only GitHub display text, not download names.
           gh release upload "$TAG" dist/*.apk dist/SHA256SUMS.txt dist/apk-manifest.json --clobber
+          # Whitelisted synthetic PreviewDebug evidence only, captured BEFORE signing secrets.
+          # Never publish general logcat/hierarchy/QR screenshots or arbitrary diagnostic artifacts.
+          for orientation in portrait landscape; do
+            SOURCE="build/emulator-results/4096/screens/TunXBoxSmoke/lan_discovery_${orientation}.png"
+            test -s "$SOURCE"
+            NAME="TunXBox-${VERSION}-android-emulator-preview-debug-lan-${orientation}-${SHORT_SHA}.png"
+            cp "$SOURCE" "dist/$NAME"
+            gh release upload "$TAG" "dist/$NAME" --clobber
+          done
 
           # Verify uploaded bytes before removing superseded APKs from this rolling release.
           gh release view "$TAG" --json assets > /tmp/release-assets.json

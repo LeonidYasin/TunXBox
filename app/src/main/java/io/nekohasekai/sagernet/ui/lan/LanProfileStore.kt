@@ -16,6 +16,12 @@ object LanProfileStore {
     suspend fun save(candidate: ProxyCandidate, http: Boolean, groupId: Long, name: String, username: String, password: String): Saved {
         require(LanScope.ipv4(candidate.host)?.let(LanScope::privateAddress) == true)
         require(candidate.port in 1..65535 && name.length <= 128 && username.length <= 256 && password.length <= 256)
+        require(when (candidate.kind) {
+            ProbeKind.SOCKS5, ProbeKind.SOCKS5_AUTH -> !http
+            ProbeKind.HTTP_AUTH -> http
+            else -> true
+        })
+        require(candidate.kind !in setOf(ProbeKind.SOCKS5_AUTH, ProbeKind.HTTP_AUTH) || username.isNotBlank())
         val bean: AbstractBean = if (http) HttpBean().apply { this.username = username; this.password = password }
             else SOCKSBean().apply { this.username = username; this.password = password; protocol = SOCKSBean.PROTOCOL_SOCKS5 }
         bean.name = name; bean.serverAddress = candidate.host; bean.serverPort = candidate.port; bean.applyDefaultValues()

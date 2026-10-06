@@ -11,6 +11,7 @@ import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.lifecycleScope
+import androidx.core.view.doOnLayout
 import io.nekohasekai.sagernet.R
 import io.nekohasekai.sagernet.GroupType
 import io.nekohasekai.sagernet.database.SagerDatabase
@@ -41,6 +42,10 @@ class LanDiscoveryFragment : ToolbarFragment(R.layout.layout_lan_discovery) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         toolbar.setTitle(R.string.lan_title)
+        view.findViewById<LinearLayout>(R.id.lan_content).doOnLayout { content ->
+            content.layoutParams = FrameLayout.LayoutParams(minOf(view.width, (840 * resources.displayMetrics.density).toInt()),
+                android.view.ViewGroup.LayoutParams.WRAP_CONTENT, android.view.Gravity.CENTER_HORIZONTAL)
+        }
         environment = LanEnvironment(requireContext())
         scopeText = view.findViewById(R.id.lan_scope); status = view.findViewById(R.id.lan_status)
         ports = view.findViewById(R.id.lan_ports); consent = view.findViewById(R.id.lan_consent)
@@ -108,7 +113,7 @@ class LanDiscoveryFragment : ToolbarFragment(R.layout.layout_lan_discovery) {
                 report.candidates.forEach { candidate ->
                     results.addView(Button(requireContext()).apply {
                         text = "${candidate.host}:${candidate.port}\n${kindLabel(candidate.kind)}"
-                        minHeight = (64 * resources.displayMetrics.density).toInt()
+                        textSize = 18f; minHeight = (64 * resources.displayMetrics.density).toInt()
                         setOnClickListener { confirmProfile(network, candidate) }
                     })
                 }
@@ -135,7 +140,7 @@ class LanDiscoveryFragment : ToolbarFragment(R.layout.layout_lan_discovery) {
             val panel = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL; setPadding((24 * resources.displayMetrics.density).toInt(), (8 * resources.displayMetrics.density).toInt(), (24 * resources.displayMetrics.density).toInt(), (8 * resources.displayMetrics.density).toInt()) }
             fun field(label: Int, value: String = "", secret: Boolean = false, limit: Int = 256): EditText {
                 val input = EditText(context).apply {
-                    hint = getString(label); setText(value); minHeight = (48 * resources.displayMetrics.density).toInt(); isSingleLine = true
+                    hint = getString(label); setText(value); textSize = 18f; minHeight = (48 * resources.displayMetrics.density).toInt(); isSingleLine = true
                     inputType = InputType.TYPE_CLASS_TEXT or if (secret) InputType.TYPE_TEXT_VARIATION_PASSWORD else InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
                     filters = arrayOf(android.text.InputFilter.LengthFilter(limit)); isSaveEnabled = false
                 }
@@ -144,7 +149,7 @@ class LanDiscoveryFragment : ToolbarFragment(R.layout.layout_lan_discovery) {
             panel.addView(TextView(context).apply { text = "${candidate.host}:${candidate.port}\n${kindLabel(candidate.kind)}\n${getString(R.string.lan_save_warning)}"; textSize = 18f })
             val name = field(R.string.lan_name, "LAN ${candidate.host}:${candidate.port}", limit = 128)
             val http = CheckBox(context).apply {
-                text = getString(R.string.lan_http_choice); minHeight = (48 * resources.displayMetrics.density).toInt()
+                text = getString(R.string.lan_http_choice); textSize = 18f; minHeight = (48 * resources.displayMetrics.density).toInt()
                 isChecked = candidate.kind == ProbeKind.HTTP_AUTH || candidate.kind == ProbeKind.HTTP_UNVERIFIED
                 isEnabled = candidate.kind in setOf(ProbeKind.HTTP_UNVERIFIED, ProbeKind.TCP_UNVERIFIED)
             }

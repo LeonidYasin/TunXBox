@@ -563,7 +563,7 @@ class LaunchRegressionTest {
     @Test fun lanSaveRejectsSubscriptionAndPublicEndpoints() = kotlinx.coroutines.runBlocking {
         val db = io.nekohasekai.sagernet.database.SagerDatabase
         val group = io.nekohasekai.sagernet.database.ProxyGroup(name = "Managed", type = io.nekohasekai.sagernet.GroupType.SUBSCRIPTION,
-            subscription = io.nekohasekai.sagernet.database.SubscriptionBean())
+            subscription = io.nekohasekai.sagernet.database.SubscriptionBean().apply { initializeDefaultValues() })
         group.id = db.groupDao.createGroup(group)
         try {
             for (host in listOf("192.168.1.22", "8.8.8.8")) {
@@ -575,5 +575,14 @@ class LaunchRegressionTest {
             }
             assertTrue(db.proxyDao.getByGroup(group.id).isEmpty())
         } finally { db.groupDao.deleteById(group.id) }
+    }
+
+    @Test fun lanStoreRejectsMissingAuthAndContradictoryProtocolBeforeSaving() = kotlinx.coroutines.runBlocking {
+        val endpoint = io.nekohasekai.sagernet.ui.lan.ProxyCandidate("192.168.1.22", 1080, io.nekohasekai.sagernet.ui.lan.ProbeKind.SOCKS5_AUTH)
+        for ((candidate, http, username) in listOf(Triple(endpoint, true, "user"), Triple(endpoint, false, ""),
+            Triple(endpoint.copy(kind = io.nekohasekai.sagernet.ui.lan.ProbeKind.HTTP_AUTH), false, "user"))) {
+            try { io.nekohasekai.sagernet.ui.lan.LanProfileStore.save(candidate, http, 0L, "Fixture", username, ""); fail("Invalid protocol/auth must fail") }
+            catch (_: IllegalArgumentException) { }
+        }
     }
 }
