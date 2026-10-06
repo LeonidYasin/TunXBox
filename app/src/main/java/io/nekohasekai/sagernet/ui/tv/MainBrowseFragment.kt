@@ -318,7 +318,19 @@ class MainBrowseFragment : BrowseSupportFragment() {
             // transition and throws when HEADERS_DISABLED. Select through the
             // embedded Rows fragment instead; no headers animation is needed.
             val rows = rowsSupportFragment
-            if (rows?.view != null) rows.setSelectedPosition(row, false, ListRowPresenter.SelectItemViewHolderTask(index))
+            if (rows?.view != null) {
+                val selection = ListRowPresenter.SelectItemViewHolderTask(index).apply {
+                    itemTask = object : Presenter.ViewHolderTask() {
+                        override fun run(holder: Presenter.ViewHolder) {
+                            if (view == null || dialog?.isShowing == true) return
+                            // Selection alone does not grant keyboard focus after a touch-based mode choice.
+                            holder.view.isFocusableInTouchMode = true
+                            holder.view.requestFocus()
+                        }
+                    }
+                }
+                rows.setSelectedPosition(row, false, selection)
+            }
             else {
                 restoreAfterLoad = true
                 setSelectedPosition(row, false)

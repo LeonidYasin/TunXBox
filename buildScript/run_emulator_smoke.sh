@@ -7,9 +7,10 @@ out="build/emulator-results/$pages"
 mkdir -p "$out"
 collect() {
   adb logcat -d > "$out/logcat.txt" || true
+  adb logcat -d -s TunXBoxSmoke:I "*:S" > "$out/smoke-ui-log.txt" || true
   adb shell getprop > "$out/device-properties.txt" || true
   adb shell getconf PAGESIZE > "$out/page-size.txt" || true
-  adb pull /sdcard/Android/data/com.tunxbox.app/files/smoke-artifacts "$out/screens" >/dev/null 2>&1 || true
+  adb pull /sdcard/Download/TunXBoxSmoke "$out/screens" >/dev/null 2>&1 || true
   # Synthetic/offline test data only, before signing secrets: concise UI failure evidence.
   python3 - "$out" <<'PYUI'
 import pathlib,sys,xml.etree.ElementTree as ET

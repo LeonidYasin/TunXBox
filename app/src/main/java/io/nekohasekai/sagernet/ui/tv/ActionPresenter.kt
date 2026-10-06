@@ -25,6 +25,7 @@ class ActionPresenter : Presenter() {
             gravity = Gravity.CENTER_VERTICAL
             setBackgroundResource(R.drawable.card_background_tv)
             isFocusable = true
+            isFocusableInTouchMode = true
         }
         val icon = ImageView(context).apply {
             layoutParams = LinearLayout.LayoutParams(dp(32), dp(32)).apply { marginEnd = dp(12) }

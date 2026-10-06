@@ -231,4 +231,13 @@ class RemoteUiTest {
         assertFalse(text.contains("импорта с телефона"))
     }
 
+    @Test fun tvActionCanReceiveKeyboardFocusAfterTouchModePicker() {
+        val context = activity(); val parent = FrameLayout(context); context.setContentView(parent)
+        val presenter = ActionPresenter(); val holder = presenter.onCreateViewHolder(parent)
+        parent.addView(holder.view); layout(parent)
+        assertTrue(holder.view.isFocusableInTouchMode)
+        assertTrue(holder.view.requestFocus())
+        assertTrue(holder.view.hasFocus())
+    }
+
 }

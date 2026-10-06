@@ -54,8 +54,15 @@ class EmulatorSmokeTest {
     @After fun finish() {
         try {
             val directory = File(context.getExternalFilesDir(null), "smoke-artifacts").apply { mkdirs() }
-            device.takeScreenshot(File(directory, "${testName.methodName}.png"))
-            device.dumpWindowHierarchy(File(directory, "${testName.methodName}.xml"))
+            val name = testName.methodName
+            val hierarchy = File(directory, "$name.xml")
+            device.dumpWindowHierarchy(hierarchy)
+            // AGP uninstalls the test APK after connected tests, deleting app-owned external files.
+            // Copy synthetic UI evidence to shell-owned Downloads BEFORE that teardown.
+            device.executeShellCommand("mkdir -p /sdcard/Download/TunXBoxSmoke")
+            device.executeShellCommand("screencap -p /sdcard/Download/TunXBoxSmoke/$name.png")
+            device.executeShellCommand("cp ${hierarchy.absolutePath} /sdcard/Download/TunXBoxSmoke/$name.xml")
+            android.util.Log.i("TunXBoxSmoke", "$name: " + hierarchy.readText())
         } finally {
             scenario?.close()
             instrumentation.runOnMainSync {
@@ -136,7 +143,7 @@ class EmulatorSmokeTest {
         scenario = ActivityScenario.launch<ModeSelectionActivity>(Intent(context, ModeSelectionActivity::class.java))
         requireNotNull(device.wait(Until.findObject(By.res(context.packageName, "mode_choose_phone")), timeout)).click()
         // Preview builds intentionally show their warning; exercise and dismiss it normally.
-        requireNotNull(device.wait(Until.findObject(By.res("android", "button1")), timeout)).click()
+        visibleText(text(android.R.string.ok)).click()
         val plus = requireNotNull(device.wait(Until.findObject(By.res(context.packageName, "action_add")), timeout))
         plus.click()
         visibleText(text(R.string.action_import))
