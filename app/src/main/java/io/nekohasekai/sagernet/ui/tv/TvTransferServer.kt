@@ -19,7 +19,9 @@ class TvTransferServer(
     private val onImportSuccess: ((Int) -> Unit)? = null,
     private val onImportError: ((String) -> Unit)? = null,
     private val allowExport: Boolean = false,
-    private val bindAddress: String = findLanAddress()
+    private val bindAddress: String = findLanAddress(),
+    private val profilesImporter: suspend (String) -> Int = TvProfileImporter::importProfiles,
+    private val subscriptionImporter: suspend (String) -> Int = TvProfileImporter::importSubscription
 ) : NanoHTTPD(bindAddress, PORT) {
     private val sessionToken = TransferProtocol.newToken()
     private val startedNanos = System.nanoTime()
@@ -111,22 +113,27 @@ class TvTransferServer(
             val json = JSONObject(String(body, Charsets.UTF_8))
             val profiles = json.optString("profiles", "").trim()
             val subscription = json.optString("subscription_url", "").trim()
-            require(profiles.isNotBlank() xor subscription.isNotBlank()) { "Supply profiles OR a subscription URL" }
+            if (!(profiles.isNotBlank() xor subscription.isNotBlank())) throw TransferImportFailure(TransferImportError.INPUT_INVALID)
             val imported = synchronized(importLock) {
                 runBlocking {
-                    if (profiles.isNotBlank()) TvProfileImporter.importProfiles(profiles)
-                    else TvProfileImporter.importSubscription(subscription)
+                    if (subscription.isNotBlank()) subscriptionImporter(subscription)
+                    else if (TransferImportInput.isSubscription(profiles)) subscriptionImporter(profiles)
+                    else profilesImporter(profiles)
                 }
             }
             onImportSuccess?.invoke(imported)
             reply(Response.Status.OK, JSONObject().put("status", "success").put("imported", imported).toString())
         } catch (_: EOFException) {
             error(Response.Status.BAD_REQUEST, "Incomplete request body")
+        } catch (failure: TransferImportFailure) {
+            onImportError?.invoke(failure.reason.publicMessage)
+            reply(Response.Status.BAD_REQUEST, JSONObject().put("error", failure.reason.publicMessage)
+                .put("code", failure.reason.code).toString())
         } catch (_: Exception) {
             // Configurations, tokens and subscription credentials must not enter logs/errors.
-            val message = "Import failed. Check the configuration, subscription URL and network."
-            onImportError?.invoke(message)
-            error(Response.Status.BAD_REQUEST, message)
+            val reason = TransferImportError.IMPORT_FAILED
+            onImportError?.invoke(reason.publicMessage)
+            reply(Response.Status.BAD_REQUEST, JSONObject().put("error", reason.publicMessage).put("code", reason.code).toString())
         }
     }
 

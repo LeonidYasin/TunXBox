@@ -117,6 +117,9 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      - name: Test browser transfer page
+        run: node buildScript/test_tv_transfer_page.cjs
+
       - name: Read version from nb4a.properties
         id: version
         run: |

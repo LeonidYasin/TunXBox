@@ -8,6 +8,10 @@
 4. Paste profile links or configuration text, select a configuration file, or enter an HTTP(S) subscription URL. Submit only one input type.
 5. Press **Send to TV**, check the imported count, and close the TV transfer screen.
 
+A plain HTTP(S) subscription URL with a non-root path can be pasted into the main text field: both the browser and the TV recognize it as a subscription. Upstream `sn://subscription` / `clash://install-config` wrappers are supported too. Root HTTP proxy links remain profiles; use the dedicated subscription field for a subscription served at a site's root URL.
+
+**The TV downloads the subscription**, not the phone. A VPN/Internet connection on the phone does not automatically provide the TV access to the provider. If the TV cannot reach the subscription, the browser explains that separately from a malformed configuration. If needed, download/export the supported configuration on the phone and send its file or content instead. Never post a full subscription URL in public issues: its path/query can be an access credential.
+
 The local page also has a small SOCKS5/HTTP profile builder. Complex protocols can be imported via their standard share links or edited using the full upstream profile editors under **Manual**.
 
 To send a group from the TunXBox phone app, switch the TV QR to **TunXBox app** and scan it inside the phone application's scanner. To pull a phone group onto TV, open **Send to TV** on the phone and scan its QR using the TV camera/image importer. QR sessions from older builds should be recreated after updating both devices.

@@ -133,7 +133,8 @@ abstract class GroupUpdater {
         suspend fun executeUpdate(
             proxyGroup: ProxyGroup,
             byUser: Boolean,
-            userInterface: GroupManager.Interface? = GroupManager.userInterface
+            userInterface: GroupManager.Interface? = GroupManager.userInterface,
+            throwOnFailure: Boolean = false
         ): Boolean = coroutineScope {
             // Existing phone callers keep their global adapter. TV passes a lifecycle-owned
             // interface and does not replace the process-global phone activity.
@@ -149,6 +150,9 @@ abstract class GroupUpdater {
                     true
                 } catch (cancelled: CancellationException) { throw cancelled }
                 catch (error: Throwable) {
+                    // LAN imports need a safe, structured failure rather than false plus a raw URL in logs.
+                    // Existing phone/TV update callers retain the upstream notification behavior.
+                    if (throwOnFailure) throw error
                     Logs.w(error)
                     userInterface?.onUpdateFailure(proxyGroup, error.readableMessage)
                     false

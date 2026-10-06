@@ -9,20 +9,20 @@
 body{max-width:640px;margin:auto;padding:24px}h1{font-size:26px}label{display:block;margin-top:18px}
 textarea,input,select,button{box-sizing:border-box;width:100%;font:inherit;border-radius:10px;padding:12px;margin-top:8px;border:1px solid #475569;background:#1e293b;color:inherit}
 textarea{min-height:170px}button{background:#0369a1;border:0;font-weight:600;cursor:pointer}button:disabled{opacity:.5}
-p,small{color:#cbd5e1;line-height:1.5}#status{white-space:pre-wrap}details{margin-top:24px}input[type=file]{padding:8px}
+p,small{color:#cbd5e1;line-height:1.5}small{font-size:14px}textarea::placeholder,input::placeholder{color:#94a3b8;opacity:1}#status{white-space:pre-wrap}details{margin-top:24px}input[type=file]{padding:8px}
 </style>
 </head>
 <body>
 <h1>Передать конфигурацию на TV</h1>
 <p>Телефон и телевизор должны находиться в одной доверенной локальной сети. Данные идут напрямую на TV, без облака. HTTP не шифрует передачу. QR действует 10 минут; закрытие экрана на TV завершает сеанс.</p>
 <form id="transfer">
-<label for="profiles">Ссылки профилей или конфигурация JSON / YAML / sing-box</label>
-<textarea id="profiles" placeholder="Вставьте ss://, vless://, vmess://… или содержимое конфигурации" spellcheck="false" autocomplete="off"></textarea>
+<label for="profiles">Ссылка подписки, ссылки профилей или конфигурация JSON / YAML / sing-box</label>
+<textarea id="profiles" placeholder="Вставьте https://…/подписка, ss://, vless://, vmess://… или содержимое конфигурации" spellcheck="false" autocomplete="off"></textarea>
 <label for="file">Или выберите файл конфигурации (до 2 МиБ)</label>
 <input id="file" type="file" accept=".json,.yaml,.yml,.txt,.conf,.ini">
 <label for="subscription">Или ссылка подписки HTTP(S)</label>
 <input id="subscription" type="url" placeholder="https://…" autocomplete="off" spellcheck="false">
-<small>Подписка сохраняется как отдельная группа с возможностью дальнейшего обновления. Отправляйте только один вариант: конфигурацию или подписку.</small>
+<small>HTTPS-ссылку подписки с путём можно вставить и в верхнее поле — она распознается автоматически. Подписка сохраняется как отдельная группа и скачивается самим TV, не телефоном. Если подписка доступна на телефоне только через VPN, проверьте доступ с TV или отправьте уже скачанный файл конфигурации. Отправляйте только один вариант.</small>
 <button id="send" type="submit">Отправить на TV</button>
 </form>
 <details>
@@ -62,11 +62,38 @@ el('create').addEventListener('click', () => {
     el('subscription').value = ''; el('password').value = ''; el('status').textContent = 'Профиль добавлен. Нажмите «Отправить на TV».';
   } catch (error) { el('status').textContent = error.message; }
 });
+function subscriptionCandidate(value) {
+  if (/\s/.test(value)) return false;
+  try {
+    const url = new URL(value);
+    return (['http:', 'https:'].includes(url.protocol) && url.pathname !== '/') ||
+      (url.protocol === 'sn:' && url.hostname === 'subscription') ||
+      (url.protocol === 'clash:' && url.hostname === 'install-config');
+  } catch (_) { return false; }
+}
+function validSubscription(value) {
+  try {
+    let url = new URL(value);
+    if (url.protocol === 'sn:' && url.hostname === 'subscription' || url.protocol === 'clash:' && url.hostname === 'install-config') {
+      url = new URL(url.searchParams.get('url') || '');
+    }
+    return ['http:', 'https:'].includes(url.protocol) && Boolean(url.hostname);
+  } catch (_) { return false; }
+}
+const importErrors = {
+  input_invalid: 'Укажите один вариант: конфигурацию или ссылку подписки.',
+  profile_invalid: 'В конфигурации не найдены поддерживаемые профили. Если это подписка, используйте HTTPS-ссылку или поле подписки.',
+  subscription_invalid: 'Некорректная ссылка подписки. Нужен полный адрес HTTP(S).',
+  subscription_format: 'TV загрузил ответ, но не нашёл поддерживаемых профилей. Возможно, это страница сайта, подписка истекла или формат не поддерживается. Можно передать скачанный файл конфигурации.',
+  subscription_failed: 'TV получил ссылку, но не смог загрузить или обработать подписку. Проверьте доступ к адресу с телевизора. VPN на смартфоне не даёт телевизору доступ к подписке. Можно передать скачанный файл конфигурации.',
+  import_failed: 'Не удалось импортировать конфигурацию. Проверьте формат данных.'
+};
 el('transfer').addEventListener('submit', async event => {
   event.preventDefault();
-  const profiles = el('profiles').value.trim(); const subscription = el('subscription').value.trim();
+  let profiles = el('profiles').value.trim(); let subscription = el('subscription').value.trim();
   if (Boolean(profiles) === Boolean(subscription)) { el('status').textContent = 'Укажите конфигурацию ИЛИ ссылку подписки.'; return; }
-  if (subscription && !/^https?:\/\//i.test(subscription)) { el('status').textContent = 'Подписка должна использовать HTTP(S).'; return; }
+  if (profiles && subscriptionCandidate(profiles)) { subscription = profiles; profiles = ''; }
+  if (subscription && !validSubscription(subscription)) { el('status').textContent = importErrors.subscription_invalid; return; }
   const body = JSON.stringify(profiles ? { profiles } : { subscription_url: subscription });
   if (new TextEncoder().encode(body).length > limit) { el('status').textContent = 'Данные больше 2 МиБ. Выберите меньшую группу.'; return; }
   el('send').disabled = true; el('status').textContent = 'Передача…';
@@ -74,10 +101,10 @@ el('transfer').addEventListener('submit', async event => {
   try {
     const response = await fetch('/import', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Session-Token': token }, body, signal: controller.signal, credentials: 'omit' });
     const result = await response.json();
-    if (!response.ok) throw Error(result.error || 'Ошибка передачи');
+    if (!response.ok) throw Error(importErrors[result.code] || (response.status === 403 ? 'Сеанс передачи недействителен или истёк. Откройте новую сессию на TV и отсканируйте QR заново.' : result.error || 'Ошибка передачи'));
     el('status').textContent = 'Готово: импортировано профилей — ' + result.imported;
     el('profiles').value = ''; el('subscription').value = ''; el('file').value = '';
-  } catch (error) { el('status').textContent = error.name === 'AbortError' ? 'Истекло время ожидания. Проверьте результат на TV перед повторной отправкой.' : error.message; }
+  } catch (error) { el('status').textContent = error.name === 'AbortError' ? 'Истекло время ожидания. Проверьте результат на TV перед повторной отправкой.' : error instanceof TypeError ? 'Не удалось связаться с TV. Проверьте общую локальную сеть и откройте новую сессию QR.' : error.message; }
   finally { clearTimeout(timer); el('send').disabled = false; }
 });
 </script>
