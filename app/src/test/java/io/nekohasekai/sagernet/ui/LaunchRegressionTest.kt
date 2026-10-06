@@ -580,6 +580,7 @@ class LaunchRegressionTest {
     @Test fun lanStoreRejectsMissingAuthAndContradictoryProtocolBeforeSaving() = kotlinx.coroutines.runBlocking {
         val endpoint = io.nekohasekai.sagernet.ui.lan.ProxyCandidate("192.168.1.22", 1080, io.nekohasekai.sagernet.ui.lan.ProbeKind.SOCKS5_AUTH)
         for ((candidate, http, username) in listOf(Triple(endpoint, true, "user"), Triple(endpoint, false, ""),
+            Triple(endpoint.copy(kind = io.nekohasekai.sagernet.ui.lan.ProbeKind.TCP_UNVERIFIED), false, ""),
             Triple(endpoint.copy(kind = io.nekohasekai.sagernet.ui.lan.ProbeKind.HTTP_AUTH), false, "user"))) {
             try { io.nekohasekai.sagernet.ui.lan.LanProfileStore.save(candidate, http, 0L, "Fixture", username, ""); fail("Invalid protocol/auth must fail") }
             catch (_: IllegalArgumentException) { }

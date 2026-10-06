@@ -517,7 +517,6 @@
     <string name="lan_name">Название профиля</string>
     <string name="lan_username">Логин (необязателен без запроса авторизации)</string>
     <string name="lan_password">Пароль</string>
-    <string name="lan_http_choice">Прокси HTTP (без отметки: SOCKS5)</string>
     <string name="lan_group">Локальная группа (не подписка)</string>
     <string name="lan_save">Сохранить профиль</string>
     <string name="lan_auth_required">Для этого сервера нужен логин. При поиске учётные данные не проверяются.</string>
@@ -525,4 +524,6 @@
     <string name="lan_saved">Профиль сохранён, но не выбран и не подключён. Проверьте доступность интернета тестами профиля.</string>
     <string name="lan_duplicate">Такой сервер с этими учётными данными уже есть в выбранной группе. Дубликат не добавлен.</string>
     <string name="lan_save_failed">Не удалось сохранить профиль. Проверьте, что локальная группа существует.</string>
+    <string name="lan_protocol_label">Протокол профиля</string>
+    <string name="lan_choose_protocol">Выберите протокол…</string>
 </resources>

@@ -611,7 +611,6 @@
     <string name="lan_name">Profile name</string>
     <string name="lan_username">Username (optional unless authentication required)</string>
     <string name="lan_password">Password</string>
-    <string name="lan_http_choice">Use HTTP proxy (unchecked: SOCKS5)</string>
     <string name="lan_group">Local group (not a subscription)</string>
     <string name="lan_save">Save profile</string>
     <string name="lan_auth_required">This listener requires a username. Credentials are not verified during discovery.</string>
@@ -619,4 +618,6 @@
     <string name="lan_saved">Profile saved. It is not selected or connected. Use profile tests to check Internet access.</string>
     <string name="lan_duplicate">This endpoint and credentials already exist in the selected group. No duplicate was added.</string>
     <string name="lan_save_failed">Could not save the profile. Check that the local group still exists.</string>
+    <string name="lan_protocol_label">Profile protocol</string>
+    <string name="lan_choose_protocol">Choose protocol…</string>
 </resources>

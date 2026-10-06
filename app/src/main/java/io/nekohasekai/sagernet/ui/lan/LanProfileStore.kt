@@ -13,8 +13,9 @@ import kotlinx.coroutines.withContext
 /** Explicit save only. Does not select a profile, start VPN or append to subscription groups. */
 object LanProfileStore {
     data class Saved(val profile: ProxyEntity, val created: Boolean)
-    suspend fun save(candidate: ProxyCandidate, http: Boolean, groupId: Long, name: String, username: String, password: String): Saved {
+    suspend fun save(candidate: ProxyCandidate, http: Boolean, groupId: Long, name: String, username: String, password: String, protocolConfirmed: Boolean = false): Saved {
         require(LanScope.ipv4(candidate.host)?.let(LanScope::privateAddress) == true)
+        require(candidate.kind !in setOf(ProbeKind.HTTP_UNVERIFIED, ProbeKind.TCP_UNVERIFIED) || protocolConfirmed)
         require(candidate.port in 1..65535 && name.length <= 128 && username.length <= 256 && password.length <= 256)
         require(when (candidate.kind) {
             ProbeKind.SOCKS5, ProbeKind.SOCKS5_AUTH -> !http

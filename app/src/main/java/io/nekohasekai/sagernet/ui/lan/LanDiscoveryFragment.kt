@@ -148,12 +148,21 @@ class LanDiscoveryFragment : ToolbarFragment(R.layout.layout_lan_discovery) {
             }
             panel.addView(TextView(context).apply { text = "${candidate.host}:${candidate.port}\n${kindLabel(candidate.kind)}\n${getString(R.string.lan_save_warning)}"; textSize = 18f })
             val name = field(R.string.lan_name, "LAN ${candidate.host}:${candidate.port}", limit = 128)
-            val http = CheckBox(context).apply {
-                text = getString(R.string.lan_http_choice); textSize = 18f; minHeight = (48 * resources.displayMetrics.density).toInt()
-                isChecked = candidate.kind == ProbeKind.HTTP_AUTH || candidate.kind == ProbeKind.HTTP_UNVERIFIED
+            panel.addView(TextView(context).apply { text = getString(R.string.lan_protocol_label); textSize = 18f })
+            val protocol = Spinner(context).apply {
+                minimumHeight = (48 * resources.displayMetrics.density).toInt()
+                adapter = ArrayAdapter(context, android.R.layout.simple_spinner_dropdown_item,
+                    listOf(getString(R.string.lan_choose_protocol), "SOCKS5", "HTTP"))
+                setSelection(when (candidate.kind) {
+                    ProbeKind.SOCKS5, ProbeKind.SOCKS5_AUTH -> 1
+                    ProbeKind.HTTP_AUTH -> 2
+                    else -> 0
+                })
                 isEnabled = candidate.kind in setOf(ProbeKind.HTTP_UNVERIFIED, ProbeKind.TCP_UNVERIFIED)
             }
-            panel.addView(http)
+            panel.addView(protocol)
+            val validation = TextView(context).apply { textSize = 18f; accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE }
+            panel.addView(validation)
             val username = field(R.string.lan_username); val password = field(R.string.lan_password, secret = true)
             panel.addView(TextView(context).apply { text = getString(R.string.lan_group) })
             val group = Spinner(context).apply { minimumHeight = (48 * resources.displayMetrics.density).toInt()
@@ -165,15 +174,19 @@ class LanDiscoveryFragment : ToolbarFragment(R.layout.layout_lan_discovery) {
             dialog = confirmation; confirmation.show()
             confirmation.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 if (!environment.current(network)) { confirmation.dismiss(); invalidateNetwork(); return@setOnClickListener }
+                if (protocol.selectedItemPosition == 0) {
+                    validation.setText(R.string.lan_choose_protocol); protocol.requestFocus(); return@setOnClickListener
+                }
+                validation.text = ""
                 if (candidate.kind in setOf(ProbeKind.SOCKS5_AUTH, ProbeKind.HTTP_AUTH) && username.text.isBlank()) {
                     username.error = getString(R.string.lan_auth_required); username.requestFocus(); return@setOnClickListener
                 }
                 confirmation.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = false
-                val useHttp = http.isChecked; val groupId = groups[group.selectedItemPosition].id
+                val useHttp = protocol.selectedItemPosition == 2; val groupId = groups[group.selectedItemPosition].id
                 val profileName = name.text.toString().trim(); val user = username.text.toString(); val secret = password.text.toString()
                 viewLifecycleOwner.lifecycleScope.launch {
                     try {
-                        val saved = withContext(Dispatchers.IO) { LanProfileStore.save(candidate, useHttp, groupId, profileName, user, secret) }
+                        val saved = withContext(Dispatchers.IO) { LanProfileStore.save(candidate, useHttp, groupId, profileName, user, secret, protocolConfirmed = true) }
                         confirmation.dismiss(); status.setText(if (saved.created) R.string.lan_saved else R.string.lan_duplicate)
                         status.requestFocus()
                     } catch (cancelled: CancellationException) { throw cancelled }
