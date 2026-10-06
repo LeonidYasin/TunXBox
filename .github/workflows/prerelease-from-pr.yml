@@ -402,7 +402,7 @@ jobs:
           # Whitelisted synthetic PreviewDebug evidence only, captured BEFORE signing secrets.
           # Never publish general logcat/hierarchy/QR screenshots or arbitrary diagnostic artifacts.
           for orientation in portrait landscape; do
-            SOURCE="build/emulator-results/4096/screens/TunXBoxSmoke/lan_discovery_${orientation}.png"
+            SOURCE=$(find build/emulator-results/4096/screens -type f -name "lan_discovery_${orientation}.png" -print)
             test -s "$SOURCE"
             NAME="TunXBox-${VERSION}-android-emulator-preview-debug-lan-${orientation}-${SHORT_SHA}.png"
             cp "$SOURCE" "dist/$NAME"
