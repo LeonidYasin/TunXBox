@@ -4,6 +4,8 @@
 
 Исторический tracked `release.keystore` — только имя артефакта; его содержимое не раскрывается и он не является гарантией текущей private pinned signing identity.
 
+Ссылки inventory открывают записи Git, включая tracked symlinks. Наличие такой записи не гарантирует существование её runtime target; `buildScript/nkmr` — историческая ссылка на отсутствующий в tree `../nkmr`.
+
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
 Всего tracked файлов: **650**.

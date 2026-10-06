@@ -75,3 +75,7 @@ Rolling tag `vVERSION-rc` не заменяет Android versionCode. VersionCode
 | VPN/подписочные providers пользователя | Реальные endpoints/URLs | TunXBox не выдаёт их credentials и не гарантирует доступность |
 
 Полные прямые/транзитивные Go зависимости: [go.mod](../libcore/go.mod), [go.sum](../libcore/go.sum). Android зависимости: [app/build.gradle.kts](../app/build.gradle.kts), repositories/buildSrc. Licensing: [LICENSE](../LICENSE), [AUTHORS](../AUTHORS), core LICENSE; версии Third-party SDK проверяются из файлов, не из этого обзорного текста.
+
+## Публикация после изменения workflow
+
+Встроенный `GITHUB_TOKEN` с `contents: write` не имеет отдельного права `workflows`. При force-update rolling tag через коммиты с изменённым workflow GitHub может отклонить push. Это ошибка publication permissions, не падение Android-тестов. Не обходить gates и не печатать токены. Владелец/авторизованная интеграция с нужными правами может обновить существующий rolling tag на выбранный source SHA; затем повторная сборка должна пройти весь pipeline и проверить загруженные bytes. До завершения upload `apk-manifest.json` в Assets остаётся источником фактической ревизии APK, а не новое положение тега. Master/main не нужны для такого исправления.

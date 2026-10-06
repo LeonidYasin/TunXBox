@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Check docs-as-code links, tracked-file inventory and keyed XML preference coverage."""
-import argparse, collections, json, pathlib, re, subprocess, urllib.parse, xml.etree.ElementTree as ET
+import argparse, collections, json, os, pathlib, re, subprocess, urllib.parse, xml.etree.ElementTree as ET
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 INDEX = ROOT/'docs/reference/repository-index.md'
 def paths_from_git():
@@ -15,7 +15,7 @@ def make_index(paths):
         elif path.startswith('app/src/'): group='/'.join(path.split('/')[:3])
         else: group=path.split('/')[0] if '/' in path else 'Корень'
         groups[group].append(path)
-    lines=['# Полный реестр файлов репозитория','','Сгенерирован из tracked Git tree. Это inventory, не утверждение, что каждый ресурс/класс является активной UI-функцией. Generated/ignored AAR, downloaded cores/assets, private signing material и build outputs сюда не входят.','','Исторический tracked `release.keystore` — только имя артефакта; его содержимое не раскрывается и он не является гарантией текущей private pinned signing identity.','','Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.','',f'Всего tracked файлов: **{len(paths)}**.','','| Раздел | Файлов |','|---|---|']
+    lines=['# Полный реестр файлов репозитория','','Сгенерирован из tracked Git tree. Это inventory, не утверждение, что каждый ресурс/класс является активной UI-функцией. Generated/ignored AAR, downloaded cores/assets, private signing material и build outputs сюда не входят.','','Исторический tracked `release.keystore` — только имя артефакта; его содержимое не раскрывается и он не является гарантией текущей private pinned signing identity.','','Ссылки inventory открывают записи Git, включая tracked symlinks. Наличие такой записи не гарантирует существование её runtime target; `buildScript/nkmr` — историческая ссылка на отсутствующий в tree `../nkmr`.','','Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.','',f'Всего tracked файлов: **{len(paths)}**.','','| Раздел | Файлов |','|---|---|']
     for key,values in sorted(groups.items()): lines.append(f'| `{key}` | {len(values)} |')
     for key,values in sorted(groups.items()):
         lines+=['','## '+key,'']
@@ -32,8 +32,12 @@ def main():
         for target in re.findall(r'(?<!!)\[[^\]]*\]\(([^)]+)\)',source.read_text()):
             parsed=urllib.parse.urlsplit(target)
             if parsed.scheme or parsed.netloc or not parsed.path: continue
-            resolved=(source.parent/urllib.parse.unquote(parsed.path)).resolve()
-            if not resolved.is_relative_to(ROOT) or not resolved.exists(): errors.append(f'{source.relative_to(ROOT)}: {target}')
+            # Documentation links address Git entries, not dereferenced runtime targets.
+            # Source ZIPs materialize symlinks as text; real Git checkouts preserve them.
+            candidate=pathlib.Path(os.path.abspath(source.parent/urllib.parse.unquote(parsed.path)))
+            inside=candidate.is_relative_to(ROOT)
+            tracked_symlink=inside and candidate.is_symlink() and candidate.relative_to(ROOT).as_posix() in paths
+            if not inside or not (candidate.exists() or tracked_symlink): errors.append(f'{source.relative_to(ROOT)}: {target}')
             checked+=1
     assert not errors,'Broken local links: '+str(errors[:30])
     reference=(ROOT/'docs/reference/preferences.md').read_text();entries=0
