@@ -11,6 +11,12 @@ collect() {
   adb logcat -d > "$out/logcat.txt" || true
   adb logcat -b crash -d > "$out/crash-log.txt" || true
   tail -n 160 "$out/crash-log.txt" || true
+  # Capture process-kill reasons too: LMKD/system kills need not appear in crash buffer.
+  # Disposable offline fixtures only, before private signing identity is loaded.
+  adb shell dumpsys activity exit-info com.tunxbox.app > "$out/process-exits.txt" || true
+  head -n 100 "$out/process-exits.txt" || true
+  adb logcat -b events -d -s am_kill:I am_crash:I am_anr:I am_proc_died:I "*:S" > "$out/process-events.txt" || true
+  tail -n 80 "$out/process-events.txt" || true
   adb logcat -d -s TunXBoxSmoke:I "*:S" > "$out/smoke-ui-log.txt" || true
   adb shell getprop > "$out/device-properties.txt" || true
   adb shell getconf PAGESIZE > "$out/page-size.txt" || true
