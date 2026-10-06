@@ -100,6 +100,13 @@ class EmulatorSmokeTest {
         assertFalse("QR transfer must not open before explicit selection", device.hasObject(By.text(text(R.string.tv_qr_title))))
     }
 
+    private fun clickAddMethod(id: Int) {
+        val title = text(id)
+        assertTrue("Unreachable requested add method: $title", UiScrollable(UiSelector().className("android.widget.ListView"))
+            .scrollIntoView(UiSelector().text(title)))
+        visibleText(title).click()
+    }
+
     @Test fun nativeCoreLoadsOnActualExpectedPageSize() {
         val expected = InstrumentationRegistry.getArguments().getString("expectedPageSize") ?: error("CI must specify page size")
         assertEquals(expected, device.executeShellCommand("getconf PAGESIZE").trim())
@@ -124,7 +131,7 @@ class EmulatorSmokeTest {
     }
     @Test fun manualChooserIncludesAdvancedEditorsOnRealAndroid() {
         startTv(); openTopAdd()
-        visibleText(text(R.string.add_profile_methods_manual_settings)).click()
+        clickAddMethod(R.string.add_profile_methods_manual_settings)
         visibleText(text(R.string.action_socks))
         val list = UiScrollable(UiSelector().className("android.widget.ListView"))
         assertTrue(list.scrollIntoView(UiSelector().text(text(R.string.custom_config))))
@@ -139,7 +146,7 @@ class EmulatorSmokeTest {
                 ClipData.newPlainText("Offline test profile", "socks://127.0.0.1:1080#EmulatorSmoke"))
         }
         openTopAdd()
-        visibleText(text(R.string.action_import)).click()
+        clickAddMethod(R.string.action_import)
         val deadline = android.os.SystemClock.elapsedRealtime() + timeout
         while (SagerDatabase.proxyDao.getByGroup(DataStore.currentGroupId()).isEmpty() && android.os.SystemClock.elapsedRealtime() < deadline)
             android.os.SystemClock.sleep(100)
@@ -153,6 +160,7 @@ class EmulatorSmokeTest {
         // Preview intentionally shows a warning; stable OSS must not show that dialog.
         if (isPreview) {
             visibleText(text(android.R.string.ok)).click()
+            assertTrue("Preview warning must dismiss and stay dismissed", device.wait(Until.gone(By.text(text(R.string.preview_version_hint))), timeout))
         } else {
             assertFalse("Stable OSS must not show preview warning", device.hasObject(By.text(text(R.string.preview_version_hint))))
         }
@@ -165,7 +173,7 @@ class EmulatorSmokeTest {
     }
     @Test fun receiveQrScreenRemainsReachableFromTopAdd() {
         startTv(); openTopAdd()
-        visibleText(text(R.string.tv_receive_qr)).click()
+        clickAddMethod(R.string.tv_receive_qr)
         visibleText(text(R.string.tv_qr_title))
         visibleText(text(R.string.tv_qr_ready))
         assertFalse(device.hasObject(By.text(text(R.string.tv_send_qr_title))))
@@ -191,7 +199,19 @@ class EmulatorSmokeTest {
     @Test fun sharedLanScreenIsIdleAndUsableInBothOrientations() {
         scenario = ActivityScenario.launch<MainActivity>(Intent(context, MainActivity::class.java)
             .putExtra("tv_tools", true).putExtra("tv_destination", R.id.nav_lan_discovery))
-        fun assertIdle() {
+        fun orientAndAssertIdle(orientation: Int, expected: Int) {
+            scenario!!.onActivity { it.requestedOrientation = orientation }
+            val deadline = android.os.SystemClock.elapsedRealtime() + timeout
+            var ready = false
+            while (!ready && android.os.SystemClock.elapsedRealtime() < deadline) {
+                instrumentation.runOnMainSync {
+                    ready = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED).any {
+                        it is MainActivity && it.resources.configuration.orientation == expected && it.findViewById<android.view.View>(R.id.lan_scan) != null
+                    }
+                }
+                if (!ready) android.os.SystemClock.sleep(100)
+            }
+            assertTrue("LAN activity did not resume in the expected orientation", ready)
             instrumentation.waitForIdleSync()
             scenario!!.onActivity { activity ->
                 assertFalse(activity.findViewById<android.widget.CheckBox>(R.id.lan_consent).isChecked)
@@ -200,10 +220,11 @@ class EmulatorSmokeTest {
                 assertEquals(0, activity.findViewById<android.widget.LinearLayout>(R.id.lan_results).childCount)
             }
         }
-        visibleText(text(R.string.lan_title)); assertIdle()
+        visibleText(text(R.string.lan_title))
+        orientAndAssertIdle(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT, android.content.res.Configuration.ORIENTATION_PORTRAIT)
         device.executeShellCommand("mkdir -p /sdcard/Download/TunXBoxSmoke")
         device.executeShellCommand("screencap -p /sdcard/Download/TunXBoxSmoke/lan_discovery_portrait.png")
-        device.setOrientationLeft(); device.waitForIdle(); visibleText(text(R.string.lan_title)); assertIdle()
+        orientAndAssertIdle(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE, android.content.res.Configuration.ORIENTATION_LANDSCAPE)
         device.executeShellCommand("screencap -p /sdcard/Download/TunXBoxSmoke/lan_discovery_landscape.png")
     }
     @Test fun realSocketProbeAndRoomImportAreDuplicateSafeWithoutConnectingVpn() = runBlocking {

@@ -58,6 +58,14 @@ class LanDiscoveryFragment : ToolbarFragment(R.layout.layout_lan_discovery) {
         cancelButton.setOnClickListener { stopScan(R.string.lan_cancelled) }
         select(environment.networks().firstOrNull())
     }
+    override fun onResume() {
+        super.onResume()
+        // This screen creates profiles but never connects. Suppress the unrelated global VPN FAB,
+        // including after Android restores the fragment on rotation.
+        (activity as? io.nekohasekai.sagernet.ui.MainActivity)?.binding?.let {
+            it.fab.hide(); it.stats.allowShow = false; it.stats.performHide()
+        }
+    }
     override fun onStart() {
         super.onStart()
         val request = NetworkRequest.Builder().addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)

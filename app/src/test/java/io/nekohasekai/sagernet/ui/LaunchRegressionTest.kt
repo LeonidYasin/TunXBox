@@ -587,4 +587,22 @@ class LaunchRegressionTest {
             catch (_: IllegalArgumentException) { }
         }
     }
+
+    @Test fun previewWarningIsColdStartOnlyAndDoesNotReappearAfterRecreation() {
+        TvUiPreferences.phoneMode = true
+        val controller = Robolectric.buildActivity(MainActivity::class.java, Intent(Intent.ACTION_MAIN)).setup().visible()
+        try {
+            controller.get().supportFragmentManager.executePendingTransactions(); shadowOf(Looper.getMainLooper()).idle()
+            val first = org.robolectric.shadows.ShadowDialog.getLatestDialog()
+            if (io.nekohasekai.sagernet.ktx.isPreview) {
+                assertNotNull(first); assertTrue(first!!.isShowing)
+                first.dismiss()
+            }
+            controller.recreate().visible()
+            controller.get().supportFragmentManager.executePendingTransactions(); shadowOf(Looper.getMainLooper()).idle()
+            val restored = org.robolectric.shadows.ShadowDialog.getLatestDialog()
+            val message = restored?.findViewById<android.widget.TextView>(android.R.id.message)?.text?.toString()
+            assertFalse("Rotation must not display a fresh preview warning", restored?.isShowing == true && message == controller.get().getString(R.string.preview_version_hint))
+        } finally { controller.pause().stop().destroy() }
+    }
 }

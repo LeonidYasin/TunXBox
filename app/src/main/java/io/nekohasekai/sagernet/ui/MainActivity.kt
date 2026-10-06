@@ -164,7 +164,7 @@ class MainActivity : ThemedActivity(),
             }
         }
 
-        if (isPreview && !intent.getBooleanExtra("tv_tools", false)) {
+        if (savedInstanceState == null && isPreview && !intent.getBooleanExtra("tv_tools", false)) {
             MaterialAlertDialogBuilder(this)
                 .setTitle(BuildConfig.PRE_VERSION_NAME)
                 .setMessage(R.string.preview_version_hint)
@@ -387,10 +387,10 @@ class MainActivity : ThemedActivity(),
 
     @SuppressLint("CommitTransaction")
     fun displayFragment(fragment: ToolbarFragment) {
-        if (fragment is ConfigurationFragment) {
+        if (fragment is ConfigurationFragment || (DataStore.showBottomBar && fragment !is io.nekohasekai.sagernet.ui.lan.LanDiscoveryFragment)) {
             binding.stats.allowShow = true
             binding.fab.show()
-        } else if (!DataStore.showBottomBar) {
+        } else {
             binding.stats.allowShow = false
             binding.stats.performHide()
             binding.fab.hide()
