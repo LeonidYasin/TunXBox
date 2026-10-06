@@ -4,7 +4,8 @@
     android:id="@+id/coordinator"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:focusable="true">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -35,7 +36,8 @@
         <androidx.core.widget.NestedScrollView
             android:id="@+id/main_layout"
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:focusable="true">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -50,6 +52,8 @@
                     android:layout_marginRight="16dp"
                     android:clickable="true"
                     android:focusable="true"
+                    app:strokeColor="@color/tv_focus_stroke"
+                    app:strokeWidth="2dp"
                     app:cardElevation="2dp">
 
                     <LinearLayout
@@ -70,7 +74,8 @@
                             android:layout_height="wrap_content"
                             android:ems="10"
                             android:inputType="text"
-                            android:text="stun.voipgate.com:3478" />
+                            android:text="stun.voipgate.com:3478"
+                            android:focusable="true" />
 
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
@@ -83,6 +88,8 @@
                     android:layout_marginRight="16dp"
                     android:clickable="true"
                     android:focusable="true"
+                    app:strokeColor="@color/tv_focus_stroke"
+                    app:strokeWidth="2dp"
                     app:cardElevation="2dp">
 
                     <LinearLayout
@@ -122,7 +129,8 @@
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="8dp"
                         android:text="@string/start"
-                        android:textColor="?primaryOrTextPrimary" />
+                        android:textColor="?primaryOrTextPrimary"
+                        android:focusable="true" />
                 </LinearLayout>
 
             </LinearLayout>

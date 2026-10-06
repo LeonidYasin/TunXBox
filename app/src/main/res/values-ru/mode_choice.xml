@@ -1,0 +1,8 @@
+<resources>
+    <string name="mode_choose_title">Выберите интерфейс</string>
+    <string name="mode_choose_hint">Как вы хотите использовать TunXBox? Режим можно изменить позже.</string>
+    <string name="mode_tv_title">ТВ</string>
+    <string name="mode_tv_hint">Крупные карточки и управление пультом</string>
+    <string name="mode_phone_title">Смартфон</string>
+    <string name="mode_phone_hint">Сенсорное управление и полные настройки профилей</string>
+</resources>

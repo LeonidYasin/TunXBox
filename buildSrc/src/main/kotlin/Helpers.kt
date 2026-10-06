@@ -94,7 +94,7 @@ fun Project.setupCommon() {
                     }
                 }
                 getByName("debug") {
-                    applicationIdSuffix = "debug"
+                    // applicationIdSuffix removed for TV compatibility
                     debuggable(true)
                     jniDebuggable(true)
                 }
@@ -119,11 +119,14 @@ fun Project.setupAppCommon() {
     val alias = lp.getProperty("ALIAS_NAME") ?: System.getenv("ALIAS_NAME")
     val pwd = lp.getProperty("ALIAS_PASS") ?: System.getenv("ALIAS_PASS")
 
+    if (System.getenv("TUNXBOX_REQUIRE_SIGNING") == "1") {
+        require(!keystorePwd.isNullOrBlank() && !alias.isNullOrBlank() && !pwd.isNullOrBlank()) { "Missing required signing identity" }
+    }
     android.apply {
         if (keystorePwd != null) {
             signingConfigs {
                 create("release") {
-                    storeFile = rootProject.file("release.keystore")
+                    storeFile = rootProject.file(System.getenv("TUNXBOX_SIGNING_KEYSTORE") ?: "release.keystore")
                     storePassword = keystorePwd
                     keyAlias = alias
                     keyPassword = pwd
@@ -135,6 +138,15 @@ fun Project.setupAppCommon() {
             if (key != null) {
                 getByName("release").signingConfig = key
                 getByName("debug").signingConfig = key
+            } else {
+                // Fallback to debug signing for CI builds without release keystore
+                val debugKey = signingConfigs.findByName("debug")
+                if (debugKey != null) {
+                    getByName("release").signingConfig = debugKey
+                    names.filter { it != "release" && it != "debug" }.forEach { name ->
+                        findByName(name)?.signingConfig = debugKey
+                    }
+                }
             }
         }
     }
@@ -143,7 +155,10 @@ fun Project.setupAppCommon() {
 fun Project.setupApp() {
     val pkgName = requireMetadata().getProperty("PACKAGE_NAME")
     val verName = requireMetadata().getProperty("VERSION_NAME")
-    val verCode = (requireMetadata().getProperty("VERSION_CODE").toInt()) * 5
+    val versionBase = requireMetadata().getProperty("VERSION_CODE").toInt()
+    val buildSequence = System.getenv("TUNXBOX_BUILD_SEQUENCE")?.toIntOrNull() ?: 0
+    require(versionBase in 1..2100 && buildSequence in 0..999998) { "Invalid Android version sequence" }
+    val verCode = versionBase * 1_000_000 + 999999
     android.apply {
         defaultConfig {
             applicationId = pkgName
@@ -169,11 +184,9 @@ fun Project.setupApp() {
         splits.abi {
             reset()
             isEnable = true
-            isUniversalApk = false
+            isUniversalApk = true
             include("armeabi-v7a")
             include("arm64-v8a")
-            include("x86")
-            include("x86_64")
         }
 
         flavorDimensions += "vendor"
@@ -182,6 +195,8 @@ fun Project.setupApp() {
             create("fdroid")
             create("play")
             create("preview") {
+                versionCode = versionBase * 1_000_000 + buildSequence
+                versionNameSuffix = "-rc.$buildSequence"
                 buildConfigField(
                     "String",
                     "PRE_VERSION_NAME",
@@ -197,10 +212,10 @@ fun Project.setupApp() {
                 outputFileName = if (isPreview) {
                     outputFileName.replace(
                         project.name,
-                        "NekoBox-" + requireMetadata().getProperty("PRE_VERSION_NAME")
+                        "TunXBox-" + requireMetadata().getProperty("PRE_VERSION_NAME")
                     ).replace("-preview", "")
                 } else {
-                    outputFileName.replace(project.name, "NekoBox-$versionName")
+                    outputFileName.replace(project.name, "TunXBox-$versionName")
                         .replace("-release", "")
                         .replace("-oss", "")
                 }

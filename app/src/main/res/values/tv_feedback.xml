@@ -1,0 +1,32 @@
+<resources>
+    <string name="tv_receive_success_title">Profiles received</string>
+    <string name="tv_receive_success_message">Saved profiles: %1$d. Continue on TV; you can close the browser tab on your phone.</string>
+    <string name="tv_receive_continue">Continue on TV</string>
+    <string name="tv_connection_row">Connection</string>
+    <string name="tv_connection_status">VPN status and traffic</string>
+    <string name="tv_connection_stats">%1$s\nProfile: %2$s\n↑ %3$s  ↓ %4$s\nSession: ↑ %5$s  ↓ %6$s</string>
+    <string name="tv_connection_explanation">Status comes from the VPN service. Rates show proxy traffic; session totals include measured traffic. Zero traffic while idle is normal and does not prove a failure. A running VPN is not proof of Internet access. URL tests check a profile through a separate temporary core, not the active tunnel.</string>
+    <string name="tv_stats_age">Last traffic update: %1$s seconds ago</string>
+    <string name="tv_tests_title">Test profiles</string>
+    <string name="tv_tests_hint">TCP latency, URL availability, results and sorting</string>
+    <string name="tv_test_tcp">TCP latency — current group</string>
+    <string name="tv_test_url">URL availability — current group</string>
+    <string name="tv_test_clear">Clear test results</string>
+    <string name="tv_test_sort">Sort by latency</string>
+    <string name="tv_test_advanced">All profile operations</string>
+    <string name="tv_test_starting">Preparing test…</string>
+    <string name="tv_test_progress">Tested: %1$d / %2$d\nAvailable: %3$d · Unavailable: %4$d</string>
+    <string name="tv_test_complete">Test finished</string>
+    <string name="tv_test_unavailable">Unavailable</string>
+    <string name="tv_test_scope">TCP checks the server port; URL uses the configured test URL through each profile. These are not ICMP ping or a speed benchmark. Results are saved in the profile cards.</string>
+    <string name="tv_all_functions">All functions</string>
+    <string name="tv_all_functions_hint">Complete profile, group, routing, settings, tools and log screens</string>
+    <string name="tv_home">TV home screen</string>
+    <string name="tv_home_hint">Leave TunXBox without disconnecting VPN</string>
+    <string name="tv_youtube">Open YouTube</string>
+    <string name="tv_youtube_hint">Check playback without disconnecting VPN</string>
+    <string name="tv_youtube_missing">YouTube is not installed or has no launchable screen.</string>
+<string name="tv_test_active">Check current VPN</string>
+<string name="tv_test_active_ok">Last VPN check: succeeded, %1$d ms</string>
+<string name="tv_test_active_failed">Last VPN check: URL test failed; check network or logs.</string>
+</resources>

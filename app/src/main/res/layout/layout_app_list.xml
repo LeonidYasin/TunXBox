@@ -5,7 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:duplicateParentState="false"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:focusable="true">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appbar"
@@ -47,6 +48,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_margin="4dp"
+                        android:focusable="true"
                         app:cardElevation="2dp">
 
                         <LinearLayout
@@ -61,7 +63,8 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginBottom="4dp"
-                                android:text="@string/show_system_apps" />
+                                android:text="@string/show_system_apps"
+                                android:focusable="true" />
 
                             <com.google.android.material.textfield.TextInputLayout
                                 android:layout_width="match_parent"
@@ -71,7 +74,8 @@
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/search"
                                     android:layout_width="match_parent"
-                                    android:layout_height="wrap_content" />
+                                    android:layout_height="wrap_content"
+                                    android:focusable="true" />
 
                             </com.google.android.material.textfield.TextInputLayout>
 
@@ -109,6 +113,7 @@
         android:clipToPadding="false"
         android:scrollbarSize="0dp"
         android:visibility="gone"
+        android:focusable="true"
         app:fastScrollAutoHide="true"
         app:fastScrollPopupTextColor="?colorPrimary"
         app:fastScrollThumbColor="?colorPrimary"

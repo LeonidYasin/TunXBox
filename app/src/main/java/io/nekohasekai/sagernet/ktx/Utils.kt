@@ -44,10 +44,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import moe.matsuri.nb4a.utils.NGUtil
-import java.io.FileDescriptor
 import java.net.HttpURLConnection
 import java.net.InetAddress
-import java.net.Socket
 import java.net.URLEncoder
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -77,15 +75,9 @@ inline fun <T> Iterable<T>.forEachTry(action: (T) -> Unit) {
 val Throwable.readableMessage
     get() = localizedMessage.takeIf { !it.isNullOrBlank() } ?: javaClass.simpleName
 
-/**
- * https://android.googlesource.com/platform/prebuilts/runtime/+/94fec32/appcompat/hiddenapi-light-greylist.txt#9466
- */
-
-private val socketGetFileDescriptor = Socket::class.java.getDeclaredMethod("getFileDescriptor\$")
-val Socket.fileDescriptor get() = socketGetFileDescriptor.invoke(this) as FileDescriptor
-
-private val getInt = FileDescriptor::class.java.getDeclaredMethod("getInt$")
-val FileDescriptor.int get() = getInt.invoke(this) as Int
+// Do not resolve unused hidden Socket/FileDescriptor APIs during this utility
+// class initializer. Their lookup can abort the entire application/service startup
+// on runtimes where the non-SDK methods are unavailable or restricted.
 
 suspend fun <T> HttpURLConnection.useCancellable(block: suspend HttpURLConnection.() -> T): T {
     return suspendCancellableCoroutine { cont ->

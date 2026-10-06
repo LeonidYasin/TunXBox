@@ -116,12 +116,17 @@ class SagerConnection(
     }
 
     override fun onServiceConnected(name: ComponentName?, binder: IBinder) {
+        // Preference initialization/service-mode changes may queue a rebind before
+        // the earlier callback arrives. Ignore late delivery and make repeats idempotent.
+        if (!connectionActive) return
+        if (this.binder === binder && callbackRegistered) return
+        unregisterCallback()
+        if (listenForDeath) try { this.binder?.unlinkToDeath(this, 0) } catch (_: NoSuchElementException) { }
         this.binder = binder
         val service = ISagerNetService.Stub.asInterface(binder)!!
         this.service = service
         try {
             if (listenForDeath) binder.linkToDeath(this, 0)
-            check(!callbackRegistered)
             service.registerCallback(serviceCallback, connectionId)
             callbackRegistered = true
         } catch (e: RemoteException) {

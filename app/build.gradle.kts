@@ -1,5 +1,3 @@
-@file:Suppress("UnstableApiUsage")
-
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -10,6 +8,10 @@ plugins {
 setupApp()
 
 android {
+    testOptions { unitTests.isIncludeAndroidResources = true
+        unitTests.all {
+            it.testLogging.exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        } }
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
     }
@@ -28,6 +30,10 @@ android {
         aidl = true
     }
     namespace = "io.nekohasekai.sagernet"
+    defaultConfig {
+        applicationId = "com.tunxbox.app"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
     packaging {
         jniLibs {
             useLegacyPackaging = true
@@ -39,6 +45,13 @@ android {
 }
 
 dependencies {
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.test:core:1.6.1")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test.uiautomator:uiautomator:2.3.0")
+
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.14.1")
 
     implementation(fileTree("libs"))
 
@@ -54,6 +67,7 @@ dependencies {
     implementation("androidx.navigation:navigation-ui-ktx:2.5.3")
     implementation("androidx.preference:preference-ktx:1.2.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("androidx.leanback:leanback:1.0.0")
     implementation("androidx.work:work-runtime-ktx:2.8.1")
     implementation("androidx.work:work-multiprocess:2.8.1")
 
@@ -66,6 +80,7 @@ dependencies {
     implementation("com.blacksquircle.ui:language-json:2.6.0")
 
     implementation("com.squareup.okhttp3:okhttp:5.0.0-alpha.3")
+    implementation("org.nanohttpd:nanohttpd:2.3.1")
     implementation("org.yaml:snakeyaml:1.30")
     implementation("com.github.daniel-stoneuk:material-about-library:3.2.0-rc01")
     implementation("com.jakewharton:process-phoenix:2.1.2")

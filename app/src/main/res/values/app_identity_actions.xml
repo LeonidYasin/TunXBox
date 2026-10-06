@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_close">Close app</string>
+    <string name="app_restart">Restart app</string>
+    <string name="app_close_hint">Close the interface; VPN stays in the background</string>
+    <string name="app_restart_hint">Restart the interface in the selected mode</string>
+    <string name="app_close_confirm">Close the TunXBox interface? This does not send a VPN disconnect command. To stop VPN, use Disconnect first.</string>
+    <string name="app_restart_confirm">Restart the TunXBox interface in the selected mode? Profiles and settings are retained. This does not force-disconnect the background VPN service.</string>
+    <string name="project_source_tunxbox">TunXBox source code</string>
+    <string name="project_report_issue">Report a TunXBox issue</string>
+    <string name="project_upstream">Open-source upstream</string>
+    <string name="project_upstream_neko">NekoBox for Android</string>
+    <string name="project_upstream_hint">Original project; TunXBox is an independent fork</string>
+    <string name="project_upstream_support">Support the upstream NekoBox project</string>
+    <string name="project_upstream_support_hint">Opens the original authors’ donation page, not TunXBox donations</string>
+    <string name="app_build_identity">Android package / version code</string>
+    <string name="app_build_identity_value">%1$s · %2$d</string>
+    <string name="promotions_title">Advertising in TunXBox</string>
+    <string name="promotions_body">TunXBox currently has no published advertising offers. This section no longer automatically opens the upstream NekoBox promotions site.\n\nTunXBox is a client, not a VPN subscription provider. Imported profiles and subscriptions belong to the providers you choose; their availability and terms are outside this project’s control.</string>
+    <string name="update_no_compatible_release">No compatible TunXBox release was found.</string>
+    <string name="update_check_failed">Unable to check TunXBox updates. Check your connection or open the project’s Releases page.</string>
+</resources>

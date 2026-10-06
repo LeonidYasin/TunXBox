@@ -23,6 +23,8 @@ class ToolsFragment : ToolbarFragment(R.layout.layout_tools) {
 
         TabLayoutMediator(binding.toolsTab, binding.toolsPager) { tab, position ->
             tab.text = tools[position].name()
+            tab.view.isFocusable = true
+            tab.view.minimumHeight = (48 * resources.displayMetrics.density).toInt()
             tab.view.setOnLongClickListener { // clear toast
                 true
             }

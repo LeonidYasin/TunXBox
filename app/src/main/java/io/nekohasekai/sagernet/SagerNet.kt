@@ -47,7 +47,7 @@ class SagerNet : Application(),
     private val nativeInterface = NativeInterface()
 
     val externalAssets: File by lazy { getExternalFilesDir(null) ?: filesDir }
-    val process: String = JavaUtil.getProcessName()
+    val process: String = JavaUtil.getProcessName()?.takeIf { it.isNotBlank() } ?: BuildConfig.APPLICATION_ID
     private val isMainProcess = process == BuildConfig.APPLICATION_ID
     val isBgProcess = process.endsWith(":bg")
 
@@ -204,9 +204,8 @@ class SagerNet : Application(),
 
         var appVersionNameForDisplay = {
             var n = BuildConfig.VERSION_NAME
-            if (isPreview) {
-                n += " " + BuildConfig.PRE_VERSION_NAME
-            } else if (!isOss) {
+            // VERSION_NAME already includes the preview sequence; do not append stale upstream metadata.
+            if (!isPreview && !isOss) {
                 n += " ${BuildConfig.FLAVOR}"
             }
             if (BuildConfig.DEBUG) {

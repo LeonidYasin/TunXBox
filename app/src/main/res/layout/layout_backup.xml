@@ -3,7 +3,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:focusable="true">
 
     <Button
         android:id="@+id/reset_settings"
@@ -11,7 +12,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/reset_settings"
-        android:textColor="?whiteOrTextPrimary" />
+        android:textColor="?whiteOrTextPrimary"
+        android:focusable="true" />
 
     <CheckBox
         android:id="@+id/backup_configurations"
@@ -19,7 +21,8 @@
         android:layout_height="wrap_content"
         android:checked="true"
         android:text="@string/backup_groups_and_configurations"
-        android:textAppearance="?attr/textAppearanceSubtitle2" />
+        android:textAppearance="?attr/textAppearanceSubtitle2"
+        android:focusable="true" />
 
     <CheckBox
         android:id="@+id/backup_rules"
@@ -27,7 +30,8 @@
         android:layout_height="wrap_content"
         android:checked="true"
         android:text="@string/backup_rules"
-        android:textAppearance="?attr/textAppearanceSubtitle2" />
+        android:textAppearance="?attr/textAppearanceSubtitle2"
+        android:focusable="true" />
 
 
     <CheckBox
@@ -36,7 +40,8 @@
         android:layout_height="wrap_content"
         android:checked="true"
         android:text="@string/backup_settings"
-        android:textAppearance="?attr/textAppearanceSubtitle2" />
+        android:textAppearance="?attr/textAppearanceSubtitle2"
+        android:focusable="true" />
 
     <Button
         android:id="@+id/action_export"
@@ -44,7 +49,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/action_export"
-        android:textColor="?whiteOrTextPrimary" />
+        android:textColor="?whiteOrTextPrimary"
+        android:focusable="true" />
 
     <Button
         android:id="@+id/action_share"
@@ -52,7 +58,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/share"
-        android:textColor="?whiteOrTextPrimary" />
+        android:textColor="?whiteOrTextPrimary"
+        android:focusable="true" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -68,7 +75,8 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:text="@string/action_import_file"
-        android:textColor="?whiteOrTextPrimary" />
+        android:textColor="?whiteOrTextPrimary"
+        android:focusable="true" />
 
 
 </LinearLayout>

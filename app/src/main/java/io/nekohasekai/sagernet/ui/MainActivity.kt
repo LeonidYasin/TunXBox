@@ -10,6 +10,14 @@ import android.os.Bundle
 import android.os.RemoteException
 import android.view.KeyEvent
 import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
+import androidx.drawerlayout.widget.DrawerLayout
+import java.lang.ref.WeakReference
+import io.nekohasekai.sagernet.ui.tv.TvInteractionPolicy
+import io.nekohasekai.sagernet.ui.tv.TvVpnPhase
+import io.nekohasekai.sagernet.ui.tv.TvVpnCommand
+import io.nekohasekai.sagernet.database.ProxyEntity
 import androidx.activity.addCallback
 import androidx.annotation.IdRes
 import androidx.core.app.ActivityCompat
@@ -57,16 +65,43 @@ class MainActivity : ThemedActivity(),
 
     lateinit var binding: LayoutMainBinding
     lateinit var navigation: NavigationView
+    private var contentFocus: WeakReference<View>? = null
+    private var menuKeyHandled = false
+    private var lastRemoteCommand = -750L
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        
+        // TV Mode is DEFAULT for all devices
+        // Only use Phone Mode if user explicitly requested it
+        val forcePhoneMode = intent.getBooleanExtra("force_phone_mode", false)
+        val preferPhoneMode = io.nekohasekai.sagernet.ui.tv.TvUiPreferences.phoneMode
+        
+        // Deep links (sn://subscription, clash://install-config, ss://, vmess://, trojan://, etc.)
+        // must be processed in phone mode because the TV UI doesn't have the subscription/profile
+        // import dialogs. If we redirect to TV mode, the intent data is lost and the import fails.
+        // The upstream onNewIntent() handler processes these links via importSubscription/importProfile.
+        val isDeepLink = intent?.action == Intent.ACTION_VIEW && intent?.data != null
+        
+        if (!forcePhoneMode && !preferPhoneMode && !isDeepLink && !intent.getBooleanExtra("tv_tools", false)) {
+            // Redirect to TV UI using explicit component name (no implicit intent)
+            val tvIntent = android.content.Intent().apply {
+                component = android.content.ComponentName(this@MainActivity, MainActivityTv::class.java)
+                addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            startActivity(tvIntent)
+            finish()
+            return
+        }
+        
+        // Phone Mode: continue with normal mobile UI initialization
+        if (forcePhoneMode && !isDeepLink && !intent.getBooleanExtra("tv_tools", false)) {
+            io.nekohasekai.sagernet.ui.tv.TvUiPreferences.phoneMode = true
+        }
+        
         binding = LayoutMainBinding.inflate(layoutInflater)
         binding.fab.initProgress(binding.fabProgress)
-        if (themeResId !in intArrayOf(
-                R.style.Theme_SagerNet_Black
-            )
-        ) {
+        if (themeResId !in intArrayOf(R.style.Theme_SagerNet_Black)) {
             navigation = binding.navView
             binding.drawerLayout.removeView(binding.navViewBlack)
         } else {
@@ -74,23 +109,36 @@ class MainActivity : ThemedActivity(),
             binding.drawerLayout.removeView(binding.navView)
         }
         navigation.setNavigationItemSelectedListener(this)
+        binding.drawerLayout.addDrawerListener(object : DrawerLayout.SimpleDrawerListener() {
+            override fun onDrawerClosed(drawerView: View) {
+                if (!remoteFocusEnabled) return
+                binding.root.post {
+                    val previous = contentFocus?.get()
+                    if (previous?.isAttachedToWindow == true && previous.isShown && previous.isEnabled) previous.requestFocus()
+                    else if (findViewById<View>(R.id.configuration_list)?.requestFocus() != true) binding.fab.requestFocus()
+                }
+            }
+        })
 
         if (savedInstanceState == null) {
-            displayFragmentWithId(R.id.nav_configuration)
+            val destination = intent.getIntExtra("tv_destination", R.id.nav_configuration)
+            val allowed = io.nekohasekai.sagernet.ui.tv.TvFunctionCatalog.entries(this, DataStore.enableClashAPI, isPlay).map { it.id }.toSet()
+            if (!displayFragmentWithId(if (destination in allowed) destination else R.id.nav_configuration)) displayFragmentWithId(R.id.nav_configuration)
         }
         onBackPressedDispatcher.addCallback {
-            if (supportFragmentManager.findFragmentById(R.id.fragment_holder) is ConfigurationFragment) {
-                moveTaskToBack(true)
+            if (binding.drawerLayout.isOpen) {
+                binding.drawerLayout.closeDrawers()
+            } else if (intent.getBooleanExtra("tv_tools", false)) {
+                finish()
+            } else if (supportFragmentManager.findFragmentById(R.id.fragment_holder) is ConfigurationFragment) {
+                if (intent.getBooleanExtra("tv_tools", false) || intent?.action == Intent.ACTION_VIEW && !io.nekohasekai.sagernet.ui.tv.TvUiPreferences.phoneMode) finish()
+                else moveTaskToBack(true)
             } else {
                 displayFragmentWithId(R.id.nav_configuration)
             }
         }
 
-        binding.fab.setOnClickListener {
-            if (DataStore.serviceState.canStop) SagerNet.stopService() else connect.launch(
-                null
-            )
-        }
+        binding.fab.setOnClickListener { toggleService() }
         binding.stats.setOnClickListener { if (DataStore.serviceState.connected) binding.stats.testConnection() }
 
         setContentView(binding.root)
@@ -110,14 +158,13 @@ class MainActivity : ThemedActivity(),
             val checkPermission =
                 ContextCompat.checkSelfPermission(this@MainActivity, POST_NOTIFICATIONS)
             if (checkPermission != PackageManager.PERMISSION_GRANTED) {
-                //动态申请
                 ActivityCompat.requestPermissions(
                     this@MainActivity, arrayOf(POST_NOTIFICATIONS), 0
                 )
             }
         }
 
-        if (isPreview) {
+        if (isPreview && !intent.getBooleanExtra("tv_tools", false)) {
             MaterialAlertDialogBuilder(this)
                 .setTitle(BuildConfig.PRE_VERSION_NAME)
                 .setMessage(R.string.preview_version_hint)
@@ -135,6 +182,13 @@ class MainActivity : ThemedActivity(),
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        setIntent(intent)
+        if (intent.getBooleanExtra("tv_tools", false)) {
+            val allowed = io.nekohasekai.sagernet.ui.tv.TvFunctionCatalog.entries(this, DataStore.enableClashAPI, isPlay).map { it.id }.toSet()
+            val destination = intent.getIntExtra("tv_destination", R.id.nav_configuration)
+            if (!displayFragmentWithId(if (destination in allowed) destination else R.id.nav_configuration)) displayFragmentWithId(R.id.nav_configuration)
+            return
+        }
 
         val uri = intent.data ?: return
 
@@ -240,6 +294,7 @@ class MainActivity : ThemedActivity(),
         val targetId = DataStore.selectedGroupForImport()
 
         ProfileManager.createProfile(targetId, profile)
+        DataStore.selectedGroup = targetId
 
         onMainDispatcher {
             displayFragmentWithId(R.id.nav_configuration)
@@ -306,7 +361,25 @@ class MainActivity : ThemedActivity(),
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         if (item.isChecked) binding.drawerLayout.closeDrawers() else {
-            return displayFragmentWithId(item.itemId)
+            when (item.itemId) {
+                R.id.nav_restart_app, R.id.nav_close_app -> {
+                    binding.drawerLayout.closeDrawers()
+                    AppLifecycleActions.confirm(this, item.itemId == R.id.nav_restart_app)
+                    return true
+                }
+                R.id.nav_switch_tv_mode -> {
+                    binding.drawerLayout.closeDrawers()
+                    // Clear phone-mode override so next launch goes to TV UI
+                    io.nekohasekai.sagernet.ui.tv.TvUiPreferences.phoneMode = false
+                    val tvIntent = android.content.Intent(this, MainActivityTv::class.java).apply {
+                        addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                    startActivity(tvIntent)
+                    finish()
+                    return true
+                }
+                else -> return displayFragmentWithId(item.itemId)
+            }
         }
         return true
     }
@@ -341,15 +414,12 @@ class MainActivity : ThemedActivity(),
             R.id.nav_tools -> displayFragment(ToolsFragment())
             R.id.nav_logcat -> displayFragment(LogcatFragment())
             R.id.nav_faq -> {
-                launchCustomTab("https://matsuridayo.github.io/")
+                launchCustomTab(ProjectLinks.DOCUMENTATION)
                 return false
             }
 
             R.id.nav_about -> displayFragment(AboutFragment())
-            R.id.nav_tuiguang -> {
-                launchCustomTab("https://neko-box.pages.dev/喵")
-                return false
-            }
+            R.id.nav_tuiguang -> displayFragment(PromotionsFragment())
 
             else -> return false
         }
@@ -363,6 +433,11 @@ class MainActivity : ThemedActivity(),
         animate: Boolean = false,
     ) {
         DataStore.serviceState = state
+        // Availability of edit/delete buttons follows the active connection, not stale binds.
+        runOnDefaultDispatcher {
+            ProfileManager.postUpdate(DataStore.currentProfile, true)
+            if (DataStore.selectedProxy != DataStore.currentProfile) ProfileManager.postUpdate(DataStore.selectedProxy, true)
+        }
 
         binding.fab.changeState(state, DataStore.serviceState, animate)
         binding.stats.changeState(state)
@@ -448,33 +523,89 @@ class MainActivity : ThemedActivity(),
 
     override fun onDestroy() {
         super.onDestroy()
-        GroupManager.userInterface = null
-        DataStore.configurationStore.unregisterChangeListener(this)
-        connection.disconnect(this)
+        if (::binding.isInitialized) {
+            GroupManager.userInterface = null
+            DataStore.configurationStore.unregisterChangeListener(this)
+            connection.disconnect(this)
+        }
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
-        when (keyCode) {
-            KeyEvent.KEYCODE_DPAD_LEFT -> {
-                if (super.onKeyDown(keyCode, event)) return true
-                binding.drawerLayout.open()
-                navigation.requestFocus()
-            }
-
-            KeyEvent.KEYCODE_DPAD_RIGHT -> {
-                if (binding.drawerLayout.isOpen) {
-                    binding.drawerLayout.close()
-                    return true
+        if (!::binding.isInitialized) return super.onKeyDown(keyCode, event)
+        if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT && !binding.drawerLayout.isOpen) {
+            val focused = currentFocus
+            // Explicit within-row links take precedence over opening the drawer.
+            if (focused != null && focused.nextFocusLeftId != View.NO_ID) {
+                val target = focused.focusSearch(View.FOCUS_LEFT)
+                if (target != null && target !== focused && target.isShown && target.isEnabled) {
+                    target.requestFocus(); return true
                 }
             }
+            contentFocus = focused?.let { WeakReference(it) }
+            binding.drawerLayout.open(); navigation.requestFocus(); return true
         }
-
-        if (super.onKeyDown(keyCode, event)) return true
-        if (binding.drawerLayout.isOpen) return false
-
-        val fragment =
-            supportFragmentManager.findFragmentById(R.id.fragment_holder) as? ToolbarFragment
-        return fragment != null && fragment.onKeyDown(keyCode, event)
+        if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT && binding.drawerLayout.isOpen) {
+            binding.drawerLayout.closeDrawers(); return true
+        }
+        if (binding.drawerLayout.isOpen) return super.onKeyDown(keyCode, event)
+        val fragment = supportFragmentManager.findFragmentById(R.id.fragment_holder) as? ToolbarFragment
+        if (fragment?.onKeyDown(keyCode, event) == true) return true
+        return super.onKeyDown(keyCode, event)
     }
 
+
+    // Hardware keys must consume both down and up; OK stays with the focused view.
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (!::binding.isInitialized) return super.dispatchKeyEvent(event)
+        if (RemoteRowActions.handle(currentFocus, event)) { highlightRemoteFocus(); return true }
+        if (event.keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) {
+            if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) { highlightRemoteFocus(); toggleService() }
+            return true
+        }
+        if (event.keyCode == KeyEvent.KEYCODE_MENU) {
+            if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
+                highlightRemoteFocus()
+                var candidate: View? = currentFocus
+                var profile: ProxyEntity? = null
+                while (candidate != null && profile == null) {
+                    profile = candidate.getTag(R.id.remote_profile_entity) as? ProxyEntity
+                    candidate = candidate.parent as? View
+                }
+                val fragment = supportFragmentManager.findFragmentById(R.id.fragment_holder) as? ConfigurationFragment
+                menuKeyHandled = if (profile != null && fragment != null) {
+                    fragment.showRemoteProfileActions(profile); true
+                } else findViewById<androidx.appcompat.widget.Toolbar>(R.id.toolbar)?.showOverflowMenu() == true
+            }
+            if (menuKeyHandled) {
+                if (event.action == KeyEvent.ACTION_UP) menuKeyHandled = false
+                return true
+            }
+        }
+        return super.dispatchKeyEvent(event)
+    }
+
+    fun connectProfileForRemote(id: Long) {
+        val phase = TvVpnPhase.fromServiceName(DataStore.serviceState.name)
+        if (!TvInteractionPolicy.canSelect(phase)) { snackbar(R.string.tv_wait).show(); return }
+        val old = DataStore.selectedProxy
+        DataStore.selectedProxy = id
+        runOnDefaultDispatcher { ProfileManager.postUpdate(old, true); ProfileManager.postUpdate(id, true) }
+        executeServiceCommand(TvInteractionPolicy.connectOnly(phase, id, DataStore.currentProfile, connection.service != null))
+    }
+
+    private fun toggleService() {
+        executeServiceCommand(TvInteractionPolicy.media(TvVpnPhase.fromServiceName(DataStore.serviceState.name), DataStore.selectedProxy, connection.service != null))
+    }
+
+    private fun executeServiceCommand(command: TvVpnCommand) {
+        val now = android.os.SystemClock.elapsedRealtime()
+        if (now - lastRemoteCommand < 750) return
+        lastRemoteCommand = now
+        when (command) {
+            TvVpnCommand.START -> connect.launch(null)
+            TvVpnCommand.STOP -> SagerNet.stopService()
+            TvVpnCommand.RELOAD -> SagerNet.reloadService()
+            TvVpnCommand.NONE -> snackbar(if (DataStore.selectedProxy == 0L) R.string.tv_choose_profile else R.string.tv_wait).show()
+        }
+    }
 }

@@ -6,6 +6,10 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="4dp"
+    android:focusable="true"
+    android:clickable="true"
+    app:strokeColor="@color/tv_focus_stroke"
+    app:strokeWidth="2dp"
     app:cardElevation="2dp">
 
     <LinearLayout
@@ -64,6 +68,7 @@
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/edit"
                 android:focusable="true"
+                android:nextFocusLeft="@+id/content"
                 android:padding="12dp"
                 app:srcCompat="@drawable/ic_image_edit" />
 
@@ -74,7 +79,7 @@
                 android:layout_gravity="top"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:focusable="true"
-                android:nextFocusLeft="@+id/container"
+                android:nextFocusLeft="@+id/edit"
                 android:padding="12dp"
                 app:srcCompat="@drawable/ic_baseline_more_vert_24" />
 
@@ -123,6 +128,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
+                android:focusable="true"
+                android:nextFocusLeft="@+id/options"
                 android:text="@string/group_update"
                 android:textColor="?accentOrTextSecondary" />
         </LinearLayout>

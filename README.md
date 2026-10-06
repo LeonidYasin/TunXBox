@@ -1,4 +1,19 @@
-# NekoBox for Android
+# TunXBox for Android
+
+TunXBox is an Android TV / phone client based on the open-source NekoBox project and sing-box. It adds a remote-first TV interface, a phone interface, local QR/browser profile transfer, group tests, and connection traffic/status.
+
+- **TunXBox downloads:** [current preview APKs](https://github.com/LeonidYasin/TunXBox/releases/tag/v1.5.0-rc).
+- **TunXBox issues:** [report a problem](https://github.com/LeonidYasin/TunXBox/issues).
+- **Project documentation and complete mind map:** [docs/README.md](docs/README.md) · [project map](docs/project-map.md).
+- **TV / local transfer guide:** [docs/tv-transfer.md](docs/tv-transfer.md).
+- **APK signing and updates:** [docs/signing-and-updates.md](docs/signing-and-updates.md).
+- `SHA256SUMS.txt` verifies downloaded APK bytes; it is not an Android installer or a replacement for the APK signing certificate.
+- TV and phone interfaces are included in each APK. Choose ARM64, ARM32, or universal according to your device; the manifest records the actual ABIs.
+- Closing/restarting the UI does not send a VPN disconnect command. Stop the connection explicitly before exiting if required.
+
+TunXBox is a fork, not the official NekoBox distribution. Original licensing, authorship and upstream documentation are retained below. There are currently no advertising offers published by TunXBox; the app does not automatically open the old upstream promotions page.
+
+## Upstream NekoBox documentation (not TunXBox download links)
 
 [![API](https://img.shields.io/badge/API-21%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=21)
 [![Releases](https://img.shields.io/github/v/release/MatsuriDayo/NekoBoxForAndroid)](https://github.com/MatsuriDayo/NekoBoxForAndroid/releases)

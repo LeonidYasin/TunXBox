@@ -1,0 +1,10 @@
+<resources>
+    <item type="id" name="mode_choose_tv"/>
+    <item type="id" name="mode_choose_phone"/>
+    <string name="mode_choose_title">Choose interface</string>
+    <string name="mode_choose_hint">Select how you want to use TunXBox. You can switch modes later.</string>
+    <string name="mode_tv_title">TV</string>
+    <string name="mode_tv_hint">Large cards and remote control navigation</string>
+    <string name="mode_phone_title">Smartphone</string>
+    <string name="mode_phone_hint">Touch controls and full profile settings</string>
+</resources>

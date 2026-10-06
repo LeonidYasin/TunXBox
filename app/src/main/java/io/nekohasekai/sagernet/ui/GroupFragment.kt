@@ -328,7 +328,7 @@ class GroupFragment : ToolbarFragment(R.layout.layout_group),
         val subscriptionUpdateProgress = binding.subscriptionUpdateProgress
 
         override fun onMenuItemClick(item: MenuItem): Boolean {
-
+            val targetGroup = proxyGroup
             fun export(link: String) {
                 val success = SagerNet.trySetPrimaryClip(link)
                 activity.snackbar(if (success) R.string.action_export_msg else R.string.action_export_err)
@@ -361,16 +361,14 @@ class GroupFragment : ToolbarFragment(R.layout.layout_group),
                     startFilesForResult(exportProfiles, "profiles_${proxyGroup.displayName()}.txt")
                 }
 
-                R.id.action_clear -> {
-                    MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.confirm)
-                        .setMessage(R.string.clear_profiles_message)
-                        .setPositiveButton(R.string.yes) { _, _ ->
-                            runOnDefaultDispatcher {
-                                GroupManager.clearGroup(proxyGroup.id)
-                            }
-                        }
-                        .setNegativeButton(android.R.string.cancel, null)
-                        .show()
+                R.id.action_clear -> RemoteRowActions.confirmDelete(requireContext(), getString(R.string.clear_profiles_message)) { mutateGroup(targetGroup.id) { GroupManager.clearGroup(targetGroup.id) } }
+                R.id.remote_delete -> RemoteRowActions.confirmDelete(requireContext(), proxyGroup.displayName()) { mutateGroup(targetGroup.id) { GroupManager.deleteGroup(targetGroup.id) } }
+                R.id.remote_move_up, R.id.remote_move_down -> {
+                    val index = bindingAdapterPosition
+                    val target = index + if (item.itemId == R.id.remote_move_up) -1 else 1
+                    if (index >= 0 && target in groupAdapter.groupList.indices && !groupAdapter.groupList[target].ungrouped && !proxyGroup.ungrouped && proxyGroup.id !in GroupUpdater.updating) {
+                        groupAdapter.move(index, target); groupAdapter.commitMove()
+                    }
                 }
             }
 
@@ -378,10 +376,20 @@ class GroupFragment : ToolbarFragment(R.layout.layout_group),
         }
 
 
+        private fun mutateGroup(id: Long, action: suspend () -> Unit) {
+            if (id in GroupUpdater.updating) return
+            runOnDefaultDispatcher {
+                val active = DataStore.currentProfile.takeIf { it > 0 } ?: DataStore.selectedProxy
+                val busy = DataStore.serviceState in setOf(io.nekohasekai.sagernet.bg.BaseService.State.Connecting, io.nekohasekai.sagernet.bg.BaseService.State.Connected, io.nekohasekai.sagernet.bg.BaseService.State.Stopping)
+                if (busy && SagerDatabase.proxyDao.getByGroup(id).any { it.id == active }) {
+                    onMainDispatcher { activity.snackbar(R.string.remote_protected_group).show() }
+                } else action()
+            }
+        }
         fun bind(group: ProxyGroup) {
             proxyGroup = group
 
-            itemView.setOnClickListener { }
+            itemView.setOnClickListener { optionsButton.performClick() }
 
             editButton.isGone = proxyGroup.ungrouped
             updateButton.isInvisible = proxyGroup.type != GroupType.SUBSCRIPTION
@@ -405,6 +413,12 @@ class GroupFragment : ToolbarFragment(R.layout.layout_group),
 
                 if (proxyGroup.type != GroupType.SUBSCRIPTION) {
                     popup.menu.removeItem(R.id.action_share_subscription)
+                }
+                if (!proxyGroup.ungrouped && proxyGroup.id !in GroupUpdater.updating) {
+                    val index = bindingAdapterPosition
+                    if (index > 0 && !groupAdapter.groupList[index - 1].ungrouped) popup.menu.add(0, R.id.remote_move_up, 0, R.string.remote_move_up)
+                    if (index >= 0 && index < groupAdapter.itemCount - 1) popup.menu.add(0, R.id.remote_move_down, 0, R.string.remote_move_down)
+                    popup.menu.add(0, R.id.remote_delete, 0, R.string.delete)
                 }
                 popup.setOnMenuItemClickListener(this)
                 popup.show()
@@ -439,6 +453,7 @@ class GroupFragment : ToolbarFragment(R.layout.layout_group),
                 editButton.isGone = proxyGroup.ungrouped
             }
 
+            RemoteRowActions.bind(itemView, listOf(editButton, optionsButton, updateButton)) { optionsButton.performClick() }
             val subscription = proxyGroup.subscription
             if (subscription != null && subscription.bytesUsed > 0L) { // SIP008 & Open Online Config
                 groupTraffic.isVisible = true

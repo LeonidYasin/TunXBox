@@ -141,7 +141,7 @@ abstract class ProfileSettingsActivity<T : AbstractBean>(
                 finish()
                 return
             }
-            if (proxyEntity!!.id == DataStore.selectedProxy) {
+            if (proxyEntity!!.id == DataStore.currentProfile && DataStore.serviceState.started) {
                 SagerNet.stopService()
             }
             ProfileManager.updateProfile(proxyEntity!!.apply { (requireBean() as T).serialize() })
@@ -172,7 +172,11 @@ abstract class ProfileSettingsActivity<T : AbstractBean>(
         return true
     }
 
-    override fun onOptionsItemSelected(item: MenuItem) = child.onOptionsItemSelected(item)
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        val current = supportFragmentManager.findFragmentById(R.id.settings) as? MyPreferenceFragmentCompat
+            ?: return false // A fast remote press must not crash while the editor is loading.
+        return current.onOptionsItemSelected(item)
+    }
 
     override fun onBackPressed() {
         if (DataStore.dirty) UnsavedChangesDialogFragment().apply { key() }

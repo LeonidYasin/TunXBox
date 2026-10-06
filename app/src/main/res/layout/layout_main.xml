@@ -38,6 +38,8 @@
             android:layout_height="wrap_content"
             android:elevation="6dp"
             android:nextFocusDown="@+id/stats"
+            android:nextFocusUp="@+id/configuration_list"
+            android:focusable="true"
             app:backgroundTint="?fabColorBackground"
             app:layout_anchor="@id/stats"
             app:pressedTranslationZ="6dp"
@@ -49,6 +51,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="bottom"
             android:nextFocusUp="@+id/fab"
+            android:focusable="true"
             app:backgroundTint="?colorMaterial300"
             app:contentInsetStart="0dp"
             app:hideOnScroll="true"
@@ -70,7 +73,8 @@
                     android:ellipsize="marquee"
                     android:singleLine="true"
                     android:textColor="?whiteOrTextPrimary"
-                    android:textSize="14sp" />
+                    android:textSize="14sp"
+                    android:focusable="false" />
 
                 <TextView
                     android:id="@+id/rx"
@@ -81,7 +85,8 @@
                     android:ellipsize="marquee"
                     android:singleLine="true"
                     android:textColor="?whiteOrTextPrimary"
-                    android:textSize="14sp" />
+                    android:textSize="14sp"
+                    android:focusable="false" />
 
                 <TextView
                     android:id="@+id/status"
@@ -92,10 +97,9 @@
                     android:maxLines="1"
                     android:textColor="?whiteOrTextPrimary"
                     android:textSize="16sp"
+                    android:focusable="false"
                     tools:text="@string/connection_test_available" />
-
             </LinearLayout>
-
         </io.nekohasekai.sagernet.widget.StatsBar>
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>

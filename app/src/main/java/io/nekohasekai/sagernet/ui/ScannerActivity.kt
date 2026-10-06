@@ -119,6 +119,13 @@ class ScannerActivity : ThemedActivity(),
         runOnDefaultDispatcher {
             try {
                 val text = result?.text ?: throw Exception("QR code not found")
+
+                // Check for TV transfer QR: phone scanned TV's QR → send profiles to TV
+                if (text.startsWith("tunxbox://transfer")) {
+                    handleTvTransfer(text)
+                    return@runOnDefaultDispatcher
+                }
+
                 val results = RawUpdater.parseRaw(text)
                 if (!results.isNullOrEmpty()) {
                     val currentGroupId = DataStore.selectedGroupForImport()
@@ -150,6 +157,29 @@ class ScannerActivity : ThemedActivity(),
             }
         }
         return true
+    }
+
+    /**
+     * Phone scanned TV's QR code. Parse tunxbox://transfer URL, collect all profiles
+     * from the current group, and POST them to the TV's HTTP server.
+     */
+    private suspend fun handleTvTransfer(qrText: String) {
+        try {
+            val result = io.nekohasekai.sagernet.ui.tv.TvTransferClient.transfer(qrText, legacyPull = false)
+            if (result.received) importedN.addAndGet(result.count)
+            onMainDispatcher {
+                Toast.makeText(app, getString(if (result.received) R.string.tv_import_count else R.string.tv_sent_count, result.count), Toast.LENGTH_LONG).show()
+            }
+
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (e: Exception) {
+            Logs.e("TV transfer failed")
+            onMainDispatcher {
+                Toast.makeText(app, R.string.tv_import_failed, Toast.LENGTH_LONG).show()
+            }
+            // Allow retry
+            finished.set(false)
+        }
     }
 
     /**

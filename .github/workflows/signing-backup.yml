@@ -1,0 +1,65 @@
+name: Export encrypted signing backup
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/tv-remote-support]
+    paths: [.github/workflows/signing-backup.yml]
+permissions:
+  contents: read
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Encrypt and verify signing backup
+        env:
+          SIGNING_BUNDLE: ${{ secrets.TUNXBOX_SIGNING_BUNDLE }}
+          BACKUP_PASSWORD: ${{ secrets.TUNXBOX_BACKUP_PASSWORD }}
+        run: |
+          set -euo pipefail
+          umask 077
+          python3 - <<'PY'
+          import base64, hashlib, io, json, os, pathlib, subprocess, tarfile
+          password = os.environ.get('BACKUP_PASSWORD', '')
+          if len(password) < 16:
+              raise SystemExit('Set TUNXBOX_BACKUP_PASSWORD to a separate strong password of at least 16 characters.')
+          try:
+              bundle_text = os.environ['SIGNING_BUNDLE']
+              bundle = json.loads(bundle_text)
+              key = base64.b64decode(bundle['keystore'], validate=True)
+              for field in ('storePassword', 'alias', 'keyPassword'):
+                  assert isinstance(bundle[field], str) and bundle[field]
+          except Exception:
+              raise SystemExit('Signing bundle is missing or invalid; no backup exported.')
+          pin = pathlib.Path('signing-certificate.sha256').read_bytes()
+          content = io.BytesIO()
+          with tarfile.open(fileobj=content, mode='w') as archive:
+              for name, data in [('release.keystore', key), ('signing-bundle.json', bundle_text.encode()), ('signing-certificate.sha256', pin)]:
+                  info = tarfile.TarInfo(name); info.size = len(data); info.mode = 0o600
+                  archive.addfile(info, io.BytesIO(data))
+          plain = content.getvalue()
+          output = pathlib.Path('encrypted-backup'); output.mkdir(mode=0o700)
+          target = output / 'TunXBox-signing-backup.tar.enc'
+          # Restrict child environment; password is read from env, never command arguments.
+          env = {'PATH': os.environ['PATH'], 'BACKUP_PASSWORD': password}
+          args = ['openssl', 'enc', '-aes-256-cbc', '-pbkdf2', '-iter', '200000', '-salt', '-pass', 'env:BACKUP_PASSWORD']
+          encrypted = subprocess.run(args, input=plain, capture_output=True, env=env)
+          if encrypted.returncode: raise SystemExit('Backup encryption failed; no private data logged.')
+          decrypted = subprocess.run(args + ['-d'], input=encrypted.stdout, capture_output=True, env=env)
+          if decrypted.returncode or not hashlib.sha256(decrypted.stdout).digest() == hashlib.sha256(plain).digest():
+              raise SystemExit('Encrypted backup verification failed.')
+          target.write_bytes(encrypted.stdout); target.chmod(0o600)
+          (output / 'SHA256SUMS.txt').write_text(hashlib.sha256(encrypted.stdout).hexdigest() + '  ' + target.name + '\n')
+          (output / 'signing-certificate.sha256').write_bytes(pin)
+          print('Encrypted backup roundtrip verified. No unencrypted private files written to disk.')
+          PY
+      - name: Upload only encrypted backup
+        uses: actions/upload-artifact@v4
+        with:
+          name: TunXBox-encrypted-signing-backup
+          path: encrypted-backup/
+          if-no-files-found: error
+          retention-days: 7
+      - name: Remove temporary encrypted output
+        if: always()
+        run: rm -rf encrypted-backup

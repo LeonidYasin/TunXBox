@@ -1,11 +1,9 @@
-name: Pre-release from PR
-
-# Publishes ONE rolling pre-release APK per feature/fix branch so the APK can
+# Publishes one rolling pre-release with verified ARM APKs so builds can
 # be downloaded and installed BEFORE the PR is merged.
 #
 # The tag is FIXED per version: vMAJOR.MINOR.PATCH-rc (no run number).
 # Each new build re-points the tag onto the current commit and overwrites the
-# APK inside the same release (gh release upload --clobber), so Releases always
+# APK set inside the same release, so Releases always
 # shows exactly ONE current pre-release for the branch, with a fresh commit SHA
 # and a fresh publishedAt instead of a growing rc1, rc2, ... rcN pile.
 #
@@ -20,6 +18,14 @@ on:
         description: 'Branch to build (default: current ref)'
         required: false
         default: ''
+      check_only:
+        description: 'Validate without publishing or using signing secrets'
+        type: boolean
+        default: false
+      allow_legacy_signer_migration:
+        description: 'ONE TIME ONLY: old temporary-key APKs require export and uninstall'
+        type: boolean
+        default: false
 
 concurrency:
   group: prerelease-${{ github.ref }}
@@ -39,8 +45,32 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           ref: ${{ github.event.inputs.ref || github.event.pull_request.head.ref || github.ref }}
           submodules: recursive
+      - name: Restore native shell executable modes
+        env:
+          REPAIR_BRANCH: feature/tv-remote-support
+        run: |
+          set -euo pipefail
+          # The MCP file writer can replace executable files with mode 100644.
+          # Restore the two edited native scripts; never alter master/main.
+          chmod +x buildScript/lib/core/build.sh libcore/build.sh
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ github.ref_name }}" = "$REPAIR_BRANCH" ]; then
+            if ! git diff --quiet -- buildScript/lib/core/build.sh libcore/build.sh; then
+              git config user.name "github-actions[bot]"
+              git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+              git add buildScript/lib/core/build.sh libcore/build.sh
+              git commit -m "Restore executable bits on native build scripts"
+              # Normal fast-forward push: a concurrent branch edit causes a safe failure.
+              git push origin "HEAD:$REPAIR_BRANCH"
+            fi
+          fi
+
+      - name: Get actual commit SHA
+        id: actual_sha
+        run: |
+          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -81,25 +111,34 @@ jobs:
           echo "NDK_HOME=$ANDROID_HOME/ndk/25.0.8775105" >> $GITHUB_ENV
 
       - name: Install Golang (needed for libcore)
+        id: go
         uses: actions/setup-go@v5
         with:
-          go-version: ^1.25
+          go-version: '1.26.8'
+          cache-dependency-path: libcore/go.sum
 
       - name: Cache libcore
-        uses: actions/cache@v4
+        id: core_cache
+        uses: actions/cache/restore@v4
         with:
           path: app/libs/libcore.aar
-          key: libcore-${{ runner.os }}-${{ hashFiles('buildScript/lib/**', 'libcore/**') }}
-          restore-keys: |
-            libcore-${{ runner.os }}-
+          key: libcore-16kb-v1-${{ runner.os }}-${{ steps.go.outputs.go-version }}-${{ hashFiles('buildScript/lib/**', 'libcore/**') }}
 
       - name: Build libcore.aar (if cache miss)
         run: |
           if [ ! -f app/libs/libcore.aar ]; then
             ./run lib core
           else
-            echo "libcore.aar restored from cache"
+            echo "libcore.aar restored from 16KB cache"
           fi
+          python3 buildScript/verify_native_alignment.py --require-64bit app/libs/libcore.aar
+
+      - name: Save verified 16KB libcore cache
+        if: steps.core_cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: app/libs/libcore.aar
+          key: ${{ steps.core_cache.outputs.cache-primary-key }}
 
       - name: Cache Gradle packages
         uses: actions/cache@v4
@@ -113,6 +152,12 @@ jobs:
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
+
+      - name: Check project documentation
+        run: python3 buildScript/check_project_docs.py
+
+      - name: Test browser transfer page
+        run: node buildScript/test_tv_transfer_page.cjs
 
       - name: Read version from nb4a.properties
         id: version
@@ -130,46 +175,200 @@ jobs:
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           echo "ndk.dir=$ANDROID_NDK_HOME" >> local.properties
 
+      # Device tests run BEFORE any private release-signing bundle is loaded.
+      - name: Build debug instrumentation APKs
+        env:
+          BUILD_PLUGIN: none
+          # assets.sh uses gh api when authenticated, avoiding shared-runner anonymous rate limits.
+          # Step-scoped: this API token is not passed to emulator instrumentation.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ./run init action gradle
+          ./gradlew app:assemblePreviewDebug app:assemblePreviewDebugAndroidTest --stacktrace
+          ./gradlew --stop
+
+      - name: Enable hardware-accelerated emulator
+        run: |
+          test -c /dev/kvm
+          sudo chmod a+rw /dev/kvm
+
+      - name: Android 15 emulator smoke (4KB)
+        timeout-minutes: 20
+        uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # pinned v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          avd-name: tunxbox-smoke-4k
+          ram-size: 2048M
+          emulator-boot-timeout: 300
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash buildScript/run_emulator_smoke.sh 4096
+
+      - name: Android 15 emulator smoke (16KB)
+        timeout-minutes: 20
+        uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # pinned v2
+        with:
+          api-level: 35
+          target: google_apis_ps16k
+          arch: x86_64
+          profile: pixel_2
+          avd-name: tunxbox-smoke-16k
+          ram-size: 2048M
+          emulator-boot-timeout: 300
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash buildScript/run_emulator_smoke.sh 16384
+
+      - name: Upload emulator diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TunXBox-emulator-smoke-${{ steps.actual_sha.outputs.sha }}
+          path: |
+            build/emulator-results/
+            app/build/reports/androidTests/
+            app/build/outputs/androidTest-results/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Prepare pinned signing identity
+        if: github.event.inputs.check_only != 'true'
+        env:
+          TUNXBOX_SIGNING_BUNDLE: ${{ secrets.TUNXBOX_SIGNING_BUNDLE }}
+        run: python3 buildScript/signing_bundle.py
+
+      - name: Test APK packaging and update rules
+        run: |
+          python3 buildScript/test_package_preview_apks.py
+          python3 buildScript/test_signing_bundle.py
+          python3 buildScript/test_assets.py
+          python3 buildScript/test_native_alignment.py
+
       - name: Build Preview APK
         env:
           BUILD_PLUGIN: none
+          TUNXBOX_BUILD_SEQUENCE: ${{ github.run_number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          export LOCAL_PROPERTIES="${{ secrets.LOCAL_PROPERTIES }}"
+          # Ignore legacy LOCAL_PROPERTIES signing credentials: the pinned bundle is authoritative.
+          unset LOCAL_PROPERTIES
           ./run init action gradle
           ./gradlew app:assemblePreviewRelease --stacktrace
 
-      - name: Locate APK
+      - name: Verify Android update metadata
         run: |
-          APK=$(find app/build/outputs/apk -name '*.apk' | head -n 1)
-          if [ -z "$APK" ]; then
-            echo "No APK found under app/build/outputs/apk"
-            find app/build/outputs -type f || true
-            exit 1
-          fi
-          echo "APK=$APK" >> $GITHUB_ENV
-          echo "Found APK: $APK"
+          export AAPT="$ANDROID_HOME/build-tools/35.0.1/aapt"
+          python3 - <<'PYMETA'
+          import glob, os, re, subprocess
+          from pathlib import Path
+          meta = dict(line.split('=', 1) for line in Path('nb4a.properties').read_text().splitlines() if '=' in line)
+          expected = int(meta['VERSION_CODE']) * 1000000 + int(os.environ['GITHUB_RUN_NUMBER'])
+          paths = glob.glob('app/build/outputs/apk/preview/release/*.apk')
+          assert len(paths) == 3
+          for path in paths:
+              badging = subprocess.check_output([os.environ['AAPT'], 'dump', 'badging', path], text=True)
+              output = badging.splitlines()[0]
+              assert int(re.search(r"targetSdkVersion:'([0-9]+)'", badging)[1]) >= 35
+              assert "name='com.tunxbox.app'" in output
+              assert int(re.search(r"versionCode='([0-9]+)'", output)[1]) == expected
+          print('Actual APK applicationId and increasing versionCode verified:', expected)
+          PYMETA
 
-      - name: Upload APK (artifact)
+      - name: Verify native 16KB page alignment
+        run: python3 buildScript/verify_native_alignment.py app/build/outputs/apk/preview/release/*.apk
+
+      - name: Test protocol and remote UI
+        run: |
+          ./gradlew app:testPreviewDebugUnitTest --stacktrace
+          python3 - <<'PY'
+          import glob, xml.etree.ElementTree as ET
+          totals = dict(tests=0, failures=0, errors=0, skipped=0)
+          for path in glob.glob("app/build/test-results/testPreviewDebugUnitTest/TEST-*.xml"):
+              suite = ET.parse(path).getroot()
+              for key in totals:
+                  totals[key] += int(suite.get(key, "0"))
+          print("JUnit summary: " + ", ".join(f"{key}={value}" for key, value in totals.items()))
+          assert totals["tests"] > 0 and totals["failures"] == 0 and totals["errors"] == 0
+          PY
+
+      - name: Upload unit-test reports
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: app-preview-rc
-          path: ${{ env.APK }}
+          name: TunXBox-ui-test-reports-${{ steps.actual_sha.outputs.sha }}
+          path: |
+            app/build/reports/tests/testPreviewDebugUnitTest/
+            app/build/test-results/testPreviewDebugUnitTest/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Package verified APKs
+        if: github.event.inputs.check_only != 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          BUILD_SHA: ${{ steps.actual_sha.outputs.sha }}
+        run: |
+          set -euo pipefail
+          python3 buildScript/test_package_preview_apks.py
+          python3 buildScript/package_preview_apks.py \
+            --apk-dir app/build/outputs/apk/preview/release \
+            --output-dir dist \
+            --version "$VERSION" \
+            --commit "$BUILD_SHA" \
+            --apksigner "$ANDROID_HOME/build-tools/35.0.1/apksigner" \
+            --aapt "$ANDROID_HOME/build-tools/35.0.1/aapt" \
+            --certificate signing-certificate.sha256 \
+            --expected-version-code "$(( $(grep '^VERSION_CODE=' nb4a.properties | cut -d= -f2) * 1000000 + ${{ github.run_number }} ))"
+
+      - name: Upload APKs (artifact)
+        if: github.event.inputs.check_only != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: TunXBox-android-preview-release-${{ steps.actual_sha.outputs.sha }}
+          path: dist/*
+          if-no-files-found: error
           retention-days: 30
 
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log-${{ github.run_number }}
+          path: |
+            app/build/outputs/logs/
+            app/build/reports/
+          retention-days: 7
+          if-no-files-found: ignore
       - name: Publish rolling pre-release to GitHub Releases
+        if: github.event.inputs.check_only != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ steps.version.outputs.rc_tag }}
           VERSION: ${{ steps.version.outputs.version }}
-          BUILD_SHA: ${{ github.sha }}
+          BUILD_SHA: ${{ steps.actual_sha.outputs.sha }}
         run: |
           set -euo pipefail
           SHORT_SHA="${BUILD_SHA:0:8}"
           NOTES="Rolling pre-release APK for testing before merge.
           Version: ${VERSION}
           Built from commit: ${BUILD_SHA}
-          Branch: ${{ github.event.pull_request.head.ref || github.ref_name }}"
+          Branch: ${{ github.event.pull_request.head.ref || github.ref_name }}
+          Platform: Android 5.0+; TV and phone interfaces in the same APK.
+          APK choices: arm64-v8a (64-bit ARM), armeabi-v7a (32-bit ARM), and combined APK (see actual ABI list in apk-manifest.json).
+          APKs use the pinned persistent TunXBox signing key. New builds have increasing Android versionCode.
+          Legacy builds signed with temporary keys require one-time export/backup and uninstall before this signing migration; later updates preserve app data.
+          Universal APK includes all four bundled ABIs: ARM32, ARM64, x86 and x86_64 when confirmed by apk-manifest.json.
+          Actual filenames match Assets and download filenames; see SHA256SUMS.txt and apk-manifest.json."
 
+          # Do not overwrite a newer release, even if an older workflow is rerun.
+          if gh release download "$TAG" --pattern apk-manifest.json --dir previous-release >/dev/null 2>&1; then
+            ALLOW_LEGACY=""
+            if [ "${{ github.event.inputs.allow_legacy_signer_migration }}" = "true" ]; then ALLOW_LEGACY="--allow-legacy"; fi
+            python3 buildScript/verify_update.py previous-release/apk-manifest.json dist/apk-manifest.json $ALLOW_LEGACY
+          fi
           # Roll the git tag onto the CURRENT commit so the release page shows the
           # fresh source revision instead of a stale one. Without this, --clobber
           # updates only the APK asset and the tag keeps pointing at an old SHA.
@@ -180,7 +379,9 @@ jobs:
 
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "Pre-release $TAG exists - refreshing notes + overwriting APK with the fresh build."
-            gh release edit "$TAG" --notes "$NOTES" --target "$BUILD_SHA"
+            # Recreating a rolling tag through an authorized integration can turn its release into a draft.
+            # Explicitly reattach and publish it only AFTER all APK gates succeeded.
+            gh release edit "$TAG" --tag "$TAG" --draft=false --prerelease --notes "$NOTES" --target "$BUILD_SHA"
           else
             gh release create "$TAG" \
               --title "TunXBox $TAG (rolling pre-release)" \
@@ -188,13 +389,55 @@ jobs:
               --target "$BUILD_SHA" \
               --prerelease
           fi
-          gh release upload "$TAG" "$APK#app-preview.apk" --clobber
+          # Upload the REAL names; #label changes only GitHub display text, not download names.
+          gh release upload "$TAG" dist/*.apk dist/SHA256SUMS.txt dist/apk-manifest.json --clobber
+
+          # Verify uploaded bytes before removing superseded APKs from this rolling release.
+          gh release view "$TAG" --json assets > /tmp/release-assets.json
+          mkdir -p verification
+          while IFS= read -r name; do
+            gh release download "$TAG" --pattern "$name" --dir verification
+          done < <(python3 -c 'import json; print("\n".join(a["name"] for a in json.load(open("dist/apk-manifest.json"))["apks"]))')
+          python3 - <<'PYVERIFY'
+          import json, pathlib, hashlib
+          manifest = json.loads(pathlib.Path('dist/apk-manifest.json').read_text())
+          assets = json.loads(pathlib.Path('/tmp/release-assets.json').read_text())['assets']
+          by_name = {asset['name']: asset for asset in assets}
+          for expected in manifest['apks']:
+              asset = by_name[expected['name']]
+              assert asset['size'] == expected['size'], expected['name']
+              with (pathlib.Path('verification') / expected['name']).open('rb') as downloaded:
+                  digest = hashlib.file_digest(downloaded, 'sha256').hexdigest()
+              assert digest == expected['sha256'], 'Uploaded checksum mismatch: ' + expected['name']
+          print('All uploaded APK checksums verified')
+          PYVERIFY
+          while IFS= read -r name; do
+            if [ ! -f "dist/$name" ]; then
+              gh release delete-asset "$TAG" "$name" --yes
+            fi
+          done < <(gh release view "$TAG" --json assets -q '.assets[].name | select(endswith(".apk"))')
+          # Finally verify visible names, stored asset names and HTTP download filenames agree.
+          gh api "repos/${{ github.repository }}/releases/tags/$TAG" > /tmp/release-final.json
+          python3 - <<'PYNAMES'
+          import json, pathlib, urllib.parse
+          release = json.loads(pathlib.Path('/tmp/release-final.json').read_text())
+          expected = {item['name'] for item in json.loads(pathlib.Path('dist/apk-manifest.json').read_text())['apks']}
+          actual = set()
+          for asset in release['assets']:
+              if not asset['name'].endswith('.apk'):
+                  continue
+              assert asset.get('label') in (None, '', asset['name']), 'Misleading display label'
+              assert urllib.parse.unquote(asset['browser_download_url'].rsplit('/', 1)[-1]) == asset['name']
+              actual.add(asset['name'])
+          assert actual == expected, 'Rolling release contains stale or missing APKs'
+          print('Asset names and download URLs agree; no obsolete APKs')
+          PYNAMES
           echo "Rolling pre-release ready: $TAG (commit $SHORT_SHA)"
           echo "Release publishedAt: $(gh release view "$TAG" --json publishedAt -q .publishedAt)"
           echo "Release tagName: $(gh release view "$TAG" --json tagName -q .tagName)"
 
       - name: Comment on PR with RC link
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && github.event.inputs.check_only != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ steps.version.outputs.rc_tag }}
@@ -207,4 +450,8 @@ jobs:
           Tag: $TAG
           Download: https://github.com/${{ github.repository }}/releases/tag/$TAG
 
-          This release is refreshed on every build - the tag and APK are overwritten in place."
+          This release is refreshed on every build. APKs are signature/checksum verified; obsolete APKs are removed after successful upload."
+
+      - name: Remove private signing material
+        if: always()
+        run: rm -rf .signing

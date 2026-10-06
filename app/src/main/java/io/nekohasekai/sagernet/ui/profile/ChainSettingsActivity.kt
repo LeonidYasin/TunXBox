@@ -135,9 +135,9 @@ class ChainSettingsActivity : ProfileSettingsActivity<ChainBean>(R.layout.layout
         }
 
         fun move(from: Int, to: Int) {
-            val toMove = proxyList[to - 1]
-            proxyList[to - 1] = proxyList[from - 1]
-            proxyList[from - 1] = toMove
+            if (from <= 0 || to <= 0 || from > proxyList.size || to > proxyList.size || from == to) return
+            val moved = proxyList.removeAt(from - 1)
+            proxyList.add(to - 1, moved)
             notifyItemMoved(from, to)
             DataStore.dirty = true
         }
@@ -287,7 +287,22 @@ class ChainSettingsActivity : ProfileSettingsActivity<ChainBean>(R.layout.layout
                 })
             }
 
-            shareLayout.isVisible = false
+            shareLayout.isVisible = true
+            shareLayout.contentDescription = getString(R.string.remote_row_options)
+            shareLayout.findViewById<android.widget.ImageView>(R.id.shareIcon)?.setImageResource(R.drawable.ic_baseline_more_vert_24)
+            val showActions = {
+                val position = bindingAdapterPosition
+                if (position > 0) {
+                    val actions = mutableListOf<Pair<Int, () -> Unit>>()
+                    if (position > 1) actions.add(R.string.remote_move_up to { configurationAdapter.move(position, position - 1) })
+                    if (position < configurationAdapter.itemCount - 1) actions.add(R.string.remote_move_down to { configurationAdapter.move(position, position + 1) })
+                    actions.add(R.string.delete to { io.nekohasekai.sagernet.ui.RemoteRowActions.confirmDelete(this@ChainSettingsActivity, proxyEntity.displayName().orEmpty()) { if (bindingAdapterPosition > 0) configurationAdapter.remove(bindingAdapterPosition) } })
+                    MaterialAlertDialogBuilder(this@ChainSettingsActivity).setTitle(proxyEntity.displayName()).setItems(actions.map { getString(it.first) }.toTypedArray()) { _, index -> actions[index].second() }.show()
+                }
+            }
+            shareLayout.setOnClickListener { showActions() }
+            itemView.setOnClickListener { showActions() }
+            io.nekohasekai.sagernet.ui.RemoteRowActions.bind(itemView, listOf(editButton, shareLayout)) { showActions() }
         }
 
     }
