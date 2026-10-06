@@ -379,7 +379,9 @@ jobs:
 
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "Pre-release $TAG exists - refreshing notes + overwriting APK with the fresh build."
-            gh release edit "$TAG" --notes "$NOTES" --target "$BUILD_SHA"
+            # Recreating a rolling tag through an authorized integration can turn its release into a draft.
+            # Explicitly reattach and publish it only AFTER all APK gates succeeded.
+            gh release edit "$TAG" --tag "$TAG" --draft=false --prerelease --notes "$NOTES" --target "$BUILD_SHA"
           else
             gh release create "$TAG" \
               --title "TunXBox $TAG (rolling pre-release)" \
