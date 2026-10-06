@@ -39,6 +39,7 @@ flowchart TD
 - Browser: JS input classification, errors, receipt banner и duplicate-submit guards. Не полный browser-device end-to-end suite.
 - Python: packaging, signing rules, assets, ELF/alignment metadata.
 - Device: **debug instrumentation APK**, реальный Android 15 x86_64 4KB/16KB, настоящий core/Room/DPAD/UI/LAN. Не подписанный release APK, не физическая ARM-приставка и не throughput/failover/provider test.
+- GeoIP/GeoSite release metadata запрашивается через step-scoped `GITHUB_TOKEN`/`gh api`, чтобы не зависеть от anonymous rate limit общего runner IP. Этот API token не передаётся emulator instrumentation; private signing bundle загружается позже.
 - Release checks: actual applicationId/versionCode/target SDK, pinned signer, metadata, actual native alignment, uploaded bytes/filenames.
 
 Числа тестов меняются: достоверные итоги — конкретный run/report, не устаревающая константа в документации. Test artifacts содержат screenshots/hierarchy/logcat для synthetic offline fixtures и ограничены retention. См. [emulator testing](emulator-testing.md).

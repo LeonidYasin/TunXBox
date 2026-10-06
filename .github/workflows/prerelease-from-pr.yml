@@ -179,6 +179,9 @@ jobs:
       - name: Build debug instrumentation APKs
         env:
           BUILD_PLUGIN: none
+          # assets.sh uses gh api when authenticated, avoiding shared-runner anonymous rate limits.
+          # Step-scoped: this API token is not passed to emulator instrumentation.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           ./run init action gradle
           ./gradlew app:assemblePreviewDebug app:assemblePreviewDebugAndroidTest --stacktrace
