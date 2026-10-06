@@ -154,11 +154,13 @@ jobs:
         run: |
           python3 buildScript/test_package_preview_apks.py
           python3 buildScript/test_signing_bundle.py
+          python3 buildScript/test_assets.py
 
       - name: Build Preview APK
         env:
           BUILD_PLUGIN: none
           TUNXBOX_BUILD_SEQUENCE: ${{ github.run_number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Ignore legacy LOCAL_PROPERTIES signing credentials: the pinned bundle is authoritative.
           unset LOCAL_PROPERTIES

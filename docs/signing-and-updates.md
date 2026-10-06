@@ -29,7 +29,7 @@ python3 buildScript/setup_signing.py
 Если ключ создан агентом и уже сохранён в Actions Secret, повторно запускать bootstrap для создания нового ключа не нужно. Владелец должен сохранить исходную идентичность, а не заменить её.
 
 1. Задать отдельный сильный пароль (не пароль GitHub), минимум 16 символов, в repository Actions Secret `TUNXBOX_BACKUP_PASSWORD`.
-2. Запустить workflow `signing-backup.yml` на ветке PR. Он шифрует backup в памяти через OpenSSL AES-256-CBC/PBKDF2 (200000 iterations), проверяет расшифрование и загружает **только зашифрованный** artifact с retention 7 дней.
+2. До мержа workflow `signing-backup.yml` запускается при создании/изменении своего файла в ветке PR; после появления в default branch доступен и ручной запуск. Он шифрует backup в памяти через OpenSSL AES-256-CBC/PBKDF2 (200000 iterations), проверяет расшифрование и загружает **только зашифрованный** artifact с retention 7 дней.
 3. Скачать artifact `TunXBox-encrypted-signing-backup`, проверить SHA256 и хранить архив offline. Пароль сохранить отдельно в менеджере паролей. Не публиковать архив или пароль.
 4. Для восстановления на своём доверенном компьютере с OpenSSL:
 

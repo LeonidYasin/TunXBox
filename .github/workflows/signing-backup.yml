@@ -1,6 +1,9 @@
 name: Export encrypted signing backup
 on:
   workflow_dispatch:
+  push:
+    branches: [feature/tv-remote-support]
+    paths: [.github/workflows/signing-backup.yml]
 permissions:
   contents: read
 jobs:
