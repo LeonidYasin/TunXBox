@@ -26,6 +26,7 @@
     <string name="tv_updating">Updating subscription…</string>
     <string name="tv_updated">Subscription updated</string>
     <string name="tv_update_failed">Subscription update failed. Check connection.</string>
+    <string name="tv_add_profile_hint">Phone, link, file, clipboard, QR or manual</string>
     <string name="tv_import_phone">Import from phone</string>
     <string name="tv_import_phone_hint">Scan QR · paste or upload in browser</string>
     <string name="tv_more_import">Other import methods</string>
@@ -49,7 +50,7 @@
     <string name="tv_phone_mode">Phone mode</string>
     <string name="tv_phone_mode_hint">Full settings and touch interface</string>
     <string name="tv_phone_confirm">Switch to the phone interface? Your choice is saved. Use the side menu to return to TV mode.</string>
-    <string name="tv_empty">No profiles in this group. Press OK to import from phone.</string>
+    <string name="tv_empty">No profiles in this group. Press OK to choose how to add a profile.</string>
     <string name="tv_remote_hint">OK: select · Profile actions: manage · Play/Pause: connect or disconnect · Back: return</string>
     <string name="tv_import_count">Imported profiles: %1$d</string>
     <string name="tv_import_failed">Import failed. Check configuration and connection (maximum 2 MiB).</string>

@@ -60,7 +60,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
         private const val ROW_TOOLS = 2L
         private const val TOGGLE = 1L
         private const val GROUPS = 2L
-        private const val PHONE_IMPORT = 3L
+        private const val ADD_PROFILE = 3L
         private const val PROFILE_ACTIONS = 4L
         private const val UPDATE = 5L
         private const val MORE = 6L
@@ -185,7 +185,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
         onItemViewClickedListener = OnItemViewClickedListener { _, item, _, _ ->
             when (item) {
                 is TvProfileCard -> selectProfile(item.id)
-                is TvEmptyHint -> showPhoneImport()
+                is TvEmptyHint -> showImportMethods()
                 is TvAction -> if (item.available) handleAction(item.id) else toast(if (item.id == TOGGLE && DataStore.selectedProxy == 0L || item.id == PROFILE_ACTIONS) R.string.tv_choose_profile else if (item.id == UPDATE && groups.firstOrNull { it.id == DataStore.selectedGroup }?.type != GroupType.SUBSCRIPTION) R.string.tv_not_subscription else R.string.tv_wait)
             }
         }
@@ -278,7 +278,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
         actionsAdapter.setItems(listOf(
             TvAction(TOGGLE, getString(label), names.joinToString("\n"), if (command == TvVpnCommand.STOP) R.drawable.ic_service_active else R.drawable.ic_service_idle, command != TvVpnCommand.NONE),
             TvAction(GROUPS, getString(R.string.tv_groups), group?.let { getString(R.string.tv_group_count, it.displayName(), profiles.size) } ?: "", R.drawable.ic_remote_groups),
-            TvAction(PHONE_IMPORT, getString(R.string.tv_import_phone), getString(R.string.tv_import_phone_hint), R.drawable.ic_remote_import),
+            TvAction(ADD_PROFILE, getString(R.string.add_profile), getString(R.string.tv_add_profile_hint), R.drawable.ic_action_note_add),
             TvAction(PHONE_MODE, getString(R.string.tv_phone_mode), getString(R.string.tv_phone_mode_hint), R.drawable.ic_remote_phone)
         ), diff)
         val updating = group != null && GroupUpdater.updating.contains(group.id)
@@ -337,7 +337,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
     private fun handleAction(id: Long) { when (id) {
         TOGGLE -> execute(TvInteractionPolicy.primary(phase, DataStore.selectedProxy, activeProfileId(), serviceReady))
         GROUPS -> chooseGroup()
-        PHONE_IMPORT -> showPhoneImport()
+        ADD_PROFILE -> showImportMethods()
         PROFILE_ACTIONS -> if (DataStore.selectedProxy > 0) openProfileActions(DataStore.selectedProxy) else toast(R.string.tv_choose_profile)
         UPDATE -> updateSubscription()
         MORE -> showImportMethods()
@@ -462,15 +462,22 @@ class MainBrowseFragment : BrowseSupportFragment() {
     }
     private fun showPhoneImport() { parentFragmentManager.beginTransaction().replace(R.id.tv_container, QrCodeTransferFragment()).addToBackStack("phone_import").commit() }
     private fun showImportMethods() {
-        val labels = arrayOf(R.string.tv_clipboard, R.string.tv_url, R.string.tv_file, R.string.tv_manual, R.string.tv_scan, R.string.tv_remote_hint)
-        show(AlertDialog.Builder(requireContext()).setTitle(R.string.tv_more_import).setItems(labels.map { getString(it) }.toTypedArray()) { _, index -> when (index) {
-            0 -> { val text = SagerNet.getClipboardText(); if (text.isBlank()) toast(R.string.tv_clipboard_empty) else importText(text) }
-            1 -> showUrlImport()
-            2 -> importFile.launch("*/*")
-            3 -> showManualEditor()
-            4 -> parentFragmentManager.beginTransaction().replace(R.id.tv_container, TvScannerFragment()).addToBackStack("qr_scan").commit()
-            else -> show(AlertDialog.Builder(requireContext()).setMessage(R.string.tv_remote_hint).setPositiveButton(android.R.string.ok, null))
-        } }.setNegativeButton(android.R.string.cancel, null))
+        val entries = TvProfileAddCatalog.entries(requireContext())
+        show(AlertDialog.Builder(requireContext()).setTitle(R.string.add_profile)
+            .setItems(entries.map { it.title }.toTypedArray()) { _, index ->
+                when (entries[index].id) {
+                    TvProfileAddCatalog.PHONE -> showPhoneImport()
+                    TvProfileAddCatalog.URL -> showUrlImport()
+                    R.id.action_import_clipboard -> {
+                        val text = SagerNet.getClipboardText()
+                        if (text.isBlank()) toast(R.string.tv_clipboard_empty) else importText(text)
+                    }
+                    R.id.action_import_file -> importFile.launch("*/*")
+                    TvProfileAddCatalog.MANUAL -> showManualEditor()
+                    R.id.action_scan_qr_code -> parentFragmentManager.beginTransaction()
+                        .replace(R.id.tv_container, TvScannerFragment()).addToBackStack("qr_scan").commit()
+                }
+            }.setNegativeButton(android.R.string.cancel, null))
     }
     private fun importText(text: String) = launchWork {
         val count = withContext(Dispatchers.IO) { TvProfileImporter.importProfiles(text) }
@@ -490,12 +497,13 @@ class MainBrowseFragment : BrowseSupportFragment() {
         }.setNeutralButton(R.string.tv_import_phone) { _, _ -> showPhoneImport() }.setNegativeButton(android.R.string.cancel, null))
     }
     private fun showManualEditor() {
-        val protocols = arrayOf("Shadowsocks", "VMess", "VLESS", "Trojan", "SOCKS5", "HTTP")
-        show(AlertDialog.Builder(requireContext()).setTitle(R.string.tv_manual).setItems(protocols) { _, index ->
-            val editor = when (index) { 0 -> ShadowsocksSettingsActivity::class.java; 1, 2 -> VMessSettingsActivity::class.java; 3 -> TrojanSettingsActivity::class.java; 4 -> SocksSettingsActivity::class.java; else -> HttpSettingsActivity::class.java }
-            DataStore.selectedGroup = DataStore.selectedGroupForImport()
-            startActivity(Intent(requireContext(), editor).apply { if (index == 2) putExtra("vless", true) })
-        }.setNegativeButton(android.R.string.cancel, null))
+        val entries = io.nekohasekai.sagernet.ui.ProfileCreationActions.manualEntries(requireContext())
+        show(AlertDialog.Builder(requireContext()).setTitle(R.string.add_profile_methods_manual_settings)
+            .setItems(entries.map { it.title }.toTypedArray()) { _, index ->
+                val intent = requireNotNull(io.nekohasekai.sagernet.ui.ProfileCreationActions.intent(requireContext(), entries[index].id))
+                DataStore.selectedGroup = DataStore.selectedGroupForImport()
+                startActivity(intent)
+            }.setNegativeButton(android.R.string.cancel, null))
     }
     private fun switchPhoneMode() {
         show(AlertDialog.Builder(requireContext()).setTitle(R.string.tv_phone_mode).setMessage(R.string.tv_phone_confirm)

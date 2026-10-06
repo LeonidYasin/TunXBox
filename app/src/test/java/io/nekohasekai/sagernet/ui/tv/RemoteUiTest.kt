@@ -194,4 +194,41 @@ class RemoteUiTest {
     @Test fun tvKeepsRemoteFocusZoom() {
         assertEquals(androidx.leanback.widget.FocusHighlight.ZOOM_FACTOR_SMALL, StableTvRowPresenter(false).focusZoomFactor)
     }
+    @Test fun tvAddCatalogIncludesEveryInboundPhoneMethodPlusPhoneAndUrl() {
+        val context = activity()
+        val source = io.nekohasekai.sagernet.ui.ProfileCreationActions.addMenu(context)
+        val expected = (0 until source.size()).map { source.getItem(it) }
+            .filter { it.isVisible && it.itemId != R.id.action_send_to_tv }
+            .map { if (it.hasSubMenu()) TvProfileAddCatalog.MANUAL else it.itemId }.toSet()
+        val ids = TvProfileAddCatalog.entries(context).map { it.id }
+        assertEquals(expected + setOf(TvProfileAddCatalog.PHONE, TvProfileAddCatalog.URL), ids.toSet())
+        assertEquals(ids.size, ids.distinct().size)
+        assertEquals(6, ids.size)
+    }
+    @Test fun allSeventeenPhoneManualEditorsHaveSharedExplicitIntents() {
+        val context = activity()
+        val entries = io.nekohasekai.sagernet.ui.ProfileCreationActions.manualEntries(context)
+        assertEquals(17, entries.size)
+        for (entry in entries) {
+            val intent = io.nekohasekai.sagernet.ui.ProfileCreationActions.intent(context, entry.id)
+            assertNotNull(entry.title, intent)
+            assertNotNull(entry.title, intent!!.component)
+            assertNotEquals(android.content.Intent.ACTION_SEND, intent.action)
+        }
+        assertNull(io.nekohasekai.sagernet.ui.ProfileCreationActions.intent(context, R.id.action_import_file))
+    }
+    @Test fun sharedVlessEditorRetainsVlessFlagAndVmessDoesNot() {
+        val context = activity()
+        val vless = io.nekohasekai.sagernet.ui.ProfileCreationActions.intent(context, R.id.action_new_vless)!!
+        val vmess = io.nekohasekai.sagernet.ui.ProfileCreationActions.intent(context, R.id.action_new_vmess)!!
+        assertEquals(vmess.component, vless.component)
+        assertTrue(vless.getBooleanExtra("vless", false))
+        assertFalse(vmess.getBooleanExtra("vless", false))
+    }
+    @Test @Config(qualifiers = "ru") fun emptyGroupHintOffersChoiceInsteadOfDirectPhoneImport() {
+        val text = activity().getString(R.string.tv_empty)
+        assertTrue(text.contains("выбрать способ"))
+        assertFalse(text.contains("импорта с телефона"))
+    }
+
 }

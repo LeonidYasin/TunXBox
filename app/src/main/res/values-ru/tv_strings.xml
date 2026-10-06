@@ -26,6 +26,7 @@
     <string name="tv_updating">Обновление подписки…</string>
     <string name="tv_updated">Подписка обновлена</string>
     <string name="tv_update_failed">Не удалось обновить подписку. Проверьте соединение.</string>
+    <string name="tv_add_profile_hint">Телефон, ссылка, файл, буфер, QR или вручную</string>
     <string name="tv_import_phone">Импорт с телефона</string>
     <string name="tv_import_phone_hint">QR → вставка или файл в браузере</string>
     <string name="tv_more_import">Другие способы импорта</string>
@@ -49,7 +50,7 @@
     <string name="tv_phone_mode">Режим смартфона</string>
     <string name="tv_phone_mode_hint">Все настройки и сенсорный интерфейс</string>
     <string name="tv_phone_confirm">Перейти к интерфейсу смартфона? Выбор сохранится. Возврат к TV — через боковое меню.</string>
-    <string name="tv_empty">В этой группе нет профилей. Нажмите OK для импорта с телефона.</string>
+    <string name="tv_empty">В этой группе нет профилей. Нажмите OK, чтобы выбрать способ добавления.</string>
     <string name="tv_remote_hint">OK: выбрать · Действия: управление · Play/Pause: подключить или отключить · Назад: вернуться</string>
     <string name="tv_import_count">Импортировано профилей: %1$d</string>
     <string name="tv_import_failed">Не удалось импортировать. Проверьте конфигурацию и соединение (до 2 МиБ).</string>

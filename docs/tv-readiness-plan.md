@@ -117,3 +117,12 @@ TV сохраняет Leanback: короткая основная полоса, 
 - Promotions is a local information page, not an automatic upstream advertising link. README separates TunXBox downloads from inherited upstream documentation.
 - Native Go/JNI build uses external linker 16KB max/common page sizes. Old 4KB core caches are excluded. CI validates actual 64-bit ELF LOAD/RELRO segments in AAR and every APK (and ZIP alignment for uncompressed natives). The published rc.93 APK had targetSdk 35 but 4KB arm64 LOAD alignment. This addresses that compatibility issue without suppressing Android's warning. A real 16KB device/emulator VPN test remains required.
 - SHA256SUMS.txt checks downloaded APK bytes; not an installer and not a replacement for APK signing.
+
+
+### Follow-up: complete TV Add profile chooser
+- The permanent top-row Add profile action and empty-group card open the same method chooser, never LAN QR directly. Connect remains first/default focused and phone mode stays last.
+- Choices: receive from phone/browser, URL, QR/camera/image, clipboard, file and manual configuration. Phone-to-TV sending is outbound export, not an inbound add method.
+- Manual configuration now reads all 17 entries from the phone + menu, and both modes share editor intents (including VLESS flags, custom configuration and chains).
+- LAN pairing is opened only after explicitly choosing phone import. Existing file size/security/subscription rules are unchanged.
+- Added 8 automated regressions for top/empty chooser parity, populated groups, explicit QR navigation, all manual editor routes, phone + and localization. Physical remote/file-picker/editor acceptance is still required before merge.
+- Direct Happ/Incy migration is not claimed; app-specific export compatibility needs a separately scoped change.

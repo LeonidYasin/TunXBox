@@ -388,4 +388,100 @@ class LaunchRegressionTest {
         } finally { controller.pause().stop().destroy() }
     }
     @Test fun aboutFromTvStartsLocallyAndKeepsTvPreference() = checkTvDestination(R.id.nav_about,AboutFragment::class.java)
+    @Test fun tvTopAddAndEmptyProfileCardOpenSameChooserNotQrTransfer() {
+        TvUiPreferences.phoneMode = false
+        val controller = Robolectric.buildActivity(MainActivityTv::class.java).setup().visible()
+        try {
+            val activity = controller.get()
+            activity.supportFragmentManager.executePendingTransactions(); shadowOf(Looper.getMainLooper()).idle()
+            val fragment = activity.supportFragmentManager.findFragmentById(R.id.tv_container) as MainBrowseFragment
+            val row = fragment.adapter[0] as androidx.leanback.widget.ListRow
+            val add = row.adapter[2] as io.nekohasekai.sagernet.ui.tv.TvAction
+            assertEquals(3L, add.id); assertTrue(add.available)
+            assertEquals(activity.getString(R.string.add_profile), add.title)
+            val click = fragment.onItemViewClickedListener!!
+            click.onItemClicked(null, add, null, row)
+            shadowOf(Looper.getMainLooper()).idle()
+            val first = org.robolectric.shadows.ShadowAlertDialog.getLatestAlertDialog()
+            assertTrue(first.isShowing); assertEquals(6, first.listView.adapter.count)
+            val firstLabels = (0 until first.listView.adapter.count).map { first.listView.adapter.getItem(it).toString() }
+            assertSame(fragment, activity.supportFragmentManager.findFragmentById(R.id.tv_container))
+            first.dismiss(); shadowOf(Looper.getMainLooper()).idle()
+            click.onItemClicked(null, io.nekohasekai.sagernet.ui.tv.TvEmptyHint(activity.getString(R.string.tv_empty)), null, fragment.adapter[2] as androidx.leanback.widget.ListRow)
+            shadowOf(Looper.getMainLooper()).idle()
+            val second = org.robolectric.shadows.ShadowAlertDialog.getLatestAlertDialog()
+            assertTrue(second.isShowing)
+            assertEquals(firstLabels, (0 until second.listView.adapter.count).map { second.listView.adapter.getItem(it).toString() })
+            assertSame(fragment, activity.supportFragmentManager.findFragmentById(R.id.tv_container))
+        } finally { controller.pause().stop().destroy() }
+    }
+    @Test fun tvAddRemainsInTopRowAfterProfilesAppearAndOpensFullManualList() {
+        TvUiPreferences.phoneMode = false
+        val controller = Robolectric.buildActivity(MainActivityTv::class.java).setup().visible()
+        try {
+            val activity = controller.get()
+            activity.supportFragmentManager.executePendingTransactions(); shadowOf(Looper.getMainLooper()).idle()
+            val fragment = activity.supportFragmentManager.findFragmentById(R.id.tv_container) as MainBrowseFragment
+            MainBrowseFragment::class.java.getDeclaredField("profiles").apply { isAccessible = true }
+                .set(fragment, listOf(io.nekohasekai.sagernet.ui.tv.TvProfileCard(123, "Existing", "VLESS", "example.com", false, null)))
+            MainBrowseFragment::class.java.getDeclaredMethod("refreshCards").apply { isAccessible = true }.invoke(fragment)
+            val row = fragment.adapter[0] as androidx.leanback.widget.ListRow
+            val add = row.adapter[2] as io.nekohasekai.sagernet.ui.tv.TvAction
+            assertEquals(3L, add.id); assertTrue(add.available)
+            fragment.onItemViewClickedListener!!.onItemClicked(null, add, null, row)
+            shadowOf(Looper.getMainLooper()).idle()
+            val chooser = org.robolectric.shadows.ShadowAlertDialog.getLatestAlertDialog()
+            val entries = io.nekohasekai.sagernet.ui.tv.TvProfileAddCatalog.entries(activity)
+            val index = entries.indexOfFirst { it.id == io.nekohasekai.sagernet.ui.tv.TvProfileAddCatalog.MANUAL }
+            chooser.listView.performItemClick(android.view.View(activity), index, index.toLong())
+            shadowOf(Looper.getMainLooper()).idle()
+            val manual = org.robolectric.shadows.ShadowAlertDialog.getLatestAlertDialog()
+            assertTrue(manual.isShowing); assertEquals(17, manual.listView.adapter.count)
+            val all = ProfileCreationActions.manualEntries(activity)
+            val customIndex = all.indexOfFirst { it.id == R.id.action_new_config }
+            manual.listView.performItemClick(android.view.View(activity), customIndex, customIndex.toLong())
+            shadowOf(Looper.getMainLooper()).idle()
+            assertEquals(moe.matsuri.nb4a.proxy.config.ConfigSettingActivity::class.java.name,
+                shadowOf(activity).nextStartedActivity!!.component!!.className)
+            assertFalse(TvUiPreferences.phoneMode)
+        } finally { controller.pause().stop().destroy() }
+    }
+    @Test fun tvPhoneReceivingRequiresExplicitChooserSelection() {
+        TvUiPreferences.phoneMode = false
+        val controller = Robolectric.buildActivity(MainActivityTv::class.java).setup().visible()
+        try {
+            val activity = controller.get()
+            activity.supportFragmentManager.executePendingTransactions(); shadowOf(Looper.getMainLooper()).idle()
+            val fragment = activity.supportFragmentManager.findFragmentById(R.id.tv_container) as MainBrowseFragment
+            val row = fragment.adapter[0] as androidx.leanback.widget.ListRow
+            fragment.onItemViewClickedListener!!.onItemClicked(null, row.adapter[2], null, row)
+            shadowOf(Looper.getMainLooper()).idle()
+            val chooser = org.robolectric.shadows.ShadowAlertDialog.getLatestAlertDialog()
+            assertSame(fragment, activity.supportFragmentManager.findFragmentById(R.id.tv_container))
+            val index = io.nekohasekai.sagernet.ui.tv.TvProfileAddCatalog.entries(activity)
+                .indexOfFirst { it.id == io.nekohasekai.sagernet.ui.tv.TvProfileAddCatalog.PHONE }
+            chooser.listView.performItemClick(android.view.View(activity), index, index.toLong())
+            shadowOf(Looper.getMainLooper()).idle(); activity.supportFragmentManager.executePendingTransactions()
+            assertTrue(activity.supportFragmentManager.findFragmentById(R.id.tv_container) is io.nekohasekai.sagernet.ui.tv.QrCodeTransferFragment)
+        } finally { controller.pause().stop().destroy() }
+    }
+    @Test fun phonePlusStillDispatchesEverySharedManualEditor() {
+        TvUiPreferences.phoneMode = true
+        val controller = Robolectric.buildActivity(MainActivity::class.java,
+            Intent(RuntimeEnvironment.getApplication(), MainActivity::class.java).putExtra("force_phone_mode", true)).setup().visible()
+        try {
+            val activity = controller.get()
+            activity.supportFragmentManager.executePendingTransactions(); shadowOf(Looper.getMainLooper()).idle()
+            val fragment = activity.supportFragmentManager.findFragmentById(R.id.fragment_holder) as ConfigurationFragment
+            val source = ProfileCreationActions.addMenu(activity)
+            for (entry in ProfileCreationActions.manualEntries(activity)) {
+                assertTrue(fragment.onMenuItemClick(source.findItem(entry.id)))
+                val actual = shadowOf(activity).nextStartedActivity!!
+                val expected = ProfileCreationActions.intent(activity, entry.id)!!
+                assertEquals(expected.component, actual.component)
+                assertEquals(expected.getBooleanExtra("vless", false), actual.getBooleanExtra("vless", false))
+            }
+        } finally { controller.pause().stop().destroy() }
+    }
+
 }
