@@ -47,7 +47,7 @@ class SagerNet : Application(),
     private val nativeInterface = NativeInterface()
 
     val externalAssets: File by lazy { getExternalFilesDir(null) ?: filesDir }
-    val process: String = JavaUtil.getProcessName()
+    val process: String = JavaUtil.getProcessName()?.takeIf { it.isNotBlank() } ?: BuildConfig.APPLICATION_ID
     private val isMainProcess = process == BuildConfig.APPLICATION_ID
     val isBgProcess = process.endsWith(":bg")
 

@@ -1,0 +1,8 @@
+<resources>
+    <string name="crash_recovery_title">TunXBox stopped unexpectedly</string>
+    <string name="crash_recovery_message">Close the app or try again. Diagnostic logs are shared only if you press Share logs; they may contain sensitive information.</string>
+    <string name="crash_recovery_retry">Try again</string>
+    <string name="crash_recovery_close">Close</string>
+    <string name="crash_recovery_share">Share logs</string>
+    <string name="crash_recovery_share_failed">Could not open log sharing.</string>
+</resources>

@@ -1,0 +1,8 @@
+<resources>
+    <string name="crash_recovery_title">Сбой TunXBox</string>
+    <string name="crash_recovery_message">Можно закрыть приложение или повторить запуск. Диагностические логи отправляются только по кнопке «Поделиться логами» и могут содержать личные данные.</string>
+    <string name="crash_recovery_retry">Повторить запуск</string>
+    <string name="crash_recovery_close">Закрыть</string>
+    <string name="crash_recovery_share">Поделиться логами</string>
+    <string name="crash_recovery_share_failed">Не удалось открыть отправку логов.</string>
+</resources>
