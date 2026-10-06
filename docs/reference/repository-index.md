@@ -8,7 +8,7 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **655**.
+Всего tracked файлов: **657**.
 
 | Раздел | Файлов |
 |---|---|
@@ -64,7 +64,7 @@
 | `app/src/main/java/io/nekohasekai/sagernet/fmt/trojan` | 2 |
 | `app/src/main/java/io/nekohasekai/sagernet/fmt/trojan_go` | 2 |
 | `app/src/main/java/io/nekohasekai/sagernet/fmt/tuic` | 2 |
-| `app/src/main/java/io/nekohasekai/sagernet/fmt/v2ray` | 3 |
+| `app/src/main/java/io/nekohasekai/sagernet/fmt/v2ray` | 4 |
 | `app/src/main/java/io/nekohasekai/sagernet/fmt/wireguard` | 2 |
 | `app/src/main/java/io/nekohasekai/sagernet/group/GroupInterfaceAdapter.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/group/GroupUpdater.kt` | 1 |
@@ -190,7 +190,7 @@
 | `app/src/main/res/values-zh-rHK` | 1 |
 | `app/src/main/res/values-zh-rTW` | 1 |
 | `app/src/main/res/xml` | 24 |
-| `app/src/test` | 11 |
+| `app/src/test` | 12 |
 | `buildScript` | 24 |
 | `buildSrc` | 2 |
 | `docs` | 19 |
@@ -459,6 +459,7 @@
 ## app/src/main/java/io/nekohasekai/sagernet/fmt/v2ray
 
 - [`app/src/main/java/io/nekohasekai/sagernet/fmt/v2ray/StandardV2RayBean.java`](../../app/src/main/java/io/nekohasekai/sagernet/fmt/v2ray/StandardV2RayBean.java)
+- [`app/src/main/java/io/nekohasekai/sagernet/fmt/v2ray/UnsupportedV2RayTransport.kt`](../../app/src/main/java/io/nekohasekai/sagernet/fmt/v2ray/UnsupportedV2RayTransport.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/fmt/v2ray/V2RayFmt.kt`](../../app/src/main/java/io/nekohasekai/sagernet/fmt/v2ray/V2RayFmt.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/fmt/v2ray/VMessBean.java`](../../app/src/main/java/io/nekohasekai/sagernet/fmt/v2ray/VMessBean.java)
 
@@ -1274,6 +1275,7 @@
 
 ## app/src/test
 
+- [`app/src/test/java/io/nekohasekai/sagernet/fmt/v2ray/UnsupportedV2RayTransportTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/fmt/v2ray/UnsupportedV2RayTransportTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionUpdateGuardTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionUpdateGuardTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/BrandingRecoveryTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/BrandingRecoveryTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/LaunchRegressionTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/LaunchRegressionTest.kt)
