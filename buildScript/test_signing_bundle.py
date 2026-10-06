@@ -39,6 +39,11 @@ class UpgradeTest(unittest.TestCase):
         with patch.object(package.subprocess,'check_output',side_effect=['Signer #1 certificate SHA-256 digest: '+'a'*64,"package: name='com.tunxbox.app' versionCode='47000123' versionName='1.5.0-rc.123'\n"]):
             self.assertEqual(package.read_identity(pathlib.Path('app.apk'),'apksigner','aapt'),('com.tunxbox.app',47000123,'1.5.0-rc.123','a'*64))
 
+    def test_compile_sdk_codename_cannot_overwrite_application_name(self):
+        metadata = "package: name='com.tunxbox.app' versionCode='47000090' versionName='1.5.0-rc.90' platformBuildVersionName='15' compileSdkVersion='35' compileSdkVersionCodename='15'\n"
+        with patch.object(package.subprocess, 'check_output', side_effect=['Signer #1 certificate SHA-256 digest: ' + 'a' * 64, metadata]):
+            self.assertEqual(package.read_identity(pathlib.Path('app.apk'), 'apksigner', 'aapt'), ('com.tunxbox.app', 47000090, '1.5.0-rc.90', 'a' * 64))
+
     def test_real_pkcs12_bundle_can_be_prepared_without_printing_secrets(self):
         with tempfile.TemporaryDirectory() as directory:
             root=pathlib.Path(directory);key=root/'test.p12';password='synthetic-local-test'

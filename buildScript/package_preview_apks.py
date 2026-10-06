@@ -47,7 +47,7 @@ def read_identity(source, apksigner, aapt):
     if len(fingerprints) != 1 or len(fingerprints[0]) != 64:
         raise ValueError("Expected exactly one APK signing certificate")
     metadata = subprocess.check_output([str(aapt), "dump", "badging", str(source)], text=True).splitlines()[0]
-    fields = dict(re.findall(r"(name|versionCode|versionName)='([^']*)'", metadata))
+    fields = dict(re.findall(r"(?:^|\s)(name|versionCode|versionName)='([^']*)'", metadata))
     return fields['name'], int(fields['versionCode']), fields['versionName'], fingerprints[0].lower()
 
 

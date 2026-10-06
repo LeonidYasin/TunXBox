@@ -240,7 +240,7 @@ jobs:
         with:
           name: build-log-${{ github.run_number }}
           path: |
-            app/build/outputs/
+            app/build/outputs/logs/
             app/build/reports/
           retention-days: 7
           if-no-files-found: ignore
