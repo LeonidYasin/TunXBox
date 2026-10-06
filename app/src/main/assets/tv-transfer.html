@@ -9,11 +9,12 @@
 body{max-width:640px;margin:auto;padding:24px}h1{font-size:26px}label{display:block;margin-top:18px}
 textarea,input,select,button{box-sizing:border-box;width:100%;font:inherit;border-radius:10px;padding:12px;margin-top:8px;border:1px solid #475569;background:#1e293b;color:inherit}
 textarea{min-height:170px}button{background:#0369a1;border:0;font-weight:600;cursor:pointer}button:disabled{opacity:.5}
-p,small{color:#cbd5e1;line-height:1.5}small{font-size:14px}textarea::placeholder,input::placeholder{color:#94a3b8;opacity:1}#status{white-space:pre-wrap}details{margin-top:24px}input[type=file]{padding:8px}
+p,small{color:#cbd5e1;line-height:1.5}small{font-size:14px}textarea::placeholder,input::placeholder{color:#94a3b8;opacity:1}#status{white-space:pre-wrap}#success{border:2px solid #4ade80;border-radius:12px;background:#14532d;padding:20px;margin:20px 0}#success:focus{outline:3px solid #67e8f9}#success h2{margin:0;font-size:24px}#success p{color:#f0fdf4}#success button{background:#166534;border:1px solid #86efac}details{margin-top:24px}input[type=file]{padding:8px}
 </style>
 </head>
 <body>
 <h1>Передать конфигурацию на TV</h1>
+<section id="success" hidden tabindex="-1" role="status" aria-live="polite"><h2>✓ Профили получены телевизором</h2><p id="success-count"></p><p>Можно закрыть эту вкладку и продолжить на TV. Переданные данные уже сохранены.</p><button id="close-page" type="button">Закрыть страницу</button><p id="close-help" hidden>Браузер не разрешил автоматическое закрытие. Закройте вкладку вручную.</p></section>
 <p>Телефон и телевизор должны находиться в одной доверенной локальной сети. Данные идут напрямую на TV, без облака. HTTP не шифрует передачу. QR действует 10 минут; закрытие экрана на TV завершает сеанс.</p>
 <form id="transfer">
 <label for="profiles">Ссылка подписки, ссылки профилей или конфигурация JSON / YAML / sing-box</label>
@@ -42,6 +43,8 @@ const token = new URLSearchParams(location.hash.slice(1)).get('session') || '';
 history.replaceState(null, '', location.pathname);
 const el = id => document.getElementById(id);
 const limit = 2 * 1024 * 1024;
+let completed = false;
+el('close-page').addEventListener('click', () => { window.close(); el('close-help').hidden = false; });
 if (!token) { el('status').textContent = 'Нет ключа сеанса. Отсканируйте QR на TV заново.'; el('send').disabled = true; }
 el('file').addEventListener('change', async () => {
   const file = el('file').files[0]; if (!file) return;
@@ -90,6 +93,7 @@ const importErrors = {
 };
 el('transfer').addEventListener('submit', async event => {
   event.preventDefault();
+  if (completed) return;
   let profiles = el('profiles').value.trim(); let subscription = el('subscription').value.trim();
   if (Boolean(profiles) === Boolean(subscription)) { el('status').textContent = 'Укажите конфигурацию ИЛИ ссылку подписки.'; return; }
   if (profiles && subscriptionCandidate(profiles)) { subscription = profiles; profiles = ''; }
@@ -102,10 +106,14 @@ el('transfer').addEventListener('submit', async event => {
     const response = await fetch('/import', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Session-Token': token }, body, signal: controller.signal, credentials: 'omit' });
     const result = await response.json();
     if (!response.ok) throw Error(importErrors[result.code] || (response.status === 403 ? 'Сеанс передачи недействителен или истёк. Откройте новую сессию на TV и отсканируйте QR заново.' : result.error || 'Ошибка передачи'));
+    completed = true;
     el('status').textContent = 'Готово: импортировано профилей — ' + result.imported;
+    el('success-count').textContent = 'Импортировано профилей: ' + result.imported;
+    el('success').hidden = false; el('success').focus(); el('success').scrollIntoView({block: 'start', behavior: 'auto'});
+    el('send').textContent = 'Передача завершена';
     el('profiles').value = ''; el('subscription').value = ''; el('file').value = '';
   } catch (error) { el('status').textContent = error.name === 'AbortError' ? 'Истекло время ожидания. Проверьте результат на TV перед повторной отправкой.' : error instanceof TypeError ? 'Не удалось связаться с TV. Проверьте общую локальную сеть и откройте новую сессию QR.' : error.message; }
-  finally { clearTimeout(timer); el('send').disabled = false; }
+  finally { clearTimeout(timer); el('send').disabled = completed; }
 });
 </script>
 </body>

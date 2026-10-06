@@ -159,4 +159,62 @@ class LaunchRegressionTest {
         assertEquals(MainActivity::class.java.name, app.packageManager.queryIntentActivities(link, 0).single().activityInfo.name)
     }
 
+    @Test fun advancedScreensFromTvDoNotSwitchSavedModeAndBackReturnsToTv() {
+        TvUiPreferences.phoneMode = false
+        val app = RuntimeEnvironment.getApplication()
+        val intent = Intent(app, MainActivity::class.java).putExtra("tv_tools", true).putExtra("tv_destination", R.id.nav_configuration)
+        val controller = Robolectric.buildActivity(MainActivity::class.java, intent)
+        try {
+            controller.setup().visible(); controller.get().supportFragmentManager.executePendingTransactions()
+            assertFalse(TvUiPreferences.phoneMode)
+            assertTrue(controller.get().supportFragmentManager.findFragmentById(R.id.fragment_holder) is ConfigurationFragment)
+            controller.get().onBackPressedDispatcher.onBackPressed(); shadowOf(Looper.getMainLooper()).idle()
+            assertTrue(controller.get().isFinishing)
+        } finally { controller.pause().stop().destroy() }
+    }
+    @Test fun receivedProfilesReplaceQrWithProminentAcknowledgement() {
+        TvUiPreferences.phoneMode = false
+        val controller = Robolectric.buildActivity(MainActivityTv::class.java).setup().visible()
+        try {
+            val activity = controller.get()
+            activity.supportFragmentManager.executePendingTransactions()
+            val fragment = io.nekohasekai.sagernet.ui.tv.QrCodeTransferFragment()
+            activity.supportFragmentManager.beginTransaction().replace(R.id.tv_container, fragment).addToBackStack("qr").commit()
+            activity.supportFragmentManager.executePendingTransactions()
+            fragment.acknowledgeImport(3)
+            val dialog = org.robolectric.shadows.ShadowAlertDialog.getLatestAlertDialog()
+            assertTrue(dialog.isShowing)
+            assertTrue(dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).hasFocus())
+            dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).performClick(); shadowOf(Looper.getMainLooper()).idle()
+            activity.supportFragmentManager.executePendingTransactions()
+            assertTrue(activity.supportFragmentManager.findFragmentById(R.id.tv_container) is MainBrowseFragment)
+        } finally { controller.pause().stop().destroy() }
+    }
+    @Test fun trafficCountersUpdateConnectionCardAndPreserveActionOrder() {
+        TvUiPreferences.phoneMode = false
+        val controller = Robolectric.buildActivity(MainActivityTv::class.java).setup().visible()
+        try {
+            controller.get().supportFragmentManager.executePendingTransactions()
+            val fragment = controller.get().supportFragmentManager.findFragmentById(R.id.tv_container) as MainBrowseFragment
+            fragment.updateTraffic(io.nekohasekai.sagernet.aidl.SpeedDisplayData(txRateProxy = 2048, rxRateProxy = 4096, txTotal = 8192, rxTotal = 16384))
+            val row = fragment.adapter[1] as androidx.leanback.widget.ListRow
+            val status = row.adapter[0] as io.nekohasekai.sagernet.ui.tv.TvAction
+            assertEquals(8L, status.id); assertTrue(status.subtitle.contains("↑")); assertTrue(status.subtitle.contains("↓"))
+            val actions = (fragment.adapter[0] as androidx.leanback.widget.ListRow).adapter
+            assertEquals(listOf(7L, 2L, 1L, 3L), (0 until actions.size()).map { (actions[it] as io.nekohasekai.sagernet.ui.tv.TvAction).id })
+        } finally { controller.pause().stop().destroy() }
+    }
+    @Test fun tvHomeActionLeavesAppWithoutSharingOrDisconnectCommand() {
+        TvUiPreferences.phoneMode = false
+        val controller = Robolectric.buildActivity(MainActivityTv::class.java).setup().visible()
+        try {
+            controller.get().supportFragmentManager.executePendingTransactions()
+            val fragment = controller.get().supportFragmentManager.findFragmentById(R.id.tv_container) as MainBrowseFragment
+            fragment.openHome()
+            val target = shadowOf(controller.get()).nextStartedActivity
+            assertEquals(Intent.ACTION_MAIN, target.action); assertTrue(target.hasCategory(Intent.CATEGORY_HOME))
+            assertFalse(controller.get().isFinishing)
+        } finally { controller.pause().stop().destroy() }
+    }
+
 }

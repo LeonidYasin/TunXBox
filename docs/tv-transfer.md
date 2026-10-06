@@ -46,3 +46,9 @@ The QR screen keeps the code beside its controls. New pairing session invalidate
 - Run `./gradlew app:testPreviewDebugUnitTest` and `./gradlew app:assemblePreviewRelease`.
 
 The phone launcher, profile editors and parser/updater APIs were checked against `master` and the working upstream `main`. Changes are isolated to the PR branch; upstream branches are not modified.
+
+## Receipt and TV diagnostics
+
+After success the phone shows a focused top banner with the saved count and a close-tab action (manual close instructions when the browser blocks closing). The TV hides the QR and asks to continue to the list; acknowledging closes the sharing session. Do not resend after a confirmed success.
+
+TV tools include TCP/URL group tests, saved results and latency sorting. The Connection row shows VPN service state, active profile and measured traffic. Its active-tunnel test is distinct from URL testing each profile with a temporary core. Zero traffic while idle is not a failure, and service Connected alone is not proof of Internet reachability. HOME and YouTube do not stop the VPN. All functions opens complete upstream screens without changing the saved TV mode; these screens are reused Material layouts, not independent Leanback copies.

@@ -1,0 +1,32 @@
+<resources>
+    <string name="tv_receive_success_title">Профили получены</string>
+    <string name="tv_receive_success_message">Сохранено профилей: %1$d. Продолжите на TV; вкладку браузера на смартфоне можно закрыть.</string>
+    <string name="tv_receive_continue">Продолжить на TV</string>
+    <string name="tv_connection_row">Подключение</string>
+    <string name="tv_connection_status">Состояние VPN и трафик</string>
+    <string name="tv_connection_stats">%1$s\nПрофиль: %2$s\n↑ %3$s  ↓ %4$s\nЗа сеанс: ↑ %5$s  ↓ %6$s</string>
+    <string name="tv_connection_explanation">Состояние приходит от VPN-сервиса. Скорость показывает прокси-трафик; итоги — измеренный трафик за сеанс. Нулевая скорость в простое нормальна и не доказывает сбой. Работающий VPN не гарантирует доступ в интернет. URL-тест проверяет профиль через отдельное временное ядро, а не активный туннель.</string>
+    <string name="tv_stats_age">Последнее обновление трафика: %1$s с назад</string>
+    <string name="tv_tests_title">Тестировать профили</string>
+    <string name="tv_tests_hint">Задержка TCP, доступность URL, результаты и сортировка</string>
+    <string name="tv_test_tcp">Задержка TCP — текущая группа</string>
+    <string name="tv_test_url">Доступность URL — текущая группа</string>
+    <string name="tv_test_clear">Очистить результаты тестов</string>
+    <string name="tv_test_sort">Сортировать по задержке</string>
+    <string name="tv_test_advanced">Все операции с профилями</string>
+    <string name="tv_test_starting">Подготовка теста…</string>
+    <string name="tv_test_progress">Проверено: %1$d / %2$d\nДоступны: %3$d · Недоступны: %4$d</string>
+    <string name="tv_test_complete">Тест завершён</string>
+    <string name="tv_test_unavailable">Недоступен</string>
+    <string name="tv_test_scope">TCP проверяет порт сервера; URL — настроенный адрес проверки через каждый профиль. Это не ICMP-пинг и не измерение скорости. Результаты сохраняются в карточках профилей.</string>
+    <string name="tv_all_functions">Все возможности</string>
+    <string name="tv_all_functions_hint">Полные экраны профилей, групп, маршрутов, настроек, инструментов и логов</string>
+    <string name="tv_home">Главный экран TV</string>
+    <string name="tv_home_hint">Свернуть TunXBox, не отключая VPN</string>
+    <string name="tv_youtube">Открыть YouTube</string>
+    <string name="tv_youtube_hint">Проверить воспроизведение, не отключая VPN</string>
+    <string name="tv_youtube_missing">YouTube не установлен или не имеет доступного экрана запуска.</string>
+<string name="tv_test_active">Проверить текущий VPN</string>
+<string name="tv_test_active_ok">Текущий VPN: проверка успешна, %1$d мс</string>
+<string name="tv_test_active_failed">Текущий VPN: URL-тест не прошёл; проверьте сеть или логи.</string>
+</resources>

@@ -83,7 +83,7 @@ class MainActivity : ThemedActivity(),
         // The upstream onNewIntent() handler processes these links via importSubscription/importProfile.
         val isDeepLink = intent?.action == Intent.ACTION_VIEW && intent?.data != null
         
-        if (!forcePhoneMode && !preferPhoneMode && !isDeepLink) {
+        if (!forcePhoneMode && !preferPhoneMode && !isDeepLink && !intent.getBooleanExtra("tv_tools", false)) {
             // Redirect to TV UI using explicit component name (no implicit intent)
             val tvIntent = android.content.Intent().apply {
                 component = android.content.ComponentName(this@MainActivity, MainActivityTv::class.java)
@@ -95,7 +95,7 @@ class MainActivity : ThemedActivity(),
         }
         
         // Phone Mode: continue with normal mobile UI initialization
-        if (forcePhoneMode && !isDeepLink) {
+        if (forcePhoneMode && !isDeepLink && !intent.getBooleanExtra("tv_tools", false)) {
             io.nekohasekai.sagernet.ui.tv.TvUiPreferences.phoneMode = true
         }
         
@@ -121,13 +121,15 @@ class MainActivity : ThemedActivity(),
         })
 
         if (savedInstanceState == null) {
-            displayFragmentWithId(R.id.nav_configuration)
+            val destination = intent.getIntExtra("tv_destination", R.id.nav_configuration)
+            val allowed = setOf(R.id.nav_configuration, R.id.nav_group, R.id.nav_route, R.id.nav_settings, R.id.nav_tools, R.id.nav_logcat, R.id.nav_about, R.id.nav_traffic)
+            displayFragmentWithId(if (destination in allowed) destination else R.id.nav_configuration)
         }
         onBackPressedDispatcher.addCallback {
             if (binding.drawerLayout.isOpen) {
                 binding.drawerLayout.closeDrawers()
             } else if (supportFragmentManager.findFragmentById(R.id.fragment_holder) is ConfigurationFragment) {
-                if (intent?.action == Intent.ACTION_VIEW && !io.nekohasekai.sagernet.ui.tv.TvUiPreferences.phoneMode) finish()
+                if (intent.getBooleanExtra("tv_tools", false) || intent?.action == Intent.ACTION_VIEW && !io.nekohasekai.sagernet.ui.tv.TvUiPreferences.phoneMode) finish()
                 else moveTaskToBack(true)
             } else {
                 displayFragmentWithId(R.id.nav_configuration)

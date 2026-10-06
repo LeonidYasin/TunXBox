@@ -27,8 +27,10 @@ class QrCodeTransferFragment : Fragment() {
     private var expiryJob: Job? = null
     private var appQr = false
     private var qrSize = 400
-    override fun onCreate(savedInstanceState: Bundle?) { super.onCreate(savedInstanceState); appQr = savedInstanceState?.getBoolean("app_qr", false) ?: false }
-    override fun onSaveInstanceState(outState: Bundle) { outState.putBoolean("app_qr", appQr); super.onSaveInstanceState(outState) }
+    private var receivedCount = 0
+    private var receivedDialog: android.app.AlertDialog? = null
+    override fun onCreate(savedInstanceState: Bundle?) { super.onCreate(savedInstanceState); appQr = savedInstanceState?.getBoolean("app_qr", false) ?: false; receivedCount = savedInstanceState?.getInt("received_count", 0) ?: 0 }
+    override fun onSaveInstanceState(outState: Bundle) { outState.putBoolean("app_qr", appQr); outState.putInt("received_count", receivedCount); super.onSaveInstanceState(outState) }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         val context = requireContext(); val metrics = resources.displayMetrics
@@ -69,12 +71,12 @@ class QrCodeTransferFragment : Fragment() {
             }
         }
     }
-    override fun onStart() { super.onStart(); startSession(); toggle.requestFocus() }
+    override fun onStart() { super.onStart(); if (receivedCount > 0) acknowledgeImport(receivedCount) else { startSession(); toggle.requestFocus() } }
     private fun startSession() {
         qrJob?.cancel(); expiryJob?.cancel(); transferServer?.stop(); transferServer = null
         try {
             transferServer = TvTransferServer(
-                onImportSuccess = { count -> view?.post { if (view != null) { statusText.text = getString(R.string.tv_qr_received, count); statusText.setTextColor(0xFF4ADE80.toInt()) } } },
+                onImportSuccess = { count -> android.os.Handler(android.os.Looper.getMainLooper()).post { if (isAdded && view != null) acknowledgeImport(count) } },
                 onImportError = { _ -> view?.post { if (view != null) { statusText.setText(R.string.tv_import_failed); statusText.setTextColor(0xFFFCA5A5.toInt()) } } }
             )
             statusText.setText(R.string.tv_qr_ready); statusText.setTextColor(Color.WHITE); renderQr()
@@ -86,6 +88,22 @@ class QrCodeTransferFragment : Fragment() {
         } catch (_: Exception) {
             statusText.setText(R.string.tv_qr_failed); statusText.setTextColor(0xFFFCA5A5.toInt()); qrImageView.setImageDrawable(null)
         }
+    }
+    internal fun acknowledgeImport(count: Int) {
+        if (view == null || receivedDialog != null) return
+        receivedCount = count
+        qrJob?.cancel(); expiryJob?.cancel()
+        qrImageView.setImageDrawable(null)
+        qrImageView.visibility = View.GONE
+        statusText.text = getString(R.string.tv_qr_received, count)
+        statusText.setTextColor(0xFF4ADE80.toInt())
+        // Keep HTTP alive until the sender receives its response; close on user acknowledgement.
+        receivedDialog = android.app.AlertDialog.Builder(requireContext())
+            .setTitle(R.string.tv_receive_success_title)
+            .setMessage(getString(R.string.tv_receive_success_message, count))
+            .setPositiveButton(R.string.tv_receive_continue) { _, _ -> parentFragmentManager.popBackStack() }
+            .setOnCancelListener { parentFragmentManager.popBackStack() }
+            .create().also { it.show(); it.getButton(android.app.AlertDialog.BUTTON_POSITIVE).requestFocus() }
     }
     private fun renderQr() {
         val server = transferServer ?: return
@@ -106,5 +124,5 @@ class QrCodeTransferFragment : Fragment() {
     }
     private fun stopSession() { qrJob?.cancel(); expiryJob?.cancel(); transferServer?.stop(); transferServer = null }
     override fun onStop() { stopSession(); super.onStop() }
-    override fun onDestroyView() { stopSession(); super.onDestroyView() }
+    override fun onDestroyView() { receivedDialog?.dismiss(); receivedDialog = null; stopSession(); super.onDestroyView() }
 }

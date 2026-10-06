@@ -8,10 +8,10 @@ let tests = 0;
 function page(result = {ok: true, status: 200, data: {imported: 3}}) {
   const fields = new Map(); const requests = [];
   const element = id => {
-    if (!fields.has(id)) fields.set(id, {value: '', textContent: '', disabled: false, files: [], events: {}, addEventListener(type, callback) { this.events[type] = callback; }});
+    if (!fields.has(id)) fields.set(id, {value: '', textContent: '', disabled: false, hidden: true, focused: false, scrolled: false, focus() {this.focused=true;}, scrollIntoView() {this.scrolled=true;}, files: [], events: {}, addEventListener(type, callback) { this.events[type] = callback; }});
     return fields.get(id);
   };
-  const context = {URL, URLSearchParams, TextEncoder, AbortController, setTimeout, clearTimeout,
+  const context = {window: {close() {}}, URL, URLSearchParams, TextEncoder, AbortController, setTimeout, clearTimeout,
     location: {hash: '#session=' + '0'.repeat(64), pathname: '/'}, history: {replaceState() {}}, document: {getElementById: element},
     fetch: async (url, options) => { requests.push({url, options, body: JSON.parse(options.body)}); return {ok: result.ok, status: result.status, json: async () => result.data}; }};
   vm.runInNewContext(script, context);
@@ -50,5 +50,16 @@ async function test(name, fn) { await fn(); tests++; console.log('PASS ' + name)
   });
   await test('expired pairing asks for a new QR', async () => { const p = page({ok: false, status: 403, data: {error: 'Invalid or expired'}}); p.element('profiles').value = 'vless://test@example.invalid:443'; await p.submit(); assert.match(p.element('status').textContent, /отсканируйте QR заново/); });
   await test('oversize file rejected before reading', async () => { const p = page(); p.element('file').files = [{size: 3 * 1024 * 1024, text() {throw Error('Should not read');}}]; await p.element('file').events.change(); assert.match(p.element('status').textContent, /больше 2 МиБ/); });
+  await test('success banner is visible focused scrolled and duplicate submission blocked', async () => {
+    const p=page(); p.element('profiles').value='https://example.invalid/sub'; await p.submit();
+    assert.equal(p.element('success').hidden,false); assert.equal(p.element('success').focused,true); assert.equal(p.element('success').scrolled,true);
+    assert.match(p.element('success-count').textContent,/3/); assert.equal(p.element('send').disabled,true);
+    await p.submit(); assert.equal(p.requests.length,1);
+    p.element('close-page').events.click(); assert.equal(p.element('close-help').hidden,false);
+  });
+  await test('failed transfer does not display success banner', async () => {
+    const p=page({ok:false,status:400,data:{code:'subscription_failed'}}); p.element('profiles').value='https://example.invalid/sub'; await p.submit();
+    assert.equal(p.element('success').hidden,true); assert.equal(p.element('send').disabled,false);
+  });
   console.log(`Browser transfer summary: tests=${tests}, failures=0`);
 })().catch(error => { console.error(error); process.exit(1); });
