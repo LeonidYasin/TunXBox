@@ -172,6 +172,62 @@ jobs:
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           echo "ndk.dir=$ANDROID_NDK_HOME" >> local.properties
 
+      # Device tests run BEFORE any private release-signing bundle is loaded.
+      - name: Build debug instrumentation APKs
+        env:
+          BUILD_PLUGIN: none
+        run: |
+          ./run init action gradle
+          ./gradlew app:assemblePreviewDebug app:assemblePreviewDebugAndroidTest --stacktrace
+          ./gradlew --stop
+
+      - name: Enable hardware-accelerated emulator
+        run: |
+          test -c /dev/kvm
+          sudo chmod a+rw /dev/kvm
+
+      - name: Android 15 emulator smoke (4KB)
+        timeout-minutes: 20
+        uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # pinned v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          avd-name: tunxbox-smoke-4k
+          ram-size: 2048M
+          emulator-boot-timeout: 300
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash buildScript/run_emulator_smoke.sh 4096
+
+      - name: Android 15 emulator smoke (16KB)
+        timeout-minutes: 20
+        uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # pinned v2
+        with:
+          api-level: 35
+          target: google_apis_ps16k
+          arch: x86_64
+          profile: pixel_2
+          avd-name: tunxbox-smoke-16k
+          ram-size: 2048M
+          emulator-boot-timeout: 300
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash buildScript/run_emulator_smoke.sh 16384
+
+      - name: Upload emulator diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TunXBox-emulator-smoke-${{ steps.actual_sha.outputs.sha }}
+          path: |
+            build/emulator-results/
+            app/build/reports/androidTests/
+            app/build/outputs/androidTest-results/
+          if-no-files-found: ignore
+          retention-days: 14
+
       - name: Prepare pinned signing identity
         if: github.event.inputs.check_only != 'true'
         env:
