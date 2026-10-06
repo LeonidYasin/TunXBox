@@ -66,6 +66,22 @@
 
 Удалённое управление — отдельный security scope: pairing, explicit approval, аудит/отзыв прав, allowlist действий. Отправка отчёта не выдаёт право управлять устройством. До готового sanitizer текущие raw logs не отправлять автоматически.
 
+## Аудит v2ray_box 1.0.6
+
+Изучен именно опубликованный source archive 1.0.6; SHA256 сверена с metadata Pub.dev. Scripts и сторонние live fixtures не запускались. Источники: [пакет](https://pub.dev/packages/v2ray_box), [пример](https://pub.dev/packages/v2ray_box/example), [исходники версии](https://pub.dev/api/archives/v2ray_box-1.0.6.tar.gz), [repository](https://github.com/pesaregorg/v2ray_box).
+
+**Применимость:** Flutter facade с нативными Kotlin services, Xray libXray AAR in-process, sing-box subprocess. В Android sing-box VPN path используется Xray TUN → local SOCKS bridge. XrayConfigParser действительно строит network=xhttp/xhttpSettings с path/host/mode для xhttp/splithttp. Но TunXBox — native Kotlin/Java + Go/JNI, не Flutter: dependency в pubspec.yaml не является drop-in интеграцией. Ядра пакет не включает, их нужно отдельно собирать и упаковывать.
+
+**Подтверждённые ограничения опубликованного кода:**
+- SingboxConfigParser объединяет `httpupgrade` и `xhttp`, выдавая type=httpupgrade. Это разные транспорты. CoreCompatibility.resolveEngineForLink при preferred singbox немедленно оставляет singbox; поэтому такая комбинация может попасть в неправильный builder. В TunXBox эту подмену не переносить: выбирать поддерживающее ядро либо отклонять профиль.
+- Проверенный Xray XHTTP builder переносит path/host/mode; advanced extra options/full Happ parity не подтверждены. Нужны fixtures по конкретной версии и runtime tests.
+- Build defaults: libXray main, sing-box latest stable. Для наших APK нужны pinned refs/checksums. В scripts отсутствие llvm-readobj допускает пропуск alignment check — наш обязательный gate ослаблять нельзя.
+- libXray script по умолчанию оставляет arm64-v8a/x86_64. Нельзя незаметно потерять armeabi-v7a/x86 и старые TV; доступность Xray на этих ABI отдельно проверить.
+- Live demo smoke opt-in проверяет один Shadowsocks fixture на двух ядрах, допускает counters OR HTTP response. Это не all-protocol coverage и не доказательство отсутствия direct bypass. Его endpoints не запрашивались.
+- MIT лицензия plugin не отменяет лицензии/обязанности ядер и транзитивных компонентов. Pub.dev является каталогом, не endorsement Flutter/Xray; publisher unverified не доказывает вредоносность, но не заменяет аудит.
+
+**Предварительное решение:** сохранить native TunXBox UI/Room/QR/текущий sing-box JNI путь. Использовать v2ray_box как reference, при необходимости небольшие MIT-компоненты с attribution после аудита; Flutter migration не обоснована. Оценить прямой pinned libXray adapter, capability matrix и нашу VPN/lifecycle integration. Это ещё не реализованный dual-core runtime. Смена base project не чинит expired certificate сервера и не гарантирует сохранение всех REALITY параметров.
+
 ## Acceptance evidence
 
 Пока: скриншоты владельца и статический аудит baseline, официальные страницы. В реализации D1 пока только fail-closed builder; заметный локализованный UI ошибки ещё впереди. НЕ выполнены: воспроизведение с приватным провайдером, полная матрица клиентов, Xray integration, новый diagnostic UI, sanitizer или регулярный monitor. Предоставлять обезличенные fixtures; не помещать реальные подписочные токены/ключи в Git/CI/artifacts/issues. В каждом последующем PR отмечать точную core/build version и фактически прошедшие проверки.
