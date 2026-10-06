@@ -362,6 +362,11 @@ class MainActivity : ThemedActivity(),
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         if (item.isChecked) binding.drawerLayout.closeDrawers() else {
             when (item.itemId) {
+                R.id.nav_restart_app, R.id.nav_close_app -> {
+                    binding.drawerLayout.closeDrawers()
+                    AppLifecycleActions.confirm(this, item.itemId == R.id.nav_restart_app)
+                    return true
+                }
                 R.id.nav_switch_tv_mode -> {
                     binding.drawerLayout.closeDrawers()
                     // Clear phone-mode override so next launch goes to TV UI
@@ -409,15 +414,12 @@ class MainActivity : ThemedActivity(),
             R.id.nav_tools -> displayFragment(ToolsFragment())
             R.id.nav_logcat -> displayFragment(LogcatFragment())
             R.id.nav_faq -> {
-                launchCustomTab("https://matsuridayo.github.io/")
+                launchCustomTab(ProjectLinks.DOCUMENTATION)
                 return false
             }
 
             R.id.nav_about -> displayFragment(AboutFragment())
-            R.id.nav_tuiguang -> {
-                launchCustomTab("https://neko-box.pages.dev/喵")
-                return false
-            }
+            R.id.nav_tuiguang -> displayFragment(PromotionsFragment())
 
             else -> return false
         }

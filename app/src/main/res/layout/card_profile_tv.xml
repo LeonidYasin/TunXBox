@@ -4,17 +4,17 @@
     android:orientation="vertical" android:padding="16dp" android:background="@drawable/card_background_tv"
     android:focusable="true" android:clickable="true">
     <TextView android:id="@+id/profile_name" android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:textSize="20sp" android:textStyle="bold" android:textColor="#FFFFFFFF" android:maxLines="2" android:ellipsize="end" />
+        android:textSize="20sp" android:textStyle="bold" android:textColor="#FFFFFFFF" android:minLines="2" android:maxLines="2" android:ellipsize="end" />
     <TextView android:id="@+id/profile_protocol" android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:layout_marginTop="6dp" android:textSize="16sp" android:textColor="#FFCBD5E1" android:maxLines="1" android:ellipsize="end" />
+        android:layout_marginTop="6dp" android:textSize="16sp" android:textColor="#FFCBD5E1" android:minLines="1" android:maxLines="1" android:ellipsize="end" />
     <TextView android:id="@+id/profile_address" android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:layout_marginTop="8dp" android:textSize="16sp" android:textColor="#FFCBD5E1" android:maxLines="2" android:ellipsize="end" />
+        android:layout_marginTop="8dp" android:textSize="16sp" android:textColor="#FFCBD5E1" android:minLines="2" android:maxLines="2" android:ellipsize="end" />
     <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp"
         android:orientation="horizontal" android:gravity="center_vertical">
         <View android:id="@+id/status_dot" android:layout_width="12dp" android:layout_height="12dp"
             android:layout_marginEnd="8dp" android:background="@drawable/status_dot_tv" android:visibility="gone"
             android:importantForAccessibility="no" />
         <TextView android:id="@+id/profile_status" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1"
-            android:textSize="16sp" android:textColor="#FFFFFFFF" android:maxLines="3" android:ellipsize="end" />
+            android:textSize="16sp" android:textColor="#FFFFFFFF" android:minLines="3" android:maxLines="3" android:ellipsize="end" />
     </LinearLayout>
 </LinearLayout>

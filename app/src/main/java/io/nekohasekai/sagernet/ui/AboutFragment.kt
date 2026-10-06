@@ -83,9 +83,14 @@ class AboutFragment : ToolbarFragment(R.layout.layout_about) {
                                 .subText(SagerNet.appVersionNameForDisplay)
                                 .setOnClickAction {
                                     requireContext().launchCustomTab(
-                                        "https://github.com/MatsuriDayo/NekoBoxForAndroid/releases"
+                                        ProjectLinks.RELEASES
                                     )
                                 }
+                                .build())
+                        .addItem(
+                            MaterialAboutActionItem.Builder()
+                                .text(R.string.app_build_identity)
+                                .subText(getString(R.string.app_build_identity_value, BuildConfig.APPLICATION_ID, BuildConfig.VERSION_CODE))
                                 .build())
                         .addItem(
                             MaterialAboutActionItem.Builder()
@@ -105,19 +110,8 @@ class AboutFragment : ToolbarFragment(R.layout.layout_about) {
                             MaterialAboutActionItem.Builder()
                                 .icon(R.drawable.ic_baseline_layers_24)
                                 .text(getString(R.string.version_x, "sing-box"))
-                                .subText(Libcore.versionBox())
+                                .subText(runCatching { Libcore.versionBox() }.getOrDefault("—"))
                                 .setOnClickAction { }
-                                .build())
-                        .addItem(
-                            MaterialAboutActionItem.Builder()
-                                .icon(R.drawable.ic_baseline_card_giftcard_24)
-                                .text(R.string.donate)
-                                .subText(R.string.donate_info)
-                                .setOnClickAction {
-                                    requireContext().launchCustomTab(
-                                        "https://matsuridayo.github.io/index_docs/#donate"
-                                    )
-                                }
                                 .build())
                         .apply {
                             PackageCache.awaitLoadSync()
@@ -180,24 +174,34 @@ class AboutFragment : ToolbarFragment(R.layout.layout_about) {
                         .addItem(
                             MaterialAboutActionItem.Builder()
                                 .icon(R.drawable.ic_baseline_sanitizer_24)
-                                .text(R.string.github)
+                                .text(R.string.project_source_tunxbox)
                                 .setOnClickAction {
                                     requireContext().launchCustomTab(
-                                        "https://github.com/MatsuriDayo/NekoBoxForAndroid"
+                                        ProjectLinks.REPOSITORY
 
                                     )
                                 }
                                 .build())
                         .addItem(
                             MaterialAboutActionItem.Builder()
-                                .icon(R.drawable.ic_qu_shadowsocks_foreground)
-                                .text(R.string.telegram)
+                                .icon(R.drawable.ic_baseline_bug_report_24)
+                                .text(R.string.project_report_issue)
                                 .setOnClickAction {
                                     requireContext().launchCustomTab(
-                                        "https://t.me/MatsuriDayo"
+                                        ProjectLinks.ISSUES
                                     )
                                 }
                                 .build())
+                        .build())
+                .addCard(
+                    MaterialAboutCard.Builder().outline(false).title(R.string.project_upstream)
+                        .addItem(MaterialAboutActionItem.Builder()
+                            .text(R.string.project_upstream_neko).subText(R.string.project_upstream_hint)
+                            .setOnClickAction { requireContext().launchCustomTab(ProjectLinks.UPSTREAM) }.build())
+                        .addItem(MaterialAboutActionItem.Builder()
+                            .icon(R.drawable.ic_baseline_card_giftcard_24)
+                            .text(R.string.project_upstream_support).subText(R.string.project_upstream_support_hint)
+                            .setOnClickAction { requireContext().launchCustomTab(ProjectLinks.UPSTREAM_DONATE) }.build())
                         .build())
                 .build()
 
@@ -211,69 +215,57 @@ class AboutFragment : ToolbarFragment(R.layout.layout_about) {
             }
         }
 
+        private fun installedSigner(): String {
+            val context = requireContext()
+            val signatures = if (Build.VERSION.SDK_INT >= 28) {
+                context.packageManager.getPackageInfo(context.packageName, android.content.pm.PackageManager.GET_SIGNING_CERTIFICATES)
+                    .signingInfo?.apkContentsSigners
+            } else {
+                @Suppress("DEPRECATION")
+                context.packageManager.getPackageInfo(context.packageName, android.content.pm.PackageManager.GET_SIGNATURES).signatures
+            }
+            require(signatures?.size == 1) { "Expected one installed signer" }
+            val bytes = java.security.MessageDigest.getInstance("SHA-256").digest(signatures!![0].toByteArray())
+            return bytes.joinToString("") { "%02x".format(it.toInt() and 255) }
+        }
+
         fun checkUpdate(checkPreview: Boolean) {
+            val signer = runCatching { installedSigner() }.getOrNull() ?: run {
+                Toast.makeText(requireContext(), R.string.update_no_compatible_release, Toast.LENGTH_LONG).show()
+                return
+            }
             runOnIoDispatcher {
                 try {
-                    val client = Libcore.newHttpClient().apply {
-                        modernTLS()
-                        trySocks5(DataStore.mixedPort)
-                    }
-                    val response = client.newRequest().apply {
-                        if (checkPreview) {
-                            setURL("https://api.github.com/repos/MatsuriDayo/NekoBoxForAndroid/releases/tags/preview")
-                        } else {
-                            setURL("https://api.github.com/repos/MatsuriDayo/NekoBoxForAndroid/releases/latest")
-                        }
-                    }.execute()
-                    val release = JSONObject(Util.getStringBox(response.contentString))
-                    val releaseName = release.getString("name")
+                    val client = Libcore.newHttpClient().apply { modernTLS(); trySocks5(DataStore.mixedPort) }
+                    fun fetch(url: String): String = Util.getStringBox(client.newRequest().apply { setURL(url) }.execute().contentString)
+                    val release = JSONObject(fetch(if (checkPreview) ProjectLinks.PREVIEW_API else ProjectLinks.RELEASE_API))
                     val releaseUrl = release.getString("html_url")
-                    var haveUpdate = releaseName.isNotBlank()
-                    haveUpdate = if (isPreview) {
-                        if (checkPreview) {
-                            haveUpdate && releaseName != BuildConfig.PRE_VERSION_NAME
-                        } else {
-                            // User: 1.3.9 pre-1.4.0 Stable: 1.3.9 -> No update
-                            haveUpdate && releaseName != BuildConfig.VERSION_NAME
-                        }
-                    } else {
-                        // User: 1.4.0 Preview: pre-1.4.0 -> No update
-                        // User: 1.4.0 Preview: pre-1.4.1 -> Update
-                        // User: 1.4.0 Stable: 1.4.0 -> No update
-                        // User: 1.4.0 Stable: 1.4.1 -> Update
-                        haveUpdate && !releaseName.contains(BuildConfig.VERSION_NAME)
+                    require(releaseUrl.startsWith(ProjectLinks.REPOSITORY + "/releases/tag/"))
+                    val assets = release.getJSONArray("assets")
+                    val asset = (0 until assets.length()).map { assets.getJSONObject(it) }
+                        .firstOrNull { it.optString("name") == "apk-manifest.json" }
+                    if (asset == null) {
+                        runOnMainDispatcher { if (isAdded) Toast.makeText(requireContext(), R.string.update_no_compatible_release, Toast.LENGTH_LONG).show() }
+                        return@runOnIoDispatcher
                     }
+                    val manifestUrl = asset.getString("browser_download_url")
+                    require(manifestUrl.startsWith(ProjectLinks.REPOSITORY + "/releases/download/"))
+                    val available = ReleaseUpdatePolicy.parse(JSONObject(fetch(manifestUrl)), BuildConfig.APPLICATION_ID, BuildConfig.VERSION_CODE.toLong(), signer)
                     runOnMainDispatcher {
-                        if (haveUpdate) {
+                        if (!isAdded || view == null) return@runOnMainDispatcher
+                        if (available.newer) {
                             val context = requireContext()
-                            MaterialAlertDialogBuilder(context)
-                                .setTitle(R.string.update_dialog_title)
-                                .setMessage(
-                                    context.getString(
-                                        R.string.update_dialog_message,
-                                        SagerNet.appVersionNameForDisplay,
-                                        releaseName
-                                    )
-                                )
-                                .setPositiveButton(R.string.yes) { _, _ ->
-                                    val intent = Intent(Intent.ACTION_VIEW, releaseUrl.toUri())
-                                    context.startActivity(intent)
-                                }
-                                .setNegativeButton(R.string.no, null)
-                                .show()
-                        } else {
-                            Toast.makeText(app, R.string.check_update_no, Toast.LENGTH_SHORT).show()
-                        }
+                            MaterialAlertDialogBuilder(context).setTitle(R.string.update_dialog_title)
+                                .setMessage(context.getString(R.string.update_dialog_message, SagerNet.appVersionNameForDisplay, available.versionName))
+                                .setPositiveButton(R.string.yes) { _, _ -> context.launchCustomTab(releaseUrl) }
+                                .setNegativeButton(R.string.no, null).show()
+                        } else Toast.makeText(requireContext(), R.string.check_update_no, Toast.LENGTH_SHORT).show()
                     }
                 } catch (e: Exception) {
                     Logs.w(e)
-                    runOnMainDispatcher {
-                        Toast.makeText(app, e.readableMessage, Toast.LENGTH_SHORT).show()
-                    }
+                    runOnMainDispatcher { if (isAdded) Toast.makeText(requireContext(), R.string.update_check_failed, Toast.LENGTH_LONG).show() }
                 }
             }
         }
-
     }
-
 }

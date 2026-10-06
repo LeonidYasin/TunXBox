@@ -13,7 +13,7 @@ object TvFunctionCatalog {
         val menu = PopupMenu(context, View(context)).menu
         MenuInflater(context).inflate(R.menu.main_drawer_menu, menu)
         return (0 until menu.size()).map { menu.getItem(it) }.filter {
-            it.isVisible && it.itemId != R.id.nav_switch_tv_mode &&
+            it.isVisible && it.itemId !in setOf(R.id.nav_switch_tv_mode, R.id.nav_restart_app, R.id.nav_close_app) &&
                 (it.itemId != R.id.nav_traffic || dashboardEnabled) &&
                 (it.itemId != R.id.nav_tuiguang || !playFlavor)
         }.map { Entry(it.itemId, it.title.toString()) }

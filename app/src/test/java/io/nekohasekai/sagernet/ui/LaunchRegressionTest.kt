@@ -33,8 +33,17 @@ class StartupApplicationShadow : org.robolectric.shadows.ShadowApplication() {
     @Implementation fun onCreate() { /* Android JNI core is tested by APK/device acceptance. */ }
 }
 
+@Implements(value = com.jakewharton.processphoenix.ProcessPhoenix::class, isInAndroidSdk = false)
+class PhoenixUiShadow {
+    companion object {
+        var restarted: Intent? = null
+        @JvmStatic @Implementation
+        fun triggerRebirth(context: android.content.Context, intents: Array<Intent>) { restarted = intents.firstOrNull() }
+    }
+}
+
 @RunWith(RobolectricTestRunner::class)
-@Config(application = SagerNet::class, shadows = [StartupApplicationShadow::class], sdk = [28], qualifiers = "land")
+@Config(application = SagerNet::class, shadows = [StartupApplicationShadow::class, PhoenixUiShadow::class], sdk = [28], qualifiers = "land")
 class LaunchRegressionTest {
     private lateinit var room: ServiceController<MultiInstanceInvalidationService>
     private lateinit var vpn: ServiceController<VpnService>
@@ -139,7 +148,7 @@ class LaunchRegressionTest {
             val fragment = controller.get().supportFragmentManager.findFragmentById(R.id.tv_container) as MainBrowseFragment
             val row = fragment.adapter[0] as androidx.leanback.widget.ListRow
             val actions = row.adapter
-            assertEquals(listOf(7L, 2L, 1L, 3L), (0 until actions.size()).map { (actions[it] as io.nekohasekai.sagernet.ui.tv.TvAction).id })
+            assertEquals(listOf(1L, 2L, 3L, 7L), (0 until actions.size()).map { (actions[it] as io.nekohasekai.sagernet.ui.tv.TvAction).id })
             val info = controller.get().packageManager.getActivityInfo(controller.get().componentName, 0)
             assertEquals(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_FULL_USER, info.screenOrientation)
             assertTrue(controller.get().resources.getDimension(R.dimen.tv_browse_rows_margin_start) / controller.get().resources.displayMetrics.density < 40)
@@ -201,7 +210,7 @@ class LaunchRegressionTest {
             val status = row.adapter[0] as io.nekohasekai.sagernet.ui.tv.TvAction
             assertEquals(8L, status.id); assertTrue(status.subtitle.contains("↑")); assertTrue(status.subtitle.contains("↓"))
             val actions = (fragment.adapter[0] as androidx.leanback.widget.ListRow).adapter
-            assertEquals(listOf(7L, 2L, 1L, 3L), (0 until actions.size()).map { (actions[it] as io.nekohasekai.sagernet.ui.tv.TvAction).id })
+            assertEquals(listOf(1L, 2L, 3L, 7L), (0 until actions.size()).map { (actions[it] as io.nekohasekai.sagernet.ui.tv.TvAction).id })
         } finally { controller.pause().stop().destroy() }
     }
     @Test fun tvHomeActionLeavesAppWithoutSharingOrDisconnectCommand() {
@@ -290,4 +299,87 @@ class LaunchRegressionTest {
         assertEquals(1, registered); assertNull(connection.service)
     }
 
+
+    @Test fun coldTvFocusStartsAtConnectAndExitActionsAreLast() {
+        TvUiPreferences.phoneMode = false
+        val controller = Robolectric.buildActivity(MainActivityTv::class.java).setup().visible()
+        try {
+            controller.get().supportFragmentManager.executePendingTransactions(); shadowOf(Looper.getMainLooper()).idle()
+            val fragment = controller.get().supportFragmentManager.findFragmentById(R.id.tv_container) as MainBrowseFragment
+            val focus = MainBrowseFragment::class.java.getDeclaredField("focusedId").apply { isAccessible = true }
+            assertEquals(1L, focus.getLong(fragment))
+            val tools = (fragment.adapter[3] as androidx.leanback.widget.ListRow).adapter
+            assertEquals(listOf(13L,14L), (tools.size()-2 until tools.size()).map { (tools[it] as io.nekohasekai.sagernet.ui.tv.TvAction).id })
+        } finally { controller.pause().stop().destroy() }
+    }
+    @Test fun tvTrafficDoesNotNotifyOtherScrollingRows() {
+        TvUiPreferences.phoneMode = false
+        val controller = Robolectric.buildActivity(MainActivityTv::class.java).setup().visible()
+        try {
+            controller.get().supportFragmentManager.executePendingTransactions()
+            val fragment = controller.get().supportFragmentManager.findFragmentById(R.id.tv_container) as MainBrowseFragment
+            var updates = 0
+            for(index in listOf(0,2,3)) ((fragment.adapter[index] as androidx.leanback.widget.ListRow).adapter).registerObserver(object : androidx.leanback.widget.ObjectAdapter.DataObserver() {
+                override fun onChanged() { updates++ }
+                override fun onItemRangeChanged(positionStart: Int, itemCount: Int) { updates++ }
+            })
+            repeat(10) { fragment.updateTraffic(io.nekohasekai.sagernet.aidl.SpeedDisplayData(txRateProxy=it.toLong()*9999999)) }
+            assertEquals(0, updates)
+        } finally { controller.pause().stop().destroy() }
+    }
+    @Test fun closeAppConfirmationDefaultsToCancelAndDoesNotDisconnectVpn() {
+        TvUiPreferences.phoneMode = false
+        val controller = Robolectric.buildActivity(MainActivityTv::class.java).setup().visible()
+        try {
+            controller.get().supportFragmentManager.executePendingTransactions()
+            val dialog=AppLifecycleActions.confirm(controller.get(),false)
+            assertTrue(dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE).hasFocus())
+            val app=RuntimeEnvironment.getApplication()
+            val before=shadowOf(app).broadcastIntents.count { it.action==Action.CLOSE }
+            dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).performClick()
+            assertTrue(controller.get().isFinishing)
+            assertEquals(before,shadowOf(app).broadcastIntents.count { it.action==Action.CLOSE })
+        } finally { controller.pause().stop().destroy() }
+    }
+    @Test fun restartIntentsKeepExplicitModeAndNeverOpenShareChooser() {
+        val app=RuntimeEnvironment.getApplication()
+        for(phone in listOf(false,true)) {
+            val intent=AppLifecycleActions.restartIntent(app,phone)
+            assertEquals(if(phone) MainActivity::class.java.name else MainActivityTv::class.java.name,intent.component!!.className)
+            assertEquals(phone,intent.getBooleanExtra("force_phone_mode",false))
+            assertTrue(intent.flags and Intent.FLAG_ACTIVITY_CLEAR_TASK != 0)
+            assertNotEquals(Intent.ACTION_SEND,intent.action)
+        }
+    }
+    @Test fun smartphoneLifecycleActionsAreAtEndOfDrawerAndOpenConfirmation() {
+        TvUiPreferences.phoneMode = true
+        val controller=Robolectric.buildActivity(MainActivity::class.java,Intent(RuntimeEnvironment.getApplication(),MainActivity::class.java).putExtra("force_phone_mode",true)).setup().visible()
+        try {
+            controller.get().supportFragmentManager.executePendingTransactions()
+            val menu=controller.get().navigation.menu
+            assertEquals(R.id.nav_restart_app,menu.getItem(menu.size()-2).itemId)
+            assertEquals(R.id.nav_close_app,menu.getItem(menu.size()-1).itemId)
+            assertTrue(controller.get().onNavigationItemSelected(menu.findItem(R.id.nav_restart_app)))
+            val dialog=org.robolectric.shadows.ShadowAlertDialog.getLatestAlertDialog()
+            assertTrue(dialog.isShowing);assertTrue(dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE).hasFocus())
+            dialog.dismiss()
+        } finally { controller.pause().stop().destroy() }
+    }
+    @Test fun promotionsFromTvIsLocalAndBackReturnsWithoutBrowserLaunch() = checkTvDestination(R.id.nav_tuiguang,PromotionsFragment::class.java)
+
+    @Test fun confirmedRestartRestartsOnlyUiInTvModeWithoutDisconnectCommand() {
+        TvUiPreferences.phoneMode=false;PhoenixUiShadow.restarted=null
+        val controller=Robolectric.buildActivity(MainActivityTv::class.java).setup().visible()
+        try {
+            controller.get().supportFragmentManager.executePendingTransactions()
+            val app=RuntimeEnvironment.getApplication()
+            val before=shadowOf(app).broadcastIntents.count { it.action==Action.CLOSE }
+            val dialog=AppLifecycleActions.confirm(controller.get(),true)
+            dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).performClick()
+            assertEquals(MainActivityTv::class.java.name,PhoenixUiShadow.restarted!!.component!!.className)
+            assertEquals(before,shadowOf(app).broadcastIntents.count { it.action==Action.CLOSE })
+            assertFalse(TvUiPreferences.phoneMode)
+        } finally { controller.pause().stop().destroy() }
+    }
+    @Test fun aboutFromTvStartsLocallyAndKeepsTvPreference() = checkTvDestination(R.id.nav_about,AboutFragment::class.java)
 }

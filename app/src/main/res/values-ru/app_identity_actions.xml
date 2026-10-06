@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_close">Закрыть приложение</string>
+    <string name="app_restart">Перезагрузить приложение</string>
+    <string name="app_close_hint">Закрыть интерфейс; VPN останется в фоне</string>
+    <string name="app_restart_hint">Перезапустить интерфейс в выбранном режиме</string>
+    <string name="app_close_confirm">Закрыть интерфейс TunXBox? Команда отключения VPN не отправляется. Чтобы остановить VPN, сначала нажмите «Отключить».</string>
+    <string name="app_restart_confirm">Перезапустить интерфейс TunXBox в выбранном режиме? Профили и настройки сохранятся. Фоновый VPN-сервис не будет принудительно отключён.</string>
+    <string name="project_source_tunxbox">Исходный код TunXBox</string>
+    <string name="project_report_issue">Сообщить о проблеме TunXBox</string>
+    <string name="project_upstream">Исходный открытый проект</string>
+    <string name="project_upstream_neko">NekoBox for Android</string>
+    <string name="project_upstream_hint">Исходный проект; TunXBox — независимый форк</string>
+    <string name="project_upstream_support">Поддержать исходный проект NekoBox</string>
+    <string name="project_upstream_support_hint">Откроется страница пожертвований исходным авторам, не сбор средств TunXBox</string>
+    <string name="app_build_identity">Пакет Android / код версии</string>
+    <string name="app_build_identity_value">%1$s · %2$d</string>
+    <string name="promotions_title">Реклама в TunXBox</string>
+    <string name="promotions_body">В TunXBox сейчас нет размещённых рекламных предложений. Этот раздел больше не открывает автоматически рекламный сайт исходного NekoBox.\n\nTunXBox — клиент, а не продавец VPN-подписок. Импортированные профили и подписки относятся к выбранным вами провайдерам; их доступность и условия не контролируются этим проектом.</string>
+    <string name="update_no_compatible_release">Совместимый релиз TunXBox не найден.</string>
+    <string name="update_check_failed">Не удалось проверить обновления TunXBox. Проверьте соединение или откройте Releases проекта.</string>
+</resources>

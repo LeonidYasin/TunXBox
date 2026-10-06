@@ -100,17 +100,16 @@ jobs:
         uses: actions/cache@v4
         with:
           path: app/libs/libcore.aar
-          key: libcore-${{ runner.os }}-${{ hashFiles('buildScript/lib/**', 'libcore/**') }}
-          restore-keys: |
-            libcore-${{ runner.os }}-
+          key: libcore-16kb-v1-${{ runner.os }}-${{ hashFiles('buildScript/lib/**', 'libcore/**') }}
 
       - name: Build libcore.aar (if cache miss)
         run: |
           if [ ! -f app/libs/libcore.aar ]; then
             ./run lib core
           else
-            echo "libcore.aar restored from cache"
+            echo "libcore.aar restored from 16KB cache"
           fi
+          python3 buildScript/verify_native_alignment.py --require-64bit app/libs/libcore.aar
 
       - name: Cache Gradle packages
         uses: actions/cache@v4
@@ -155,6 +154,7 @@ jobs:
           python3 buildScript/test_package_preview_apks.py
           python3 buildScript/test_signing_bundle.py
           python3 buildScript/test_assets.py
+          python3 buildScript/test_native_alignment.py
 
       - name: Build Preview APK
         env:
@@ -178,11 +178,16 @@ jobs:
           paths = glob.glob('app/build/outputs/apk/preview/release/*.apk')
           assert len(paths) == 3
           for path in paths:
-              output = subprocess.check_output([os.environ['AAPT'], 'dump', 'badging', path], text=True).splitlines()[0]
+              badging = subprocess.check_output([os.environ['AAPT'], 'dump', 'badging', path], text=True)
+              output = badging.splitlines()[0]
+              assert int(re.search(r"targetSdkVersion:'([0-9]+)'", badging)[1]) >= 35
               assert "name='com.tunxbox.app'" in output
               assert int(re.search(r"versionCode='([0-9]+)'", output)[1]) == expected
           print('Actual APK applicationId and increasing versionCode verified:', expected)
           PYMETA
+
+      - name: Verify native 16KB page alignment
+        run: python3 buildScript/verify_native_alignment.py app/build/outputs/apk/preview/release/*.apk
 
       - name: Test protocol and remote UI
         run: |

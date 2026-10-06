@@ -35,7 +35,7 @@ class ActionPresenter : Presenter() {
             orientation = LinearLayout.VERTICAL
             layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
         }
-        val title = TextView(context).apply { id = R.id.action_title; textSize = 20f; setTextColor(Color.WHITE); maxLines = 2; ellipsize = TextUtils.TruncateAt.END }
+        val title = TextView(context).apply { id = R.id.action_title; textSize = 20f; setTextColor(Color.WHITE); minLines = 2; maxLines = 2; ellipsize = TextUtils.TruncateAt.END }
         val subtitle = TextView(context).apply {
             id = R.id.action_subtitle; textSize = 16f; setTextColor(0xFFCBD5E1.toInt()); maxLines = 3; ellipsize = TextUtils.TruncateAt.END
             layoutParams = LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(6) }
@@ -47,7 +47,9 @@ class ActionPresenter : Presenter() {
     override fun onBindViewHolder(viewHolder: ViewHolder, item: Any?) {
         val holder = viewHolder as ActionViewHolder
         val action = item as TvAction
-        holder.subtitle.maxLines = if (action.id == 8L) 8 else 3
+        val lines = if (action.id == 8L) 8 else 3
+        holder.subtitle.minLines = lines
+        holder.subtitle.maxLines = lines
         holder.title.text = action.title; holder.subtitle.text = action.subtitle; holder.icon.setImageResource(action.icon)
         holder.view.alpha = if (action.available) 1f else 0.65f
         // Keep stable focus even when an operation is temporarily unavailable. Click handler

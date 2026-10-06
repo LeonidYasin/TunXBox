@@ -107,7 +107,7 @@ class RemoteUiTest {
         val context = activity()
         val menu = android.widget.PopupMenu(context, View(context)).menu
         android.view.MenuInflater(context).inflate(R.menu.main_drawer_menu, menu)
-        val expected = (0 until menu.size()).map { menu.getItem(it).itemId }.filter { it != R.id.nav_switch_tv_mode }
+        val expected = (0 until menu.size()).map { menu.getItem(it).itemId }.filter { it !in setOf(R.id.nav_switch_tv_mode, R.id.nav_restart_app, R.id.nav_close_app) }
         assertEquals(expected, TvFunctionCatalog.entries(context, true, false).map { it.id })
         assertFalse(TvFunctionCatalog.entries(context, false, true).any { it.id == R.id.nav_traffic || it.id == R.id.nav_tuiguang })
     }
@@ -156,4 +156,42 @@ class RemoteUiTest {
         assertTrue(key.isFocusable)
     }
 
+
+    @Test @Config(qualifiers = "w390dp-h844dp-port")
+    fun horizontalActionCardsKeepEqualHeightForShortAndLongLabels() {
+        val parent = FrameLayout(activity()); val presenter = ActionPresenter()
+        val holder = presenter.onCreateViewHolder(parent) as ActionPresenter.ActionViewHolder
+        parent.addView(holder.view)
+        presenter.onBindViewHolder(holder, TvAction(1, "Connect", "Idle", R.drawable.ic_service_idle))
+        layout(parent); val shortHeight = holder.view.measuredHeight
+        presenter.onBindViewHolder(holder, TvAction(1, "A very long translated connection action wrapping onto two lines", "Connected\nA very long selected profile name which wraps\nAn active profile", R.drawable.ic_service_active))
+        layout(parent); assertEquals(shortHeight, holder.view.measuredHeight)
+        assertEquals(2, holder.title.minLines); assertEquals(3, holder.subtitle.minLines)
+    }
+    @Test @Config(qualifiers = "w390dp-h844dp-port")
+    fun trafficCardHeightStaysFixedWhenCountersGrow() {
+        val parent = FrameLayout(activity()); val presenter = ActionPresenter()
+        val holder = presenter.onCreateViewHolder(parent)
+        parent.addView(holder.view)
+        presenter.onBindViewHolder(holder, TvAction(8, "Connection", "Idle\n0 B/s", R.drawable.ic_remote_groups))
+        layout(parent); val height = holder.view.measuredHeight
+        presenter.onBindViewHolder(holder, TvAction(8, "Connection", "Connected\nLong current profile name\n999 GiB/s up\n999 GiB/s down\nTotals 999 TiB\nLast check passed", R.drawable.ic_remote_groups))
+        layout(parent); assertEquals(height, holder.view.measuredHeight)
+    }
+    @Test fun rowPresenterKeepsPhonePaddingStableAcrossFocusAndExpansion() {
+        val parent = FrameLayout(activity()); val presenter = StableTvRowPresenter(true)
+        assertEquals(androidx.leanback.widget.FocusHighlight.ZOOM_FACTOR_NONE, presenter.focusZoomFactor)
+        val outer = presenter.onCreateViewHolder(parent)
+        presenter.onBindViewHolder(outer, androidx.leanback.widget.ListRow(androidx.leanback.widget.HeaderItem("Actions"), ArrayObjectAdapter(ActionPresenter())))
+        val holder = presenter.getRowViewHolder(outer) as androidx.leanback.widget.ListRowPresenter.ViewHolder
+        presenter.setRowViewSelected(outer, true)
+        val before = listOf(holder.gridView.paddingTop, holder.gridView.paddingBottom)
+        presenter.setRowViewExpanded(outer, true); presenter.setRowViewSelected(outer, false)
+        assertEquals(before, listOf(holder.gridView.paddingTop, holder.gridView.paddingBottom))
+        presenter.freeze(holder, false); assertFalse(holder.gridView.isChildLayoutAnimated)
+        assertEquals(androidx.leanback.widget.BaseGridView.FOCUS_SCROLL_ITEM, holder.gridView.focusScrollStrategy)
+    }
+    @Test fun tvKeepsRemoteFocusZoom() {
+        assertEquals(androidx.leanback.widget.FocusHighlight.ZOOM_FACTOR_SMALL, StableTvRowPresenter(false).focusZoomFactor)
+    }
 }

@@ -66,4 +66,8 @@
             android:title="@string/switch_tv_mode" />
     </group>
 
+    <group android:id="@+id/app_lifecycle" android:checkableBehavior="none">
+        <item android:id="@+id/nav_restart_app" android:icon="@drawable/ic_baseline_refresh_24" android:title="@string/app_restart" />
+        <item android:id="@+id/nav_close_app" android:icon="@drawable/ic_navigation_close" android:title="@string/app_close" />
+    </group>
 </menu>

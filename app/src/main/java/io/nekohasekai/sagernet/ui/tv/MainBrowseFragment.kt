@@ -49,7 +49,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
     private var updateDeclined = false
     private var dialog: AlertDialog? = null
     private var focusedRow = ROW_ACTIONS
-    private var focusedId = PHONE_MODE
+    private var focusedId = TOGGLE
     private var restoreAfterLoad = true
     private var lastCommand = -750L
     private val connection = SagerConnection(SagerConnection.CONNECTION_ID_MAIN_ACTIVITY_FOREGROUND, true)
@@ -70,6 +70,8 @@ class MainBrowseFragment : BrowseSupportFragment() {
         private const val FULL_TOOLS = 10L
         private const val HOME = 11L
         private const val YOUTUBE = 12L
+        private const val RESTART_APP = 13L
+        private const val CLOSE_APP = 14L
         private const val ROW_CONNECTION = 3L
     }
 
@@ -155,7 +157,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
         headersState = HEADERS_DISABLED
         isHeadersTransitionOnBackEnabled = false
         focusedRow = savedInstanceState?.getLong("tv_focus_row", ROW_ACTIONS) ?: ROW_ACTIONS
-        focusedId = savedInstanceState?.getLong("tv_focus_item", PHONE_MODE) ?: PHONE_MODE
+        focusedId = savedInstanceState?.getLong("tv_focus_item", TOGGLE) ?: TOGGLE
         connection.connect(requireActivity(), connectionCallback)
     }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -171,7 +173,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
         profilesAdapter = ArrayObjectAdapter(ProfileCardPresenter { openProfileActions(it) })
         toolsAdapter = ArrayObjectAdapter(ActionPresenter())
         connectionAdapter = ArrayObjectAdapter(ActionPresenter())
-        adapter = ArrayObjectAdapter(ListRowPresenter()).apply {
+        adapter = ArrayObjectAdapter(StableTvRowPresenter(resources.configuration.screenWidthDp < 600)).apply {
             add(ListRow(HeaderItem(ROW_ACTIONS, getString(R.string.tv_row_actions)), actionsAdapter))
             add(ListRow(HeaderItem(ROW_CONNECTION, getString(R.string.tv_connection_row)), connectionAdapter))
             add(ListRow(HeaderItem(ROW_PROFILES, getString(R.string.tv_row_profiles)), profilesAdapter))
@@ -188,6 +190,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
             }
         }
         restoreAfterLoad = true
+        view.post { rowsSupportFragment?.verticalGridView?.setAnimateChildLayout(false) }
         refreshCards(); requestSnapshot()
     }
     override fun onStart() {
@@ -273,10 +276,10 @@ class MainBrowseFragment : BrowseSupportFragment() {
         if (phase in setOf(TvVpnPhase.CONNECTING, TvVpnPhase.CONNECTED, TvVpnPhase.STOPPING) && activeName.isNotBlank() && activeName != selectedName) names.add(getString(R.string.tv_active_name, activeName))
         val group = groups.firstOrNull { it.id == DataStore.selectedGroup }
         actionsAdapter.setItems(listOf(
-            TvAction(PHONE_MODE, getString(R.string.tv_phone_mode), getString(R.string.tv_phone_mode_hint), R.drawable.ic_remote_phone),
-            TvAction(GROUPS, getString(R.string.tv_groups), group?.let { getString(R.string.tv_group_count, it.displayName(), profiles.size) } ?: "", R.drawable.ic_remote_groups),
             TvAction(TOGGLE, getString(label), names.joinToString("\n"), if (command == TvVpnCommand.STOP) R.drawable.ic_service_active else R.drawable.ic_service_idle, command != TvVpnCommand.NONE),
-            TvAction(PHONE_IMPORT, getString(R.string.tv_import_phone), getString(R.string.tv_import_phone_hint), R.drawable.ic_remote_import)
+            TvAction(GROUPS, getString(R.string.tv_groups), group?.let { getString(R.string.tv_group_count, it.displayName(), profiles.size) } ?: "", R.drawable.ic_remote_groups),
+            TvAction(PHONE_IMPORT, getString(R.string.tv_import_phone), getString(R.string.tv_import_phone_hint), R.drawable.ic_remote_import),
+            TvAction(PHONE_MODE, getString(R.string.tv_phone_mode), getString(R.string.tv_phone_mode_hint), R.drawable.ic_remote_phone)
         ), diff)
         val updating = group != null && GroupUpdater.updating.contains(group.id)
         toolsAdapter.setItems(listOf(
@@ -285,17 +288,23 @@ class MainBrowseFragment : BrowseSupportFragment() {
             TvAction(TESTS, getString(R.string.tv_tests_title), getString(R.string.tv_tests_hint), R.drawable.ic_remote_groups),
             TvAction(FULL_TOOLS, getString(R.string.tv_all_functions), getString(R.string.tv_all_functions_hint), R.drawable.ic_baseline_more_vert_24),
             TvAction(HOME, getString(R.string.tv_home), getString(R.string.tv_home_hint), R.drawable.ic_baseline_more_vert_24),
-            TvAction(MORE, getString(R.string.tv_more_import), getString(R.string.tv_more_hint), R.drawable.ic_baseline_more_vert_24)
+            TvAction(MORE, getString(R.string.tv_more_import), getString(R.string.tv_more_hint), R.drawable.ic_baseline_more_vert_24),
+            TvAction(RESTART_APP, getString(R.string.app_restart), getString(R.string.app_restart_hint), R.drawable.ic_baseline_refresh_24),
+            TvAction(CLOSE_APP, getString(R.string.app_close), getString(R.string.app_close_hint), R.drawable.ic_navigation_close)
         ), diff)
         val cards: List<Any> = if (profiles.isEmpty()) listOf(TvEmptyHint(getString(R.string.tv_empty))) else profiles.map {
             it.copy(selected = it.id == DataStore.selectedProxy,
                 activePhase = if (it.id == activeProfileId() && phase in setOf(TvVpnPhase.CONNECTING, TvVpnPhase.CONNECTED, TvVpnPhase.STOPPING)) phase else null)
         }
+        profilesAdapter.setItems(cards, diff)
+        refreshConnectionCards()
+    }
+    private fun refreshConnectionCards() {
+        if (view == null || !::connectionAdapter.isInitialized) return
         val info = getString(R.string.tv_connection_stats, phaseLabel(), activeName.ifBlank { getString(R.string.tv_no_selection) }, bytes(stats.txRateProxy) + "/s", bytes(stats.rxRateProxy) + "/s", bytes(stats.txTotal), bytes(stats.rxTotal)) + if (health.isBlank()) "" else "\n" + health
         val statusCards = mutableListOf(TvAction(STATUS, getString(R.string.tv_connection_status), info, R.drawable.ic_remote_groups))
         if (phase == TvVpnPhase.CONNECTED) statusCards.add(TvAction(YOUTUBE, getString(R.string.tv_youtube), getString(R.string.tv_youtube_hint), R.drawable.ic_baseline_more_vert_24))
         connectionAdapter.setItems(statusCards, diff)
-        profilesAdapter.setItems(cards, diff)
     }
     private fun restoreFocus() {
         if (dialog?.isShowing == true || view == null) return
@@ -337,6 +346,8 @@ class MainBrowseFragment : BrowseSupportFragment() {
         FULL_TOOLS -> showAllFunctions()
         HOME -> openHome()
         YOUTUBE -> openYoutube()
+        RESTART_APP -> io.nekohasekai.sagernet.ui.AppLifecycleActions.confirm(requireActivity(), true)
+        CLOSE_APP -> io.nekohasekai.sagernet.ui.AppLifecycleActions.confirm(requireActivity(), false)
         STATUS -> show(AlertDialog.Builder(requireContext()).setTitle(R.string.tv_connection_status).setMessage(getString(R.string.tv_connection_explanation) + "\n\n" + getString(R.string.tv_stats_age, if (statsAt == 0L) "—" else ((SystemClock.elapsedRealtime() - statsAt) / 1000).toString())).setPositiveButton(R.string.tv_test_active) { _, _ -> testActiveConnection() }.setNeutralButton(R.string.tv_tests_title) { _, _ -> showTests() }.setNegativeButton(android.R.string.cancel, null))
     } }
     fun handlePlayPause() = execute(TvInteractionPolicy.media(phase, DataStore.selectedProxy, serviceReady))
@@ -495,7 +506,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
             }.setNegativeButton(android.R.string.cancel, null))
     }
     internal fun updateTraffic(value: io.nekohasekai.sagernet.aidl.SpeedDisplayData) {
-        stats = value.copy(); statsAt = SystemClock.elapsedRealtime(); refreshCards()
+        stats = value.copy(); statsAt = SystemClock.elapsedRealtime(); refreshConnectionCards()
     }
     private fun testActiveConnection() {
         if (phase != TvVpnPhase.CONNECTED || healthJob?.isActive == true) { toast(R.string.tv_wait); return }

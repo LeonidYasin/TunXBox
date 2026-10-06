@@ -204,9 +204,8 @@ class SagerNet : Application(),
 
         var appVersionNameForDisplay = {
             var n = BuildConfig.VERSION_NAME
-            if (isPreview) {
-                n += " " + BuildConfig.PRE_VERSION_NAME
-            } else if (!isOss) {
+            // VERSION_NAME already includes the preview sequence; do not append stale upstream metadata.
+            if (!isPreview && !isOss) {
                 n += " ${BuildConfig.FLAVOR}"
             }
             if (BuildConfig.DEBUG) {

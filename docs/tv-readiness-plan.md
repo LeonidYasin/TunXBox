@@ -107,3 +107,13 @@ TV сохраняет Leanback: короткая основная полоса, 
 
 - [x] Проверка открытия настроек воспроизвела повторный Binder callback при rebind: SagerConnection теперь игнорирует поздний callback после disconnect и идемпотентен для повторного Binder. Добавлен регрессионный тест. Это JVM-воспроизведение, не утверждение о конкретной прошивке.
 - [x] Клавиши JSON-редактора фокусируемы и 48dp; горизонтальный список получает оставшееся место, Undo/Redo/Format не выдавливаются за экран телефона. Вторичный текст списка приложений поднят до 14sp.
+
+## Review follow-up: controls, modern Android and project identity
+
+- Primary TV row: Connect/Disconnect → group → phone import → smartphone mode. Cold-launch focus is on the connection action; rotation/restoration keeps the user's current selection.
+- Narrow TV windows use no focus zoom, fixed vertical row padding and no child-layout animations. Action/profile text reserves its line count; traffic only updates the status card. Real touch scrolling still needs device acceptance.
+- Restart/Close are last in the tools row and smartphone drawer. Both ask confirmation with Cancel initially focused. Close removes the UI task; restart uses ProcessPhoenix with an explicit saved-mode destination. Neither sends VPN's CLOSE command; the separate background service is not force-disconnected.
+- About/version checks now point to TunXBox. Updates are compared by real manifest versionCode, applicationId and installed signing certificate, not the upstream release title. Upstream source/donation attribution is explicitly labelled.
+- Promotions is a local information page, not an automatic upstream advertising link. README separates TunXBox downloads from inherited upstream documentation.
+- Native Go/JNI build uses external linker 16KB max/common page sizes. Old 4KB core caches are excluded. CI validates actual 64-bit ELF LOAD/RELRO segments in AAR and every APK (and ZIP alignment for uncompressed natives). The published rc.93 APK had targetSdk 35 but 4KB arm64 LOAD alignment. This addresses that compatibility issue without suppressing Android's warning. A real 16KB device/emulator VPN test remains required.
+- SHA256SUMS.txt checks downloaded APK bytes; not an installer and not a replacement for APK signing.

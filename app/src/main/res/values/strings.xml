@@ -2,7 +2,7 @@
 <resources>
     <string name="app_name" translatable="false">TunXBox</string>
     <string name="app_name_long" translatable="false">TunXBox for Android</string>
-    <string name="app_desc">The universal proxy toolchain for Android, written in Kotlin.</string>
+    <string name="app_desc">TunXBox is an Android TV and phone proxy client based on NekoBox and sing-box. Remote navigation, local profile transfer, group tests and connection traffic are available in one app.</string>
     <string name="project">Project</string>
     <string name="github">Source code</string>
     <string name="telegram">Telegram update channel</string>
