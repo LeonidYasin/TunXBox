@@ -403,7 +403,7 @@ class LaunchRegressionTest {
             click.onItemClicked(null, add, null, row)
             shadowOf(Looper.getMainLooper()).idle()
             val first = org.robolectric.shadows.ShadowAlertDialog.getLatestAlertDialog()
-            assertTrue(first.isShowing); assertEquals(7, first.listView.adapter.count)
+            assertTrue(first.isShowing); assertEquals(8, first.listView.adapter.count)
             val firstLabels = (0 until first.listView.adapter.count).map { first.listView.adapter.getItem(it).toString() }
             assertSame(fragment, activity.supportFragmentManager.findFragmentById(R.id.tv_container))
             first.dismiss(); shadowOf(Looper.getMainLooper()).idle()
@@ -527,4 +527,53 @@ class LaunchRegressionTest {
         try { assertEquals("export",android.net.Uri.parse(sender.getAppQrData()).getQueryParameter("mode")) } finally { sender.stop() }
     }
 
+
+    @Test fun sharedLanDestinationNeverScansWithoutConsent() {
+        TvUiPreferences.phoneMode = true
+        val app = RuntimeEnvironment.getApplication()
+        val controller = Robolectric.buildActivity(MainActivity::class.java,
+            Intent(app, MainActivity::class.java).putExtra("tv_tools", true).putExtra("tv_destination", R.id.nav_lan_discovery))
+        try {
+            controller.setup().visible(); controller.get().supportFragmentManager.executePendingTransactions()
+            val activity = controller.get()
+            assertTrue(activity.supportFragmentManager.findFragmentById(R.id.fragment_holder) is io.nekohasekai.sagernet.ui.lan.LanDiscoveryFragment)
+            assertFalse(activity.findViewById<android.widget.CheckBox>(R.id.lan_consent).isChecked)
+            assertFalse(activity.findViewById<android.widget.Button>(R.id.lan_scan).isEnabled)
+            assertEquals(android.view.View.GONE, activity.findViewById<android.view.View>(R.id.lan_cancel).visibility)
+            assertEquals(0, activity.findViewById<android.widget.LinearLayout>(R.id.lan_results).childCount)
+        } finally { controller.pause().stop().destroy() }
+    }
+    @Test fun lanSaveIsTransactionalDuplicateSafeAndDoesNotSelectOrConnect() = kotlinx.coroutines.runBlocking {
+        val db = io.nekohasekai.sagernet.database.SagerDatabase
+        val group = io.nekohasekai.sagernet.database.GroupManager.createGroup(io.nekohasekai.sagernet.database.ProxyGroup(name = "LAN synthetic"))
+        val selected = io.nekohasekai.sagernet.database.DataStore.selectedProxy
+        val current = io.nekohasekai.sagernet.database.DataStore.currentProfile
+        try {
+            val candidate = io.nekohasekai.sagernet.ui.lan.ProxyCandidate("192.168.1.22", 1080, io.nekohasekai.sagernet.ui.lan.ProbeKind.SOCKS5_AUTH)
+            val first = io.nekohasekai.sagernet.ui.lan.LanProfileStore.save(candidate, false, group.id, "Fixture", "test-user", "synthetic-password")
+            val second = io.nekohasekai.sagernet.ui.lan.LanProfileStore.save(candidate, false, group.id, "Different label", "test-user", "synthetic-password")
+            assertTrue(first.created); assertFalse(second.created); assertEquals(first.profile.id, second.profile.id)
+            assertEquals(1, db.proxyDao.getByGroup(group.id).size)
+            val bean = db.proxyDao.getByGroup(group.id).single().requireBean() as io.nekohasekai.sagernet.fmt.socks.SOCKSBean
+            assertEquals("test-user", bean.username); assertEquals("synthetic-password", bean.password)
+            assertEquals(selected, io.nekohasekai.sagernet.database.DataStore.selectedProxy)
+            assertEquals(current, io.nekohasekai.sagernet.database.DataStore.currentProfile)
+        } finally { db.proxyDao.deleteByGroup(group.id); db.groupDao.deleteById(group.id) }
+    }
+    @Test fun lanSaveRejectsSubscriptionAndPublicEndpoints() = kotlinx.coroutines.runBlocking {
+        val db = io.nekohasekai.sagernet.database.SagerDatabase
+        val group = io.nekohasekai.sagernet.database.ProxyGroup(name = "Managed", type = io.nekohasekai.sagernet.GroupType.SUBSCRIPTION,
+            subscription = io.nekohasekai.sagernet.database.SubscriptionBean())
+        group.id = db.groupDao.createGroup(group)
+        try {
+            for (host in listOf("192.168.1.22", "8.8.8.8")) {
+                try {
+                    io.nekohasekai.sagernet.ui.lan.LanProfileStore.save(io.nekohasekai.sagernet.ui.lan.ProxyCandidate(host, 1080,
+                        io.nekohasekai.sagernet.ui.lan.ProbeKind.SOCKS5), false, group.id, "Fixture", "", "")
+                    fail("Managed group or public endpoint must be rejected")
+                } catch (_: IllegalArgumentException) { }
+            }
+            assertTrue(db.proxyDao.getByGroup(group.id).isEmpty())
+        } finally { db.groupDao.deleteById(group.id) }
+    }
 }

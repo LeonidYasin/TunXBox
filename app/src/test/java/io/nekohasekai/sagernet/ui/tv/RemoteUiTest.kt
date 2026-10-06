@@ -203,7 +203,7 @@ class RemoteUiTest {
         val ids = TvProfileAddCatalog.entries(context).map { it.id }
         assertEquals(expected + setOf(TvProfileAddCatalog.PHONE, TvProfileAddCatalog.URL, TvProfileAddCatalog.SEND), ids.toSet())
         assertEquals(ids.size, ids.distinct().size)
-        assertEquals(7, ids.size)
+        assertEquals(8, ids.size)
     }
     @Test fun allSeventeenPhoneManualEditorsHaveSharedExplicitIntents() {
         val context = activity()

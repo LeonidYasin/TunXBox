@@ -6,6 +6,12 @@ on:
       - "buildScript/**"
       - "docs/**"
       - "README.md"
+      - "app/**"
+      - "buildSrc/**"
+      - "*.gradle*"
+      - "gradle/**"
+      - "gradle.properties"
+      - "nb4a.properties"
   workflow_dispatch:
     inputs:
       check_only:
@@ -167,7 +173,7 @@ jobs:
           arch: x86_64
           profile: pixel_2
           avd-name: tunxbox-smoke-4k
-          ram-size: 2048M
+          ram-size: 3072M
           emulator-boot-timeout: 300
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
@@ -182,7 +188,7 @@ jobs:
           arch: x86_64
           profile: pixel_2
           avd-name: tunxbox-smoke-16k
-          ram-size: 2048M
+          ram-size: 3072M
           emulator-boot-timeout: 300
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           disable-animations: true

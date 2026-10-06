@@ -180,4 +180,47 @@ class EmulatorSmokeTest {
         startTv()
     }
 
+
+    @Test fun sharedLanScreenIsIdleAndUsableInBothOrientations() {
+        scenario = ActivityScenario.launch<MainActivity>(Intent(context, MainActivity::class.java)
+            .putExtra("tv_tools", true).putExtra("tv_destination", R.id.nav_lan_discovery))
+        fun assertIdle() {
+            instrumentation.waitForIdleSync()
+            scenario!!.onActivity { activity ->
+                assertFalse(activity.findViewById<android.widget.CheckBox>(R.id.lan_consent).isChecked)
+                assertFalse(activity.findViewById<android.widget.Button>(R.id.lan_scan).isEnabled)
+                assertEquals(android.view.View.GONE, activity.findViewById<android.view.View>(R.id.lan_cancel).visibility)
+                assertEquals(0, activity.findViewById<android.widget.LinearLayout>(R.id.lan_results).childCount)
+            }
+        }
+        visibleText(text(R.string.lan_title)); assertIdle()
+        device.executeShellCommand("mkdir -p /sdcard/Download/TunXBoxSmoke")
+        device.executeShellCommand("screencap -p /sdcard/Download/TunXBoxSmoke/lan_discovery_portrait.png")
+        device.setOrientationLeft(); device.waitForIdle(); visibleText(text(R.string.lan_title)); assertIdle()
+        device.executeShellCommand("screencap -p /sdcard/Download/TunXBoxSmoke/lan_discovery_landscape.png")
+    }
+    @Test fun realSocketProbeAndRoomImportAreDuplicateSafeWithoutConnectingVpn() = runBlocking {
+        val server = java.net.ServerSocket(0, 2, java.net.InetAddress.getByName("127.0.0.1"))
+        val thread = Thread {
+            server.accept().use { socket ->
+                socket.soTimeout = 1000
+                repeat(4) { assertTrue(socket.getInputStream().read() >= 0) }
+                socket.getOutputStream().write(byteArrayOf(5, 0)); socket.getOutputStream().flush()
+            }
+        }.apply { isDaemon = true; start() }
+        val db = SagerDatabase
+        val group = GroupManager.createGroup(io.nekohasekai.sagernet.database.ProxyGroup(name = "LAN device fixture"))
+        val selected = DataStore.selectedProxy; val current = DataStore.currentProfile
+        try {
+            val detected = io.nekohasekai.sagernet.ui.lan.ProxyProbe({ java.net.Socket() }).probe("127.0.0.1", server.localPort)!!
+            assertEquals(io.nekohasekai.sagernet.ui.lan.ProbeKind.SOCKS5, detected.kind)
+            // Store uses a synthetic private endpoint; loopback is NEVER accepted by production scope.
+            val candidate = detected.copy(host = "192.168.1.22")
+            val first = io.nekohasekai.sagernet.ui.lan.LanProfileStore.save(candidate, false, group.id, "Fixture", "", "")
+            val duplicate = io.nekohasekai.sagernet.ui.lan.LanProfileStore.save(candidate, false, group.id, "Fixture", "", "")
+            assertTrue(first.created); assertFalse(duplicate.created); assertEquals(first.profile.id, duplicate.profile.id)
+            assertEquals(1, db.proxyDao.getByGroup(group.id).size)
+            assertEquals(selected, DataStore.selectedProxy); assertEquals(current, DataStore.currentProfile)
+        } finally { server.close(); thread.join(1000); db.proxyDao.deleteByGroup(group.id); db.groupDao.deleteById(group.id) }
+    }
 }

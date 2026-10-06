@@ -14,7 +14,7 @@ Baseline: stable 1.5.0 source `7e230f24` после PR #1/#2. Это стати�
 | Тип определяется номером открытого порта | LanScanner | TCP connect не доказывает SOCKS/HTTP proxy и не является Internet health check |
 | Много параллельных jobs; нет общего deadline/ограничителя/явного cancel UI | LanScanner/ProxyScanActivity | Нужны bounded concurrency, total timeout, закрытие sockets при cancel и защита от повторного запуска |
 | CancellationException может попасть в catch(Exception) | ProxyDiscoveryService | Отмена не должна превращаться в обычный error/success с сохранением данных |
-| Автоматическое сохранение всех результатов с устаревшими beans/API | proxy-discovery/ProxyDiscoveryService | HttpBean/SocksBean и createProfile(profile) не соответствуют текущим HTTPBean/SOCKSBean и createProfile(groupId,bean); нужны выбор/подтверждение и точная группа |
+| Автоматическое сохранение всех результатов с устаревшими beans/API | proxy-discovery/ProxyDiscoveryService | HttpBean/SocksBean и createProfile(profile) не соответствуют текущим fmt.http.HttpBean / fmt.socks.SOCKSBean и createProfile(groupId,bean); нужны выбор/подтверждение и точная группа |
 | В auto variant выбор показывает Toast и закрывает экран | auto-proxy-discovery/ProxyScanActivity | Профиль фактически не создаётся — нельзя показывать «импортирован» |
 | hideLoading — placeholder; строки частично hardcoded | ProxyScanActivity | Нужны реальные progress/cancel/error/retry, локализация и доступность |
 | NetworkStateMonitor.internet callback и локальный monitor без сохранённого lifecycle handle | NetworkStateMonitor и старая MainActivity | Не равен Wi-Fi LAN; проверить unregister/lifecycle и не сканировать без opt-in |
@@ -39,4 +39,4 @@ HEAD `c5c504cf` содержит старые версии MainActivityTv/MainBr
 
 ## Состояние следующего PR
 
-Этот документ — аудит/design и критерии, не реализация discovery. Пока нет нового scan endpoint/UI/profile creation, не объявлять функцию доступной. Код старых веток не скопирован. Следующий implementation commit должен включать документацию, tests и versionCode base следующего release cycle, а не изменение immutable v1.5.0.
+Аудит сохранён как основание новой реализации. В feature/lan-proxy-discovery-v2 добавлен [ручной LAN-поиск](lan-discovery.md) с opt-in, actual protocol evidence, ограничениями и транзакционным сохранением. Код старых служб не скопирован. До CI и ручной приёмки это кандидат 1.6.0, не stable-функция; immutable 1.5.0 и upstream main не изменяются.

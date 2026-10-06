@@ -503,6 +503,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
                         if (text.isBlank()) toast(R.string.tv_clipboard_empty) else importText(text)
                     }
                     R.id.action_import_file -> importFile.launch("*/*")
+                    R.id.action_lan_discovery -> openFullScreen(R.id.nav_lan_discovery)
                     TvProfileAddCatalog.MANUAL -> showManualEditor()
                     R.id.action_scan_qr_code -> parentFragmentManager.beginTransaction()
                         .replace(R.id.tv_container, TvScannerFragment()).addToBackStack("qr_scan").commit()

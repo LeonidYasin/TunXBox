@@ -201,7 +201,7 @@ jobs:
           arch: x86_64
           profile: pixel_2
           avd-name: tunxbox-smoke-4k
-          ram-size: 2048M
+          ram-size: 3072M
           emulator-boot-timeout: 300
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
@@ -216,7 +216,7 @@ jobs:
           arch: x86_64
           profile: pixel_2
           avd-name: tunxbox-smoke-16k
-          ram-size: 2048M
+          ram-size: 3072M
           emulator-boot-timeout: 300
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
@@ -363,12 +363,19 @@ jobs:
           Universal APK includes all four bundled ABIs: ARM32, ARM64, x86 and x86_64 when confirmed by apk-manifest.json.
           Actual filenames match Assets and download filenames; see SHA256SUMS.txt and apk-manifest.json."
 
-          # Do not overwrite a newer release, even if an older workflow is rerun.
-          if gh release download "$TAG" --pattern apk-manifest.json --dir previous-release >/dev/null 2>&1; then
-            ALLOW_LEGACY=""
-            if [ "${{ github.event.inputs.allow_legacy_signer_migration }}" = "true" ]; then ALLOW_LEGACY="--allow-legacy"; fi
-            python3 buildScript/verify_update.py previous-release/apk-manifest.json dist/apk-manifest.json $ALLOW_LEGACY
+          # Fail closed: a NEW RC series must also upgrade over the current stable release.
+          # An existing RC must retain a readable manifest; a download failure is not a new series.
+          mkdir -p previous-release
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release download "$TAG" --pattern apk-manifest.json --dir previous-release
+          else
+            STABLE_TAG=$(gh release view --json tagName -q .tagName)
+            test -n "$STABLE_TAG"
+            gh release download "$STABLE_TAG" --pattern apk-manifest.json --dir previous-release
           fi
+          ALLOW_LEGACY=""
+          if [ "${{ github.event.inputs.allow_legacy_signer_migration }}" = "true" ]; then ALLOW_LEGACY="--allow-legacy"; fi
+          python3 buildScript/verify_update.py previous-release/apk-manifest.json dist/apk-manifest.json $ALLOW_LEGACY
           # Roll the git tag onto the CURRENT commit so the release page shows the
           # fresh source revision instead of a stale one. Without this, --clobber
           # updates only the APK asset and the tag keeps pointing at an old SHA.

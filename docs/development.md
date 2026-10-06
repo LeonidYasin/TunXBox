@@ -86,3 +86,7 @@ Rolling tag `vVERSION-rc` не заменяет Android versionCode. VersionCode
 ## Stable 1.5.0 и следующий цикл
 
 Согласованный порядок — [roadmap](roadmap.md): stable из master без новых функций, затем отдельные PR с новым baseline. [stable-release.yml](../.github/workflows/stable-release.yml) сохраняет полный набор gates, но собирает ossRelease без rc suffix. Immutable stable tag не force-update; публикация только из master после проверки source/tag/signature/RC-to-stable upgrade. Следующим RC нужен увеличенный VERSION_CODE base. Legacy release.yml не используется как замена этим gates.
+
+## Новый LAN scope
+
+[Ручной поиск](lan-discovery.md) живёт в отдельной feature-ветке. App/buildSrc/Gradle/metadata изменения запускают полный PR gate; не только docs/workflow paths. Новый цикл 1.6.0 имеет VERSION_CODE base 48, следующий RC обязан проходить verify_update относительно существующего RC либо latest stable manifest, если RC-серия новая. Это не меняет immutable stable 1.5.0.

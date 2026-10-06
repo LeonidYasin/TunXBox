@@ -583,4 +583,40 @@
     <string name="minimize">Minimize</string>
     <string name="app_list_permission_denied">Unable to read installed apps.\nThis is usually because the system has restricted app read permissions.\nPlease grant permissions in the system settings.</string>
     <string name="open_app_settings">Open System Settings</string>
+
+    <!-- Manual LAN discovery: no background scan or automatic connection. -->
+    <string name="lan_title">Find LAN proxies</string>
+    <string name="lan_explanation">Manual search only on a trusted Wi-Fi or Ethernet network. Get permission from the network owner. At most 254 addresses, 8 ports, 8 concurrent probes and 45 seconds. Wider networks are limited to the current /24 segment. No external traffic or credentials are sent; a detected listener is NOT proof that Internet works.</string>
+    <string name="lan_refresh">Refresh / choose network</string>
+    <string name="lan_scope_details">Device: %1$s\nSearch scope: %2$s • %3$d peers\nLocal addresses, gateway, network and broadcast addresses are excluded.</string>
+    <string name="lan_no_network">No suitable private IPv4 Wi-Fi/Ethernet network. IPv6-only, cellular, VPN and public networks are not scanned. Refresh after connecting.</string>
+    <string name="lan_ports_label">Ports (comma-separated, up to 8 distinct values)</string>
+    <string name="lan_ports_error">Enter 1–8 distinct ports from 1 to 65535, separated by commas.</string>
+    <string name="lan_consent">I am allowed to probe this trusted network and approve the scope shown above.</string>
+    <string name="lan_scan">Start manual search</string>
+    <string name="lan_idle">Ready. Nothing is scanned until you confirm and start.</string>
+    <string name="lan_running">Checking local listeners…</string>
+    <string name="lan_progress">Checked endpoints: %1$d / %2$d</string>
+    <string name="lan_cancelled">Search stopped. No profiles were added automatically.</string>
+    <string name="lan_network_changed">Network changed: search cancelled and results cleared. Refresh and confirm again.</string>
+    <string name="lan_done">Listeners found: %1$d. Choose one to review and save. Internet availability has not been tested.</string>
+    <string name="lan_partial">Partial results: %1$d. Time limit or 64-result limit reached. Choose one to review; no automatic import.</string>
+    <string name="lan_failed">Search could not complete. Refresh the network and try again.</string>
+    <string name="lan_socks_verified">SOCKS5 handshake confirmed • no authentication requested</string>
+    <string name="lan_socks_auth">SOCKS5 handshake confirmed • username/password required</string>
+    <string name="lan_http_auth">HTTP 407 • proxy authentication required</string>
+    <string name="lan_http_unverified">HTTP response • proxy functionality NOT confirmed</string>
+    <string name="lan_tcp_unverified">Open TCP port • protocol NOT confirmed</string>
+    <string name="lan_save_warning">Review the protocol and choose a local group. Unconfirmed listeners require manual protocol selection and may not be proxies. Credentials are saved locally like other profiles. This does not connect, select the profile or alter your current VPN. Test the saved profile separately.</string>
+    <string name="lan_name">Profile name</string>
+    <string name="lan_username">Username (optional unless authentication required)</string>
+    <string name="lan_password">Password</string>
+    <string name="lan_http_choice">Use HTTP proxy (unchecked: SOCKS5)</string>
+    <string name="lan_group">Local group (not a subscription)</string>
+    <string name="lan_save">Save profile</string>
+    <string name="lan_auth_required">This listener requires a username. Credentials are not verified during discovery.</string>
+    <string name="lan_no_group">Create a local group in Groups first. Subscription groups are not modified.</string>
+    <string name="lan_saved">Profile saved. It is not selected or connected. Use profile tests to check Internet access.</string>
+    <string name="lan_duplicate">This endpoint and credentials already exist in the selected group. No duplicate was added.</string>
+    <string name="lan_save_failed">Could not save the profile. Check that the local group still exists.</string>
 </resources>

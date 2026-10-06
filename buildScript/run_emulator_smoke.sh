@@ -36,7 +36,7 @@ PYUI
 }
 trap collect EXIT
 adb logcat -c
-./gradlew --no-daemon "app:connected${variant}DebugAndroidTest" --stacktrace \
+./gradlew --no-daemon --max-workers=2 -Dorg.gradle.parallel=false -Dorg.gradle.jvmargs="-Xmx1536m -XX:+UseParallelGC -Dfile.encoding=UTF-8" "app:connected${variant}DebugAndroidTest" --stacktrace \
   -Pandroid.testInstrumentationRunnerArguments.class=io.nekohasekai.sagernet.ui.EmulatorSmokeTest \
   -Pandroid.testInstrumentationRunnerArguments.expectedPageSize="$pages"
 python3 - "$out" <<'PYTEST'
@@ -47,5 +47,5 @@ for path in paths:
     root=ET.parse(path).getroot()
     for key in totals: totals[key]+=int(root.get(key,'0'))
 print('Emulator instrumentation summary:',totals)
-assert totals['tests']==8 and all(totals[key]==0 for key in ('failures','errors','skipped')), 'Missing or unsuccessful device tests'
+assert totals['tests']==10 and all(totals[key]==0 for key in ('failures','errors','skipped')), 'Missing or unsuccessful device tests'
 PYTEST
