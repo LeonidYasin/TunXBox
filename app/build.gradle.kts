@@ -8,6 +8,7 @@ plugins {
 setupApp()
 
 android {
+    testOptions { unitTests.isIncludeAndroidResources = true }
     compileOptions {
         isCoreLibraryDesugaringEnabled = true
     }
@@ -41,6 +42,7 @@ android {
 
 dependencies {
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.14.1")
 
     implementation(fileTree("libs"))
 

@@ -20,7 +20,6 @@ import com.google.zxing.WriterException
 import io.nekohasekai.sagernet.R
 import io.nekohasekai.sagernet.ktx.Logs
 import io.nekohasekai.sagernet.ktx.readableMessage
-import io.nekohasekai.sagernet.ui.MainActivity
 import java.nio.charset.StandardCharsets
 import kotlin.math.roundToInt
 
@@ -63,7 +62,7 @@ class QRCodeDialog() : DialogFragment() {
             val height: Int = displayMetrics.heightPixels
             val width: Int = displayMetrics.widthPixels
             pixelMin = if (height > width) width else height
-            pixelMin = (pixelMin * 0.8).roundToInt()
+            pixelMin = (pixelMin * if (width > height) 0.6 else 0.8).roundToInt()
         } catch (e: Exception) {
         }
 
@@ -86,6 +85,8 @@ class QRCodeDialog() : DialogFragment() {
                 layoutParams = ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
                 )
+                layoutParams = ViewGroup.LayoutParams(size, size)
+                scaleType = ImageView.ScaleType.FIT_CENTER
                 setImageBitmap(Bitmap.createBitmap(size, size, Bitmap.Config.RGB_565).apply {
                     for (x in 0 until size) for (y in 0 until size) {
                         setPixel(x, y, if (qrBits.get(x, y)) Color.BLACK else Color.WHITE)
@@ -99,12 +100,12 @@ class QRCodeDialog() : DialogFragment() {
                 layoutParams = ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT
                 )
-                text = displayName
+                text = displayName + "\n" + getString(R.string.tv_qr_back_hint)
             })
         }
     } catch (e: WriterException) {
         Logs.w(e)
-        (activity as MainActivity).snackbar(e.readableMessage).show()
+        context?.let { android.widget.Toast.makeText(it, R.string.tv_share_unsupported, android.widget.Toast.LENGTH_LONG).show() }
         dismiss()
         null
     }

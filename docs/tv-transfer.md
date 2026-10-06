@@ -12,6 +12,12 @@ The local page also has a small SOCKS5/HTTP profile builder. Complex protocols c
 
 To send a group from the TunXBox phone app, switch the TV QR to **TunXBox app** and scan it inside the phone application's scanner. To pull a phone group onto TV, open **Send to TV** on the phone and scan its QR using the TV camera/image importer. QR sessions from older builds should be recreated after updating both devices.
 
+## Remote navigation
+
+TV OK selects a profile without starting VPN. Use the primary connection card or the profile menu to connect. Menu/Info, long press, and the on-screen Profile actions card expose details, edit, QR, delete and manual ordering. Play/Pause starts or stops; transition states prevent duplicate/reload races. Back closes the current screen/dialog. Groups and subscription updates are available on TV.
+
+The QR screen keeps the code beside its controls. New pairing session invalidates the old token; expiration clears the QR. A TV without a camera can import a QR image. See [readiness plan](tv-readiness-plan.md) for the pre-merge device checklist.
+
 ## Security and limitations
 
 - The pairing token is random (256 bits), comes only from the QR, and expires after 10 minutes.

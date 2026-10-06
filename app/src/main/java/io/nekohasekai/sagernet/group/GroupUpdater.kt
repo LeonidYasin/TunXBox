@@ -130,30 +130,27 @@ abstract class GroupUpdater {
             }
         }
 
-        suspend fun executeUpdate(proxyGroup: ProxyGroup, byUser: Boolean): Boolean {
-            return coroutineScope {
-                if (!updating.add(proxyGroup.id)) cancel()
-                GroupManager.postReload(proxyGroup.id)
-
-                val subscription = proxyGroup.subscription!!
-                val connected = DataStore.serviceState.connected
-                val userInterface = GroupManager.userInterface
-
-                if (byUser && (subscription.link?.startsWith("http://") == true || subscription.updateWhenConnectedOnly) && !connected) {
-                    if (userInterface == null || !userInterface.confirm(app.getString(R.string.update_subscription_warning))) {
-                        finishUpdate(proxyGroup)
-                        cancel()
-                        return@coroutineScope true
-                    }
-                }
-
+        suspend fun executeUpdate(
+            proxyGroup: ProxyGroup,
+            byUser: Boolean,
+            userInterface: GroupManager.Interface? = GroupManager.userInterface
+        ): Boolean = coroutineScope {
+            // Existing phone callers keep their global adapter. TV passes a lifecycle-owned
+            // interface and does not replace the process-global phone activity.
+            SubscriptionUpdateGuard.withUpdateLock(proxyGroup.id, updating, { finishUpdate(proxyGroup) }) {
                 try {
+                    GroupManager.postReload(proxyGroup.id)
+                    val subscription = proxyGroup.subscription ?: return@withUpdateLock false
+                    val connected = DataStore.serviceState.connected
+                    if (byUser && (subscription.link?.startsWith("http://") == true || subscription.updateWhenConnectedOnly) && !connected) {
+                        if (userInterface == null || !userInterface.confirm(app.getString(R.string.update_subscription_warning))) return@withUpdateLock false
+                    }
                     RawUpdater.doUpdate(proxyGroup, subscription, userInterface, byUser)
                     true
-                } catch (e: Throwable) {
-                    Logs.w(e)
-                    userInterface?.onUpdateFailure(proxyGroup, e.readableMessage)
-                    finishUpdate(proxyGroup)
+                } catch (cancelled: CancellationException) { throw cancelled }
+                catch (error: Throwable) {
+                    Logs.w(error)
+                    userInterface?.onUpdateFailure(proxyGroup, error.readableMessage)
                     false
                 }
             }

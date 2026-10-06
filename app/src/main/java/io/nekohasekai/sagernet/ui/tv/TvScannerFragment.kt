@@ -5,6 +5,7 @@ import android.content.Intent
 import android.graphics.ImageDecoder
 import android.os.Build
 import android.os.Bundle
+import android.content.pm.PackageManager
 import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.View
@@ -15,6 +16,10 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.CancellationException
 import com.google.zxing.Result
 import com.king.zxing.CameraScan
 import com.king.zxing.DefaultCameraScan
@@ -29,7 +34,6 @@ import io.nekohasekai.sagernet.ktx.Logs
 import io.nekohasekai.sagernet.ktx.SubscriptionFoundException
 import io.nekohasekai.sagernet.ktx.onMainDispatcher
 import io.nekohasekai.sagernet.ktx.readableMessage
-import io.nekohasekai.sagernet.ktx.runOnDefaultDispatcher
 import io.nekohasekai.sagernet.ui.MainActivity
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -52,11 +56,20 @@ class TvScannerFragment : Fragment(), CameraScan.OnScanResultCallback {
     private lateinit var cameraScan: CameraScan
     
     private val finished = AtomicBoolean(false)
+
+    private fun scannerWork(work: suspend () -> Unit) {
+        if (view == null) return
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+            try { work() } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) { onMainDispatcher { if (isAdded && view != null) Toast.makeText(requireContext(), R.string.tv_import_failed, Toast.LENGTH_LONG).show() } }
+        }
+    }
+
     
     private val importImageLauncher = registerForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
         if (uris.isNullOrEmpty()) return@registerForActivityResult
         
-        runOnDefaultDispatcher {
+        scannerWork {
             try {
                 var totalImported = 0
                 var qrFound = false
@@ -80,14 +93,22 @@ class TvScannerFragment : Fragment(), CameraScan.OnScanResultCallback {
                         if (result != null) {
                             qrFound = true
                             if (result.text.startsWith("tunxbox://transfer")) {
-                                handleTvTransfer(result.text)
-                                transferDone = true
+                                transferDone = handleTvTransfer(result.text) || transferDone
                             } else {
                                 totalImported += importFromQrText(result.text)
                             }
                         }
+                    } catch (subscription: SubscriptionFoundException) {
+                        onMainDispatcher {
+                            startActivity(Intent(requireContext(), MainActivity::class.java).apply {
+                                action = Intent.ACTION_VIEW; data = subscription.link.toUri(); putExtra("force_phone_mode", true)
+                            })
+                            parentFragmentManager.popBackStack()
+                        }
+                        return@scannerWork
                     } catch (e: Exception) {
-                        Logs.w("Failed to decode QR from image", e)
+                        if (e is CancellationException) throw e
+                        Logs.w("Failed to decode QR from image")
                     }
                 }
                 
@@ -96,20 +117,21 @@ class TvScannerFragment : Fragment(), CameraScan.OnScanResultCallback {
                         parentFragmentManager.popBackStack()
                     } else if (totalImported > 0) {
                         Toast.makeText(requireContext(), 
-                            "Imported $totalImported profile(s)", 
+                            getString(R.string.tv_import_count, totalImported), 
                             Toast.LENGTH_LONG).show()
                         parentFragmentManager.popBackStack()
                     } else if (qrFound) {
-                        Toast.makeText(requireContext(), "QR found but no valid proxy data", Toast.LENGTH_LONG).show()
+                        Toast.makeText(requireContext(), getString(R.string.tv_import_failed), Toast.LENGTH_LONG).show()
                         parentFragmentManager.popBackStack()
                     } else {
-                        Toast.makeText(requireContext(), "No QR code found in image(s)", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(requireContext(), getString(R.string.tv_import_failed), Toast.LENGTH_SHORT).show()
                     }
                 }
             } catch (e: Exception) {
+                        if (e is CancellationException) throw e
                 Logs.w("Import image failed", e)
                 onMainDispatcher {
-                    Toast.makeText(requireContext(), "Import failed: ${e.readableMessage}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), getString(R.string.tv_import_failed), Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -121,10 +143,8 @@ class TvScannerFragment : Fragment(), CameraScan.OnScanResultCallback {
         if (granted) {
             startCamera()
         } else {
-            Toast.makeText(requireContext(), 
-                "Camera permission denied. Use \"Import from image\" instead.", 
-                Toast.LENGTH_LONG).show()
-            hintText.text = "Camera not available. Use the image import button above."
+            Toast.makeText(requireContext(), R.string.tv_scan_no_camera, Toast.LENGTH_LONG).show()
+            hintText.setText(R.string.tv_scan_no_camera)
             previewView.visibility = View.GONE
         }
     }
@@ -144,10 +164,21 @@ class TvScannerFragment : Fragment(), CameraScan.OnScanResultCallback {
         
         flashlightBtn.setOnClickListener { toggleFlashlight() }
         importImageBtn.setOnClickListener { importFromImage() }
+        flashlightBtn.nextFocusRightId = R.id.ivImportImage
+        importImageBtn.nextFocusLeftId = R.id.ivFlashlight
+        importImageBtn.nextFocusRightId = R.id.ivClose
+        closeBtn.nextFocusLeftId = R.id.ivImportImage
         closeBtn.setOnClickListener { parentFragmentManager.popBackStack() }
         
+        if (!requireContext().packageManager.hasSystemFeature(PackageManager.FEATURE_CAMERA_ANY)) {
+            hintText.setText(R.string.tv_scan_no_camera)
+            previewView.visibility = View.GONE
+            flashlightBtn.isEnabled = false
+            importImageBtn.requestFocus()
+            return
+        }
         initCameraScan()
-        
+
         if (PermissionUtils.checkPermission(requireContext(), Manifest.permission.CAMERA)) {
             startCamera()
         } else {
@@ -165,10 +196,11 @@ class TvScannerFragment : Fragment(), CameraScan.OnScanResultCallback {
     private fun startCamera() {
         try {
             cameraScan.startCamera()
-            hintText.text = "Point camera at QR code to import proxy profile"
+            hintText.setText(R.string.tv_scan_hint)
         } catch (e: Exception) {
+                        if (e is CancellationException) throw e
             Logs.w("Camera start failed", e)
-            hintText.text = "Camera not available. Use the image import button."
+            hintText.setText(R.string.tv_scan_no_camera)
             previewView.visibility = View.GONE
         }
     }
@@ -179,6 +211,7 @@ class TvScannerFragment : Fragment(), CameraScan.OnScanResultCallback {
             cameraScan.enableTorch(!isTorch)
             flashlightBtn.isSelected = !isTorch
         } catch (e: Exception) {
+                        if (e is CancellationException) throw e
             Logs.w("Flashlight toggle failed", e)
         }
     }
@@ -188,9 +221,11 @@ class TvScannerFragment : Fragment(), CameraScan.OnScanResultCallback {
     }
     
     private fun releaseCamera() {
+        if (!::cameraScan.isInitialized) return
         try {
             cameraScan.release()
         } catch (e: Exception) {
+                        if (e is CancellationException) throw e
             Logs.w("Camera release failed", e)
         }
     }
@@ -198,14 +233,14 @@ class TvScannerFragment : Fragment(), CameraScan.OnScanResultCallback {
     override fun onScanResultCallback(result: Result?): Boolean {
         if (finished.getAndSet(true)) return true
         
-        runOnDefaultDispatcher {
+        scannerWork {
             try {
                 val text = result?.text ?: throw Exception("QR code not found")
 
                 // Check for TV transfer QR: scanned another device's QR -> GET profiles from it
                 if (text.startsWith("tunxbox://transfer")) {
-                    handleTvTransfer(text)
-                    return@runOnDefaultDispatcher
+                    if (handleTvTransfer(text)) onMainDispatcher { parentFragmentManager.popBackStack() }
+                    return@scannerWork
                 }
 
                 val count = importFromQrText(text)
@@ -231,6 +266,7 @@ class TvScannerFragment : Fragment(), CameraScan.OnScanResultCallback {
                     parentFragmentManager.popBackStack()
                 }
             } catch (e: Throwable) {
+                if (e is CancellationException) throw e
                 Logs.w(e)
                 onMainDispatcher {
                     var text = getString(R.string.action_import_err)
@@ -269,92 +305,34 @@ class TvScannerFragment : Fragment(), CameraScan.OnScanResultCallback {
      * Parse the URL, connect to the remote device's /export endpoint,
      * and import the profiles it serves.
      */
-    private suspend fun handleTvTransfer(qrText: String) {
-        try {
+    private suspend fun handleTvTransfer(qrText: String): Boolean {
+        return try {
             val uri = java.net.URI(qrText)
-            val params = uri.query?.split("&")?.associate {
-                val parts = it.split("=")
-                parts[0] to (parts.getOrNull(1) ?: "")
-            } ?: emptyMap()
-
-            val ip = params["ip"] ?: throw Exception("Missing 'ip' in QR")
-            val port = params["port"]?.toIntOrNull() ?: 8765
-            val session = params["session"] ?: throw Exception("Missing 'session' in QR")
+            val params = uri.query?.split("&")?.associate { val parts = it.split("=", limit = 2); parts[0] to parts.getOrElse(1) { "" } } ?: emptyMap()
+            val ip = params["ip"] ?: error("Missing LAN address")
+            val port = params["port"]?.toIntOrNull() ?: TvTransferServer.PORT
+            val token = params["session"] ?: error("Missing pairing token")
             TransferProtocol.requireLanAddress(ip, port)
-
-            onMainDispatcher {
-                Toast.makeText(requireContext(), "📡 Connecting to $ip:$port...", Toast.LENGTH_SHORT).show()
-            }
-
-            val url = java.net.URL("http://$ip:$port/export")
-            val connection = url.openConnection() as java.net.HttpURLConnection
-            connection.requestMethod = "GET"
-            connection.setRequestProperty("X-Session-Token", session)
-            connection.instanceFollowRedirects = false
-            connection.connectTimeout = 10000
-            connection.readTimeout = 10000
-
-            val responseBody = try {
-                val responseCode = connection.responseCode
-                require(responseCode in 200..299) { "Remote device returned HTTP $responseCode" }
+            val connection = java.net.URL("http://$ip:$port/export").openConnection() as java.net.HttpURLConnection
+            val response = try {
+                connection.requestMethod = "GET"; connection.instanceFollowRedirects = false
+                connection.connectTimeout = 10000; connection.readTimeout = 10000
+                connection.setRequestProperty("X-Session-Token", token)
+                require(connection.responseCode in 200..299)
                 connection.inputStream.use { String(TransferProtocol.readLimited(it), Charsets.UTF_8) }
-            } finally {
-                connection.disconnect()
-            }
-
-            val json = org.json.JSONObject(responseBody)
-            val profilesData = json.optString("profiles", "")
-            val remoteCount = json.optInt("count", 0)
-
-            if (profilesData.isBlank()) {
-                onMainDispatcher {
-                    Toast.makeText(requireContext(), "Remote device has no profiles", Toast.LENGTH_LONG).show()
-                    finished.set(false)
-                }
-                return
-            }
-
-            val links = profilesData.split("\n").filter { it.isNotBlank() }
-            val targetId = DataStore.selectedGroupForImport()
-            var importedCount = 0
-
-            for (link in links) {
-                try {
-                    val proxies = RawUpdater.parseRaw(link)
-                    if (!proxies.isNullOrEmpty()) {
-                        for (proxy in proxies) {
-                            ProfileManager.createProfile(targetId, proxy)
-                            importedCount++
-                        }
-                    }
-                } catch (e: Exception) {
-                    Logs.w("Failed to import profile from remote")
-                }
-            }
-
-            onMainDispatcher {
-                if (importedCount > 0) {
-                    Toast.makeText(requireContext(),
-                        "✅ Imported $importedCount profile(s) from remote device ($remoteCount available)",
-                        Toast.LENGTH_LONG).show()
-                    parentFragmentManager.popBackStack()
-                } else {
-                    Toast.makeText(requireContext(), "No valid profiles found on remote device", Toast.LENGTH_LONG).show()
-                    finished.set(false)
-                }
-            }
-
-        } catch (e: Exception) {
-            Logs.e("TV transfer import failed")
-            onMainDispatcher {
-                Toast.makeText(requireContext(),
-                    "❌ Failed to receive profiles: ${e.readableMessage}",
-                    Toast.LENGTH_LONG).show()
-                finished.set(false)
-            }
+            } finally { connection.disconnect() }
+            val data = org.json.JSONObject(response).optString("profiles", "")
+            val imported = TvProfileImporter.importProfiles(data)
+            onMainDispatcher { Toast.makeText(requireContext(), getString(R.string.tv_import_count, imported), Toast.LENGTH_LONG).show() }
+            true
+        } catch (cancelled: CancellationException) { throw cancelled }
+        catch (_: Exception) {
+            finished.set(false)
+            onMainDispatcher { if (isAdded && view != null) Toast.makeText(requireContext(), R.string.tv_import_failed, Toast.LENGTH_LONG).show() }
+            false
         }
     }
-    
+
     override fun onDestroyView() {
         releaseCamera()
         super.onDestroyView()

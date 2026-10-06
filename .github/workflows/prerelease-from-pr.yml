@@ -133,6 +133,12 @@ jobs:
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           echo "ndk.dir=$ANDROID_NDK_HOME" >> local.properties
 
+      - name: Cache preview debug signing key
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: TunXBox-preview-debug-signing-v1
+
       - name: Build Preview APK
         env:
           BUILD_PLUGIN: none
@@ -141,8 +147,19 @@ jobs:
           ./run init action gradle
           ./gradlew app:assemblePreviewRelease --stacktrace
 
-      - name: Test transfer protocol
+      - name: Test protocol and remote UI
         run: ./gradlew app:testPreviewDebugUnitTest --stacktrace
+
+      - name: Upload unit-test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TunXBox-ui-test-reports-${{ steps.actual_sha.outputs.sha }}
+          path: |
+            app/build/reports/tests/testPreviewDebugUnitTest/
+            app/build/test-results/testPreviewDebugUnitTest/
+          if-no-files-found: ignore
+          retention-days: 14
 
       - name: Package verified APKs
         env:

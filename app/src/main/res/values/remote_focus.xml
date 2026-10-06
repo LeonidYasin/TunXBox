@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="remote_focus_indicator">#00796B</color>
+    <item name="remote_profile_entity" type="id" />
+</resources>

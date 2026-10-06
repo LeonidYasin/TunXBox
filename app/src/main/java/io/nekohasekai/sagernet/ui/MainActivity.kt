@@ -10,6 +10,14 @@ import android.os.Bundle
 import android.os.RemoteException
 import android.view.KeyEvent
 import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
+import androidx.drawerlayout.widget.DrawerLayout
+import java.lang.ref.WeakReference
+import io.nekohasekai.sagernet.ui.tv.TvInteractionPolicy
+import io.nekohasekai.sagernet.ui.tv.TvVpnPhase
+import io.nekohasekai.sagernet.ui.tv.TvVpnCommand
+import io.nekohasekai.sagernet.database.ProxyEntity
 import androidx.activity.addCallback
 import androidx.annotation.IdRes
 import androidx.core.app.ActivityCompat
@@ -57,6 +65,9 @@ class MainActivity : ThemedActivity(),
 
     lateinit var binding: LayoutMainBinding
     lateinit var navigation: NavigationView
+    private var contentFocus: WeakReference<View>? = null
+    private var menuKeyHandled = false
+    private var lastRemoteCommand = -750L
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -98,13 +109,26 @@ class MainActivity : ThemedActivity(),
             binding.drawerLayout.removeView(binding.navView)
         }
         navigation.setNavigationItemSelectedListener(this)
+        binding.drawerLayout.addDrawerListener(object : DrawerLayout.SimpleDrawerListener() {
+            override fun onDrawerClosed(drawerView: View) {
+                if (!remoteFocusEnabled) return
+                binding.root.post {
+                    val previous = contentFocus?.get()
+                    if (previous?.isAttachedToWindow == true && previous.isShown && previous.isEnabled) previous.requestFocus()
+                    else if (findViewById<View>(R.id.configuration_list)?.requestFocus() != true) binding.fab.requestFocus()
+                }
+            }
+        })
 
         if (savedInstanceState == null) {
             displayFragmentWithId(R.id.nav_configuration)
         }
         onBackPressedDispatcher.addCallback {
-            if (supportFragmentManager.findFragmentById(R.id.fragment_holder) is ConfigurationFragment) {
-                moveTaskToBack(true)
+            if (binding.drawerLayout.isOpen) {
+                binding.drawerLayout.closeDrawers()
+            } else if (supportFragmentManager.findFragmentById(R.id.fragment_holder) is ConfigurationFragment) {
+                if (intent?.action == Intent.ACTION_VIEW && !io.nekohasekai.sagernet.ui.tv.TvUiPreferences.phoneMode) finish()
+                else moveTaskToBack(true)
             } else {
                 displayFragmentWithId(R.id.nav_configuration)
             }
@@ -259,6 +283,7 @@ class MainActivity : ThemedActivity(),
         val targetId = DataStore.selectedGroupForImport()
 
         ProfileManager.createProfile(targetId, profile)
+        DataStore.selectedGroup = targetId
 
         onMainDispatcher {
             displayFragmentWithId(R.id.nav_configuration)
@@ -395,6 +420,11 @@ class MainActivity : ThemedActivity(),
         animate: Boolean = false,
     ) {
         DataStore.serviceState = state
+        // Availability of edit/delete buttons follows the active connection, not stale binds.
+        runOnDefaultDispatcher {
+            ProfileManager.postUpdate(DataStore.currentProfile, true)
+            if (DataStore.selectedProxy != DataStore.currentProfile) ProfileManager.postUpdate(DataStore.selectedProxy, true)
+        }
 
         binding.fab.changeState(state, DataStore.serviceState, animate)
         binding.stats.changeState(state)
@@ -488,44 +518,80 @@ class MainActivity : ThemedActivity(),
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
-        when (keyCode) {
-            KeyEvent.KEYCODE_DPAD_LEFT -> {
-                if (super.onKeyDown(keyCode, event)) return true
-                binding.drawerLayout.open()
-                navigation.requestFocus()
-            }
-
-            KeyEvent.KEYCODE_DPAD_RIGHT -> {
-                if (binding.drawerLayout.isOpen) {
-                    binding.drawerLayout.close()
-                    return true
+        if (!::binding.isInitialized) return super.onKeyDown(keyCode, event)
+        if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT && !binding.drawerLayout.isOpen) {
+            val focused = currentFocus
+            // Explicit within-row links take precedence over opening the drawer.
+            if (focused != null && focused.nextFocusLeftId != View.NO_ID) {
+                val target = focused.focusSearch(View.FOCUS_LEFT)
+                if (target != null && target !== focused && target.isShown && target.isEnabled) {
+                    target.requestFocus(); return true
                 }
             }
+            contentFocus = focused?.let { WeakReference(it) }
+            binding.drawerLayout.open(); navigation.requestFocus(); return true
         }
-
-        if (super.onKeyDown(keyCode, event)) return true
-        if (binding.drawerLayout.isOpen) return false
-
-        val fragment =
-            supportFragmentManager.findFragmentById(R.id.fragment_holder) as? ToolbarFragment
-        return fragment != null && fragment.onKeyDown(keyCode, event)
+        if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT && binding.drawerLayout.isOpen) {
+            binding.drawerLayout.closeDrawers(); return true
+        }
+        if (binding.drawerLayout.isOpen) return super.onKeyDown(keyCode, event)
+        val fragment = supportFragmentManager.findFragmentById(R.id.fragment_holder) as? ToolbarFragment
+        if (fragment?.onKeyDown(keyCode, event) == true) return true
+        return super.onKeyDown(keyCode, event)
     }
 
 
-    // Remote control: the Play/Pause key toggles the VPN from any screen.
-    // (DPAD_CENTER/ENTER on the focused FAB already triggers its click handler.)
+    // Hardware keys must consume both down and up; OK stays with the focused view.
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0 &&
-            event.keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE
-        ) {
-            toggleService()
+        if (!::binding.isInitialized) return super.dispatchKeyEvent(event)
+        if (event.keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) {
+            if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) { highlightRemoteFocus(); toggleService() }
             return true
+        }
+        if (event.keyCode == KeyEvent.KEYCODE_MENU) {
+            if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
+                highlightRemoteFocus()
+                var candidate: View? = currentFocus
+                var profile: ProxyEntity? = null
+                while (candidate != null && profile == null) {
+                    profile = candidate.getTag(R.id.remote_profile_entity) as? ProxyEntity
+                    candidate = candidate.parent as? View
+                }
+                val fragment = supportFragmentManager.findFragmentById(R.id.fragment_holder) as? ConfigurationFragment
+                menuKeyHandled = if (profile != null && fragment != null) {
+                    fragment.showRemoteProfileActions(profile); true
+                } else findViewById<androidx.appcompat.widget.Toolbar>(R.id.toolbar)?.showOverflowMenu() == true
+            }
+            if (menuKeyHandled) {
+                if (event.action == KeyEvent.ACTION_UP) menuKeyHandled = false
+                return true
+            }
         }
         return super.dispatchKeyEvent(event)
     }
 
-    private fun toggleService() {
-        if (DataStore.serviceState.canStop) SagerNet.stopService() else connect.launch(null)
+    fun connectProfileForRemote(id: Long) {
+        val phase = TvVpnPhase.fromServiceName(DataStore.serviceState.name)
+        if (!TvInteractionPolicy.canSelect(phase)) { snackbar(R.string.tv_wait).show(); return }
+        val old = DataStore.selectedProxy
+        DataStore.selectedProxy = id
+        runOnDefaultDispatcher { ProfileManager.postUpdate(old, true); ProfileManager.postUpdate(id, true) }
+        executeServiceCommand(TvInteractionPolicy.connectOnly(phase, id, DataStore.currentProfile, connection.service != null))
     }
 
+    private fun toggleService() {
+        executeServiceCommand(TvInteractionPolicy.media(TvVpnPhase.fromServiceName(DataStore.serviceState.name), DataStore.selectedProxy, connection.service != null))
+    }
+
+    private fun executeServiceCommand(command: TvVpnCommand) {
+        val now = android.os.SystemClock.elapsedRealtime()
+        if (now - lastRemoteCommand < 750) return
+        lastRemoteCommand = now
+        when (command) {
+            TvVpnCommand.START -> connect.launch(null)
+            TvVpnCommand.STOP -> SagerNet.stopService()
+            TvVpnCommand.RELOAD -> SagerNet.reloadService()
+            TvVpnCommand.NONE -> snackbar(if (DataStore.selectedProxy == 0L) R.string.tv_choose_profile else R.string.tv_wait).show()
+        }
+    }
 }

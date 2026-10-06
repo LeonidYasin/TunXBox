@@ -8,13 +8,17 @@
     <androidx.camera.view.PreviewView
         android:id="@+id/previewView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:focusable="false"
+        android:importantForAccessibility="no" />
 
     <!-- Viewfinder overlay -->
     <com.king.zxing.ViewfinderView
         android:id="@+id/viewfinderView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:focusable="false"
+        android:importantForAccessibility="no" />
 
     <!-- Top bar with title and controls -->
     <LinearLayout
@@ -30,7 +34,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Scan QR Code"
+            android:text="@string/tv_scan_title"
             android:textSize="22sp"
             android:textColor="#FFFFFFFF" />
 
@@ -43,7 +47,7 @@
             android:src="@drawable/zxl_flashlight_selector"
             android:focusable="true"
             android:background="@drawable/bg_focusable_item"
-            android:contentDescription="Toggle flashlight" />
+            android:contentDescription="@string/tv_scan_flash" />
 
         <ImageView
             android:id="@+id/ivImportImage"
@@ -54,7 +58,7 @@
             android:src="@drawable/ic_image_photo"
             android:focusable="true"
             android:background="@drawable/bg_focusable_item"
-            android:contentDescription="Import from image file" />
+            android:contentDescription="@string/tv_scan_image" />
 
         <ImageView
             android:id="@+id/ivClose"
@@ -64,7 +68,7 @@
             android:src="@drawable/ic_navigation_close"
             android:focusable="true"
             android:background="@drawable/bg_focusable_item"
-            android:contentDescription="Close scanner" />
+            android:contentDescription="@string/tv_scan_close" />
     </LinearLayout>
 
     <!-- Hint text at bottom -->
@@ -76,7 +80,7 @@
         android:background="#AA000000"
         android:gravity="center"
         android:padding="20dp"
-        android:text="Point camera at QR code to import proxy profile"
+        android:text="@string/tv_scan_hint"
         android:textColor="#DDFFFFFF"
         android:textSize="16sp" />
 

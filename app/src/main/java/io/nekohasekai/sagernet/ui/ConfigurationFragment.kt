@@ -27,6 +27,13 @@ import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.core.view.size
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.CancellationException
+import io.nekohasekai.sagernet.ui.tv.TvInteractionPolicy
+import io.nekohasekai.sagernet.ui.tv.TvVpnPhase
 import androidx.preference.PreferenceDataStore
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -94,11 +101,9 @@ import io.nekohasekai.sagernet.ui.tv.TvTransferServer
 import io.nekohasekai.sagernet.widget.QRCodeDialog
 import io.nekohasekai.sagernet.widget.UndoSnackbarManager
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.joinAll
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import moe.matsuri.nb4a.Protocols
@@ -295,11 +300,75 @@ class ConfigurationFragment @JvmOverloads constructor(
                 return false
             }
         }
-        // DPAD_CENTER / ENTER are left to the focused view: click on key-up, long-press on hold.
-        fragment?.configurationListView?.apply {
-            if (!hasFocus()) requestFocus()
-        }
+        // Never steal keys/focus from a toolbar, FAB, editor or share button.
+        // DPAD_CENTER / ENTER stay with the focused view.
         return super.onKeyDown(ketCode, event)
+    }
+
+    /** D-pad Menu alternative to touch long-press, swipe deletion and drag reordering. */
+    fun showRemoteProfileActions(profile: ProxyEntity) {
+        if (view == null) return
+        remoteWork {
+            val group = withContext(Dispatchers.IO) { SagerDatabase.groupDao.getById(profile.groupId) } ?: return@remoteWork
+            val actions = mutableListOf<Pair<Int, () -> Unit>>()
+            actions.add(R.string.tv_connect_profile to { (activity as? MainActivity)?.connectProfileForRemote(profile.id) })
+            actions.add(R.string.edit to {
+                if (canModifyRemoteProfile(profile)) startActivity(profile.settingIntent(requireContext(), group.type == GroupType.SUBSCRIPTION))
+            })
+            actions.add(R.string.tv_share_qr to { remoteWork {
+                val link = withContext(Dispatchers.IO) { try { profile.toStdLink() } catch (_: Exception) { "" } }
+                if (link.isBlank()) (activity as? MainActivity)?.snackbar(R.string.tv_share_unsupported)?.show()
+                else QRCodeDialog(link, profile.displayName().orEmpty()).show(parentFragmentManager, "remote_profile_qr")
+            } })
+            actions.add(R.string.delete to {
+                if (canModifyRemoteProfile(profile)) {
+                    val confirm = MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.delete)
+                        .setMessage(getString(R.string.tv_delete_confirm, profile.displayName()))
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .setPositiveButton(R.string.yes) { _, _ -> remoteWork {
+                            if (canModifyRemoteProfile(profile)) withContext(Dispatchers.IO) { ProfileManager.deleteProfile(profile.groupId, profile.id) }
+                        } }.create()
+                    confirm.setOnShowListener { confirm.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEGATIVE).requestFocus() }
+                    confirm.show()
+                }
+            })
+            actions.add(R.string.tv_move_up to { moveRemoteProfile(profile, group, -1) })
+            actions.add(R.string.tv_move_down to { moveRemoteProfile(profile, group, 1) })
+            MaterialAlertDialogBuilder(requireContext()).setTitle(profile.displayName())
+                .setItems(actions.map { getString(it.first) }.toTypedArray()) { _, index ->
+                    try { actions[index].second() } catch (_: Exception) { (activity as? MainActivity)?.snackbar(R.string.tv_operation_failed)?.show() }
+                }.setNegativeButton(android.R.string.cancel, null).show()
+        }
+    }
+
+    private fun remoteWork(work: suspend () -> Unit) {
+        if (view == null) return
+        viewLifecycleOwner.lifecycleScope.launch {
+            try { work() } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) { (activity as? MainActivity)?.snackbar(R.string.tv_operation_failed)?.show() }
+        }
+    }
+
+    private fun canModifyRemoteProfile(profile: ProxyEntity): Boolean {
+        val phase = TvVpnPhase.fromServiceName(DataStore.serviceState.name)
+        val active = if (phase == TvVpnPhase.CONNECTING) DataStore.selectedProxy else DataStore.currentProfile
+        if ((activity as? MainActivity)?.connection?.service == null) { (activity as? MainActivity)?.snackbar(R.string.tv_wait)?.show(); return false }
+        val allowed = TvInteractionPolicy.canMutate(profile.id, active, phase)
+        if (!allowed) (activity as? MainActivity)?.snackbar(R.string.tv_stop_before_edit)?.show()
+        return allowed
+    }
+
+    private fun moveRemoteProfile(profile: ProxyEntity, group: ProxyGroup, direction: Int) = remoteWork {
+        if (group.order != GroupOrder.ORIGIN) { (activity as? MainActivity)?.snackbar(R.string.tv_order_unavailable)?.show(); return@remoteWork }
+        withContext(Dispatchers.IO) {
+            val items = SagerDatabase.proxyDao.getByGroup(profile.groupId)
+            val index = items.indexOfFirst { it.id == profile.id }; val target = index + direction
+            if (index >= 0 && target in items.indices) {
+                val first = items[index]; val other = items[target]; val order = first.userOrder
+                first.userOrder = other.userOrder; other.userOrder = order
+                ProfileManager.updateProfile(listOf(first, other)); GroupManager.postReload(profile.groupId)
+            }
+        }
     }
 
     private val importFile =
@@ -1101,6 +1170,12 @@ class ConfigurationFragment @JvmOverloads constructor(
 
         lateinit var undoManager: UndoSnackbarManager<ProxyEntity>
         var adapter: ConfigurationAdapter? = null
+        private var remoteAnchor: RemoteProfileFocus? = null
+
+        override fun onPause() {
+            RemoteProfileFocus.capture(activity?.currentFocus)?.let { remoteAnchor = it }
+            super.onPause()
+        }
 
         override fun onSaveInstanceState(outState: Bundle) {
             super.onSaveInstanceState(outState)
@@ -1108,11 +1183,15 @@ class ConfigurationFragment @JvmOverloads constructor(
             if (::proxyGroup.isInitialized) {
                 outState.putParcelable("proxyGroup", proxyGroup)
             }
+            remoteAnchor?.let { outState.putLong("remote_profile_id", it.profileId); outState.putInt("remote_control_id", it.controlId) }
         }
 
         override fun onViewStateRestored(savedInstanceState: Bundle?) {
             super.onViewStateRestored(savedInstanceState)
 
+            savedInstanceState?.getLong("remote_profile_id", 0)?.takeIf { it > 0 }?.let {
+                remoteAnchor = RemoteProfileFocus(it, savedInstanceState.getInt("remote_control_id", R.id.content))
+            }
             savedInstanceState?.getParcelable<ProxyGroup>("proxyGroup")?.also {
                 proxyGroup = it
                 onViewCreated(requireView(), null)
@@ -1156,7 +1235,8 @@ class ConfigurationFragment @JvmOverloads constructor(
                 onViewCreated(requireView(), null)
             }
             checkOrderMenu()
-            configurationListView.requestFocus()
+            remoteAnchor?.let { anchor -> adapter?.configurationIdList?.toList()?.let { RemoteProfileFocus.restore(configurationListView, it, anchor) } }
+                ?: if (activity?.currentFocus == null) configurationListView.requestFocus() else Unit
         }
 
         fun checkOrderMenu() {
@@ -1502,16 +1582,19 @@ class ConfigurationFragment @JvmOverloads constructor(
                 }
 
                 configurationListView.post {
+                    val focus = RemoteProfileFocus.capture(configurationListView.findFocus()) ?: remoteAnchor
+                    val layoutState = layoutManager.onSaveInstanceState()
                     configurationIdList.clear()
                     configurationIdList.addAll(newProfileIds)
                     notifyDataSetChanged()
-
-                    if (selectedProfileIndex != -1) {
+                    if (focus != null && focus.profileId in newProfileIds) {
+                        remoteAnchor = focus
+                        RemoteProfileFocus.restore(configurationListView, newProfileIds, focus)
+                    } else if (layoutState != null && selectedProfileIndex == -1) {
+                        layoutManager.onRestoreInstanceState(layoutState)
+                    } else if (selectedProfileIndex != -1) {
                         configurationListView.scrollTo(selectedProfileIndex, true)
-                    } else if (newProfiles.isNotEmpty()) {
-                        configurationListView.scrollTo(0, true)
                     }
-
                 }
             }
 
@@ -1542,6 +1625,7 @@ class ConfigurationFragment @JvmOverloads constructor(
                 val pf = parentFragment as? ConfigurationFragment ?: return
 
                 entity = proxyEntity
+                view.setTag(R.id.remote_profile_entity, proxyEntity)
 
                 if (select) {
                     view.setOnClickListener {
@@ -1644,6 +1728,7 @@ class ConfigurationFragment @JvmOverloads constructor(
                 }
 
                 editButton.setOnClickListener {
+                    if (!pf.canModifyRemoteProfile(proxyEntity)) return@setOnClickListener
                     it.context.startActivity(
                         proxyEntity.settingIntent(
                             it.context, proxyGroup.type == GroupType.SUBSCRIPTION
@@ -1652,10 +1737,13 @@ class ConfigurationFragment @JvmOverloads constructor(
                 }
 
                 removeButton.setOnClickListener {
+                    if (!pf.canModifyRemoteProfile(proxyEntity)) return@setOnClickListener
                     adapter?.let {
                         val index = it.configurationIdList.indexOf(proxyEntity.id)
-                        it.remove(index)
-                        undoManager.remove(index to proxyEntity)
+                        if (index >= 0) {
+                            it.remove(index)
+                            undoManager.remove(index to proxyEntity)
+                        }
                     }
                 }
 
@@ -1670,11 +1758,18 @@ class ConfigurationFragment @JvmOverloads constructor(
 
                 runOnDefaultDispatcher {
                     val selected = (selectedItem?.id ?: DataStore.selectedProxy) == proxyEntity.id
-                    val started =
-                        selected && DataStore.serviceState.started && DataStore.currentProfile == proxyEntity.id
+                    val phase = TvVpnPhase.fromServiceName(DataStore.serviceState.name)
+                    val active = if (phase == TvVpnPhase.CONNECTING) DataStore.selectedProxy else DataStore.currentProfile
+                    val started = !TvInteractionPolicy.canMutate(proxyEntity.id, active, phase)
                     onMainDispatcher {
                         editButton.isEnabled = !started
                         removeButton.isEnabled = !started
+                        val controls = listOf(editButton, shareLayout, removeButton).filter { it.isVisible && it.isEnabled }
+                        view.nextFocusRightId = controls.firstOrNull()?.id ?: view.id
+                        controls.forEachIndexed { index, control ->
+                            control.nextFocusLeftId = if (index == 0) view.id else controls[index - 1].id
+                            control.nextFocusRightId = controls.getOrNull(index + 1)?.id ?: view.id
+                        }
                         selectedView.visibility = if (selected) View.VISIBLE else View.INVISIBLE
                     }
 

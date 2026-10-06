@@ -7,141 +7,96 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.ScrollView
-import android.widget.TextView
+import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import io.nekohasekai.sagernet.R
+import kotlinx.coroutines.*
 
-/** Scan with a normal phone camera to open a local import form, or with TunXBox to
- * transfer an existing group. The receiver never offers its own profiles for export. */
+/** Keep the QR fully visible while remote users scroll the help/buttons alongside it. */
 class QrCodeTransferFragment : Fragment() {
     private lateinit var qrImageView: ImageView
     private lateinit var statusText: TextView
     private lateinit var ipText: TextView
     private lateinit var hintText: TextView
+    private lateinit var toggle: Button
     private var transferServer: TvTransferServer? = null
     private var qrJob: Job? = null
+    private var expiryJob: Job? = null
     private var appQr = false
     private var qrSize = 400
+    override fun onCreate(savedInstanceState: Bundle?) { super.onCreate(savedInstanceState); appQr = savedInstanceState?.getBoolean("app_qr", false) ?: false }
+    override fun onSaveInstanceState(outState: Bundle) { outState.putBoolean("app_qr", appQr); super.onSaveInstanceState(outState) }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        val context = requireContext()
-        val metrics = resources.displayMetrics
+        val context = requireContext(); val metrics = resources.displayMetrics
         fun dp(value: Int) = (value * metrics.density).toInt()
-        qrSize = (minOf(metrics.widthPixels, metrics.heightPixels) * 0.5f).toInt().coerceAtLeast(200)
-        val layout = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER_HORIZONTAL
-            setPadding(dp(24), dp(16), dp(24), dp(16))
+        qrSize = minOf(((metrics.heightPixels - dp(128)) * 0.7f).toInt(), (metrics.widthPixels * 0.4f).toInt()).coerceAtLeast(160)
+        val left = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER }
+        left.addView(TextView(context).apply { setText(R.string.tv_qr_title); textSize = 24f; setTextColor(Color.WHITE); gravity = Gravity.CENTER; maxLines = 2 })
+        qrImageView = ImageView(context).apply { layoutParams = LinearLayout.LayoutParams(qrSize, qrSize).apply { topMargin = dp(12) }; scaleType = ImageView.ScaleType.FIT_CENTER; importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO }
+        left.addView(qrImageView)
+        ipText = TextView(context).apply { textSize = 16f; setTextColor(0xFF67E8F9.toInt()); gravity = Gravity.CENTER; maxLines = 2 }
+        left.addView(ipText)
+        val right = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(16), dp(8), dp(16), dp(8)) }
+        statusText = TextView(context).apply { textSize = 18f; setTextColor(Color.WHITE); accessibilityLiveRegion = View.ACCESSIBILITY_LIVE_REGION_POLITE }
+        hintText = TextView(context).apply { textSize = 16f; setTextColor(0xFFCBD5E1.toInt()); setPadding(0, dp(12), 0, dp(16)) }
+        right.addView(statusText); right.addView(hintText)
+        fun button(label: Int) = Button(context).apply {
+            id = View.generateViewId(); setText(label); textSize = 18f; setTextColor(Color.WHITE)
+            minimumHeight = dp(56); isFocusable = true; setBackgroundResource(R.drawable.bg_focusable_item)
+            layoutParams = LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(8) }
         }
-        layout.addView(TextView(context).apply {
-            text = "Import from phone / computer"
-            textSize = 24f
-            setTextColor(Color.WHITE)
-            gravity = Gravity.CENTER
-        })
-        qrImageView = ImageView(context).apply {
-            layoutParams = LinearLayout.LayoutParams(qrSize, qrSize)
-            scaleType = ImageView.ScaleType.FIT_CENTER
-        }
-        layout.addView(qrImageView)
-        ipText = TextView(context).apply { textSize = 16f; setTextColor(Color.CYAN); gravity = Gravity.CENTER }
-        statusText = TextView(context).apply { textSize = 16f; setTextColor(Color.WHITE); gravity = Gravity.CENTER }
-        hintText = TextView(context).apply { textSize = 14f; setTextColor(Color.LTGRAY); gravity = Gravity.CENTER }
-        layout.addView(ipText)
-        layout.addView(statusText)
-        layout.addView(hintText)
-        layout.addView(Button(context).apply {
-            text = "Switch QR: browser / TunXBox app"
-            isFocusable = true
-            setOnClickListener { appQr = !appQr; renderQr() }
-        })
-        layout.addView(Button(context).apply {
-            text = "Close transfer"
-            isFocusable = true
-            setOnClickListener { parentFragmentManager.popBackStack() }
-        })
-        return ScrollView(context).apply {
-            setBackgroundColor(Color.rgb(15, 23, 42))
-            addView(layout)
+        toggle = button(R.string.tv_qr_toggle).apply { setOnClickListener { appQr = !appQr; renderQr() } }
+        val renew = button(R.string.tv_qr_refresh).apply { setOnClickListener { startSession() } }
+        val close = button(R.string.tv_qr_close).apply { setOnClickListener { parentFragmentManager.popBackStack() } }
+        toggle.nextFocusDownId = renew.id; renew.nextFocusUpId = toggle.id
+        renew.nextFocusDownId = close.id; close.nextFocusUpId = renew.id
+        right.addView(toggle); right.addView(renew); right.addView(close)
+        val controls = ScrollView(context).apply { addView(right); isFocusable = false }
+        return LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; setPadding(dp(20), dp(16), dp(20), dp(16)); setBackgroundColor(Color.rgb(15, 23, 42))
+            addView(left, LinearLayout.LayoutParams(0, -1, 1f)); addView(controls, LinearLayout.LayoutParams(0, -1, 1f))
         }
     }
-
-    override fun onStart() {
-        super.onStart()
+    override fun onStart() { super.onStart(); startSession(); toggle.requestFocus() }
+    private fun startSession() {
+        qrJob?.cancel(); expiryJob?.cancel(); transferServer?.stop(); transferServer = null
         try {
             transferServer = TvTransferServer(
-                onImportSuccess = { count ->
-                    view?.post {
-                        if (view != null) {
-                            statusText.text = "Imported $count profile(s). You can close this screen."
-                            statusText.setTextColor(Color.GREEN)
-                        }
-                    }
-                },
-                onImportError = { message ->
-                    view?.post {
-                        if (view != null) {
-                            statusText.text = message
-                            statusText.setTextColor(Color.RED)
-                        }
-                    }
-                }
+                onImportSuccess = { count -> view?.post { if (view != null) { statusText.text = getString(R.string.tv_qr_received, count); statusText.setTextColor(0xFF4ADE80.toInt()) } } },
+                onImportError = { _ -> view?.post { if (view != null) { statusText.setText(R.string.tv_import_failed); statusText.setTextColor(0xFFFCA5A5.toInt()) } } }
             )
-            statusText.text = "Ready. Session expires in 10 minutes."
-            renderQr()
+            statusText.setText(R.string.tv_qr_ready); statusText.setTextColor(Color.WHITE); renderQr()
+            expiryJob = viewLifecycleOwner.lifecycleScope.launch {
+                delay(TransferProtocol.SESSION_MILLIS)
+                transferServer?.stop(); transferServer = null
+                statusText.setText(R.string.tv_qr_expired); statusText.setTextColor(0xFFFBBF24.toInt()); qrImageView.setImageDrawable(null)
+            }
         } catch (_: Exception) {
-            statusText.text = "Cannot start transfer. Connect to Wi-Fi/Ethernet; check port 8765."
-            statusText.setTextColor(Color.RED)
-            qrImageView.setImageDrawable(null)
+            statusText.setText(R.string.tv_qr_failed); statusText.setTextColor(0xFFFCA5A5.toInt()); qrImageView.setImageDrawable(null)
         }
     }
-
     private fun renderQr() {
         val server = transferServer ?: return
         val data = if (appQr) server.getAppQrData() else server.getBrowserQrData()
-        ipText.text = "LAN address: ${server.getLocalIpAddress()}:${TvTransferServer.PORT}"
-        hintText.text = if (appQr) {
-            "On phone: TunXBox → Phone Mode → + → Scan QR. Sends the current group.\nTrusted LAN only: HTTP is not encrypted."
-        } else {
-            "Scan with your phone camera → open browser → paste configuration, upload a file, or enter a subscription URL. No phone app required.\nBoth devices must be on the same trusted LAN. HTTP is not encrypted."
-        }
+        ipText.text = getString(R.string.tv_qr_address, server.getLocalIpAddress(), TvTransferServer.PORT)
+        hintText.setText(if (appQr) R.string.tv_qr_native_hint else R.string.tv_qr_browser_hint)
         qrJob?.cancel()
         qrJob = viewLifecycleOwner.lifecycleScope.launch {
             val bitmap = withContext(Dispatchers.Default) {
                 val bits = QRCodeWriter().encode(data, BarcodeFormat.QR_CODE, qrSize, qrSize)
                 Bitmap.createBitmap(qrSize, qrSize, Bitmap.Config.RGB_565).apply {
-                    val pixels = IntArray(qrSize * qrSize) { index ->
-                        if (bits[index % qrSize, index / qrSize]) Color.BLACK else Color.WHITE
-                    }
+                    val pixels = IntArray(qrSize * qrSize) { index -> if (bits[index % qrSize, index / qrSize]) Color.BLACK else Color.WHITE }
                     setPixels(pixels, 0, qrSize, 0, 0, qrSize, qrSize)
                 }
             }
             qrImageView.setImageBitmap(bitmap)
         }
     }
-
-    override fun onStop() {
-        qrJob?.cancel()
-        transferServer?.stop()
-        transferServer = null
-        qrImageView.setImageDrawable(null)
-        super.onStop()
-    }
-
-    override fun onDestroyView() {
-        qrJob?.cancel()
-        transferServer?.stop()
-        transferServer = null
-        super.onDestroyView()
-    }
+    private fun stopSession() { qrJob?.cancel(); expiryJob?.cancel(); transferServer?.stop(); transferServer = null }
+    override fun onStop() { stopSession(); super.onStop() }
+    override fun onDestroyView() { stopSession(); super.onDestroyView() }
 }

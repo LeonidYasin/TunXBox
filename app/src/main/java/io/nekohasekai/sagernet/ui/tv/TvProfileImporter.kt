@@ -38,7 +38,7 @@ object TvProfileImporter {
         GroupManager.createGroup(group)
         // The user explicitly requested this import. Use the upstream downloader/parser and
         // retain the URL for later updates, including Subscription-Userinfo metadata.
-        if (!GroupUpdater.executeUpdate(group, false)) {
+        if (!GroupUpdater.executeUpdate(group, false, null)) {
             GroupManager.deleteGroup(group.id)
             error("Subscription download/import failed. Check the URL and connection.")
         }
