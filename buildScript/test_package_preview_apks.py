@@ -10,6 +10,17 @@ spec.loader.exec_module(module)
 
 
 class PackageNamingTest(unittest.TestCase):
+    def test_stable_names_do_not_claim_preview_or_rc(self):
+        self.assertEqual(module.apk_name("1.5.0", "a" * 40, ["arm64-v8a"], "stable", "oss"), "TunXBox-1.5.0-android-tv-phone-arm64-v8a-oss-release-aaaaaaaa.apk")
+
+    def test_stable_rejects_prerelease_version(self):
+        with self.assertRaises(ValueError):
+            module.apk_name("1.5.0-rc", "a" * 40, ["arm64-v8a"], "stable", "oss")
+
+    def test_mismatched_channel_flavor_is_rejected(self):
+        with self.assertRaises(ValueError):
+            module.apk_name("1.5.0", "a" * 40, ["arm64-v8a"], "stable", "preview")
+
     def test_single_abi(self):
         name = module.apk_name('1.5.0', 'a' * 40, ['arm64-v8a'])
         self.assertEqual(name, 'TunXBox-1.5.0-rc-android-tv-phone-arm64-v8a-preview-release-aaaaaaaa.apk')
