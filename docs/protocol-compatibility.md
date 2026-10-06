@@ -82,6 +82,48 @@
 
 **Предварительное решение:** сохранить native TunXBox UI/Room/QR/текущий sing-box JNI путь. Использовать v2ray_box как reference, при необходимости небольшие MIT-компоненты с attribution после аудита; Flutter migration не обоснована. Оценить прямой pinned libXray adapter, capability matrix и нашу VPN/lifecycle integration. Это ещё не реализованный dual-core runtime. Смена base project не чинит expired certificate сервера и не гарантирует сохранение всех REALITY параметров.
 
+## Сравнение VPN4TV Native, YPtun и TeapodStream
+
+Статический аудит README + выбранных исходников на точных HEAD, актуальные public release metadata. Чужие APK/скрипты не запускались; скорость/надёжность/все протоколы не сертифицировались. Код HEAD может быть новее соответствующего release.
+
+| Проект | Ревизия аудита | Последний stable по GitHub API | Главная польза для TunXBox |
+|---|---|---|---|
+| [VPN4TV Native](https://github.com/VPN4TV/vpn4tv-native) | 983f7ee60dc017d5275b106a77545226526b63cf | [v5.2.6](https://github.com/VPN4TV/vpn4tv-native/releases/tag/v5.2.6) | Native TV + JNI sing-box и встроенные мосты Xray/Outline/AmneziaWG; близкий путь к XHTTP без замены нашего UI |
+| [YPtun](https://github.com/yanisplugg/olcvpn-client) | 535a32daea00dd55128c19be90d36f4e4106f79c | [v3.6.5](https://github.com/yanisplugg/olcvpn-client/releases/tag/v3.6.5) | Общий gomobile слой Xray/sing-box/других движков, Happ routing import и тесты парсеров; Kotlin Multiplatform/Compose |
+| [TeapodStream](https://github.com/Wendor/teapod-stream) | c82e2ff43f372f69fec9af9612638e6d8b1f01b2 | [v1.6.6](https://github.com/Wendor/teapod-stream/releases/tag/v1.6.6) | Flutter UI + native Xray/tun2socks service; simple UX, staged heartbeat/TUN stall detection и network reconnect |
+
+### VPN4TV Native: ближе всего к нашей TV/ядровой задаче
+
+README заявляет D-pad UI, URLTest auto selection, proxy mode, Telegram subscription code, LAN bypass, expiry/traffic info и logs. В коде ConfigGenerator подтверждены URLTest+selector и замена XHTTP outbound локальным SOCKS bridge, не подмена на TCP/HTTPUpgrade. XrayBridge вызывает Libbox.startXrayInstance; его комментарий описывает Xray внутри fork libbox и единый Go runtime/JNI. Это хороший кандидат для аналогичного Go adapter в нашем libcore, но требует проверки самого fork, lifecycle/protect/UDP/DNS/license/ABI.
+
+Источники: [ConfigGenerator](https://github.com/VPN4TV/vpn4tv-native/blob/983f7ee60dc017d5275b106a77545226526b63cf/app/src/main/java/com/vpn4tv/app/converter/ConfigGenerator.kt), [XrayBridge](https://github.com/VPN4TV/vpn4tv-native/blob/983f7ee60dc017d5275b106a77545226526b63cf/app/src/main/java/com/vpn4tv/app/xray/XrayBridge.kt).
+
+Оговорки: JNI in-process sing-box уже есть у TunXBox и само по себе не преимущество над нами; QR/LAN импорт тоже не уникален. Отдельный external fork/AAR требуется собрать. В просмотренном app tree не найдены стандартные test/androidTest исходники, что не доказывает отсутствие тестов внешнего ядра. CrashUpload helper отправляет dumps/device metadata на внешний endpoint и сам не показывает consent/redaction: автоматическую передачу raw diagnostics не копировать без полного privacy design. Telegram subscription delivery не является готовым ботом для управления нашим приложением.
+
+### YPtun: наиболее полезный reference расширяемого ядрового слоя
+
+В cores/xraybridge/xray.go подтверждены Go imports Xray, регистрация protocol handlers и protected dialer integration. Все движки связываются в общий gomobile слой; это важнее простой установки двух независимых AAR с возможными Go/JNI/Seq конфликтами. В cores/go.mod заявлены sing-box v1.14.2/Xray v1.260930.0, но оба заменяются local vendored directories: это НЕ доказательство точного upstream binary, локальные patches тоже нужно учитывать. HappRoutingParser распознаёт happ://routing/add и routing JSON; это конкретное отличие от нашей пока исследуемой Happ compatibility.
+
+Источники: [Go bridge](https://github.com/yanisplugg/olcvpn-client/blob/535a32daea00dd55128c19be90d36f4e4106f79c/cores/xraybridge/xray.go), [go.mod](https://github.com/yanisplugg/olcvpn-client/blob/535a32daea00dd55128c19be90d36f4e4106f79c/cores/go.mod), [Happ parser](https://github.com/yanisplugg/olcvpn-client/blob/535a32daea00dd55128c19be90d36f4e4106f79c/YPtun/sharedUI/src/commonMain/kotlin/org/olcbox/app/data/importer/HappRoutingParser.kt).
+
+Плюсы: больше направлений обхода (AmneziaWG/olcRTC/relay/DNS transports), Windows/Linux release assets уже присутствуют, parser/routing unit tests в PR workflow. Оговорки: множество движков резко увеличивает зависимости/поверхность атаки/стоимость сопровождения. Android TV D-pad parity просмотренными материалами не подтверждена. Не переносить всё в первый compatibility PR; README claims «без утечек» не являются независимым security audit.
+
+### TeapodStream: ориентир диагностики живости и простого UX
+
+XrayEngine — Flutter MethodChannel facade, реальный lifecycle в Kotlin XrayVpnService и teapod-core/tun2socks. В service подтверждены heartbeat по SOCKS/core probe, стадии greeting/auth/connect/HTTP, накопление ошибок, warmup, reconnect/network handling и анализ TUN Rx/активных соединений. Это ближе к нужному нам R5, чем один TCP ping: отдельно учитывается ситуация «прокси отвечает, но данные не возвращаются в TUN». Всё равно нужны tests против false positives/idle/privacy/direct probes и bounded cooldown.
+
+Источник: [VPN service](https://github.com/Wendor/teapod-stream/blob/c82e2ff43f372f69fec9af9612638e6d8b1f01b2/android/app/src/main/kotlin/com/teapodstream/teapodstream/XrayVpnService.kt).
+
+В subscription_service есть typed UntrustedCertificateException и default отказ от bad certificates — полезная UX идея. Но allowSelfSigned=true callback принимает любой bad certificate, это не pinning конкретного сертификата. Такой обход не является исправлением expired certificate и не должен становиться нашим default. Binary teapod-core может скачиваться из latest release; у нас сохранить exact pins/checksums. README сам говорит о минимальных unit tests; найденные parser/config tests не заменяют device/core integration. README ошибочно называет Xray MIT: официальный [LICENSE Xray](https://github.com/XTLS/Xray-core/blob/main/LICENSE) — MPL-2.0, поэтому лицензионную таблицу не копировать без проверки.
+
+### Где TunXBox сохраняет преимущества и как действовать
+
+- Уже есть оба интерфейса TV/Phone, богатые редакторы и локальная передача одного профиля/полной группы; не терять их при смене ядрового слоя. Это сильная сторона, не заявление эксклюзивности.
+- Наши documented release gates проверяют signer/versionCode/metadata/hash/ABI/16KB и Android smoke; статический аудит других проектов не даёт оснований объявлять их CI хуже во всех отношениях.
+- Главные текущие пробелы TunXBox: XHTTP/Xray, lossless Happ compatibility, понятные причины ошибок и continuous tunnel health/failover. Поддержка Hysteria2 в коде уже есть: expired server certificate не является отсутствием протокола.
+- Приоритет: capability-based core choice и общий Go/JNI bridge по идеям VPN4TV/YPtun; затем staged diagnostics/heartbeat по идеям TeapodStream; Happ routing/parser fixtures; расширенные AWG/RTC/DNS engines отдельно, не mega-PR.
+- Ни один проект не устанавливает «поддержку абсолютно всего» по списку README. Переносить небольшие лицензированно допустимые компоненты/идеи с regression tests, а не менять весь base tree.
+
 ## Acceptance evidence
 
 Пока: скриншоты владельца и статический аудит baseline, официальные страницы. В реализации D1 пока только fail-closed builder; заметный локализованный UI ошибки ещё впереди. НЕ выполнены: воспроизведение с приватным провайдером, полная матрица клиентов, Xray integration, новый diagnostic UI, sanitizer или регулярный monitor. Предоставлять обезличенные fixtures; не помещать реальные подписочные токены/ключи в Git/CI/artifacts/issues. В каждом последующем PR отмечать точную core/build version и фактически прошедшие проверки.
