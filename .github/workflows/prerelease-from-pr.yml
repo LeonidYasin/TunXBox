@@ -111,15 +111,18 @@ jobs:
           echo "NDK_HOME=$ANDROID_HOME/ndk/25.0.8775105" >> $GITHUB_ENV
 
       - name: Install Golang (needed for libcore)
+        id: go
         uses: actions/setup-go@v5
         with:
-          go-version: ^1.25
+          go-version: '1.26.8'
+          cache-dependency-path: libcore/go.sum
 
       - name: Cache libcore
-        uses: actions/cache@v4
+        id: core_cache
+        uses: actions/cache/restore@v4
         with:
           path: app/libs/libcore.aar
-          key: libcore-16kb-v1-${{ runner.os }}-${{ hashFiles('buildScript/lib/**', 'libcore/**') }}
+          key: libcore-16kb-v1-${{ runner.os }}-${{ steps.go.outputs.go-version }}-${{ hashFiles('buildScript/lib/**', 'libcore/**') }}
 
       - name: Build libcore.aar (if cache miss)
         run: |
@@ -129,6 +132,13 @@ jobs:
             echo "libcore.aar restored from 16KB cache"
           fi
           python3 buildScript/verify_native_alignment.py --require-64bit app/libs/libcore.aar
+
+      - name: Save verified 16KB libcore cache
+        if: steps.core_cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: app/libs/libcore.aar
+          key: ${{ steps.core_cache.outputs.cache-primary-key }}
 
       - name: Cache Gradle packages
         uses: actions/cache@v4

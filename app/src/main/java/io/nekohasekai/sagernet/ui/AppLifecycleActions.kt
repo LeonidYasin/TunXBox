@@ -25,7 +25,12 @@ object AppLifecycleActions {
             }
             .setNegativeButton(android.R.string.cancel, null)
             .create().also { dialog ->
-                dialog.setOnShowListener { dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.requestFocus() }
+                dialog.setOnShowListener {
+                    dialog.getButton(AlertDialog.BUTTON_NEGATIVE)?.apply {
+                        isFocusableInTouchMode = true
+                        requestFocus()
+                    }
+                }
                 dialog.show()
             }
     }

@@ -140,6 +140,7 @@ class LaunchRegressionTest {
     }
     @Test @Config(qualifiers = "w390dp-h844dp-port")
     fun portraitTvLaunchKeepsActionOrderAndSystemRotation() {
+        TvUiPreferences.phoneMode = false
         val controller = Robolectric.buildActivity(MainActivityTv::class.java)
         try {
             controller.setup().visible()
@@ -333,10 +334,12 @@ class LaunchRegressionTest {
         try {
             controller.get().supportFragmentManager.executePendingTransactions()
             val dialog=AppLifecycleActions.confirm(controller.get(),false)
+            shadowOf(Looper.getMainLooper()).idle()
             assertTrue(dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE).hasFocus())
             val app=RuntimeEnvironment.getApplication()
             val before=shadowOf(app).broadcastIntents.count { it.action==Action.CLOSE }
             dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).performClick()
+            shadowOf(Looper.getMainLooper()).idle()
             assertTrue(controller.get().isFinishing)
             assertEquals(before,shadowOf(app).broadcastIntents.count { it.action==Action.CLOSE })
         } finally { controller.pause().stop().destroy() }
@@ -360,6 +363,7 @@ class LaunchRegressionTest {
             assertEquals(R.id.nav_restart_app,menu.getItem(menu.size()-2).itemId)
             assertEquals(R.id.nav_close_app,menu.getItem(menu.size()-1).itemId)
             assertTrue(controller.get().onNavigationItemSelected(menu.findItem(R.id.nav_restart_app)))
+            shadowOf(Looper.getMainLooper()).idle()
             val dialog=org.robolectric.shadows.ShadowAlertDialog.getLatestAlertDialog()
             assertTrue(dialog.isShowing);assertTrue(dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE).hasFocus())
             dialog.dismiss()
@@ -375,7 +379,9 @@ class LaunchRegressionTest {
             val app=RuntimeEnvironment.getApplication()
             val before=shadowOf(app).broadcastIntents.count { it.action==Action.CLOSE }
             val dialog=AppLifecycleActions.confirm(controller.get(),true)
+            shadowOf(Looper.getMainLooper()).idle()
             dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).performClick()
+            shadowOf(Looper.getMainLooper()).idle()
             assertEquals(MainActivityTv::class.java.name,PhoenixUiShadow.restarted!!.component!!.className)
             assertEquals(before,shadowOf(app).broadcastIntents.count { it.action==Action.CLOSE })
             assertFalse(TvUiPreferences.phoneMode)
