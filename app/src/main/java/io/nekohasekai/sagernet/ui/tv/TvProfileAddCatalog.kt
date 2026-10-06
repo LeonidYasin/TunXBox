@@ -11,10 +11,12 @@ object TvProfileAddCatalog {
     const val PHONE = -1
     const val URL = -2
     const val MANUAL = -3
+    const val SEND = -4
     fun entries(context: Context): List<ProfileCreationActions.Entry> {
         val menu = ProfileCreationActions.addMenu(context)
         val result = mutableListOf(
-            ProfileCreationActions.Entry(PHONE, context.getString(R.string.tv_import_phone)),
+            ProfileCreationActions.Entry(PHONE, context.getString(R.string.tv_receive_qr)),
+            ProfileCreationActions.Entry(SEND, context.getString(R.string.tv_send_choice)),
             ProfileCreationActions.Entry(URL, context.getString(R.string.tv_url)))
         for (index in 0 until menu.size()) {
             val item = menu.getItem(index)

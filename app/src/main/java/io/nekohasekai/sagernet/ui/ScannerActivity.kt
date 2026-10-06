@@ -165,88 +165,17 @@ class ScannerActivity : ThemedActivity(),
      */
     private suspend fun handleTvTransfer(qrText: String) {
         try {
-            val uri = java.net.URI(qrText)
-            val params = uri.query?.split("&")?.associate {
-                val parts = it.split("=")
-                parts[0] to (parts.getOrNull(1) ?: "")
-            } ?: emptyMap()
-
-            val ip = params["ip"] ?: throw Exception("Missing 'ip' in QR")
-            val port = params["port"]?.toIntOrNull() ?: 8765
-            val session = params["session"] ?: throw Exception("Missing 'session' in QR")
-            io.nekohasekai.sagernet.ui.tv.TransferProtocol.requireLanAddress(ip, port)
-
+            val result = io.nekohasekai.sagernet.ui.tv.TvTransferClient.transfer(qrText, legacyPull = false)
+            if (result.received) importedN.addAndGet(result.count)
             onMainDispatcher {
-                Toast.makeText(app, "📡 Connecting to TV at $ip:$port...", Toast.LENGTH_SHORT).show()
+                Toast.makeText(app, getString(if (result.received) R.string.tv_import_count else R.string.tv_sent_count, result.count), Toast.LENGTH_LONG).show()
             }
 
-            // Collect all profiles from current group
-            val groupId = DataStore.selectedGroup
-            val profiles = io.nekohasekai.sagernet.database.SagerDatabase.proxyDao.getByGroup(groupId)
-
-            val links = profiles.mapNotNull { profile ->
-                try {
-                    val link = profile.toStdLink()
-                    if (link.isNotBlank()) link else null
-                } catch (e: Exception) {
-                    Logs.w("Failed to export profile for TV transfer", e)
-                    null
-                }
-            }
-
-            if (links.isEmpty()) {
-                onMainDispatcher {
-                    Toast.makeText(app, "No profiles to send — current group is empty", Toast.LENGTH_LONG).show()
-                }
-                return
-            }
-
-            // POST profiles to TV server
-            val profilesString = links.joinToString("\n")
-            val jsonBody = org.json.JSONObject().apply {
-                put("profiles", profilesString)
-            }
-
-            val url = java.net.URL("http://$ip:$port/import")
-            val connection = url.openConnection() as java.net.HttpURLConnection
-            connection.requestMethod = "POST"
-            connection.instanceFollowRedirects = false
-            connection.connectTimeout = 10000
-            connection.readTimeout = 10000
-            connection.doOutput = true
-            connection.setRequestProperty("Content-Type", "application/json")
-            connection.setRequestProperty("X-Session-Token", session)
-
-            val payload = jsonBody.toString().toByteArray(Charsets.UTF_8)
-            require(payload.size <= io.nekohasekai.sagernet.ui.tv.TransferProtocol.MAX_BODY_BYTES) { "Profiles exceed 2 MiB" }
-            connection.setFixedLengthStreamingMode(payload.size)
-            val (responseCode, responseBody) = try {
-                connection.outputStream.use { it.write(payload) }
-                val code = connection.responseCode
-                val stream = if (code in 200..299) connection.inputStream else connection.errorStream
-                val body = stream?.use {
-                    String(io.nekohasekai.sagernet.ui.tv.TransferProtocol.readLimited(it), Charsets.UTF_8)
-                } ?: ""
-                code to body
-            } finally {
-                connection.disconnect()
-            }
-
-            if (responseCode == 200) {
-                val responseJson = org.json.JSONObject(responseBody)
-                val imported = responseJson.optInt("imported", links.size)
-                importedN.addAndGet(imported)
-                onMainDispatcher {
-                    Toast.makeText(app, "✅ Sent $imported profile(s) to TV!", Toast.LENGTH_LONG).show()
-                }
-            } else {
-                throw Exception("TV returned HTTP $responseCode: $responseBody")
-            }
-
-        } catch (e: Exception) {
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (e: Exception) {
             Logs.e("TV transfer failed")
             onMainDispatcher {
-                Toast.makeText(app, "❌ Failed to send profiles: ${e.readableMessage}", Toast.LENGTH_LONG).show()
+                Toast.makeText(app, R.string.tv_import_failed, Toast.LENGTH_LONG).show()
             }
             // Allow retry
             finished.set(false)

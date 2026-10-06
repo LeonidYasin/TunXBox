@@ -443,20 +443,17 @@ class ConfigurationFragment @JvmOverloads constructor(
 
     private fun showSendToTvDialog() {
         transferServer?.stop()
-        try {
-            val server = TvTransferServer(allowExport = true)
-            transferServer = server
-            val dialog = QRCodeDialog(server.getAppQrData(),
-                getString(R.string.action_send_to_tv_qr_hint) + "\nTrusted LAN only. Session expires in 10 minutes.")
-            dialog.onDismissCallback = {
-                server.stop()
-                if (transferServer === server) transferServer = null
-            }
-            dialog.showAllowingStateLoss(parentFragmentManager, "send_to_tv_qr")
-        } catch (e: Exception) {
-            transferServer?.stop()
-            transferServer = null
-            android.widget.Toast.makeText(requireContext(), "Transfer unavailable. Check LAN connection and port 8765.", android.widget.Toast.LENGTH_LONG).show()
+        val groupId = DataStore.currentGroupId()
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val payload = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { io.nekohasekai.sagernet.ui.tv.TvGroupTransfer.exportGroup(groupId) }
+                val server = TvTransferServer(allowExport = true, exportProvider = { payload })
+                transferServer = server
+                val dialog = QRCodeDialog(server.getAppQrData(), getString(R.string.tv_send_qr_hint))
+                dialog.onDismissCallback = { server.stop(); if (transferServer === server) transferServer = null }
+                dialog.showAllowingStateLoss(parentFragmentManager, "send_to_tv_qr")
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) { android.widget.Toast.makeText(requireContext(), R.string.tv_group_export_failed, android.widget.Toast.LENGTH_LONG).show() }
         }
     }
 

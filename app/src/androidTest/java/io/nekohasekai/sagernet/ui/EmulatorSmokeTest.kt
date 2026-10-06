@@ -151,4 +151,28 @@ class EmulatorSmokeTest {
         visibleText(text(R.string.add_profile_methods_manual_settings))
         assertTrue(TvUiPreferences.phoneMode)
     }
+    @Test fun receiveQrScreenRemainsReachableFromTopAdd() {
+        startTv(); openTopAdd()
+        visibleText(text(R.string.tv_receive_qr)).click()
+        visibleText(text(R.string.tv_qr_title))
+        visibleText(text(R.string.tv_qr_ready))
+        assertFalse(device.hasObject(By.text(text(R.string.tv_send_qr_title))))
+    }
+    @Test fun wholeGroupTransfersOverRealAuthenticatedLanHttp() = runBlocking {
+        val source = io.nekohasekai.sagernet.database.GroupManager.createGroup(io.nekohasekai.sagernet.database.ProxyGroup(name="Emulator group"))
+        repeat(2) { index ->
+            io.nekohasekai.sagernet.database.ProfileManager.createProfile(source.id,
+                io.nekohasekai.sagernet.fmt.socks.SOCKSBean().apply { initializeDefaultValues(); name="Offline $index"; serverAddress="127.0.0.1"; serverPort=1080+index })
+        }
+        val payload = io.nekohasekai.sagernet.ui.tv.TvGroupTransfer.exportGroup(source.id)
+        val server = io.nekohasekai.sagernet.ui.tv.TvTransferServer(allowExport=true, exportProvider={payload})
+        try {
+            val result = io.nekohasekai.sagernet.ui.tv.TvTransferClient.transfer(server.getAppQrData(), legacyPull=false)
+            assertTrue(result.received); assertEquals(2,result.count)
+            assertNotEquals(source.id,DataStore.selectedGroup)
+            assertEquals(2,SagerDatabase.proxyDao.getByGroup(DataStore.selectedGroup).size)
+        } finally { server.stop() }
+        startTv()
+    }
+
 }

@@ -53,6 +53,12 @@ class ModeSelectionActivity : ComponentActivity() {
                     }
                 }
                 setOnClickListener { choose(phone) }
+                // A focusable-in-touch-mode View otherwise consumes the first tap only for focus.
+                setOnTouchListener { clicked, event ->
+                    if (event.actionMasked == android.view.MotionEvent.ACTION_UP) {
+                        clicked.performClick(); true
+                    } else false
+                }
             }
             card.addView(text(getString(title), 22f, Color.WHITE))
             card.addView(text(getString(description), 16f, 0xFFCBD5E1.toInt()), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(8) })

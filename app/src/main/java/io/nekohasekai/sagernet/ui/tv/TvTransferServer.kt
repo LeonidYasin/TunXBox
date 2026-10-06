@@ -21,7 +21,9 @@ class TvTransferServer(
     private val allowExport: Boolean = false,
     private val bindAddress: String = findLanAddress(),
     private val profilesImporter: suspend (String) -> Int = TvProfileImporter::importProfiles,
-    private val subscriptionImporter: suspend (String) -> Int = TvProfileImporter::importSubscription
+    private val subscriptionImporter: suspend (String) -> Int = TvProfileImporter::importSubscription,
+    private val exportProvider: suspend () -> TransferExport = { TvGroupTransfer.exportGroup(DataStore.currentGroupId()) },
+    private val onExportProvided: ((Int) -> Unit)? = null
 ) : NanoHTTPD(bindAddress, PORT) {
     private val sessionToken = TransferProtocol.newToken()
     private val startedNanos = System.nanoTime()
@@ -78,19 +80,23 @@ class TvTransferServer(
             if (!allowExport) return error(Response.Status.FORBIDDEN, "Export is disabled on this receiver")
             return handleExport()
         }
-        if (session.uri == "/import" && session.method == Method.POST) return handleImport(session)
+        if (session.uri == "/import" && session.method == Method.POST) {
+            if (allowExport) return error(Response.Status.FORBIDDEN, "Import is disabled on this sender")
+            return handleImport(session)
+        }
         return error(Response.Status.METHOD_NOT_ALLOWED, "Method not allowed")
     }
 
     private fun handleExport(): Response = try {
-        val profiles = runBlocking { SagerDatabase.proxyDao.getByGroup(DataStore.selectedGroup) }
-        val links = profiles.mapNotNull {
-            try { it.toStdLink().takeIf(String::isNotBlank) } catch (_: Exception) { null }
-        }
-        val json = JSONObject().put("status", "ok").put("profiles", links.joinToString("\n")).put("count", links.size)
+        val payload = runBlocking { exportProvider() }
+        require(payload.count > 0 && payload.profiles.isNotBlank())
+        val json = JSONObject().put("status", "ok").put("profiles", payload.profiles).put("count", payload.count)
         if (json.toString().toByteArray(Charsets.UTF_8).size > TransferProtocol.MAX_BODY_BYTES) {
             error(Response.Status.PAYLOAD_TOO_LARGE, "Profiles exceed 2 MiB. Transfer a smaller group.")
-        } else reply(Response.Status.OK, json.toString())
+        } else {
+            onExportProvided?.invoke(payload.count)
+            reply(Response.Status.OK, json.toString())
+        }
     } catch (_: Exception) {
         error(Response.Status.INTERNAL_ERROR, "Could not export profiles")
     }
@@ -139,9 +145,9 @@ class TvTransferServer(
 
     fun getSessionToken(): String = sessionToken
     fun getLocalIpAddress(): String = bindAddress
-    fun getAppQrData(): String = "tunxbox://transfer?ip=$bindAddress&port=$PORT&session=$sessionToken"
+    fun getAppQrData(): String = "tunxbox://transfer?ip=$bindAddress&port=$PORT&session=$sessionToken&mode=${if (allowExport) "export" else "import"}"
     // Fragment stays in the browser: it is not sent in HTTP requests or Referer headers.
-    fun getBrowserQrData(): String = "http://$bindAddress:$PORT/#session=$sessionToken"
+    fun getBrowserQrData(): String = "http://$bindAddress:$PORT/#session=$sessionToken&mode=${if (allowExport) "export" else "import"}"
 
     companion object {
         const val PORT = 8765

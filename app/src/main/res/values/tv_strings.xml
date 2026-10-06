@@ -67,10 +67,10 @@
     <string name="tv_qr_failed">Cannot start transfer. Connect to Wi-Fi/Ethernet; check port 8765.</string>
     <string name="tv_qr_received">Imported profiles: %1$d. You can close this screen.</string>
     <string name="tv_qr_address">LAN address: %1$s:%2$d</string>
-    <string name="tv_qr_native_hint">On phone: TunXBox → Phone mode → + → Scan QR. Sends the current group.\nTrusted LAN only: HTTP is not encrypted.</string>
+    <string name="tv_qr_native_hint">On phone: TunXBox → Phone mode → + → Scan QR. Sends the current group. Use the new TunXBox version on both devices.\nTrusted LAN only: HTTP is not encrypted.</string>
     <string name="tv_qr_browser_hint">Scan with your phone camera → browser → paste configuration, upload a file or enter a subscription. No phone app required.\nBoth devices must be on the same trusted LAN. HTTP is not encrypted.</string>
     <string name="tv_scan_title">Scan QR code</string>
-    <string name="tv_scan_hint">Point camera at QR to import a profile</string>
+    <string name="tv_scan_hint">Scan a QR shown by another device/app, or choose a QR image.</string>
     <string name="tv_scan_flash">Toggle flashlight</string>
     <string name="tv_scan_image">Import QR from image</string>
     <string name="tv_scan_close">Close scanner</string>
@@ -79,4 +79,13 @@
     <string name="tv_qr_back_hint">Back: close QR</string>
     <string name="tv_qr_refresh">New pairing session</string>
     <string name="tv_qr_expired">Session expired. Choose New pairing session to display a fresh QR.</string>
+    <string name="tv_receive_qr">Receive profile / group — show QR</string>
+    <string name="tv_send_choice">Send profile / group — show QR</string>
+    <string name="tv_send_group_qr">Send current group — show QR</string>
+    <string name="tv_send_profile_qr">Send selected profile — show QR</string>
+    <string name="tv_send_qr_title">Send current group to another device</string>
+    <string name="tv_send_qr_hint">On the receiving device: TunXBox → + → Scan QR / image. This QR sends the whole current group, including its profiles and internal chains. Both devices need the new TunXBox version and the same trusted LAN. HTTP is not encrypted. Session expires in 10 minutes; closing this screen stops sharing.</string>
+    <string name="tv_sent_count">Sent profiles: %1$d</string>
+    <string name="tv_export_provided">Provided %1$d profiles for import. Check the result on the receiving device.</string>
+    <string name="tv_group_export_failed">Cannot export the whole group. Check that it is not empty and has no references to profiles outside this group, or use a full backup.</string>
 </resources>

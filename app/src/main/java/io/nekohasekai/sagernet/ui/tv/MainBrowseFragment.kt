@@ -473,12 +473,30 @@ class MainBrowseFragment : BrowseSupportFragment() {
         requestSnapshot()
     }
     private fun showPhoneImport() { parentFragmentManager.beginTransaction().replace(R.id.tv_container, QrCodeTransferFragment()).addToBackStack("phone_import").commit() }
+    private fun showSendMethods() {
+        val options = arrayOf(R.string.tv_send_group_qr, R.string.tv_send_profile_qr)
+        show(AlertDialog.Builder(requireContext()).setTitle(R.string.tv_send_choice)
+            .setItems(options.map { getString(it) }.toTypedArray()) { _, index ->
+                if (index == 0) {
+                    parentFragmentManager.beginTransaction().replace(R.id.tv_container, QrCodeTransferFragment().apply {
+                        arguments = Bundle().apply { putBoolean("outgoing", true); putLong("group_id", DataStore.currentGroupId()) }
+                    }).addToBackStack("send_group").commit()
+                } else if (DataStore.selectedProxy <= 0) toast(R.string.tv_choose_profile)
+                else launchWork {
+                    val entity = withContext(Dispatchers.IO) { ProfileManager.getProfile(DataStore.selectedProxy) }
+                    val link = withContext(Dispatchers.IO) { runCatching { entity?.toStdLink().orEmpty() }.getOrDefault("") }
+                    if (link.isBlank() || entity?.haveLink() != true) toast(R.string.tv_share_unsupported)
+                    else QRCodeDialog(link, entity.displayName().orEmpty()).show(parentFragmentManager, "send_profile_qr")
+                }
+            }.setNegativeButton(android.R.string.cancel, null))
+    }
     private fun showImportMethods() {
         val entries = TvProfileAddCatalog.entries(requireContext())
         show(AlertDialog.Builder(requireContext()).setTitle(R.string.add_profile)
             .setItems(entries.map { it.title }.toTypedArray()) { _, index ->
                 when (entries[index].id) {
                     TvProfileAddCatalog.PHONE -> showPhoneImport()
+                    TvProfileAddCatalog.SEND -> showSendMethods()
                     TvProfileAddCatalog.URL -> showUrlImport()
                     R.id.action_import_clipboard -> {
                         val text = SagerNet.getClipboardText()

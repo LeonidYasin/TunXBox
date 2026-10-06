@@ -307,23 +307,8 @@ class TvScannerFragment : Fragment(), CameraScan.OnScanResultCallback {
      */
     private suspend fun handleTvTransfer(qrText: String): Boolean {
         return try {
-            val uri = java.net.URI(qrText)
-            val params = uri.query?.split("&")?.associate { val parts = it.split("=", limit = 2); parts[0] to parts.getOrElse(1) { "" } } ?: emptyMap()
-            val ip = params["ip"] ?: error("Missing LAN address")
-            val port = params["port"]?.toIntOrNull() ?: TvTransferServer.PORT
-            val token = params["session"] ?: error("Missing pairing token")
-            TransferProtocol.requireLanAddress(ip, port)
-            val connection = java.net.URL("http://$ip:$port/export").openConnection() as java.net.HttpURLConnection
-            val response = try {
-                connection.requestMethod = "GET"; connection.instanceFollowRedirects = false
-                connection.connectTimeout = 10000; connection.readTimeout = 10000
-                connection.setRequestProperty("X-Session-Token", token)
-                require(connection.responseCode in 200..299)
-                connection.inputStream.use { String(TransferProtocol.readLimited(it), Charsets.UTF_8) }
-            } finally { connection.disconnect() }
-            val data = org.json.JSONObject(response).optString("profiles", "")
-            val imported = TvProfileImporter.importProfiles(data)
-            onMainDispatcher { Toast.makeText(requireContext(), getString(R.string.tv_import_count, imported), Toast.LENGTH_LONG).show() }
+            val result = TvTransferClient.transfer(qrText, legacyPull = true)
+            onMainDispatcher { Toast.makeText(requireContext(), getString(if (result.received) R.string.tv_import_count else R.string.tv_sent_count, result.count), Toast.LENGTH_LONG).show() }
             true
         } catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) {

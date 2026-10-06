@@ -126,3 +126,11 @@ TV сохраняет Leanback: короткая основная полоса, 
 - LAN pairing is opened only after explicitly choosing phone import. Existing file size/security/subscription rules are unchanged.
 - Added 8 automated regressions for top/empty chooser parity, populated groups, explicit QR navigation, all manual editor routes, phone + and localization. Physical remote/file-picker/editor acceptance is still required before merge.
 - Direct Happ/Incy migration is not claimed; app-specific export compatibility needs a separately scoped change.
+
+
+### Explicit QR receive/send and complete group snapshot
+- Add profile includes visibly separate Receive — show QR, Send profile/group — show QR, and Scan QR/image actions. The receiving browser/QR/success UI is retained.
+- Sending offers selected profile (standard QR) or whole current group (authenticated LAN QR). The same group sender is available from phone +. Both scanners honor explicit import/export direction; old directionless QR keeps its old device-specific meaning.
+- Full group snapshot preserves all profile beans, name, selector/front/landing and remaps internal chain profile IDs atomically to new IDs. It creates a basic copy, not a subscription/global-settings backup. Unsupported external references or cyclic chains are rejected before sharing; no profile is silently omitted.
+- Group count, 2MiB transmitted/decompressed limits, token, expiry, private-LAN-only addresses and redirect restrictions remain enforced. Receiving sessions cannot export; sending sessions cannot import. GET only means data was provided, not that remote import succeeded; UI states this correctly.
+- Both devices should use the new version for group snapshots. Physical two-device acceptance remains required before merge.

@@ -403,7 +403,7 @@ class LaunchRegressionTest {
             click.onItemClicked(null, add, null, row)
             shadowOf(Looper.getMainLooper()).idle()
             val first = org.robolectric.shadows.ShadowAlertDialog.getLatestAlertDialog()
-            assertTrue(first.isShowing); assertEquals(6, first.listView.adapter.count)
+            assertTrue(first.isShowing); assertEquals(7, first.listView.adapter.count)
             val firstLabels = (0 until first.listView.adapter.count).map { first.listView.adapter.getItem(it).toString() }
             assertSame(fragment, activity.supportFragmentManager.findFragmentById(R.id.tv_container))
             first.dismiss(); shadowOf(Looper.getMainLooper()).idle()
@@ -482,6 +482,49 @@ class LaunchRegressionTest {
                 assertEquals(expected.getBooleanExtra("vless", false), actual.getBooleanExtra("vless", false))
             }
         } finally { controller.pause().stop().destroy() }
+    }
+
+    @Test fun completeGroupRoundTripRemapsInternalChainsWithoutDroppingProfiles() = kotlinx.coroutines.runBlocking {
+        val source = io.nekohasekai.sagernet.database.GroupManager.createGroup(io.nekohasekai.sagernet.database.ProxyGroup(name="Group roundtrip",isSelector=true))
+        val originals = (0..1).map { index -> io.nekohasekai.sagernet.database.ProfileManager.createProfile(source.id,
+            io.nekohasekai.sagernet.fmt.socks.SOCKSBean().apply { initializeDefaultValues(); name="Profile $index"; serverPort=1080+index }) }
+        io.nekohasekai.sagernet.database.ProfileManager.createProfile(source.id,
+            io.nekohasekai.sagernet.fmt.internal.ChainBean().apply { initializeDefaultValues(); proxies=originals.map { it.id } })
+        source.frontProxy=originals[0].id
+        io.nekohasekai.sagernet.database.SagerDatabase.groupDao.updateGroup(source)
+        val snapshot=io.nekohasekai.sagernet.ui.tv.TvGroupTransfer.exportGroup(source.id)
+        assertEquals(3,snapshot.count)
+        assertEquals(3,io.nekohasekai.sagernet.ui.tv.TvProfileImporter.importProfiles(snapshot.profiles))
+        val target=io.nekohasekai.sagernet.database.DataStore.currentGroup()
+        assertNotEquals(source.id,target.id);assertEquals(source.name,target.name);assertTrue(target.isSelector)
+        val profiles=io.nekohasekai.sagernet.database.SagerDatabase.proxyDao.getByGroup(target.id)
+        assertEquals(3,profiles.size)
+        val socks=profiles.filter { it.socksBean!=null }
+        assertEquals(socks.map { it.id },profiles.single { it.chainBean!=null }.chainBean!!.proxies)
+        assertEquals(socks[0].id,target.frontProxy)
+        assertTrue(socks.none { it.id in originals.map { old -> old.id } })
+    }
+    @Test fun groupExportRejectsExternalDependenciesRatherThanSilentlySkippingThem() = kotlinx.coroutines.runBlocking {
+        val group=io.nekohasekai.sagernet.database.GroupManager.createGroup(io.nekohasekai.sagernet.database.ProxyGroup(name="External"))
+        io.nekohasekai.sagernet.database.ProfileManager.createProfile(group.id,
+            io.nekohasekai.sagernet.fmt.internal.ChainBean().apply { initializeDefaultValues(); proxies=listOf(Long.MAX_VALUE) })
+        try { io.nekohasekai.sagernet.ui.tv.TvGroupTransfer.exportGroup(group.id);fail("Must refuse incomplete group") }
+        catch (_:IllegalArgumentException) { }
+    }
+    @Test fun malformedGroupCannotCreatePartialGroup() = kotlinx.coroutines.runBlocking {
+        val before=io.nekohasekai.sagernet.database.SagerDatabase.groupDao.allGroups().size
+        val malformed=org.json.JSONObject().put("tunxbox_group",1).put("profiles",org.json.JSONArray().put(
+            org.json.JSONObject().put("sourceId",1).put("link","sn://socks?invalid"))).toString()
+        try { io.nekohasekai.sagernet.ui.tv.TvGroupTransfer.importGroup(malformed);fail("Must reject invalid profile") }
+        catch (_:Exception) { }
+        assertEquals(before,io.nekohasekai.sagernet.database.SagerDatabase.groupDao.allGroups().size)
+    }
+    @Test fun exportedGroupHasExplicitSendModeAndReceiverQrKeepsImportMode() {
+        val receiver=io.nekohasekai.sagernet.ui.tv.TvTransferServer(bindAddress="127.0.0.1")
+        try { assertEquals("import",android.net.Uri.parse(receiver.getAppQrData()).getQueryParameter("mode")) } finally { receiver.stop() }
+        val sender=io.nekohasekai.sagernet.ui.tv.TvTransferServer(bindAddress="127.0.0.1",allowExport=true,
+            exportProvider={io.nekohasekai.sagernet.ui.tv.TransferExport("socks://127.0.0.1:1080",1)})
+        try { assertEquals("export",android.net.Uri.parse(sender.getAppQrData()).getQueryParameter("mode")) } finally { sender.stop() }
     }
 
 }

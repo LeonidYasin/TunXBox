@@ -201,9 +201,9 @@ class RemoteUiTest {
             .filter { it.isVisible && it.itemId != R.id.action_send_to_tv }
             .map { if (it.hasSubMenu()) TvProfileAddCatalog.MANUAL else it.itemId }.toSet()
         val ids = TvProfileAddCatalog.entries(context).map { it.id }
-        assertEquals(expected + setOf(TvProfileAddCatalog.PHONE, TvProfileAddCatalog.URL), ids.toSet())
+        assertEquals(expected + setOf(TvProfileAddCatalog.PHONE, TvProfileAddCatalog.URL, TvProfileAddCatalog.SEND), ids.toSet())
         assertEquals(ids.size, ids.distinct().size)
-        assertEquals(6, ids.size)
+        assertEquals(7, ids.size)
     }
     @Test fun allSeventeenPhoneManualEditorsHaveSharedExplicitIntents() {
         val context = activity()

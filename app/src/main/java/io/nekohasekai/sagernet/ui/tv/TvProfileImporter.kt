@@ -21,6 +21,7 @@ import io.nekohasekai.sagernet.group.RawUpdater
 object TvProfileImporter {
     suspend fun importProfiles(text: String): Int {
         require(text.toByteArray(Charsets.UTF_8).size <= TransferProtocol.MAX_BODY_BYTES) { "Configuration too large" }
+        if (TvGroupTransfer.isGroup(text)) return TvGroupTransfer.importGroup(text)
         if (TransferImportInput.isSubscription(text)) return importSubscription(text)
         val proxies = try { RawUpdater.parseRaw(text) }
         catch (subscription: SubscriptionFoundException) { return importSubscription(subscription.link) }

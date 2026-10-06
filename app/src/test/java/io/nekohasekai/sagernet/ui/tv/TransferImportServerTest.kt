@@ -80,4 +80,33 @@ class TransferImportServerTest {
         start(); val result = post(JSONObject().put("profiles", "https://example.invalid/sub"), "wrong")
         assertEquals(403, result.first); assertEquals(0, profileCalls + subscriptionCalls)
     }
+    @Test fun receiverDoesNotExposeProfilesThroughExport() {
+        start()
+        val connection=URL("http://127.0.0.1:${TvTransferServer.PORT}/export").openConnection() as HttpURLConnection
+        try { connection.setRequestProperty("X-Session-Token",server!!.getSessionToken());assertEquals(403,connection.responseCode) }
+        finally { connection.disconnect() }
+    }
+    @Test fun exportServerProvidesEntireInjectedGroupButRejectsImport() {
+        val text="socks://127.0.0.1:1080#One\nsocks://127.0.0.1:1081#Two"
+        server=TvTransferServer(bindAddress="127.0.0.1",allowExport=true,exportProvider={TransferExport(text,2)})
+        val connection=URL("http://127.0.0.1:${TvTransferServer.PORT}/export").openConnection() as HttpURLConnection
+        try {
+            connection.setRequestProperty("X-Session-Token",server!!.getSessionToken())
+            assertEquals(200,connection.responseCode)
+            val result=JSONObject(connection.inputStream.bufferedReader().use { it.readText() })
+            assertEquals(2,result.getInt("count"));assertEquals(text,result.getString("profiles"))
+        } finally { connection.disconnect() }
+        assertEquals(403,post(JSONObject().put("profiles","profile")).first)
+    }
+    @Test fun explicitQrDirectionsOverrideDeviceSpecificLegacyDefaults() {
+        val base="tunxbox://transfer?ip=192.168.1.2&port=8765&session="+"a".repeat(64)
+        for(legacy in listOf(false,true)) {
+            assertTrue(TvTransferClient.parse(base+"&mode=export",legacy).pull)
+            assertFalse(TvTransferClient.parse(base+"&mode=import",legacy).pull)
+            assertEquals(legacy,TvTransferClient.parse(base,legacy).pull)
+        }
+        try { TvTransferClient.parse(base+"&mode=invalid",false);fail("Unknown direction must fail closed") }
+        catch (_:IllegalStateException) { }
+    }
+
 }

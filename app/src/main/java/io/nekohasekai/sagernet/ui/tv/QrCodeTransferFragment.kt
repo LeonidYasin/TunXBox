@@ -25,6 +25,8 @@ class QrCodeTransferFragment : Fragment() {
     private var transferServer: TvTransferServer? = null
     private var qrJob: Job? = null
     private var expiryJob: Job? = null
+    private val outgoing get() = arguments?.getBoolean("outgoing", false) == true
+    private var exportPayload: TransferExport? = null
     private var appQr = false
     private var qrSize = 400
     private var receivedCount = 0
@@ -39,7 +41,7 @@ class QrCodeTransferFragment : Fragment() {
         qrSize = if (stacked) minOf((metrics.widthPixels * 0.72f).toInt(), (metrics.heightPixels * 0.38f).toInt()).coerceAtLeast(96)
             else minOf(((metrics.heightPixels - dp(128)) * 0.7f).toInt(), (metrics.widthPixels * 0.4f).toInt()).coerceAtLeast(160)
         val left = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER }
-        left.addView(TextView(context).apply { setText(R.string.tv_qr_title); textSize = 24f; setTextColor(Color.WHITE); gravity = Gravity.CENTER; maxLines = 2 })
+        left.addView(TextView(context).apply { setText(if (outgoing) R.string.tv_send_qr_title else R.string.tv_qr_title); textSize = 24f; setTextColor(Color.WHITE); gravity = Gravity.CENTER; maxLines = 2 })
         qrImageView = ImageView(context).apply { layoutParams = LinearLayout.LayoutParams(qrSize, qrSize).apply { topMargin = dp(12) }; scaleType = ImageView.ScaleType.FIT_CENTER; importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO }
         left.addView(qrImageView)
         ipText = TextView(context).apply { textSize = 16f; setTextColor(0xFF67E8F9.toInt()); gravity = Gravity.CENTER; maxLines = 2 }
@@ -59,6 +61,7 @@ class QrCodeTransferFragment : Fragment() {
         toggle.nextFocusDownId = renew.id; renew.nextFocusUpId = toggle.id
         renew.nextFocusDownId = close.id; close.nextFocusUpId = renew.id
         right.addView(toggle); right.addView(renew); right.addView(close)
+        if (outgoing) toggle.visibility = View.GONE
         val controls = ScrollView(context).apply { addView(right); isFocusable = false }
         return LinearLayout(context).apply {
             orientation = if (stacked) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
@@ -71,11 +74,27 @@ class QrCodeTransferFragment : Fragment() {
             }
         }
     }
-    override fun onStart() { super.onStart(); if (receivedCount > 0) acknowledgeImport(receivedCount) else { startSession(); toggle.requestFocus() } }
+    override fun onStart() {
+        super.onStart()
+        if (outgoing) {
+            appQr = true
+            qrJob = viewLifecycleOwner.lifecycleScope.launch {
+                try {
+                    exportPayload = withContext(Dispatchers.IO) { TvGroupTransfer.exportGroup(requireArguments().getLong("group_id")) }
+                    startSession()
+                } catch (cancelled: CancellationException) { throw cancelled }
+                catch (_: Exception) { statusText.setText(R.string.tv_group_export_failed) }
+            }
+        } else if (receivedCount > 0) acknowledgeImport(receivedCount) else { startSession(); toggle.requestFocus() }
+    }
     private fun startSession() {
         qrJob?.cancel(); expiryJob?.cancel(); transferServer?.stop(); transferServer = null
+        if (outgoing && exportPayload == null) return
         try {
             transferServer = TvTransferServer(
+                allowExport = outgoing,
+                exportProvider = { requireNotNull(exportPayload) },
+                onExportProvided = { count -> view?.post { if (view != null) statusText.text = getString(R.string.tv_export_provided, count) } },
                 onImportSuccess = { count -> android.os.Handler(android.os.Looper.getMainLooper()).post { if (isAdded && view != null) acknowledgeImport(count) } },
                 onImportError = { _ -> view?.post { if (view != null) { statusText.setText(R.string.tv_import_failed); statusText.setTextColor(0xFFFCA5A5.toInt()) } } }
             )
@@ -109,7 +128,7 @@ class QrCodeTransferFragment : Fragment() {
         val server = transferServer ?: return
         val data = if (appQr) server.getAppQrData() else server.getBrowserQrData()
         ipText.text = getString(R.string.tv_qr_address, server.getLocalIpAddress(), TvTransferServer.PORT)
-        hintText.setText(if (appQr) R.string.tv_qr_native_hint else R.string.tv_qr_browser_hint)
+        hintText.setText(if (outgoing) R.string.tv_send_qr_hint else if (appQr) R.string.tv_qr_native_hint else R.string.tv_qr_browser_hint)
         qrJob?.cancel()
         qrJob = viewLifecycleOwner.lifecycleScope.launch {
             val bitmap = withContext(Dispatchers.Default) {

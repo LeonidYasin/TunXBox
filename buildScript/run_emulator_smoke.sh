@@ -37,5 +37,5 @@ for path in paths:
     root=ET.parse(path).getroot()
     for key in totals: totals[key]+=int(root.get(key,'0'))
 print('Emulator instrumentation summary:',totals)
-assert totals['tests']==6 and all(totals[key]==0 for key in ('failures','errors','skipped')), 'Missing or unsuccessful device tests'
+assert totals['tests']==8 and all(totals[key]==0 for key in ('failures','errors','skipped')), 'Missing or unsuccessful device tests'
 PYTEST
