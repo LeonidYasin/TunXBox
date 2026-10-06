@@ -3,7 +3,7 @@
 ## Import without typing with a remote
 
 1. Connect TV and phone/computer to the same trusted Wi-Fi/Ethernet network.
-2. On TV choose **Import from phone**.
+2. On TV choose **Add profile → Receive profile / group — show QR**.
 3. Scan the browser QR using the phone camera. No TunXBox installation is needed on the phone.
 4. Paste profile links or configuration text, select a configuration file, or enter an HTTP(S) subscription URL. Submit only one input type.
 5. Press **Send to TV**, check the imported count, and close the TV transfer screen.
@@ -31,7 +31,7 @@ The QR screen keeps the code beside its controls. New pairing session invalidate
 - Browser tokens use a URL fragment and request header, not a query sent to the server. Wildcard CORS is disabled; Host/Origin checks prevent browser cross-origin access and DNS rebinding.
 - Payloads are limited to 2 MiB; requests require JSON and Content-Length. Partial body reads are completed, truncated bodies rejected, and secrets are not written by the transfer server to logs.
 - Imported configuration files use the upstream parser: profiles/outbounds are imported, not every routing rule or global app preference. Subscription URLs create persistent subscription groups with the upstream updater.
-- Ordinary launcher entries first show a TV / Smartphone picker without loading either main interface. The last explicit choice is remembered as initial focus, not an automatic skip. Deep-link imports retain the upstream mobile handler without changing the saved mode. TV mode follows system auto-rotation on phones; actual televisions retain their natural orientation. Main actions are Smartphone → Group → Connect → Import from phone.
+- Ordinary launcher entries first show a TV / Smartphone picker without loading either main interface. The last explicit choice is remembered as initial focus, not an automatic skip. Deep-link imports retain the upstream mobile handler without changing the saved mode. TV mode follows system auto-rotation on phones; actual televisions retain their natural orientation. Main actions are Connect → Group → Add profile → Smartphone.
 
 ## Regression checklist
 
@@ -59,3 +59,15 @@ TV tools include TCP/URL group tests, saved results and latency sorting. The Con
 All functions uses the same navigation-menu source as the phone. Groups, routes, chain entries and custom asset files now have visible action menus for operations previously requiring swipe/drag. Menu/Info opens row/preference extra actions. Shared full editors are retained to avoid losing protocol/options coverage; this is not a separate Leanback copy of every form.
 
 See [signing and updates](signing-and-updates.md) for the one-time private signing setup and legacy-key migration. Do not interpret a successful check-only run as publication of a final APK.
+
+
+## Explicit receive/send QR and whole-group copies
+
+The Add profile menu includes **Receive profile / group — show QR**, **Send profile / group — show QR**, and **Scan QR / image** as separate actions. The original receiving QR/browser page and receipt banner remain available.
+
+- Receive shows a QR on the receiving TV; the phone browser can upload text/file/subscription, or a TunXBox scanner sends its current group.
+- Send offers a standard QR for the selected profile or a temporary LAN QR serving the entire current group. The receiver runs TunXBox Scan QR (camera or image); the explicit URI direction makes it pull instead of mistakenly push. Phone + also exposes the whole-group sender.
+- Update both devices for new group snapshots. The received group is a new basic copy of profile beans/order/internal chains and group selector/front/landing references, not global settings or subscription update credentials. IDs are remapped in a single transaction. External dependencies, cyclic chains, invalid types, empty/oversized groups fail as a whole; no silently skipped profiles. Use full backup for wider migrations.
+- A sender reporting data provided for import is not claiming the remote import completed. Verify the receiving count. Sending sessions reject imports; receiving sessions reject exports.
+
+[Project mind map](project-map.md) · [Scenarios](scenarios.md) · [Architecture](architecture.md) · [Security](security.md)

@@ -4,6 +4,7 @@ TunXBox is an Android TV / phone client based on the open-source NekoBox project
 
 - **TunXBox downloads:** [current preview APKs](https://github.com/LeonidYasin/TunXBox/releases/tag/v1.5.0-rc).
 - **TunXBox issues:** [report a problem](https://github.com/LeonidYasin/TunXBox/issues).
+- **Project documentation and complete mind map:** [docs/README.md](docs/README.md) · [project map](docs/project-map.md).
 - **TV / local transfer guide:** [docs/tv-transfer.md](docs/tv-transfer.md).
 - **APK signing and updates:** [docs/signing-and-updates.md](docs/signing-and-updates.md).
 - `SHA256SUMS.txt` verifies downloaded APK bytes; it is not an Android installer or a replacement for the APK signing certificate.

@@ -153,6 +153,9 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      - name: Check project documentation
+        run: python3 buildScript/check_project_docs.py
+
       - name: Test browser transfer page
         run: node buildScript/test_tv_transfer_page.cjs
 
