@@ -327,7 +327,7 @@ jobs:
           fi
           gh release download "v${VERSION}-rc" --pattern apk-manifest.json --dir previous-rc
           python3 buildScript/verify_update.py previous-rc/apk-manifest.json dist/apk-manifest.json
-          NOTES="$(cat docs/releases/1.5.0.md)
+          NOTES="$(cat "docs/releases/${VERSION}.md")
 
           Source commit: $BUILD_SHA
           Installed version: $VERSION

@@ -23,8 +23,8 @@ flowchart TD
 | ID | Этап | Статус | Граница / Definition of Done |
 |---|---|---|---|
 | R0 | Принять TV/Phone, QR/LAN, документацию | Завершён | PR #1 merged; пользователь проверил rc.106; CI успешен |
-| R1 | Выпустить стабильную 1.5.0 | В подготовке | Source из master; versionName без rc; постоянный signer/package; versionCode > rc.106; все проверки; три реальных APK; публичный immutable v1.5.0; release notes/manifest/SHA256; установка поверх RC |
-| R2 | Аудит старых веток | План | Сохранить refs; сравнить реальные trees с master; составить список unique/duplicate/obsolete; не считать ahead_by числом новых функций после squash |
+| R1 | Выпустить стабильную 1.5.0 | Завершён: [v1.5.0](https://github.com/LeonidYasin/TunXBox/releases/tag/v1.5.0), [CI](https://github.com/LeonidYasin/TunXBox/actions/runs/37516999482) | Source из master; versionName без rc; постоянный signer/package; versionCode > rc.106; все проверки; три реальных APK; публичный immutable v1.5.0; release notes/manifest/SHA256; установка поверх RC |
+| R2 | Аудит старых веток | Первичный статический аудит выполнен; [находки и следующий scope](branch-audit.md) | Сохранить refs; сравнить реальные trees с master; составить список unique/duplicate/obsolete; не считать ahead_by числом новых функций после squash |
 | R3 | Поиск прокси в LAN | План | Оценить обе discovery ветки вместе; один согласованный design; явный opt-in/область сканирования/timeout/cancel; безопасное хранение; TV/Phone; unit/device/network fixtures |
 | R4 | Актуальные TV исправления | Условно | Взять только ещё воспроизводимые проблемы; не заменять новый UI старой реализацией; при отсутствии unique fixes закрыть направление как redundant |
 | R5 | Живость туннеля и failover | План, отдельный PR | End-to-end check, не просто TCP/Connected; несколько неуспехов, cooldown/hysteresis, отмена, подходящая группа/ручной override, без reconnect loop; tests Wi-Fi change/background/all-down/recovery |
@@ -66,6 +66,12 @@ flowchart TD
 | [#64](https://github.com/LeonidYasin/mcp-server/issues/64) | Atomic update_tag и управление existing releases |
 | [#65](https://github.com/LeonidYasin/mcp-server/issues/65) | Уважать max_files и ограничения ответа compare |
 | [#66](https://github.com/LeonidYasin/mcp-server/issues/66) | Repository Actions secrets: metadata/encrypted writes, без раскрытия values |
+
+## Факт выпуска 1.5.0
+
+Опубликована из immutable source `7e230f24`; versionName **1.5.0**, versionCode **47 999 999**. Сертификат и package совпадают с rc.106. Финальный полный CI: 125 JVM, 15 browser, 31 Python (без повторного подсчёта packaging), 8/8 OSS Android 4KB и 8/8 OSS Android 16KB. Все три публичных APK независимо скачаны и проверены по SHA256/size/ABI/Content-Disposition. Первый publication attempt блокировал системный ANR Pixel Launcher; повтор на чистом runner прошёл без изменения source или отключения checks. Это не сертификат каждого физического OEM/provider. Stable APK ещё требует обычной пользовательской эксплуатации; ручная приёмка rc.106 не выдаётся за отдельное физическое тестирование stable flavor.
+
+Результаты статического аудита не разрешают автоматически переносить/мержить старые ветки. Discovery implementation и failover остаются планами.
 
 ## Обновление плана
 

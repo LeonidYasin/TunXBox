@@ -8,7 +8,7 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **653**.
+Всего tracked файлов: **654**.
 
 | Раздел | Файлов |
 |---|---|
@@ -193,7 +193,7 @@
 | `app/src/test` | 11 |
 | `buildScript` | 24 |
 | `buildSrc` | 2 |
-| `docs` | 17 |
+| `docs` | 18 |
 | `gradle` | 2 |
 | `libcore` | 42 |
 | `Корень` | 15 |
@@ -1322,6 +1322,7 @@
 
 - [`docs/README.md`](../../docs/README.md)
 - [`docs/architecture.md`](../../docs/architecture.md)
+- [`docs/branch-audit.md`](../../docs/branch-audit.md)
 - [`docs/decisions.md`](../../docs/decisions.md)
 - [`docs/development.md`](../../docs/development.md)
 - [`docs/emulator-testing.md`](../../docs/emulator-testing.md)
