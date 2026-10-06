@@ -543,6 +543,11 @@ class LaunchRegressionTest {
             assertEquals(0, activity.findViewById<android.widget.LinearLayout>(R.id.lan_results).childCount)
             assertTrue("Save feedback must be focusable so ScrollView reveals it", activity.findViewById<android.widget.TextView>(R.id.lan_status).isFocusableInTouchMode)
             assertEquals("Global stats must not obscure LAN controls", android.view.View.GONE, activity.binding.stats.visibility)
+            val action = activity.findViewById<android.widget.Button>(R.id.lan_scan)
+            val enabled = intArrayOf(android.R.attr.state_enabled)
+            val background = action.backgroundTintList!!.getColorForState(enabled, action.backgroundTintList!!.defaultColor)
+            val foreground = action.textColors.getColorForState(enabled, action.currentTextColor)
+            assertTrue("Enabled LAN action text must meet 4.5:1 contrast", androidx.core.graphics.ColorUtils.calculateContrast(foreground, background) >= 4.5)
         } finally { controller.pause().stop().destroy() }
     }
     @Test fun lanSaveIsTransactionalDuplicateSafeAndDoesNotSelectOrConnect() = kotlinx.coroutines.runBlocking {

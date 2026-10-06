@@ -1,5 +1,10 @@
 package io.nekohasekai.sagernet.ui.lan
 
+import android.content.res.ColorStateList
+import android.graphics.Color
+import androidx.core.graphics.ColorUtils
+import com.google.android.material.color.MaterialColors
+import com.google.android.material.button.MaterialButton
 import android.net.ConnectivityManager
 import android.net.LinkProperties
 import android.net.Network
@@ -42,6 +47,9 @@ class LanDiscoveryFragment : ToolbarFragment(R.layout.layout_lan_discovery) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         toolbar.setTitle(R.string.lan_title)
+        val header = MaterialColors.getColor(toolbar, androidx.appcompat.R.attr.colorPrimary)
+        val headerText = readableForeground(header)
+        toolbar.setTitleTextColor(headerText); toolbar.navigationIcon?.mutate()?.setTint(headerText)
         view.findViewById<LinearLayout>(R.id.lan_content).doOnLayout { content ->
             content.layoutParams = FrameLayout.LayoutParams(minOf(view.width, (840 * resources.displayMetrics.density).toInt()),
                 android.view.ViewGroup.LayoutParams.WRAP_CONTENT, android.view.Gravity.CENTER_HORIZONTAL)
@@ -51,6 +59,7 @@ class LanDiscoveryFragment : ToolbarFragment(R.layout.layout_lan_discovery) {
         ports = view.findViewById(R.id.lan_ports); consent = view.findViewById(R.id.lan_consent)
         scanButton = view.findViewById(R.id.lan_scan); cancelButton = view.findViewById(R.id.lan_cancel)
         networkButton = view.findViewById(R.id.lan_network); results = view.findViewById(R.id.lan_results)
+        listOf(scanButton, cancelButton, networkButton).forEach(::styleAction)
         consent.isChecked = false
         consent.setOnCheckedChangeListener { _, _ -> controls() }
         networkButton.setOnClickListener { chooseNetwork() }
@@ -77,6 +86,20 @@ class LanDiscoveryFragment : ToolbarFragment(R.layout.layout_lan_discovery) {
         if (registered) { runCatching { environment.manager.unregisterNetworkCallback(callback) }; registered = false }
         stopScan(R.string.lan_cancelled); dialog?.dismiss(); dialog = null
         super.onStop()
+    }
+    private fun readableForeground(background: Int) = if (ColorUtils.calculateContrast(Color.BLACK, background) >= 4.5) Color.BLACK else Color.WHITE
+    private fun styleAction(button: Button) {
+        val surface = MaterialColors.getColor(button, com.google.android.material.R.attr.colorSurface)
+        val onSurface = MaterialColors.getColor(button, com.google.android.material.R.attr.colorOnSurface)
+        val primary = ColorUtils.compositeColors(MaterialColors.getColor(button, androidx.appcompat.R.attr.colorPrimary), surface)
+        val states = arrayOf(intArrayOf(android.R.attr.state_enabled), intArrayOf())
+        val foreground = readableForeground(primary)
+        button.backgroundTintList = ColorStateList(states, intArrayOf(primary, ColorUtils.blendARGB(surface, onSurface, 0.12f)))
+        button.setTextColor(ColorStateList(states, intArrayOf(foreground, ColorUtils.blendARGB(surface, onSurface, 0.38f))))
+        if (button is MaterialButton) {
+            button.strokeWidth = (2 * resources.displayMetrics.density).toInt()
+            button.strokeColor = ColorStateList(arrayOf(intArrayOf(android.R.attr.state_focused), intArrayOf()), intArrayOf(foreground, Color.TRANSPARENT))
+        }
     }
     private fun controls() {
         val active = scan?.isActive == true
@@ -119,7 +142,8 @@ class LanDiscoveryFragment : ToolbarFragment(R.layout.layout_lan_discovery) {
                 if (!environment.current(network)) { invalidateNetwork(); return@launch }
                 status.text = getString(if (report.timedOut || report.limited) R.string.lan_partial else R.string.lan_done, report.candidates.size)
                 report.candidates.forEach { candidate ->
-                    results.addView(Button(requireContext()).apply {
+                    results.addView(MaterialButton(requireContext()).apply {
+                        styleAction(this)
                         text = "${candidate.host}:${candidate.port}\n${kindLabel(candidate.kind)}"
                         textSize = 18f; minHeight = (64 * resources.displayMetrics.density).toInt()
                         setOnClickListener { confirmProfile(network, candidate) }
@@ -180,6 +204,10 @@ class LanDiscoveryFragment : ToolbarFragment(R.layout.layout_lan_discovery) {
             val confirmation = AlertDialog.Builder(context).setTitle(R.string.add_profile).setView(scroll)
                 .setPositiveButton(R.string.lan_save, null).setNegativeButton(android.R.string.cancel, null).create()
             dialog = confirmation; confirmation.show()
+            val onSurface = MaterialColors.getColor(panel, com.google.android.material.R.attr.colorOnSurface)
+            val surface = MaterialColors.getColor(panel, com.google.android.material.R.attr.colorSurface)
+            for (id in listOf(AlertDialog.BUTTON_POSITIVE, AlertDialog.BUTTON_NEGATIVE)) confirmation.getButton(id).setTextColor(
+                ColorStateList(arrayOf(intArrayOf(android.R.attr.state_enabled), intArrayOf()), intArrayOf(onSurface, ColorUtils.blendARGB(surface, onSurface, 0.38f))))
             confirmation.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 if (!environment.current(network)) { confirmation.dismiss(); invalidateNetwork(); return@setOnClickListener }
                 if (protocol.selectedItemPosition == 0) {
