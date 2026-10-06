@@ -1,0 +1,369 @@
+name: Verified Stable Release
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/stable-release.yml"
+      - "buildScript/**"
+      - "docs/**"
+      - "README.md"
+  workflow_dispatch:
+    inputs:
+      check_only:
+        description: 'Validate release branch without signing/publishing; publication requires master and immutable tag'
+        type: boolean
+        default: true
+concurrency:
+  group: stable-release
+  cancel-in-progress: false
+permissions:
+  contents: write
+jobs:
+  validate-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref }}
+          submodules: recursive
+      - name: Restore native shell executable modes
+        run: chmod +x buildScript/lib/core/build.sh libcore/build.sh
+      - name: Restrict publication to master
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.check_only != 'true'
+        run: test "${{ github.ref }}" = "refs/heads/master"
+
+      - name: Get actual commit SHA
+        id: actual_sha
+        run: |
+          echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Android SDK
+        run: |
+          if [ -z "$ANDROID_HOME" ] && [ -z "$ANDROID_SDK_ROOT" ]; then
+            mkdir -p "$HOME/android-sdk/cmdline-tools"
+            cd "$HOME/android-sdk/cmdline-tools"
+            curl -fsSL -o cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+            unzip -q cmdline-tools.zip
+            mv cmdline-tools latest 2>/dev/null || true
+            export ANDROID_HOME="$HOME/android-sdk"
+            echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+          fi
+          if [ -z "$ANDROID_HOME" ]; then
+            export ANDROID_HOME="${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}"
+            echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+          fi
+          echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> $GITHUB_ENV
+          if [ -d "$ANDROID_HOME/cmdline-tools/latest/bin" ]; then
+            echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
+          elif [ -d "$ANDROID_HOME/cmdline-tools/bin" ]; then
+            echo "$ANDROID_HOME/cmdline-tools/bin" >> $GITHUB_PATH
+          fi
+          if [ -d "$ANDROID_HOME/platform-tools" ]; then
+            echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
+          fi
+
+      - name: Install NDK and CMake
+        run: |
+          yes | sdkmanager --licenses > /dev/null || true
+          sdkmanager --install "ndk;25.0.8775105" "cmake;3.22.1"
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/25.0.8775105" >> $GITHUB_ENV
+          echo "NDK_HOME=$ANDROID_HOME/ndk/25.0.8775105" >> $GITHUB_ENV
+
+      - name: Install Golang (needed for libcore)
+        id: go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.8'
+          cache-dependency-path: libcore/go.sum
+
+      - name: Cache libcore
+        id: core_cache
+        uses: actions/cache/restore@v4
+        with:
+          path: app/libs/libcore.aar
+          key: libcore-16kb-v1-${{ runner.os }}-${{ steps.go.outputs.go-version }}-${{ hashFiles('buildScript/lib/**', 'libcore/**') }}
+
+      - name: Build libcore.aar (if cache miss)
+        run: |
+          if [ ! -f app/libs/libcore.aar ]; then
+            ./run lib core
+          else
+            echo "libcore.aar restored from 16KB cache"
+          fi
+          python3 buildScript/verify_native_alignment.py --require-64bit app/libs/libcore.aar
+
+      - name: Save verified 16KB libcore cache
+        if: steps.core_cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: app/libs/libcore.aar
+          key: ${{ steps.core_cache.outputs.cache-primary-key }}
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Check project documentation
+        run: python3 buildScript/check_project_docs.py
+
+      - name: Test browser transfer page
+        run: node buildScript/test_tv_transfer_page.cjs
+
+      - name: Read version from nb4a.properties
+        id: version
+        run: |
+          set -euo pipefail
+          VERSION=$(grep -E '^VERSION_NAME=' nb4a.properties | cut -d= -f2 | tr -d '[:space:]')
+          VERSION=${VERSION:-1.0.0}
+          TAG="v${VERSION}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "stable_tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "Immutable stable tag: $TAG"
+
+      - name: Create local.properties
+        run: |
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          echo "ndk.dir=$ANDROID_NDK_HOME" >> local.properties
+
+      # Device tests run BEFORE any private release-signing bundle is loaded.
+      - name: Build debug instrumentation APKs
+        env:
+          BUILD_PLUGIN: none
+          # assets.sh uses gh api when authenticated, avoiding shared-runner anonymous rate limits.
+          # Step-scoped: this API token is not passed to emulator instrumentation.
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ./run init action gradle
+          ./gradlew app:assembleOssDebug app:assembleOssDebugAndroidTest --stacktrace
+          ./gradlew --stop
+
+      - name: Enable hardware-accelerated emulator
+        run: |
+          test -c /dev/kvm
+          sudo chmod a+rw /dev/kvm
+
+      - name: Android 15 emulator smoke (4KB)
+        timeout-minutes: 20
+        uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # pinned v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          avd-name: tunxbox-smoke-4k
+          ram-size: 2048M
+          emulator-boot-timeout: 300
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash buildScript/run_emulator_smoke.sh 4096 Oss
+
+      - name: Android 15 emulator smoke (16KB)
+        timeout-minutes: 20
+        uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # pinned v2
+        with:
+          api-level: 35
+          target: google_apis_ps16k
+          arch: x86_64
+          profile: pixel_2
+          avd-name: tunxbox-smoke-16k
+          ram-size: 2048M
+          emulator-boot-timeout: 300
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash buildScript/run_emulator_smoke.sh 16384 Oss
+
+      - name: Upload emulator diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TunXBox-emulator-smoke-${{ steps.actual_sha.outputs.sha }}
+          path: |
+            build/emulator-results/
+            app/build/reports/androidTests/
+            app/build/outputs/androidTest-results/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Prepare pinned signing identity
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.check_only != 'true'
+        env:
+          TUNXBOX_SIGNING_BUNDLE: ${{ secrets.TUNXBOX_SIGNING_BUNDLE }}
+        run: python3 buildScript/signing_bundle.py
+
+      - name: Test APK packaging and update rules
+        run: |
+          python3 buildScript/test_package_preview_apks.py
+          python3 buildScript/test_signing_bundle.py
+          python3 buildScript/test_assets.py
+          python3 buildScript/test_native_alignment.py
+
+      - name: Build stable OSS APK
+        env:
+          BUILD_PLUGIN: none
+          TUNXBOX_BUILD_SEQUENCE: ${{ github.run_number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Ignore legacy LOCAL_PROPERTIES signing credentials: the pinned bundle is authoritative.
+          unset LOCAL_PROPERTIES
+          ./run init action gradle
+          ./gradlew app:assembleOssRelease --stacktrace
+
+      - name: Verify Android update metadata
+        run: |
+          export AAPT="$ANDROID_HOME/build-tools/35.0.1/aapt"
+          python3 - <<'PYMETA'
+          import glob, os, re, subprocess
+          from pathlib import Path
+          meta = dict(line.split('=', 1) for line in Path('nb4a.properties').read_text().splitlines() if '=' in line)
+          expected = int(meta['VERSION_CODE']) * 1000000 + 999999
+          paths = glob.glob('app/build/outputs/apk/oss/release/*.apk')
+          assert len(paths) == 3
+          for path in paths:
+              badging = subprocess.check_output([os.environ['AAPT'], 'dump', 'badging', path], text=True)
+              output = badging.splitlines()[0]
+              assert int(re.search(r"targetSdkVersion:'([0-9]+)'", badging)[1]) >= 35
+              assert "name='com.tunxbox.app'" in output
+              assert re.search(r"versionName='([^']+)'", output)[1] == meta["VERSION_NAME"]
+              assert int(re.search(r"versionCode='([0-9]+)'", output)[1]) == expected
+          print('Actual APK applicationId and increasing versionCode verified:', expected)
+          PYMETA
+
+      - name: Verify native 16KB page alignment
+        run: python3 buildScript/verify_native_alignment.py app/build/outputs/apk/oss/release/*.apk
+
+      - name: Test protocol and remote UI
+        run: |
+          ./gradlew app:testOssDebugUnitTest --stacktrace
+          python3 - <<'PY'
+          import glob, xml.etree.ElementTree as ET
+          totals = dict(tests=0, failures=0, errors=0, skipped=0)
+          for path in glob.glob("app/build/test-results/testOssDebugUnitTest/TEST-*.xml"):
+              suite = ET.parse(path).getroot()
+              for key in totals:
+                  totals[key] += int(suite.get(key, "0"))
+          print("JUnit summary: " + ", ".join(f"{key}={value}" for key, value in totals.items()))
+          assert totals["tests"] > 0 and totals["failures"] == 0 and totals["errors"] == 0
+          PY
+
+      - name: Upload unit-test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TunXBox-ui-test-reports-${{ steps.actual_sha.outputs.sha }}
+          path: |
+            app/build/reports/tests/testOssDebugUnitTest/
+            app/build/test-results/testOssDebugUnitTest/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Package verified APKs
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.check_only != 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          BUILD_SHA: ${{ steps.actual_sha.outputs.sha }}
+        run: |
+          set -euo pipefail
+          python3 buildScript/test_package_preview_apks.py
+          python3 buildScript/package_preview_apks.py \
+            --apk-dir app/build/outputs/apk/oss/release \
+            --output-dir dist \
+            --channel stable --flavor oss \
+            --version "$VERSION" \
+            --commit "$BUILD_SHA" \
+            --apksigner "$ANDROID_HOME/build-tools/35.0.1/apksigner" \
+            --aapt "$ANDROID_HOME/build-tools/35.0.1/aapt" \
+            --certificate signing-certificate.sha256 \
+            --expected-version-code "$(( $(grep '^VERSION_CODE=' nb4a.properties | cut -d= -f2) * 1000000 + 999999 ))"
+
+      - name: Upload APKs (artifact)
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.check_only != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: TunXBox-android-oss-release-${{ steps.actual_sha.outputs.sha }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload build log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log-${{ github.run_number }}
+          path: |
+            app/build/outputs/logs/
+            app/build/reports/
+          retention-days: 7
+          if-no-files-found: ignore
+      - name: Publish immutable stable release
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.check_only != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.version.outputs.stable_tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+          BUILD_SHA: ${{ steps.actual_sha.outputs.sha }}
+        run: |
+          set -euo pipefail
+          # Tag is created separately on the approved master SHA, never force-updated.
+          test "$(git rev-parse "$TAG^{commit}")" = "$BUILD_SHA"
+          test "$(gh api repos/LeonidYasin/TunXBox/git/ref/heads/master --jq .object.sha)" = "$BUILD_SHA"
+          if gh release view "$TAG" --json isDraft -q .isDraft > /tmp/stable-draft 2>/dev/null; then
+            test "$(cat /tmp/stable-draft)" = "true" || { echo "Stable release is already public; immutable"; exit 1; }
+          fi
+          gh release download "v${VERSION}-rc" --pattern apk-manifest.json --dir previous-rc
+          python3 buildScript/verify_update.py previous-rc/apk-manifest.json dist/apk-manifest.json
+          NOTES="$(cat docs/releases/1.5.0.md)
+
+          Source commit: $BUILD_SHA
+          Installed version: $VERSION
+          Android TV/phone; ARM64, ARM32, universal. See apk-manifest.json for actual ABI/versionCode/signer and SHA256SUMS.txt for bytes."
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --verify-tag --draft --title "TunXBox $VERSION" --notes "$NOTES"
+          fi
+          gh release upload "$TAG" dist/*.apk dist/SHA256SUMS.txt dist/apk-manifest.json --clobber
+          mkdir -p verification
+          gh release download "$TAG" --dir verification
+          python3 - <<'PYVERIFY'
+          import json, pathlib, hashlib
+          m=json.loads(pathlib.Path('dist/apk-manifest.json').read_text())
+          for a in m['apks']:
+              p=pathlib.Path('verification')/a['name']
+              assert p.stat().st_size==a['size']
+              with p.open('rb') as f: assert hashlib.file_digest(f,'sha256').hexdigest()==a['sha256']
+          print('ALL stable uploaded APK byte hashes and sizes verified')
+          PYVERIFY
+          gh release edit "$TAG" --draft=false --prerelease=false --latest --notes "$NOTES"
+          gh api "repos/LeonidYasin/TunXBox/releases/tags/$TAG" > /tmp/stable-release.json
+          python3 - <<'PYNAMES'
+          import json, pathlib, urllib.parse
+          r=json.loads(pathlib.Path('/tmp/stable-release.json').read_text())
+          assert not r['draft'] and not r['prerelease']
+          expected={a['name'] for a in json.loads(pathlib.Path('dist/apk-manifest.json').read_text())['apks']}
+          actual=set()
+          for a in r['assets']:
+              if not a['name'].endswith('.apk'): continue
+              assert a.get('label') in (None,'',a['name'])
+              assert urllib.parse.unquote(a['browser_download_url'].rsplit('/',1)[-1])==a['name']
+              actual.add(a['name'])
+          assert actual==expected
+          print('Public stable release names verified; no stale APKs')
+          PYNAMES
+
+      - name: Remove private signing material
+        if: always()
+        run: rm -rf .signing

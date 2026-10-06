@@ -83,6 +83,8 @@ mindmap
 | F17 | GeoIP/GeoSite/custom assets, backup/restore | [AssetsActivity](../app/src/main/java/io/nekohasekai/sagernet/ui/AssetsActivity.kt), [BackupFragment](../app/src/main/java/io/nekohasekai/sagernet/ui/BackupFragment.kt), [asset build](../buildScript/lib/assets.sh). Backup — отдельная операция и может содержать секреты; полный restore может перезапускать VPN. |
 | F18 | Проверка TunXBox updates, установка поверх, выход/перезапуск UI | [ReleaseUpdatePolicy](../app/src/main/java/io/nekohasekai/sagernet/ui/ReleaseUpdatePolicy.kt), [AppLifecycleActions](../app/src/main/java/io/nekohasekai/sagernet/ui/AppLifecycleActions.kt), signing docs. Сравниваются package/certificate/versionCode; для старых временных ключей возможна однократная миграция. |
 
+Порядок дальнейшей разработки и критерии принятия — [roadmap](roadmap.md).
+
 ## Не считать реализованным
 
 - Новый непрерывный UI health monitor и автоматический переход на живой профиль — отдельный будущий объём. Native selector/custom core config не равны проверенному end-to-end failover сценариям TunXBox.

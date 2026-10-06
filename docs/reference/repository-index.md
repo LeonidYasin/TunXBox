@@ -8,11 +8,11 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **650**.
+Всего tracked файлов: **653**.
 
 | Раздел | Файлов |
 |---|---|
-| `.github` | 8 |
+| `.github` | 9 |
 | `app` | 12 |
 | `app/src/androidTest` | 1 |
 | `app/src/main` | 11 |
@@ -193,7 +193,7 @@
 | `app/src/test` | 11 |
 | `buildScript` | 24 |
 | `buildSrc` | 2 |
-| `docs` | 15 |
+| `docs` | 17 |
 | `gradle` | 2 |
 | `libcore` | 42 |
 | `Корень` | 15 |
@@ -208,6 +208,7 @@
 - [`.github/workflows/preview.yml`](../../.github/workflows/preview.yml)
 - [`.github/workflows/release.yml`](../../.github/workflows/release.yml)
 - [`.github/workflows/signing-backup.yml`](../../.github/workflows/signing-backup.yml)
+- [`.github/workflows/stable-release.yml`](../../.github/workflows/stable-release.yml)
 
 ## app
 
@@ -1328,6 +1329,8 @@
 - [`docs/project-map.md`](../../docs/project-map.md)
 - [`docs/reference/preferences.md`](../../docs/reference/preferences.md)
 - [`docs/reference/repository-index.md`](../../docs/reference/repository-index.md)
+- [`docs/releases/1.5.0.md`](../../docs/releases/1.5.0.md)
+- [`docs/roadmap.md`](../../docs/roadmap.md)
 - [`docs/scenarios.md`](../../docs/scenarios.md)
 - [`docs/security.md`](../../docs/security.md)
 - [`docs/signing-and-updates.md`](../../docs/signing-and-updates.md)

@@ -3,6 +3,8 @@
 set -euo pipefail
 pages="${1:?Expected page size required}"
 case "$pages" in 4096|16384) ;; *) echo "Unexpected page size" >&2; exit 2;; esac
+variant="${2:-Preview}"
+case "$variant" in Preview|Oss) ;; *) echo "Unsupported test flavor" >&2; exit 2;; esac
 out="build/emulator-results/$pages"
 mkdir -p "$out"
 collect() {
@@ -28,7 +30,7 @@ PYUI
 }
 trap collect EXIT
 adb logcat -c
-./gradlew --no-daemon app:connectedPreviewDebugAndroidTest --stacktrace \
+./gradlew --no-daemon "app:connected${variant}DebugAndroidTest" --stacktrace \
   -Pandroid.testInstrumentationRunnerArguments.class=io.nekohasekai.sagernet.ui.EmulatorSmokeTest \
   -Pandroid.testInstrumentationRunnerArguments.expectedPageSize="$pages"
 python3 - "$out" <<'PYTEST'

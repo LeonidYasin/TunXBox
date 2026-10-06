@@ -16,6 +16,7 @@ import androidx.test.uiautomator.UiScrollable
 import androidx.test.uiautomator.UiSelector
 import androidx.test.uiautomator.Until
 import io.nekohasekai.sagernet.R
+import io.nekohasekai.sagernet.ktx.isPreview
 import io.nekohasekai.sagernet.database.DataStore
 import io.nekohasekai.sagernet.database.GroupManager
 import io.nekohasekai.sagernet.database.SagerDatabase
@@ -142,8 +143,12 @@ class EmulatorSmokeTest {
     @Test fun phoneChoiceLoadsConfigurationAndItsPlusMenu() {
         scenario = ActivityScenario.launch<ModeSelectionActivity>(Intent(context, ModeSelectionActivity::class.java))
         requireNotNull(device.wait(Until.findObject(By.res(context.packageName, "mode_choose_phone")), timeout)).click()
-        // Preview builds intentionally show their warning; exercise and dismiss it normally.
-        visibleText(text(android.R.string.ok)).click()
+        // Preview intentionally shows a warning; stable OSS must not show that dialog.
+        if (isPreview) {
+            visibleText(text(android.R.string.ok)).click()
+        } else {
+            assertFalse("Stable OSS must not show preview warning", device.hasObject(By.text(text(R.string.preview_version_hint))))
+        }
         val plus = requireNotNull(device.wait(Until.findObject(By.res(context.packageName, "action_add")), timeout))
         plus.click()
         visibleText(text(R.string.action_import))

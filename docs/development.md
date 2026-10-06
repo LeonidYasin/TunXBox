@@ -82,3 +82,7 @@ Rolling tag `vVERSION-rc` не заменяет Android versionCode. VersionCode
 Встроенный `GITHUB_TOKEN` с `contents: write` не имеет отдельного права `workflows`. При force-update rolling tag через коммиты с изменённым workflow GitHub может отклонить push. Это ошибка publication permissions, не падение Android-тестов. Не обходить gates и не печатать токены. Владелец/авторизованная интеграция с нужными правами может обновить существующий rolling tag на выбранный source SHA; затем повторная сборка должна пройти весь pipeline и проверить загруженные bytes. До завершения upload `apk-manifest.json` в Assets остаётся источником фактической ревизии APK, а не новое положение тега. Master/main не нужны для такого исправления.
 
 Пересоздание rolling tag может перевести существующий release в draft. Publication step явно задаёт `--tag`, `--draft=false` и `--prerelease` после успешных gates, затем проверяет реальные uploaded APK checksums и имена. Draft release не считается доступной пользователю сборкой.
+
+## Stable 1.5.0 и следующий цикл
+
+Согласованный порядок — [roadmap](roadmap.md): stable из master без новых функций, затем отдельные PR с новым baseline. [stable-release.yml](../.github/workflows/stable-release.yml) сохраняет полный набор gates, но собирает ossRelease без rc suffix. Immutable stable tag не force-update; публикация только из master после проверки source/tag/signature/RC-to-stable upgrade. Следующим RC нужен увеличенный VERSION_CODE base. Legacy release.yml не используется как замена этим gates.

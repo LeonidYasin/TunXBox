@@ -24,7 +24,7 @@ def apk_abis(path):
     return sorted(abis)
 
 
-def apk_name(version, commit, abis):
+def apk_name(version, commit, abis, channel="rc", flavor="preview"):
     if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?", version):
         raise ValueError("Invalid version")
     if not re.fullmatch(r"[0-9a-f]{40}", commit):
@@ -37,8 +37,12 @@ def apk_name(version, commit, abis):
         architecture = abis[0]
     else:
         architecture = "_".join(sorted(abis))
-    release_version = version if "-" in version else version + "-rc"
-    return f"TunXBox-{release_version}-android-tv-phone-{architecture}-preview-release-{commit[:8]}.apk"
+    if (channel, flavor) not in {("rc", "preview"), ("stable", "oss")}:
+        raise ValueError("Invalid release channel/flavor")
+    if channel == "stable" and not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version):
+        raise ValueError("Stable version must not have a prerelease suffix")
+    release_version = version if channel == "stable" or "-" in version else version + "-rc"
+    return f"TunXBox-{release_version}-android-tv-phone-{architecture}-{flavor}-release-{commit[:8]}.apk"
 
 
 def read_identity(source, apksigner, aapt):
@@ -51,7 +55,7 @@ def read_identity(source, apksigner, aapt):
     return fields['name'], int(fields['versionCode']), fields['versionName'], fingerprints[0].lower()
 
 
-def package(apk_dir, output_dir, version, commit, apksigner, aapt, certificate, expected_version_code):
+def package(apk_dir, output_dir, version, commit, apksigner, aapt, certificate, expected_version_code, channel="rc", flavor="preview"):
     sources = sorted(apk_dir.glob("*.apk"))
     if not sources:
         raise ValueError(f"No release APKs in {apk_dir}")
@@ -73,7 +77,9 @@ def package(apk_dir, output_dir, version, commit, apksigner, aapt, certificate, 
             raise ValueError("Split APKs have inconsistent upgrade identities")
         identity = current_identity
         abis = apk_abis(source)
-        name = apk_name(version, commit, abis)
+        if channel == "stable" and installed_version != version:
+            raise ValueError("Stable APK versionName does not match release")
+        name = apk_name(version, commit, abis, channel, flavor)
         if name in seen:
             raise ValueError(f"Ambiguous duplicate ABI output: {name}")
         seen.add(name)
@@ -93,7 +99,7 @@ def package(apk_dir, output_dir, version, commit, apksigner, aapt, certificate, 
         ''.join(f"{r['sha256']}  {r['name']}\n" for r in records), encoding='utf-8')
     (output_dir / "apk-manifest.json").write_text(json.dumps({
         "version": version, "commit": commit, "platform": "android", "ui": ["tv", "phone"],
-        "flavor": "preview", "buildType": "release", "signatureVerified": True,
+        "flavor": flavor, "channel": channel, "buildType": "release", "signatureVerified": True,
         "applicationId": identity[0], "versionCode": identity[1], "installedVersionName": identity[2],
         "signingCertificateSha256": identity[3], "apks": records
     }, indent=2) + '\n', encoding='utf-8')
@@ -110,6 +116,8 @@ if __name__ == "__main__":
     parser.add_argument('--aapt', type=pathlib.Path, required=True)
     parser.add_argument('--certificate', type=pathlib.Path, required=True)
     parser.add_argument('--expected-version-code', type=int, required=True)
+    parser.add_argument("--channel", choices=["rc", "stable"], default="rc")
+    parser.add_argument("--flavor", choices=["preview", "oss"], default="preview")
     args = parser.parse_args()
-    for record in package(args.apk_dir, args.output_dir, args.version, args.commit, args.apksigner, args.aapt, args.certificate, args.expected_version_code):
+    for record in package(args.apk_dir, args.output_dir, args.version, args.commit, args.apksigner, args.aapt, args.certificate, args.expected_version_code, args.channel, args.flavor):
         print(f"Verified: {record['name']} ({', '.join(record['abis'])})")

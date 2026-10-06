@@ -4,7 +4,7 @@
 
 TunXBox — Android-клиент на базе NekoBox/SagerNet и форка sing-box, а не поставщик VPN-подписки, облачный синхронизатор или официальная сборка upstream. Код UI сохраняет namespace `io.nekohasekai.sagernet`, установленный пакет — `com.tunxbox.app`.
 
-Это карта возможностей и исходников текущей PR-ветки. «Есть в коде» не означает «проверено на всех устройствах». Динамическая доступность зависит от API Android, режима, группы, состояния сервиса и установленных плагинов. Неиспользуемые наследованные ресурсы тоже входят в [реестр](reference/repository-index.md), но не объявляются доступными функциями.
+Это карта возможностей и исходников принятого master после PR #1. «Есть в коде» не означает «проверено на всех устройствах». Динамическая доступность зависит от API Android, режима, группы, состояния сервиса и установленных плагинов. Неиспользуемые наследованные ресурсы тоже входят в [реестр](reference/repository-index.md), но не объявляются доступными функциями.
 
 ```mermaid
 %%{init: {"theme": "base", "themeVariables": {"primaryColor": "#E5F2FC", "primaryTextColor": "#2C2C2B", "primaryBorderColor": "#2783DE", "lineColor": "#7D7A75", "secondaryColor": "#E8F1EC", "tertiaryColor": "#F9F8F7", "fontFamily": "Arial", "cScale0": "#E5F2FC", "cScaleLabel0": "#2C2C2B", "cScale1": "#E5F2FC", "cScaleLabel1": "#2C2C2B", "cScale2": "#E5F2FC", "cScaleLabel2": "#2C2C2B", "cScale3": "#E5F2FC", "cScaleLabel3": "#2C2C2B", "cScale4": "#E5F2FC", "cScaleLabel4": "#2C2C2B", "cScale5": "#E5F2FC", "cScaleLabel5": "#2C2C2B", "cScale6": "#E5F2FC", "cScaleLabel6": "#2C2C2B", "cScale7": "#E5F2FC", "cScaleLabel7": "#2C2C2B", "cScale8": "#E5F2FC", "cScaleLabel8": "#2C2C2B", "cScale9": "#E5F2FC", "cScaleLabel9": "#2C2C2B", "cScale10": "#E5F2FC", "cScaleLabel10": "#2C2C2B", "cScale11": "#E5F2FC", "cScaleLabel11": "#2C2C2B"}}}%%
@@ -19,6 +19,9 @@ mindmap
     Сборка и качество
     Безопасность
     Экосистема и планы
+      Стабильная 1.5.0
+      Аудит старых веток
+      Новые независимые PR
 ```
 
 ## Все ветви карты
@@ -35,6 +38,7 @@ mindmap
 | Данные | Room, configuration/profile cache, Android backup и ручной backup, журналы, assets, ключи профилей | [Модель данных](architecture.md#данные-и-хранение) |
 | Сборка/качество | Gradle/Kotlin/KSP, Go/JNI/AAR, APK ABI, release signing, CI, JVM/Robolectric/browser/Python/device тесты | [Разработка](development.md), [эмуляторы](emulator-testing.md) |
 | Экосистема | Upstream GPL, forks ядра, GeoIP/GeoSite, Android APIs, плагины, GitHub Releases/Actions/Issues, инструменты разработки | [Внешние зависимости](development.md#экосистема-и-зависимости) |
+| Roadmap | Stable first; аудит старых веток; discovery/TV fixes/failover отдельными PR | [Этапы и критерии](roadmap.md) |
 | Будущее | Прямой Happ/Incy импорт; новый непрерывный health/failover; расширение реальных-device проверок | [Честные границы](features.md#не-считать-реализованным) |
 | Каждый файл | Исходники, AIDL, XML, ресурсы/языки, изображения, тесты, скрипты, workflow, лицензии, metadata | [Полный реестр](reference/repository-index.md) |
 

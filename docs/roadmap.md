@@ -1,0 +1,72 @@
+# Roadmap TunXBox
+
+## Решение и исходная точка
+
+План согласован владельцем: сначала стабильная **1.5.0** из принятого `master`, затем отдельные новые PR. PR #1 принят squash merge (`b1481137`); rc.106 прошла CI и ручную проверку владельца. Это не подтверждение будущих функций. `main` (`5768494d`) остаётся рабочим upstream; её не переписывать. Сроки не обещаются до оценки работ.
+
+## Карта последовательности
+
+```mermaid
+%%{init: {"theme":"base","themeVariables":{"primaryColor":"#E5F2FC","primaryTextColor":"#2C2C2B","primaryBorderColor":"#2783DE","lineColor":"#7D7A75","fontFamily":"Arial"}}}%%
+flowchart TD
+    A[Принятый master / rc.106] --> B[Стабильная 1.5.0: без новых фич]
+    B --> C[Инвентаризация старых веток]
+    C --> D[Свежие ветки от master]
+    D --> E[Отдельные PR по сценариям]
+    E --> F[CI + ручная приёмка + следующий релиз]
+```
+
+Текстовый эквивалент: принятый baseline → стабильный выпуск → аудит старых наработок → новые ветки → независимые PR → проверка и следующий выпуск. Draft PR можно открывать параллельно; новые функции не блокируют 1.5.0. Критическая ошибка baseline блокирует выпуск.
+
+## Этапы и критерии завершения
+
+| ID | Этап | Статус | Граница / Definition of Done |
+|---|---|---|---|
+| R0 | Принять TV/Phone, QR/LAN, документацию | Завершён | PR #1 merged; пользователь проверил rc.106; CI успешен |
+| R1 | Выпустить стабильную 1.5.0 | В подготовке | Source из master; versionName без rc; постоянный signer/package; versionCode > rc.106; все проверки; три реальных APK; публичный immutable v1.5.0; release notes/manifest/SHA256; установка поверх RC |
+| R2 | Аудит старых веток | План | Сохранить refs; сравнить реальные trees с master; составить список unique/duplicate/obsolete; не считать ahead_by числом новых функций после squash |
+| R3 | Поиск прокси в LAN | План | Оценить обе discovery ветки вместе; один согласованный design; явный opt-in/область сканирования/timeout/cancel; безопасное хранение; TV/Phone; unit/device/network fixtures |
+| R4 | Актуальные TV исправления | Условно | Взять только ещё воспроизводимые проблемы; не заменять новый UI старой реализацией; при отсутствии unique fixes закрыть направление как redundant |
+| R5 | Живость туннеля и failover | План, отдельный PR | End-to-end check, не просто TCP/Connected; несколько неуспехов, cooldown/hysteresis, отмена, подходящая группа/ручной override, без reconnect loop; tests Wi-Fi change/background/all-down/recovery |
+| R6 | Совместимость Happ/Incy | Исследование | Пользовательские обезличенные samples/официальные export formats; не обещать чтение sandbox чужого приложения; использовать общий import где возможно |
+| R7 | Расширение тестов | Постоянно | Физические ARM/OEM/пульт/поворот; APK release smoke; real provider только с явной безопасной fixture; emulator smoke не выдавать за throughput/VPN сертификацию |
+
+Номера будущих релизов предварительные: исправления — patch (например 1.5.1), существенные новые функции — minor (например 1.6.0). Следующий Android VERSION_CODE base необходимо увеличить после stable, чтобы следующий RC устанавливался поверх stable.
+
+## Сохранённые наработки
+
+| Ветка | HEAD при инвентаризации | Действие |
+|---|---|---|
+| feature/proxy-discovery | 8e20a35e | Сравнить и объединить полезные идеи с auto variant; не мержить подряд обе |
+| feature/auto-proxy-discovery | 4e602b76 | Проверить overlap и автоматическое сканирование/фоновые permissions |
+| fix/tv-ui-rendering | c5c504cf | Аудит против нового master; часть TV/QR уже реализована иначе |
+| feature/tv-remote-support | 1b954a53 | История принятой rc.106; после squash не использовать как следующий PR baseline |
+
+Старые refs не удалять/force-push до подтверждения полного переноса. Из свежей master-ветки переносить небольшие уникальные изменения (selective cherry-pick либо адаптация к новой архитектуре), а не весь старый stack. Для совместной старой ветки merge master предпочтительнее переписывания общей истории, но здесь рекомендован чистый новый baseline. Один PR — одна связная пользовательская задача, отдельная проверка и откат. Имена новых веток уточнить при открытии; не объединять всё в один mega-PR.
+
+## Правила выпуска
+
+- Стабильный tag immutable: не force-update и не подменять APK ранее опубликованной версии.
+- Pre-release tag остаётся отдельным; не снимать pre-release badge с APK, внутри которого versionName rc.
+- Stable **ossRelease** использует те же TV/Phone источники, но не preview suffix. VersionCode = VERSION_CODE base × 1 000 000 + 999 999; для текущего base 47 это 47 999 999, выше rc.106 (47 000 106).
+- После stable base 47 следующие RC должны иметь base минимум 48; plain name 1.5.1 сам по себе не гарантирует upgrade ordering.
+- Pipeline [stable-release.yml](../.github/workflows/stable-release.yml) сначала проверяется в release PR без публикации. Публикация разрешена только из master, с заранее созданным immutable tag на точный SHA и pinned signer; private signing bundle только после device checks.
+- Подробности: [разработка](development.md), [подпись](signing-and-updates.md), [функции](features.md), [приёмка](tv-readiness-plan.md).
+
+## Инструменты разработки / MCP backlog
+
+Это независимые issues в mcp-server, не runtime функции APK. Проверка проведена по фактическим сбоям и коду; production server здесь не изменяется.
+
+| Issue | Улучшение |
+|---|---|
+| [#60](https://github.com/LeonidYasin/mcp-server/issues/60) | Сохранять file executable/symlink modes в batch push |
+| [#61](https://github.com/LeonidYasin/mcp-server/issues/61) | Честный общий status/check runs, no_checks vs pending |
+| [#62](https://github.com/LeonidYasin/mcp-server/issues/62) | Merge с expected SHA и структурированным preflight |
+| [#63](https://github.com/LeonidYasin/mcp-server/issues/63) | Реальное безопасное разрешение artifact download redirect |
+| [#64](https://github.com/LeonidYasin/mcp-server/issues/64) | Atomic update_tag и управление existing releases |
+| [#65](https://github.com/LeonidYasin/mcp-server/issues/65) | Уважать max_files и ограничения ответа compare |
+| [#66](https://github.com/LeonidYasin/mcp-server/issues/66) | Repository Actions secrets: metadata/encrypted writes, без раскрытия values |
+
+## Обновление плана
+
+В каждом PR менять статус только после фактического результата; добавлять ссылки на PR/run/release и acceptance evidence. «В подготовке», «merged», «опубликован» и «проверен на устройстве» — разные состояния. Карта [project-map](project-map.md) показывает roadmap как планы, не как реализованные функции.
