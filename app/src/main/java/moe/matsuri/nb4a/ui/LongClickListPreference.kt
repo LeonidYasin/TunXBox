@@ -16,6 +16,7 @@ class LongClickListPreference
     override fun onBindViewHolder(holder: PreferenceViewHolder) {
         super.onBindViewHolder(holder)
         val itemView: View = holder.itemView
+        itemView.setTag(io.nekohasekai.sagernet.R.id.remote_row_actions, if (mLongClickListener != null) ({ itemView.performLongClick(); Unit }) else null)
         itemView.setOnLongClickListener {
             mLongClickListener?.onLongClick(it) ?: true
         }

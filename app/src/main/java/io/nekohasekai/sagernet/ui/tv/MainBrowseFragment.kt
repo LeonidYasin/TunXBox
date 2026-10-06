@@ -531,12 +531,9 @@ class MainBrowseFragment : BrowseSupportFragment() {
     }
     private fun showAllFunctions() {
         // Reuse upstream screens, including their complete menus. Do not maintain a lossy copy.
-        val entries = listOf(R.string.menu_configuration to R.id.nav_configuration,
-            R.string.menu_group to R.id.nav_group, R.string.menu_route to R.id.nav_route,
-            R.string.settings to R.id.nav_settings, R.string.menu_tools to R.id.nav_tools,
-            R.string.menu_log to R.id.nav_logcat, R.string.menu_about to R.id.nav_about)
+        val entries = TvFunctionCatalog.entries(requireContext(), DataStore.enableClashAPI, io.nekohasekai.sagernet.ktx.isPlay)
         show(AlertDialog.Builder(requireContext()).setTitle(R.string.tv_all_functions)
-            .setItems(entries.map { getString(it.first) }.toTypedArray()) { _, index -> openFullScreen(entries[index].second) }
+            .setItems(entries.map { it.title }.toTypedArray()) { _, index -> openFullScreen(entries[index].id) }
             .setNegativeButton(android.R.string.cancel, null))
     }
     private fun showTests() {

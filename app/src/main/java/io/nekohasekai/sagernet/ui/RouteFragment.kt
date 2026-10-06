@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -138,6 +139,7 @@ class RouteFragment : ToolbarFragment(R.layout.layout_route), Toolbar.OnMenuItem
         }
 
         init {
+            setHasStableIds(true)
             runOnDefaultDispatcher {
                 reload()
             }
@@ -178,20 +180,10 @@ class RouteFragment : ToolbarFragment(R.layout.layout_route), Toolbar.OnMenuItem
 
         private val updated = HashSet<RuleEntity>()
         fun move(from: Int, to: Int) {
-            val first = ruleList[from - 1]
-            var previousOrder = first.userOrder
-            val (step, range) = if (from < to) Pair(1, from - 1 until to - 1) else Pair(-1, to downTo from - 1)
-            for (i in range) {
-                val next = ruleList[i + step]
-                val order = next.userOrder
-                next.userOrder = previousOrder
-                previousOrder = order
-                ruleList[i] = next
-                updated.add(next)
-            }
-            first.userOrder = previousOrder
-            ruleList[to - 1] = first
-            updated.add(first)
+            if (from <= 0 || to <= 0 || from > ruleList.size || to > ruleList.size || from == to) return
+            val moved = ruleList.removeAt(from - 1)
+            ruleList.add(to - 1, moved)
+            ruleList.forEachIndexed { index, rule -> rule.userOrder = (index + 1).toLong(); updated.add(rule) }
             notifyItemMoved(from, to)
         }
 
@@ -279,6 +271,19 @@ class RouteFragment : ToolbarFragment(R.layout.layout_route), Toolbar.OnMenuItem
             val shareLayout = binding.share
             val enableSwitch = binding.enable
 
+            private fun showActions() {
+                val selected = rule
+                val position = ruleList.indexOfFirst { it.id == selected.id } + 1
+                if (position <= 0) return
+                val actions = mutableListOf<Pair<Int, () -> Unit>>()
+                if (position > 1) actions.add(R.string.remote_move_up to { move(position, position - 1); commitMove() })
+                if (position < itemCount - 1) actions.add(R.string.remote_move_down to { move(position, position + 1); commitMove() })
+                actions.add(R.string.delete to { RemoteRowActions.confirmDelete(requireContext(), rule.displayName()) {
+                    val current = ruleList.indexOfFirst { it.id == selected.id } + 1
+                    if (current > 0) { remove(current); undoManager.remove(current to selected) }
+                } })
+                MaterialAlertDialogBuilder(requireContext()).setTitle(rule.displayName()).setItems(actions.map { getString(it.first) }.toTypedArray()) { _, index -> actions[index].second() }.show()
+            }
             fun bind(ruleEntity: RuleEntity) {
                 rule = ruleEntity
                 profileName.text = rule.displayName()
@@ -287,6 +292,7 @@ class RouteFragment : ToolbarFragment(R.layout.layout_route), Toolbar.OnMenuItem
                 itemView.setOnClickListener {
                     enableSwitch.performClick()
                 }
+                enableSwitch.setOnCheckedChangeListener(null)
                 enableSwitch.isChecked = rule.enabled
                 enableSwitch.setOnCheckedChangeListener { _, isChecked ->
                     runOnDefaultDispatcher {
@@ -297,6 +303,11 @@ class RouteFragment : ToolbarFragment(R.layout.layout_route), Toolbar.OnMenuItem
                         }
                     }
                 }
+                shareLayout.isVisible = true
+                shareLayout.contentDescription = getString(R.string.remote_row_options)
+                shareLayout.findViewById<android.widget.ImageView>(R.id.shareIcon)?.setImageResource(R.drawable.ic_baseline_more_vert_24)
+                shareLayout.setOnClickListener { showActions() }
+                RemoteRowActions.bind(itemView, listOf(editButton, shareLayout)) { showActions() }
                 editButton.setOnClickListener {
                     startActivity(Intent(it.context, RouteSettingsActivity::class.java).apply {
                         putExtra(RouteSettingsActivity.EXTRA_ROUTE_ID, rule.id)

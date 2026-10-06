@@ -18,3 +18,10 @@ jniLibs/
 
 # submodules
 /external
+
+# Private signing material must never enter source control.
+/.signing/
+*.keystore
+*.jks
+/signing-bundle.json
+**/__pycache__/

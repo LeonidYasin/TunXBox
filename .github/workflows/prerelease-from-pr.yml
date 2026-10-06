@@ -18,6 +18,14 @@ on:
         description: 'Branch to build (default: current ref)'
         required: false
         default: ''
+      check_only:
+        description: 'Validate without publishing or using signing secrets'
+        type: boolean
+        default: false
+      allow_legacy_signer_migration:
+        description: 'ONE TIME ONLY: old temporary-key APKs require export and uninstall'
+        type: boolean
+        default: false
 
 concurrency:
   group: prerelease-${{ github.ref }}
@@ -136,19 +144,43 @@ jobs:
           echo "sdk.dir=$ANDROID_HOME" > local.properties
           echo "ndk.dir=$ANDROID_NDK_HOME" >> local.properties
 
-      - name: Cache preview debug signing key
-        uses: actions/cache@v4
-        with:
-          path: ~/.android/debug.keystore
-          key: TunXBox-preview-debug-signing-v1
+      - name: Prepare pinned signing identity
+        if: github.event.inputs.check_only != 'true'
+        env:
+          TUNXBOX_SIGNING_BUNDLE: ${{ secrets.TUNXBOX_SIGNING_BUNDLE }}
+        run: python3 buildScript/signing_bundle.py
+
+      - name: Test APK packaging and update rules
+        run: |
+          python3 buildScript/test_package_preview_apks.py
+          python3 buildScript/test_signing_bundle.py
 
       - name: Build Preview APK
         env:
           BUILD_PLUGIN: none
+          TUNXBOX_BUILD_SEQUENCE: ${{ github.run_number }}
         run: |
-          export LOCAL_PROPERTIES="${{ secrets.LOCAL_PROPERTIES }}"
+          # Ignore legacy LOCAL_PROPERTIES signing credentials: the pinned bundle is authoritative.
+          unset LOCAL_PROPERTIES
           ./run init action gradle
           ./gradlew app:assemblePreviewRelease --stacktrace
+
+      - name: Verify Android update metadata
+        run: |
+          export AAPT="$ANDROID_HOME/build-tools/35.0.1/aapt"
+          python3 - <<'PYMETA'
+          import glob, os, re, subprocess
+          from pathlib import Path
+          meta = dict(line.split('=', 1) for line in Path('nb4a.properties').read_text().splitlines() if '=' in line)
+          expected = int(meta['VERSION_CODE']) * 1000000 + int(os.environ['GITHUB_RUN_NUMBER'])
+          paths = glob.glob('app/build/outputs/apk/preview/release/*.apk')
+          assert len(paths) == 3
+          for path in paths:
+              output = subprocess.check_output([os.environ['AAPT'], 'dump', 'badging', path], text=True).splitlines()[0]
+              assert "name='com.tunxbox.app'" in output
+              assert int(re.search(r"versionCode='([0-9]+)'", output)[1]) == expected
+          print('Actual APK applicationId and increasing versionCode verified:', expected)
+          PYMETA
 
       - name: Test protocol and remote UI
         run: |
@@ -176,6 +208,7 @@ jobs:
           retention-days: 14
 
       - name: Package verified APKs
+        if: github.event.inputs.check_only != 'true'
         env:
           VERSION: ${{ steps.version.outputs.version }}
           BUILD_SHA: ${{ steps.actual_sha.outputs.sha }}
@@ -187,9 +220,13 @@ jobs:
             --output-dir dist \
             --version "$VERSION" \
             --commit "$BUILD_SHA" \
-            --apksigner "$ANDROID_HOME/build-tools/35.0.1/apksigner"
+            --apksigner "$ANDROID_HOME/build-tools/35.0.1/apksigner" \
+            --aapt "$ANDROID_HOME/build-tools/35.0.1/aapt" \
+            --certificate signing-certificate.sha256 \
+            --expected-version-code "$(( $(grep '^VERSION_CODE=' nb4a.properties | cut -d= -f2) * 1000000 + ${{ github.run_number }} ))"
 
       - name: Upload APKs (artifact)
+        if: github.event.inputs.check_only != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: TunXBox-android-preview-release-${{ steps.actual_sha.outputs.sha }}
@@ -208,6 +245,7 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
       - name: Publish rolling pre-release to GitHub Releases
+        if: github.event.inputs.check_only != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ steps.version.outputs.rc_tag }}
@@ -222,10 +260,17 @@ jobs:
           Branch: ${{ github.event.pull_request.head.ref || github.ref_name }}
           Platform: Android 5.0+; TV and phone interfaces in the same APK.
           APK choices: arm64-v8a (64-bit ARM), armeabi-v7a (32-bit ARM), and combined APK (see actual ABI list in apk-manifest.json).
-          All APK signatures are verified. Preview release may use the CI debug signing key.
+          APKs use the pinned persistent TunXBox signing key. New builds have increasing Android versionCode.
+          Legacy builds signed with temporary keys require one-time export/backup and uninstall before this signing migration; later updates preserve app data.
           Universal APK includes all four bundled ABIs: ARM32, ARM64, x86 and x86_64 when confirmed by apk-manifest.json.
           Actual filenames match Assets and download filenames; see SHA256SUMS.txt and apk-manifest.json."
 
+          # Do not overwrite a newer release, even if an older workflow is rerun.
+          if gh release download "$TAG" --pattern apk-manifest.json --dir previous-release >/dev/null 2>&1; then
+            ALLOW_LEGACY=""
+            if [ "${{ github.event.inputs.allow_legacy_signer_migration }}" = "true" ]; then ALLOW_LEGACY="--allow-legacy"; fi
+            python3 buildScript/verify_update.py previous-release/apk-manifest.json dist/apk-manifest.json $ALLOW_LEGACY
+          fi
           # Roll the git tag onto the CURRENT commit so the release page shows the
           # fresh source revision instead of a stale one. Without this, --clobber
           # updates only the APK asset and the tag keeps pointing at an old SHA.
@@ -292,7 +337,7 @@ jobs:
           echo "Release tagName: $(gh release view "$TAG" --json tagName -q .tagName)"
 
       - name: Comment on PR with RC link
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' && github.event.inputs.check_only != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ steps.version.outputs.rc_tag }}
@@ -306,3 +351,7 @@ jobs:
           Download: https://github.com/${{ github.repository }}/releases/tag/$TAG
 
           This release is refreshed on every build. APKs are signature/checksum verified; obsolete APKs are removed after successful upload."
+
+      - name: Remove private signing material
+        if: always()
+        run: rm -rf .signing

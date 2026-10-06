@@ -103,4 +103,41 @@ class RemoteUiTest {
         assertEquals(android.view.ViewGroup.LayoutParams.WRAP_CONTENT, holder.view.layoutParams.height)
         assertEquals(3, holder.subtitle.maxLines)
     }
+    @Test fun tvCatalogMatchesAllUpstreamMenuEntriesExceptRedundantTvSwitch() {
+        val context = activity()
+        val menu = android.widget.PopupMenu(context, View(context)).menu
+        android.view.MenuInflater(context).inflate(R.menu.main_drawer_menu, menu)
+        val expected = (0 until menu.size()).map { menu.getItem(it).itemId }.filter { it != R.id.nav_switch_tv_mode }
+        assertEquals(expected, TvFunctionCatalog.entries(context, true, false).map { it.id })
+        assertFalse(TvFunctionCatalog.entries(context, false, true).any { it.id == R.id.nav_traffic || it.id == R.id.nav_tuiguang })
+    }
+    @Test fun rowMenuAndInfoWorkFromNestedControlWithoutRepeats() {
+        val context = activity(); val row = LinearLayout(context); val child = android.widget.Button(context)
+        row.addView(child); context.setContentView(row)
+        var opened = 0
+        io.nekohasekai.sagernet.ui.RemoteRowActions.bind(row, listOf(child)) { opened++ }
+        assertTrue(io.nekohasekai.sagernet.ui.RemoteRowActions.handle(child, android.view.KeyEvent(android.view.KeyEvent.ACTION_DOWN, android.view.KeyEvent.KEYCODE_MENU)))
+        assertTrue(io.nekohasekai.sagernet.ui.RemoteRowActions.handle(child, android.view.KeyEvent(android.view.KeyEvent.ACTION_UP, android.view.KeyEvent.KEYCODE_MENU)))
+        assertEquals(1, opened)
+        assertTrue(io.nekohasekai.sagernet.ui.RemoteRowActions.handle(child, android.view.KeyEvent(android.view.KeyEvent.ACTION_DOWN, android.view.KeyEvent.KEYCODE_INFO)))
+        assertEquals(2, opened)
+        assertTrue(child.isFocusable); assertTrue(child.minimumHeight >= 48 * context.resources.displayMetrics.density)
+    }
+    @Test fun longClickPreferenceHasHardwareMenuAlternative() {
+        val context = activity()
+        val preference = moe.matsuri.nb4a.ui.LongClickListPreference(context)
+        var called = 0
+        preference.setOnLongClickListener { called++; true }
+        val row = LayoutInflater.from(context).inflate(androidx.preference.R.layout.preference, null)
+        preference.onBindViewHolder(androidx.preference.PreferenceViewHolder.createInstanceForTests(row))
+        assertTrue(io.nekohasekai.sagernet.ui.RemoteRowActions.handle(row, android.view.KeyEvent(android.view.KeyEvent.ACTION_DOWN, android.view.KeyEvent.KEYCODE_MENU)))
+        assertEquals(1, called)
+    }
+    @Test fun routeAndChainHaveVisibleFocusableActions() {
+        val context=activity()
+        val asset=LayoutInflater.from(context).inflate(R.layout.layout_asset_item, null)
+        val actions=asset.findViewById<View>(R.id.remote_asset_actions)
+        assertEquals(View.VISIBLE, actions.visibility);assertTrue(actions.isFocusable)
+    }
+
 }

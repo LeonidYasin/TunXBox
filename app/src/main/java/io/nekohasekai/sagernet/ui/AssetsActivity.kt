@@ -1,6 +1,7 @@
 package io.nekohasekai.sagernet.ui
 
 import android.os.Bundle
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import android.provider.OpenableColumns
 import android.text.format.DateFormat
 import android.view.Menu
@@ -205,6 +206,18 @@ class AssetsActivity : ThemedActivity() {
 
         fun bind(file: File) {
             this.file = file
+            val actions = {
+                val entries = mutableListOf<Pair<Int, () -> Unit>>()
+                if (file.name in assetNames) entries.add(R.string.group_update to { binding.rulesUpdate.performClick() })
+                else entries.add(R.string.delete to { RemoteRowActions.confirmDelete(this@AssetsActivity, file.name) {
+                    val current = adapter.assets.indexOf(file)
+                    if (current >= 2) { adapter.remove(current); undoManager.remove(current to file) }
+                } })
+                MaterialAlertDialogBuilder(this@AssetsActivity).setTitle(file.name).setItems(entries.map { getString(it.first) }.toTypedArray()) { _, index -> entries[index].second() }.show()
+            }
+            itemView.setOnClickListener { actions() }
+            binding.remoteAssetActions.setOnClickListener { actions() }
+            RemoteRowActions.bind(itemView, listOf(binding.remoteAssetActions, binding.rulesUpdate)) { actions() }
 
             binding.assetName.text = file.name
             val versionFile = File(file.parentFile, "${file.nameWithoutExtension}.version.txt")

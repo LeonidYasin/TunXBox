@@ -122,12 +122,14 @@ class MainActivity : ThemedActivity(),
 
         if (savedInstanceState == null) {
             val destination = intent.getIntExtra("tv_destination", R.id.nav_configuration)
-            val allowed = setOf(R.id.nav_configuration, R.id.nav_group, R.id.nav_route, R.id.nav_settings, R.id.nav_tools, R.id.nav_logcat, R.id.nav_about, R.id.nav_traffic)
-            displayFragmentWithId(if (destination in allowed) destination else R.id.nav_configuration)
+            val allowed = io.nekohasekai.sagernet.ui.tv.TvFunctionCatalog.entries(this, DataStore.enableClashAPI, isPlay).map { it.id }.toSet()
+            if (!displayFragmentWithId(if (destination in allowed) destination else R.id.nav_configuration)) displayFragmentWithId(R.id.nav_configuration)
         }
         onBackPressedDispatcher.addCallback {
             if (binding.drawerLayout.isOpen) {
                 binding.drawerLayout.closeDrawers()
+            } else if (intent.getBooleanExtra("tv_tools", false)) {
+                finish()
             } else if (supportFragmentManager.findFragmentById(R.id.fragment_holder) is ConfigurationFragment) {
                 if (intent.getBooleanExtra("tv_tools", false) || intent?.action == Intent.ACTION_VIEW && !io.nekohasekai.sagernet.ui.tv.TvUiPreferences.phoneMode) finish()
                 else moveTaskToBack(true)
@@ -162,7 +164,7 @@ class MainActivity : ThemedActivity(),
             }
         }
 
-        if (isPreview) {
+        if (isPreview && !intent.getBooleanExtra("tv_tools", false)) {
             MaterialAlertDialogBuilder(this)
                 .setTitle(BuildConfig.PRE_VERSION_NAME)
                 .setMessage(R.string.preview_version_hint)
@@ -180,6 +182,13 @@ class MainActivity : ThemedActivity(),
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        setIntent(intent)
+        if (intent.getBooleanExtra("tv_tools", false)) {
+            val allowed = io.nekohasekai.sagernet.ui.tv.TvFunctionCatalog.entries(this, DataStore.enableClashAPI, isPlay).map { it.id }.toSet()
+            val destination = intent.getIntExtra("tv_destination", R.id.nav_configuration)
+            if (!displayFragmentWithId(if (destination in allowed) destination else R.id.nav_configuration)) displayFragmentWithId(R.id.nav_configuration)
+            return
+        }
 
         val uri = intent.data ?: return
 
@@ -546,6 +555,7 @@ class MainActivity : ThemedActivity(),
     // Hardware keys must consume both down and up; OK stays with the focused view.
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (!::binding.isInitialized) return super.dispatchKeyEvent(event)
+        if (RemoteRowActions.handle(currentFocus, event)) { highlightRemoteFocus(); return true }
         if (event.keyCode == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) {
             if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) { highlightRemoteFocus(); toggleService() }
             return true

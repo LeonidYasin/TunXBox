@@ -41,19 +41,37 @@ def apk_name(version, commit, abis):
     return f"TunXBox-{release_version}-android-tv-phone-{architecture}-preview-release-{commit[:8]}.apk"
 
 
-def package(apk_dir, output_dir, version, commit, apksigner):
+def read_identity(source, apksigner, aapt):
+    output = subprocess.check_output([str(apksigner), "verify", "--print-certs", str(source)], text=True)
+    fingerprints = re.findall(r"Signer #\d+ certificate SHA-256 digest: ([0-9a-fA-F]+)", output)
+    if len(fingerprints) != 1 or len(fingerprints[0]) != 64:
+        raise ValueError("Expected exactly one APK signing certificate")
+    metadata = subprocess.check_output([str(aapt), "dump", "badging", str(source)], text=True).splitlines()[0]
+    fields = dict(re.findall(r"(name|versionCode|versionName)='([^']*)'", metadata))
+    return fields['name'], int(fields['versionCode']), fields['versionName'], fingerprints[0].lower()
+
+
+def package(apk_dir, output_dir, version, commit, apksigner, aapt, certificate, expected_version_code):
     sources = sorted(apk_dir.glob("*.apk"))
     if not sources:
         raise ValueError(f"No release APKs in {apk_dir}")
     if output_dir.exists() and any(output_dir.iterdir()):
         raise ValueError("Output directory must be empty")
     output_dir.mkdir(parents=True, exist_ok=True)
+    expected_cert = certificate.read_text().strip().lower()
+    if not re.fullmatch("[0-9a-f]{64}", expected_cert): raise ValueError("Invalid pinned certificate")
     records = []
+    identity = None
     seen = set()
     for source in sources:
         # All published APKs must be installable, not old unsigned artifacts.
-        subprocess.run([str(apksigner), "verify", str(source)], check=True,
-                       stdout=subprocess.DEVNULL)
+        app_id, code, installed_version, fingerprint = read_identity(source, apksigner, aapt)
+        if app_id != "com.tunxbox.app" or fingerprint != expected_cert or code != expected_version_code:
+            raise ValueError("APK application, signing certificate or versionCode is incompatible")
+        current_identity = (app_id, code, installed_version, fingerprint)
+        if identity is not None and identity != current_identity:
+            raise ValueError("Split APKs have inconsistent upgrade identities")
+        identity = current_identity
         abis = apk_abis(source)
         name = apk_name(version, commit, abis)
         if name in seen:
@@ -75,7 +93,9 @@ def package(apk_dir, output_dir, version, commit, apksigner):
         ''.join(f"{r['sha256']}  {r['name']}\n" for r in records), encoding='utf-8')
     (output_dir / "apk-manifest.json").write_text(json.dumps({
         "version": version, "commit": commit, "platform": "android", "ui": ["tv", "phone"],
-        "flavor": "preview", "buildType": "release", "signatureVerified": True, "apks": records
+        "flavor": "preview", "buildType": "release", "signatureVerified": True,
+        "applicationId": identity[0], "versionCode": identity[1], "installedVersionName": identity[2],
+        "signingCertificateSha256": identity[3], "apks": records
     }, indent=2) + '\n', encoding='utf-8')
     return records
 
@@ -87,6 +107,9 @@ if __name__ == "__main__":
     parser.add_argument('--version', required=True)
     parser.add_argument('--commit', required=True)
     parser.add_argument('--apksigner', type=pathlib.Path, required=True)
+    parser.add_argument('--aapt', type=pathlib.Path, required=True)
+    parser.add_argument('--certificate', type=pathlib.Path, required=True)
+    parser.add_argument('--expected-version-code', type=int, required=True)
     args = parser.parse_args()
-    for record in package(args.apk_dir, args.output_dir, args.version, args.commit, args.apksigner):
+    for record in package(args.apk_dir, args.output_dir, args.version, args.commit, args.apksigner, args.aapt, args.certificate, args.expected_version_code):
         print(f"Verified: {record['name']} ({', '.join(record['abis'])})")

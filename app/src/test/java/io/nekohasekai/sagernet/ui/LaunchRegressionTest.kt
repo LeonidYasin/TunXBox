@@ -235,4 +235,35 @@ class LaunchRegressionTest {
         assertTrue(runCatching { kotlinx.coroutines.runBlocking { io.nekohasekai.sagernet.ui.tv.TvDiagnostics.tcp(profile) } }.isFailure)
     }
 
+    private fun checkTvDestination(id: Int, expected: Class<*>) {
+        TvUiPreferences.phoneMode = false
+        kotlinx.coroutines.runBlocking(kotlinx.coroutines.Dispatchers.IO) { io.nekohasekai.sagernet.database.DataStore.currentGroup() }
+        val app = RuntimeEnvironment.getApplication()
+        val intent = Intent(app, MainActivity::class.java).putExtra("tv_tools", true).putExtra("tv_destination", id)
+        val controller = Robolectric.buildActivity(MainActivity::class.java, intent)
+        try {
+            controller.setup().visible(); controller.get().supportFragmentManager.executePendingTransactions()
+            shadowOf(Looper.getMainLooper()).idle()
+            assertTrue(expected.isInstance(controller.get().supportFragmentManager.findFragmentById(R.id.fragment_holder)))
+            assertFalse(TvUiPreferences.phoneMode)
+            controller.get().onBackPressedDispatcher.onBackPressed(); shadowOf(Looper.getMainLooper()).idle()
+            assertTrue(controller.get().isFinishing)
+        } finally { controller.pause().stop().destroy() }
+    }
+    @Test fun tvGroupScreenStartsAndReturnsDirectly() = checkTvDestination(R.id.nav_group, GroupFragment::class.java)
+    @Test fun tvRouteScreenStartsAndReturnsDirectly() = checkTvDestination(R.id.nav_route, RouteFragment::class.java)
+    @Test fun tvSettingsScreenStartsAndReturnsDirectly() = checkTvDestination(R.id.nav_settings, SettingsFragment::class.java)
+    @Test fun tvToolsScreenStartsAndReturnsDirectly() = checkTvDestination(R.id.nav_tools, ToolsFragment::class.java)
+    @Test fun warmTvToolsIntentNavigatesExistingSingleTaskWithoutChangingMode() {
+        TvUiPreferences.phoneMode = false
+        val app = RuntimeEnvironment.getApplication()
+        val controller = Robolectric.buildActivity(MainActivity::class.java, Intent(app, MainActivity::class.java).putExtra("tv_tools", true)).setup().visible()
+        try {
+            controller.newIntent(Intent(app, MainActivity::class.java).putExtra("tv_tools", true).putExtra("tv_destination", R.id.nav_route))
+            controller.get().supportFragmentManager.executePendingTransactions()
+            assertTrue(controller.get().supportFragmentManager.findFragmentById(R.id.fragment_holder) is RouteFragment)
+            assertFalse(TvUiPreferences.phoneMode)
+        } finally { controller.pause().stop().destroy() }
+    }
+
 }

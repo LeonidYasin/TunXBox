@@ -43,6 +43,7 @@ abstract class ThemedActivity : AppCompatActivity {
                 KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN, KeyEvent.KEYCODE_DPAD_LEFT,
                 KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER,
                 KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE)) highlightRemoteFocus()
+        if (RemoteRowActions.handle(currentFocus, event)) return true
         return super.dispatchKeyEvent(event)
     }
 

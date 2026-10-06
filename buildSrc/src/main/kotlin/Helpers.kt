@@ -119,11 +119,14 @@ fun Project.setupAppCommon() {
     val alias = lp.getProperty("ALIAS_NAME") ?: System.getenv("ALIAS_NAME")
     val pwd = lp.getProperty("ALIAS_PASS") ?: System.getenv("ALIAS_PASS")
 
+    if (System.getenv("TUNXBOX_REQUIRE_SIGNING") == "1") {
+        require(!keystorePwd.isNullOrBlank() && !alias.isNullOrBlank() && !pwd.isNullOrBlank()) { "Missing required signing identity" }
+    }
     android.apply {
         if (keystorePwd != null) {
             signingConfigs {
                 create("release") {
-                    storeFile = rootProject.file("release.keystore")
+                    storeFile = rootProject.file(System.getenv("TUNXBOX_SIGNING_KEYSTORE") ?: "release.keystore")
                     storePassword = keystorePwd
                     keyAlias = alias
                     keyPassword = pwd
@@ -152,7 +155,10 @@ fun Project.setupAppCommon() {
 fun Project.setupApp() {
     val pkgName = requireMetadata().getProperty("PACKAGE_NAME")
     val verName = requireMetadata().getProperty("VERSION_NAME")
-    val verCode = (requireMetadata().getProperty("VERSION_CODE").toInt()) * 5
+    val versionBase = requireMetadata().getProperty("VERSION_CODE").toInt()
+    val buildSequence = System.getenv("TUNXBOX_BUILD_SEQUENCE")?.toIntOrNull() ?: 0
+    require(versionBase in 1..2100 && buildSequence in 0..999998) { "Invalid Android version sequence" }
+    val verCode = versionBase * 1_000_000 + 999999
     android.apply {
         defaultConfig {
             applicationId = pkgName
@@ -189,6 +195,8 @@ fun Project.setupApp() {
             create("fdroid")
             create("play")
             create("preview") {
+                versionCode = versionBase * 1_000_000 + buildSequence
+                versionNameSuffix = "-rc.$buildSequence"
                 buildConfigField(
                     "String",
                     "PRE_VERSION_NAME",
