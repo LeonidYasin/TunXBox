@@ -62,6 +62,18 @@ class LaunchRegressionTest {
             assertNull(shadowOf(controller.get()).nextStartedActivity)
         } finally { controller.pause().stop().destroy() }
     }
+    @Test fun savedPhoneModeStartsConfigurationWithoutSharingOrRedirecting() {
+        TvUiPreferences.phoneMode = true
+        val controller = Robolectric.buildActivity(MainActivity::class.java, Intent(Intent.ACTION_MAIN))
+        try {
+            controller.setup().visible()
+            controller.get().supportFragmentManager.executePendingTransactions()
+            shadowOf(Looper.getMainLooper()).idle()
+            assertTrue(controller.get().supportFragmentManager.findFragmentById(R.id.fragment_holder) is ConfigurationFragment)
+            assertNull(shadowOf(controller.get()).nextStartedActivity)
+            assertFalse(controller.get().isFinishing)
+        } finally { controller.pause().stop().destroy() }
+    }
     @Test fun ordinaryLauncherRedirectIsExplicitNotAShareIntent() {
         TvUiPreferences.phoneMode = false
         val controller = Robolectric.buildActivity(MainActivity::class.java, Intent(Intent.ACTION_MAIN))
