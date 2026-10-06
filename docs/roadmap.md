@@ -29,6 +29,7 @@ flowchart TD
 | R4 | Актуальные TV исправления | Условно | Взять только ещё воспроизводимые проблемы; не заменять новый UI старой реализацией; при отсутствии unique fixes закрыть направление как redundant |
 | R5 | Живость туннеля и failover | План, отдельный PR | End-to-end check, не просто TCP/Connected; несколько неуспехов, cooldown/hysteresis, отмена, подходящая группа/ручной override, без reconnect loop; tests Wi-Fi change/background/all-down/recovery |
 | R6 | Совместимость Happ/Incy | Исследование | Пользовательские обезличенные samples/официальные export formats; не обещать чтение sandbox чужого приложения; использовать общий import где возможно |
+| R8 | Диагностика и совместимость, Happ first | Новый приоритет до R5, [план](protocol-compatibility.md) | Явные ошибки/безопасные отчёты; lossless import; protocol/transport/core matrix; Xray assessment; pinned sing-box updates с CI/приёмкой; не обещать all-protocol parity без evidence |
 | R7 | Расширение тестов | Постоянно | Физические ARM/OEM/пульт/поворот; APK release smoke; real provider только с явной безопасной fixture; emulator smoke не выдавать за throughput/VPN сертификацию |
 
 Номера будущих релизов предварительные: исправления — patch (например 1.5.1), существенные новые функции — minor (например 1.6.0). Следующий Android VERSION_CODE base необходимо увеличить после stable, чтобы следующий RC устанавливался поверх stable.
@@ -76,3 +77,7 @@ flowchart TD
 ## Обновление плана
 
 В каждом PR менять статус только после фактического результата; добавлять ссылки на PR/run/release и acceptance evidence. «В подготовке», «merged», «опубликован» и «проверен на устройстве» — разные состояния. Карта [project-map](project-map.md) показывает roadmap как планы, не как реализованные функции.
+
+## Приоритет после новых находок владельца
+
+Ошибки подписки/TLS/REALITY и неизвестный XHTTP фиксируются в [отдельном направлении](protocol-compatibility.md). Диагностика и подтверждённая совместимость важнее автоматического failover. LAN PR #4 остаётся отдельным scope; новые изменения создаются от актуального master и не подменяют immutable 1.5.0. Это план работ, не объявление готового исправления.
