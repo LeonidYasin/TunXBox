@@ -55,8 +55,8 @@
                 android:layout_height="wrap_content"
                 android:breakStrategy="high_quality"
                 android:ellipsize="end"
-                android:textColor="?android:attr/textColorTertiary"
-                android:textSize="12sp"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="14sp"
                 tools:text="com.package.name (10000)" />
 
         </LinearLayout>

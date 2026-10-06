@@ -266,4 +266,28 @@ class LaunchRegressionTest {
         } finally { controller.pause().stop().destroy() }
     }
 
+    @Test fun repeatedServiceBinderDeliveryRegistersOnlyOnceAndLateDeliveryIsIgnored() {
+        val app = RuntimeEnvironment.getApplication()
+        var registered = 0
+        val fake = object : io.nekohasekai.sagernet.aidl.ISagerNetService.Stub() {
+            override fun getState() = 0
+            override fun getProfileName() = "test"
+            override fun registerCallback(cb: io.nekohasekai.sagernet.aidl.ISagerNetServiceCallback, id: Int) { registered++ }
+            override fun unregisterCallback(cb: io.nekohasekai.sagernet.aidl.ISagerNetServiceCallback) { }
+            override fun urlTest() = 1
+        }
+        val cls = io.nekohasekai.sagernet.bg.SagerConnection.serviceClass
+        val component = ComponentName(app, cls)
+        val intent = Intent(app, cls).setAction(Action.SERVICE)
+        shadowOf(app).setComponentNameAndServiceForBindServiceForIntent(intent, component, fake)
+        val connection = io.nekohasekai.sagernet.bg.SagerConnection(2, true)
+        connection.connect(app, null)
+        shadowOf(Looper.getMainLooper()).idle()
+        connection.onServiceConnected(component, fake); connection.onServiceConnected(component, fake)
+        assertEquals(1, registered)
+        connection.disconnect(app)
+        connection.onServiceConnected(component, fake)
+        assertEquals(1, registered); assertNull(connection.service)
+    }
+
 }

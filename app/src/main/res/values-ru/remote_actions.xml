@@ -3,4 +3,8 @@
     <string name="remote_move_down">Переместить ниже</string>
     <string name="remote_row_options">Действия</string>
     <string name="remote_protected_group">Остановите VPN перед изменением активной группы.</string>
+<string name="remote_insert_tab">Вставить табуляцию</string>
+<string name="remote_undo">Отменить</string>
+<string name="remote_redo">Повторить</string>
+<string name="remote_format">Форматировать конфигурацию</string>
 </resources>

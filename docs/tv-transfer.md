@@ -52,3 +52,10 @@ The phone launcher, profile editors and parser/updater APIs were checked against
 After success the phone shows a focused top banner with the saved count and a close-tab action (manual close instructions when the browser blocks closing). The TV hides the QR and asks to continue to the list; acknowledging closes the sharing session. Do not resend after a confirmed success.
 
 TV tools include TCP/URL group tests, saved results and latency sorting. The Connection row shows VPN service state, active profile and measured traffic. Its active-tunnel test is distinct from URL testing each profile with a temporary core. Zero traffic while idle is not a failure, and service Connected alone is not proof of Internet reachability. HOME and YouTube do not stop the VPN. All functions opens complete upstream screens without changing the saved TV mode; these screens are reused Material layouts, not independent Leanback copies.
+
+
+## Complete tool access and updates
+
+All functions uses the same navigation-menu source as the phone. Groups, routes, chain entries and custom asset files now have visible action menus for operations previously requiring swipe/drag. Menu/Info opens row/preference extra actions. Shared full editors are retained to avoid losing protocol/options coverage; this is not a separate Leanback copy of every form.
+
+See [signing and updates](signing-and-updates.md) for the one-time private signing setup and legacy-key migration. Do not interpret a successful check-only run as publication of a final APK.

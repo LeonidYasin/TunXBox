@@ -140,4 +140,20 @@ class RemoteUiTest {
         assertEquals(View.VISIBLE, actions.visibility);assertTrue(actions.isFocusable)
     }
 
+    @Test fun configurationEditorControlsFitPhoneWidthAndAreFocusable() {
+        val context=activity()
+        val view=LayoutInflater.from(context).inflate(R.layout.layout_edit_config,null)
+        context.setContentView(view)
+        val width=(390 * context.resources.displayMetrics.density).toInt()
+        view.measure(View.MeasureSpec.makeMeasureSpec(width,View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(844,View.MeasureSpec.EXACTLY))
+        view.layout(0,0,width,844)
+        for(id in listOf(R.id.action_tab,R.id.action_undo,R.id.action_redo,R.id.action_format)) {
+            val control=view.findViewById<View>(id)
+            assertTrue(control.isFocusable);assertNotNull(control.contentDescription)
+            assertTrue(control.right <= control.parent.let { it as View }.width)
+        }
+        val key=LayoutInflater.from(context).inflate(R.layout.item_keyboard_key,null)
+        assertTrue(key.isFocusable)
+    }
+
 }

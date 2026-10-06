@@ -7,4 +7,8 @@
     <string name="remote_move_down">Move down</string>
     <string name="remote_row_options">Actions</string>
     <string name="remote_protected_group">Stop VPN before changing its active group.</string>
+<string name="remote_insert_tab">Insert tab</string>
+<string name="remote_undo">Undo</string>
+<string name="remote_redo">Redo</string>
+<string name="remote_format">Format configuration</string>
 </resources>

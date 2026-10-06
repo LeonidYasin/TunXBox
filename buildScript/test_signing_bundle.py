@@ -1,4 +1,4 @@
-import base64, hashlib, importlib.util, json, pathlib, tempfile, unittest
+import base64, hashlib, importlib.util, json, pathlib, tempfile, unittest, os, subprocess
 from unittest.mock import patch
 from types import SimpleNamespace
 
@@ -38,5 +38,16 @@ class UpgradeTest(unittest.TestCase):
     def test_apk_identity_is_extracted_from_actual_tools(self):
         with patch.object(package.subprocess,'check_output',side_effect=['Signer #1 certificate SHA-256 digest: '+'a'*64,"package: name='com.tunxbox.app' versionCode='47000123' versionName='1.5.0-rc.123'\n"]):
             self.assertEqual(package.read_identity(pathlib.Path('app.apk'),'apksigner','aapt'),('com.tunxbox.app',47000123,'1.5.0-rc.123','a'*64))
+
+    def test_real_pkcs12_bundle_can_be_prepared_without_printing_secrets(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=pathlib.Path(directory);key=root/'test.p12';password='synthetic-local-test'
+            env=dict(os.environ,SIGN_TEST_PASS=password)
+            subprocess.run(['keytool','-genkeypair','-storetype','PKCS12','-keystore',str(key),'-alias','test','-keyalg','RSA','-keysize','2048','-validity','1','-dname','CN=LocalTest','-storepass:env','SIGN_TEST_PASS','-keypass:env','SIGN_TEST_PASS'],env=env,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,check=True)
+            cert=subprocess.check_output(['keytool','-exportcert','-keystore',str(key),'-alias','test','-storepass:env','SIGN_TEST_PASS'],env=env,stderr=subprocess.DEVNULL)
+            pin=root/'pin';pin.write_text(hashlib.sha256(cert).hexdigest())
+            bundle=json.dumps(dict(keystore=base64.b64encode(key.read_bytes()).decode(),storePassword=password,alias='test',keyPassword=password))
+            prepared=signing.prepare(bundle,root,pin)
+            self.assertTrue(pathlib.Path(prepared['TUNXBOX_SIGNING_KEYSTORE']).is_file())
 
 if __name__=='__main__':unittest.main()
