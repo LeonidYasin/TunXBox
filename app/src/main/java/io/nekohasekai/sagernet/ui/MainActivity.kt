@@ -387,6 +387,9 @@ class MainActivity : ThemedActivity(),
 
     @SuppressLint("CommitTransaction")
     fun displayFragment(fragment: ToolbarFragment) {
+        // BottomAppBar translation is not a reliable hide before its first layout.
+        // This creation tool must not have an overlapping global VPN control panel.
+        binding.stats.visibility = if (fragment is io.nekohasekai.sagernet.ui.lan.LanDiscoveryFragment) View.GONE else View.VISIBLE
         if (fragment is ConfigurationFragment || (DataStore.showBottomBar && fragment !is io.nekohasekai.sagernet.ui.lan.LanDiscoveryFragment)) {
             binding.stats.allowShow = true
             binding.fab.show()

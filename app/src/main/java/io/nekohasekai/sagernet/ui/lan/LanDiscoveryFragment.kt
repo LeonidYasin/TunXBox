@@ -63,7 +63,7 @@ class LanDiscoveryFragment : ToolbarFragment(R.layout.layout_lan_discovery) {
         // This screen creates profiles but never connects. Suppress the unrelated global VPN FAB,
         // including after Android restores the fragment on rotation.
         (activity as? io.nekohasekai.sagernet.ui.MainActivity)?.binding?.let {
-            it.fab.hide(); it.stats.allowShow = false; it.stats.performHide()
+            it.fab.hide(); it.stats.allowShow = false; it.stats.visibility = View.GONE
         }
     }
     override fun onStart() {

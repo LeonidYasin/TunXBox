@@ -542,6 +542,7 @@ class LaunchRegressionTest {
             assertEquals(android.view.View.GONE, activity.findViewById<android.view.View>(R.id.lan_cancel).visibility)
             assertEquals(0, activity.findViewById<android.widget.LinearLayout>(R.id.lan_results).childCount)
             assertTrue("Save feedback must be focusable so ScrollView reveals it", activity.findViewById<android.widget.TextView>(R.id.lan_status).isFocusableInTouchMode)
+            assertEquals("Global stats must not obscure LAN controls", android.view.View.GONE, activity.binding.stats.visibility)
         } finally { controller.pause().stop().destroy() }
     }
     @Test fun lanSaveIsTransactionalDuplicateSafeAndDoesNotSelectOrConnect() = kotlinx.coroutines.runBlocking {

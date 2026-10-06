@@ -17,3 +17,9 @@ Local execution: install SDK API 35, create/start a compatible AVD, build libcor
 The first real-device runs found missing actual TV keyboard focus after touch-mode launch and a mode-picker card needing two taps. These were fixed in production rather than weakening the assertions. Screenshots/hierarchies are copied to disposable shell-owned Downloads before AGP uninstalls test APKs.
 
 During connected tests the Gradle heap is capped at 1536MB with two workers and parallel projects disabled; the AVD has 3072MB. This reduces host/emulator memory contention, but is NOT proof of fixing the previously unexplained 16KB process exit. Existing exit-info/logcat/event diagnostics remain mandatory; failed assertions are not skipped or retried automatically.
+
+## Current SDK renderer and infrastructure triage
+
+Current Android documentation marks `swiftshader_indirect` deprecated since emulator 36.4.9. CI now uses `-gpu software`, the supported software backend selection rather than a deprecated indirect mode. Reference: https://developer.android.com/studio/run/emulator-acceleration . This is renderer/environment hygiene, not a proven root-cause fix for ART/system_server crashes.
+
+Run 37533313556 recorded system_server SIGSEGV and framework NoSuchFieldError; run 37536015749 attempt 1 failed downloading the emulator SDK archive before boot, and its one clean retry recorded framework NoSuchMethodError before any 16KB tests. These are failures, not passes. No assertions or page-size checks are removed. The same runtime source passed Preview 4KB/16KB 10/10 and 146 JVM in 37536132863; that does not substitute for the separate OSS gate or certify the system image. Further repeated infrastructure failures require investigation rather than a retry loop.

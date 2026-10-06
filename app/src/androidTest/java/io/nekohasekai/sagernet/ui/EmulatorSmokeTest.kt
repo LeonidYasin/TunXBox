@@ -218,6 +218,7 @@ class EmulatorSmokeTest {
                 assertFalse(activity.findViewById<android.widget.Button>(R.id.lan_scan).isEnabled)
                 assertEquals(android.view.View.GONE, activity.findViewById<android.view.View>(R.id.lan_cancel).visibility)
                 assertEquals(0, activity.findViewById<android.widget.LinearLayout>(R.id.lan_results).childCount)
+                assertEquals("Global panel must not overlap this creation tool", android.view.View.GONE, activity.findViewById<android.view.View>(R.id.stats).visibility)
             }
         }
         visibleText(text(R.string.lan_title))
