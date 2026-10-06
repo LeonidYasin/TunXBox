@@ -268,7 +268,18 @@ class MainBrowseFragment : BrowseSupportFragment() {
         val ids = (0 until items.size()).map { itemId(items[it]) }
         val index = TvInteractionPolicy.focusIndex(ids, focusedId)
         val row = focusedRow.toInt().coerceIn(0, 2)
-        view?.post { if (view != null && dialog?.isShowing != true) setSelectedPosition(row, false, ListRowPresenter.SelectItemViewHolderTask(index)) }
+        view?.post {
+            if (view == null || dialog?.isShowing == true) return@post
+            // Browse's three-argument overload unconditionally starts a headers
+            // transition and throws when HEADERS_DISABLED. Select through the
+            // embedded Rows fragment instead; no headers animation is needed.
+            val rows = rowsSupportFragment
+            if (rows?.view != null) rows.setSelectedPosition(row, false, ListRowPresenter.SelectItemViewHolderTask(index))
+            else {
+                restoreAfterLoad = true
+                setSelectedPosition(row, false)
+            }
+        }
     }
     private fun show(builder: AlertDialog.Builder, destructive: Boolean = false): AlertDialog {
         dialog?.dismiss()
