@@ -24,6 +24,22 @@ python3 buildScript/setup_signing.py
 
 Нужно сохранить backup в защищённом offline-хранилище. Без приватного ключа обновлять приложения, подписанные этим сертификатом, невозможно. Не загружать backup/bundle в GitHub Files, issues, release assets, gist или чат.
 
+## Резервная копия после настройки через защищённый браузер
+
+Если ключ создан агентом и уже сохранён в Actions Secret, повторно запускать bootstrap для создания нового ключа не нужно. Владелец должен сохранить исходную идентичность, а не заменить её.
+
+1. Задать отдельный сильный пароль (не пароль GitHub), минимум 16 символов, в repository Actions Secret `TUNXBOX_BACKUP_PASSWORD`.
+2. Запустить workflow `signing-backup.yml` на ветке PR. Он шифрует backup в памяти через OpenSSL AES-256-CBC/PBKDF2 (200000 iterations), проверяет расшифрование и загружает **только зашифрованный** artifact с retention 7 дней.
+3. Скачать artifact `TunXBox-encrypted-signing-backup`, проверить SHA256 и хранить архив offline. Пароль сохранить отдельно в менеджере паролей. Не публиковать архив или пароль.
+4. Для восстановления на своём доверенном компьютере с OpenSSL:
+
+```bash
+openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in TunXBox-signing-backup.tar.enc -out TunXBox-signing-backup.tar
+tar -xf TunXBox-signing-backup.tar
+```
+
+OpenSSL сам запросит пароль. Восстановленный `signing-bundle.json` содержит приватный ключ и пароли: хранить с ограниченными правами, не коммитить. Проверить публичный fingerprint; восстановить тот же bundle в `TUNXBOX_SIGNING_BUNDLE`. Шифрование здесь предназначено для приватной offline-копии; checksum защищает от случайной порчи, не от злонамеренной замены. Не расшифровывать полученные от посторонних архивы.
+
 ## Первое опубликование после настройки
 
 Для **первого перехода со старых временных ключей** запустить `prerelease-from-pr.yml` на ветке PR с `allow_legacy_signer_migration=true`, `check_only=false`. Это не обход Android: старые APK потребуют один раз экспортировать/сохранить данные, удалить старую установку и установить новую. Обычные дальнейшие публикации используют `allow_legacy_signer_migration=false`.
