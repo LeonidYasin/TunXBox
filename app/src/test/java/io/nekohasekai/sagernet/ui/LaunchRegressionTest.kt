@@ -217,4 +217,22 @@ class LaunchRegressionTest {
         } finally { controller.pause().stop().destroy() }
     }
 
+    @Test fun tcpLatencyChecksListeningLocalPortWithoutInternet() {
+        SagerNet.underlyingNetwork = null
+        java.net.ServerSocket(0, 1, java.net.InetAddress.getLoopbackAddress()).use { server ->
+            val bean = io.nekohasekai.sagernet.fmt.socks.SOCKSBean().apply { serverAddress = server.inetAddress.hostAddress; serverPort = server.localPort }
+            val profile = io.nekohasekai.sagernet.database.ProxyEntity().putBean(bean)
+            val latency = kotlinx.coroutines.runBlocking { io.nekohasekai.sagernet.ui.tv.TvDiagnostics.tcp(profile) }
+            assertTrue(latency >= 0)
+        }
+    }
+    @Test fun tcpLatencyRejectsClosedLocalPort() {
+        SagerNet.underlyingNetwork = null
+        val address = java.net.InetAddress.getLoopbackAddress()
+        val port = java.net.ServerSocket(0, 1, address).use { it.localPort }
+        val bean = io.nekohasekai.sagernet.fmt.socks.SOCKSBean().apply { serverAddress = address.hostAddress; serverPort = port }
+        val profile = io.nekohasekai.sagernet.database.ProxyEntity().putBean(bean)
+        assertTrue(runCatching { kotlinx.coroutines.runBlocking { io.nekohasekai.sagernet.ui.tv.TvDiagnostics.tcp(profile) } }.isFailure)
+    }
+
 }
