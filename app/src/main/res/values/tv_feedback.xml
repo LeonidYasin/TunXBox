@@ -27,6 +27,6 @@
     <string name="tv_youtube_hint">Check playback without disconnecting VPN</string>
     <string name="tv_youtube_missing">YouTube is not installed or has no launchable screen.</string>
 <string name="tv_test_active">Check current VPN</string>
-<string name="tv_test_active_ok">Current VPN: test succeeded, %1$d ms</string>
-<string name="tv_test_active_failed">Current VPN: URL test failed; check network or logs.</string>
+<string name="tv_test_active_ok">Last VPN check: succeeded, %1$d ms</string>
+<string name="tv_test_active_failed">Last VPN check: URL test failed; check network or logs.</string>
 </resources>

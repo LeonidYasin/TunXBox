@@ -27,6 +27,6 @@
     <string name="tv_youtube_hint">Проверить воспроизведение, не отключая VPN</string>
     <string name="tv_youtube_missing">YouTube не установлен или не имеет доступного экрана запуска.</string>
 <string name="tv_test_active">Проверить текущий VPN</string>
-<string name="tv_test_active_ok">Текущий VPN: проверка успешна, %1$d мс</string>
-<string name="tv_test_active_failed">Текущий VPN: URL-тест не прошёл; проверьте сеть или логи.</string>
+<string name="tv_test_active_ok">Последняя проверка VPN: успешно, %1$d мс</string>
+<string name="tv_test_active_failed">Последняя проверка VPN: URL-тест не прошёл; проверьте сеть или логи.</string>
 </resources>

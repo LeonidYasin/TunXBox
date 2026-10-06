@@ -113,9 +113,11 @@ class MainBrowseFragment : BrowseSupportFragment() {
     }
     private fun updateService(state: BaseService.State, name: String? = null, message: String? = null) {
         DataStore.serviceState = state
+        val previousPhase = phase
         phase = TvVpnPhase.fromServiceName(state.name)
-        if (phase == TvVpnPhase.IDLE) { stats = io.nekohasekai.sagernet.aidl.SpeedDisplayData(); statsAt = 0L; activeName = ""; health = "" }
-        if (name != null) activeName = name
+        if (phase != previousPhase || name != null && name != activeName) { healthJob?.cancel(); health = "" }
+        if (phase in setOf(TvVpnPhase.IDLE, TvVpnPhase.STOPPED)) { stats = io.nekohasekai.sagernet.aidl.SpeedDisplayData(); statsAt = 0L; activeName = ""; health = "" }
+        if (name != null && phase !in setOf(TvVpnPhase.IDLE, TvVpnPhase.STOPPED)) activeName = name
         refreshCards()
         if (message != null) toast(message)
     }
@@ -498,9 +500,14 @@ class MainBrowseFragment : BrowseSupportFragment() {
     private fun testActiveConnection() {
         if (phase != TvVpnPhase.CONNECTED || healthJob?.isActive == true) { toast(R.string.tv_wait); return }
         val service = connection.service ?: run { toast(R.string.tv_unavailable); return }
+        val testedProfile = activeProfileId()
         health = getString(R.string.tv_test_starting); refreshCards()
         healthJob = viewLifecycleOwner.lifecycleScope.launch {
-            try { val ms = withContext(Dispatchers.IO) { service.urlTest() }; health = getString(R.string.tv_test_active_ok, ms) }
+            try {
+                val ms = withContext(Dispatchers.IO) { service.urlTest() }
+                ensureActive()
+                if (phase == TvVpnPhase.CONNECTED && activeProfileId() == testedProfile) health = if (ms >= 0) getString(R.string.tv_test_active_ok, ms) else getString(R.string.tv_test_active_failed)
+            }
             catch (cancelled: CancellationException) { health = ""; throw cancelled }
             catch (_: Exception) { health = getString(R.string.tv_test_active_failed) }
             finally { refreshCards() }
