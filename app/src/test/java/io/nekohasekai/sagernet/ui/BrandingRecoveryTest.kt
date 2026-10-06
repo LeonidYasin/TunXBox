@@ -51,6 +51,7 @@ class BrandingRecoveryTest {
             val dialog = ShadowAlertDialog.getLatestAlertDialog()
             assertTrue(dialog.isShowing)
             dialog.getButton(AlertDialog.BUTTON_NEGATIVE).performClick()
+            shadowOf(android.os.Looper.getMainLooper()).idle()
             assertTrue(controller.get().isFinishing)
         } finally { controller.pause().stop().destroy() }
     }
@@ -59,6 +60,7 @@ class BrandingRecoveryTest {
         try {
             controller.setup().visible()
             ShadowAlertDialog.getLatestAlertDialog().cancel()
+            shadowOf(android.os.Looper.getMainLooper()).idle()
             assertTrue(controller.get().isFinishing)
             assertNull(shadowOf(controller.get()).nextStartedActivity)
         } finally { controller.pause().stop().destroy() }
@@ -69,6 +71,7 @@ class BrandingRecoveryTest {
             controller.setup().visible()
             assertNull(shadowOf(controller.get()).nextStartedActivity)
             ShadowAlertDialog.getLatestAlertDialog().getButton(AlertDialog.BUTTON_POSITIVE).performClick()
+            shadowOf(android.os.Looper.getMainLooper()).idle()
             assertEquals(MainActivity::class.java.name, shadowOf(controller.get()).nextStartedActivity.component!!.className)
             assertTrue(controller.get().isFinishing)
         } finally { controller.pause().stop().destroy() }

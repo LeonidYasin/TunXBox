@@ -21,7 +21,7 @@ import org.robolectric.annotation.Implementation
  * Only native Go core initialization is omitted: JVM tests cannot load Android JNI.
  */
 @Implements(value = SagerNet::class, isInAndroidSdk = false)
-class StartupApplicationShadow {
+class StartupApplicationShadow : org.robolectric.shadows.ShadowApplication() {
     @Implementation fun onCreate() { /* Android JNI core is tested by APK/device acceptance. */ }
 }
 
