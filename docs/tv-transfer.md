@@ -31,11 +31,11 @@ The QR screen keeps the code beside its controls. New pairing session invalidate
 - Browser tokens use a URL fragment and request header, not a query sent to the server. Wildcard CORS is disabled; Host/Origin checks prevent browser cross-origin access and DNS rebinding.
 - Payloads are limited to 2 MiB; requests require JSON and Content-Length. Partial body reads are completed, truncated bodies rejected, and secrets are not written by the transfer server to logs.
 - Imported configuration files use the upstream parser: profiles/outbounds are imported, not every routing rule or global app preference. Subscription URLs create persistent subscription groups with the upstream updater.
-- Android TV UI remains this branch's default on all devices. Explicit Phone Mode persists across launches, including a launch from the TV home screen. Deep-link imports retain the upstream mobile handler without changing the saved mode.
+- Ordinary launcher entries first show a TV / Smartphone picker without loading either main interface. The last explicit choice is remembered as initial focus, not an automatic skip. Deep-link imports retain the upstream mobile handler without changing the saved mode. TV mode follows system auto-rotation on phones; actual televisions retain their natural orientation. Main actions are Smartphone → Group → Connect → Import from phone.
 
 ## Regression checklist
 
-- Switch TV → Phone, kill/relaunch, verify Phone persists. Switch back and relaunch. Launch from Android TV home: one launcher tile, correct saved mode.
+- Choose TV and Smartphone, kill/relaunch, verify the picker appears and focuses the last choice. Back exits without selecting. Check one launcher tile in each home environment; deep links bypass the picker. Rotate TV mode on a phone in both directions with system auto-rotation enabled; verify cards, title, QR, and focus remain usable.
 - Exercise upstream `sn://subscription`, `clash://install-config`, and profile deep links on cold/warm launches.
 - Import `ss://`, `vmess://`, `vless://`, `trojan://` directly: no HTTP download attempt.
 - Open each Manual editor, including VLESS, save and verify the profile appears.

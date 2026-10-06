@@ -19,7 +19,7 @@ class ActionPresenter : Presenter() {
         fun dp(value: Int) = (value * density).toInt()
         val layout = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
-            layoutParams = ViewGroup.LayoutParams(dp(300), ViewGroup.LayoutParams.WRAP_CONTENT)
+            layoutParams = ViewGroup.LayoutParams(dp(TvLayoutPolicy.cardWidthDp(parent.resources.configuration.screenWidthDp)), ViewGroup.LayoutParams.WRAP_CONTENT)
             minimumHeight = dp(124)
             setPadding(dp(16), dp(16), dp(16), dp(16))
             gravity = Gravity.CENTER_VERTICAL

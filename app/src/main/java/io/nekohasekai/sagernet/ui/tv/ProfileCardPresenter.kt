@@ -21,6 +21,7 @@ class ProfileCardPresenter(private val openActions: (Long) -> Unit = {}) : Prese
     }
     override fun onCreateViewHolder(parent: ViewGroup): ViewHolder {
         val holder = ProfileCardViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.card_profile_tv, parent, false))
+        holder.view.layoutParams.width = (TvLayoutPolicy.cardWidthDp(parent.resources.configuration.screenWidthDp) * parent.resources.displayMetrics.density).toInt()
         holder.view.setOnLongClickListener { if (holder.profileId > 0) { openActions(holder.profileId); true } else false }
         return holder
     }

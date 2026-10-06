@@ -43,7 +43,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
     private var updateDeclined = false
     private var dialog: AlertDialog? = null
     private var focusedRow = ROW_ACTIONS
-    private var focusedId = TOGGLE
+    private var focusedId = PHONE_MODE
     private var restoreAfterLoad = true
     private var lastCommand = -750L
     private val connection = SagerConnection(SagerConnection.CONNECTION_ID_MAIN_ACTIVITY_FOREGROUND, true)
@@ -135,12 +135,18 @@ class MainBrowseFragment : BrowseSupportFragment() {
         headersState = HEADERS_DISABLED
         isHeadersTransitionOnBackEnabled = false
         focusedRow = savedInstanceState?.getLong("tv_focus_row", ROW_ACTIONS) ?: ROW_ACTIONS
-        focusedId = savedInstanceState?.getLong("tv_focus_item", TOGGLE) ?: TOGGLE
+        focusedId = savedInstanceState?.getLong("tv_focus_item", PHONE_MODE) ?: PHONE_MODE
         connection.connect(requireActivity(), connectionCallback)
     }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         brandColor = 0xFF0EA5E9.toInt()
+        titleView?.findViewById<android.widget.TextView>(androidx.leanback.R.id.title_text)?.apply {
+            setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, resources.getDimension(R.dimen.tv_browse_title_size))
+            layoutParams.height = resources.getDimensionPixelSize(R.dimen.tv_browse_title_height)
+            maxLines = 1
+            ellipsize = android.text.TextUtils.TruncateAt.END
+        }
         actionsAdapter = ArrayObjectAdapter(ActionPresenter())
         profilesAdapter = ArrayObjectAdapter(ProfileCardPresenter { openProfileActions(it) })
         toolsAdapter = ArrayObjectAdapter(ActionPresenter())
@@ -245,16 +251,16 @@ class MainBrowseFragment : BrowseSupportFragment() {
         if (phase in setOf(TvVpnPhase.CONNECTING, TvVpnPhase.CONNECTED, TvVpnPhase.STOPPING) && activeName.isNotBlank() && activeName != selectedName) names.add(getString(R.string.tv_active_name, activeName))
         val group = groups.firstOrNull { it.id == DataStore.selectedGroup }
         actionsAdapter.setItems(listOf(
-            TvAction(TOGGLE, getString(label), names.joinToString("\n"), if (command == TvVpnCommand.STOP) R.drawable.ic_service_active else R.drawable.ic_service_idle, command != TvVpnCommand.NONE),
+            TvAction(PHONE_MODE, getString(R.string.tv_phone_mode), getString(R.string.tv_phone_mode_hint), R.drawable.ic_remote_phone),
             TvAction(GROUPS, getString(R.string.tv_groups), group?.let { getString(R.string.tv_group_count, it.displayName(), profiles.size) } ?: "", R.drawable.ic_remote_groups),
+            TvAction(TOGGLE, getString(label), names.joinToString("\n"), if (command == TvVpnCommand.STOP) R.drawable.ic_service_active else R.drawable.ic_service_idle, command != TvVpnCommand.NONE),
             TvAction(PHONE_IMPORT, getString(R.string.tv_import_phone), getString(R.string.tv_import_phone_hint), R.drawable.ic_remote_import)
         ), diff)
         val updating = group != null && GroupUpdater.updating.contains(group.id)
         toolsAdapter.setItems(listOf(
             TvAction(PROFILE_ACTIONS, getString(R.string.tv_actions), getString(R.string.tv_actions_hint), R.drawable.ic_image_edit, DataStore.selectedProxy > 0),
             TvAction(UPDATE, getString(R.string.tv_update_group), getString(if (updating) R.string.tv_updating else if (group?.type != GroupType.SUBSCRIPTION) R.string.tv_not_subscription else R.string.tv_update_group), R.drawable.ic_social_share, group?.type == GroupType.SUBSCRIPTION && !updating),
-            TvAction(MORE, getString(R.string.tv_more_import), getString(R.string.tv_more_hint), R.drawable.ic_baseline_more_vert_24),
-            TvAction(PHONE_MODE, getString(R.string.tv_phone_mode), getString(R.string.tv_phone_mode_hint), R.drawable.ic_remote_phone)
+            TvAction(MORE, getString(R.string.tv_more_import), getString(R.string.tv_more_hint), R.drawable.ic_baseline_more_vert_24)
         ), diff)
         val cards: List<Any> = if (profiles.isEmpty()) listOf(TvEmptyHint(getString(R.string.tv_empty))) else profiles.map {
             it.copy(selected = it.id == DataStore.selectedProxy,

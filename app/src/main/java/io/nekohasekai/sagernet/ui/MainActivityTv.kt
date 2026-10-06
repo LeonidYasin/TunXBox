@@ -12,8 +12,8 @@ import io.nekohasekai.sagernet.R
 import io.nekohasekai.sagernet.ui.tv.MainBrowseFragment
 
 /**
- * Leanback TV Activity - default UI for all devices.
- * Launched via explicit ComponentName from MainActivity.
+ * Leanback UI selected by the launcher picker or an explicit in-app switch.
+ * Phone rotation follows the user's system auto-rotate setting.
  */
 class MainActivityTv : FragmentActivity() {
     private val notifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
@@ -39,6 +39,13 @@ class MainActivityTv : FragmentActivity() {
             return
         }
         setContentView(R.layout.activity_main_tv)
+        val container = findViewById<android.view.View>(R.id.tv_container)
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(container) { view, insets ->
+            val bars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.systemBars() or androidx.core.view.WindowInsetsCompat.Type.displayCutout())
+            view.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+            insets
+        }
+        androidx.core.view.ViewCompat.requestApplyInsets(container)
         if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) notifications.launch(Manifest.permission.POST_NOTIFICATIONS)
 
         if (savedInstanceState == null) {

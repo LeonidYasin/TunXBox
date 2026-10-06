@@ -33,7 +33,9 @@ class QrCodeTransferFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         val context = requireContext(); val metrics = resources.displayMetrics
         fun dp(value: Int) = (value * metrics.density).toInt()
-        qrSize = minOf(((metrics.heightPixels - dp(128)) * 0.7f).toInt(), (metrics.widthPixels * 0.4f).toInt()).coerceAtLeast(160)
+        val stacked = TvLayoutPolicy.stackQr(resources.configuration.screenWidthDp, metrics.heightPixels > metrics.widthPixels)
+        qrSize = if (stacked) minOf((metrics.widthPixels * 0.72f).toInt(), (metrics.heightPixels * 0.38f).toInt()).coerceAtLeast(96)
+            else minOf(((metrics.heightPixels - dp(128)) * 0.7f).toInt(), (metrics.widthPixels * 0.4f).toInt()).coerceAtLeast(160)
         val left = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER }
         left.addView(TextView(context).apply { setText(R.string.tv_qr_title); textSize = 24f; setTextColor(Color.WHITE); gravity = Gravity.CENTER; maxLines = 2 })
         qrImageView = ImageView(context).apply { layoutParams = LinearLayout.LayoutParams(qrSize, qrSize).apply { topMargin = dp(12) }; scaleType = ImageView.ScaleType.FIT_CENTER; importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO }
@@ -57,8 +59,14 @@ class QrCodeTransferFragment : Fragment() {
         right.addView(toggle); right.addView(renew); right.addView(close)
         val controls = ScrollView(context).apply { addView(right); isFocusable = false }
         return LinearLayout(context).apply {
-            orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL; setPadding(dp(20), dp(16), dp(20), dp(16)); setBackgroundColor(Color.rgb(15, 23, 42))
-            addView(left, LinearLayout.LayoutParams(0, -1, 1f)); addView(controls, LinearLayout.LayoutParams(0, -1, 1f))
+            orientation = if (stacked) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL; setPadding(dp(20), dp(16), dp(20), dp(16)); setBackgroundColor(Color.rgb(15, 23, 42))
+            if (stacked) {
+                addView(left, LinearLayout.LayoutParams(-1, -2))
+                addView(controls, LinearLayout.LayoutParams(-1, 0, 1f))
+            } else {
+                addView(left, LinearLayout.LayoutParams(0, -1, 1f)); addView(controls, LinearLayout.LayoutParams(0, -1, 1f))
+            }
         }
     }
     override fun onStart() { super.onStart(); startSession(); toggle.requestFocus() }

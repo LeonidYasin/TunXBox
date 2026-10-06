@@ -1,0 +1,10 @@
+<resources>
+    <dimen name="tv_browse_padding_start">24dp</dimen>
+    <dimen name="tv_browse_padding_end">24dp</dimen>
+    <dimen name="tv_browse_padding_top">16dp</dimen>
+    <dimen name="tv_browse_padding_bottom">24dp</dimen>
+    <dimen name="tv_browse_rows_margin_start">24dp</dimen>
+    <dimen name="tv_browse_rows_margin_top">104dp</dimen>
+    <dimen name="tv_browse_title_size">26sp</dimen>
+    <dimen name="tv_browse_title_height">48dp</dimen>
+</resources>
