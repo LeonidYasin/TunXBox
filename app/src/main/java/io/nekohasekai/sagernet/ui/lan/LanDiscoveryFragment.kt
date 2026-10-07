@@ -90,6 +90,7 @@ class LanDiscoveryFragment : ToolbarFragment(R.layout.layout_lan_discovery) {
         scanButton.setOnClickListener { startScan() }
         cancelButton.setOnClickListener { stopScan(R.string.lan_cancelled) }
         select(environment.networks().firstOrNull())
+        networkButton.requestFocus()
     }
     override fun onResume() {
         super.onResume()
@@ -113,6 +114,8 @@ class LanDiscoveryFragment : ToolbarFragment(R.layout.layout_lan_discovery) {
     }
     private fun readableForeground(background: Int) = if (ColorUtils.calculateContrast(Color.BLACK, background) >= 4.5) Color.BLACK else Color.WHITE
     private fun styleAction(button: Button) {
+        button.isFocusable = true
+        button.isFocusableInTouchMode = true
         val surface = MaterialColors.getColor(button, com.google.android.material.R.attr.colorSurface)
         val onSurface = MaterialColors.getColor(button, com.google.android.material.R.attr.colorOnSurface)
         val primary = ColorUtils.compositeColors(MaterialColors.getColor(button, androidx.appcompat.R.attr.colorPrimary), surface)
@@ -176,7 +179,7 @@ class LanDiscoveryFragment : ToolbarFragment(R.layout.layout_lan_discovery) {
                     }
                 }
                 if (!environment.current(network)) { invalidateNetwork(); return@launch }
-                status.text = getString(if (report.timedOut || report.limited) R.string.lan_partial else R.string.lan_done, report.candidates.size)
+                status.text = getString(if (report.timedOut || report.limited || network.scope.limited) R.string.lan_partial else R.string.lan_done, report.candidates.size)
                 report.candidates.forEach { candidate ->
                     results.addView(MaterialButton(requireContext()).apply {
                         styleAction(this)
