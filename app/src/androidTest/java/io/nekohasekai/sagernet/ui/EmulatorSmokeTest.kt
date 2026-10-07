@@ -138,8 +138,8 @@ class EmulatorSmokeTest {
             scenario = ActivityScenario.launch<MainActivity>(Intent(context, MainActivity::class.java)
                 .putExtra("tv_tools", true).putExtra("tv_destination", R.id.nav_group))
             val list = UiScrollable(UiSelector().resourceId("${context.packageName}:id/group_list"))
-            assertTrue(list.scrollIntoView(UiSelector().text(group.name)))
-            var card: UiObject2? = visibleText(group.name)
+            assertTrue(list.scrollIntoView(UiSelector().text("Offline diagnostic fixture")))
+            var card: UiObject2? = visibleText("Offline diagnostic fixture")
             var options: UiObject2? = null
             repeat(5) {
                 if (options == null) {

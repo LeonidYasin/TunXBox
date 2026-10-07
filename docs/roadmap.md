@@ -101,8 +101,10 @@ Acceptance: actual Android screenshots + D-pad/device smoke; холодный с
 
 ### Следующая проверяемая итерация D1/S1
 
-Локальный last-attempt результат по этапам, separate last-success metadata, Phone/TV повторное открытие диагностики и ручной whitelist report; atomic profile/group apply и stale-request guard. Код в PR #5, новый CI требуется, не входит в опубликованную rc.115. Остальные S1–S3/network/core пункты остаются открытыми. JVM checks до эмуляторов — не отмена Android gates.
+Локальный last-attempt результат по этапам, separate last-success metadata, Phone/TV повторное открытие диагностики и ручной whitelist report; atomic profile/group apply и stale-request guard. Код в PR #5; checkpoint 6691f76b прошёл полный check-only CI, дополнительный Android screen scenario ещё проверяется. Не входит в опубликованную rc.115. Остальные S1–S3/network/core пункты остаются открытыми. JVM checks до эмуляторов — не отмена Android gates.
 
 ### Монетизация после качества
 
 [Модели и ограничения](monetization.md): открытый бесплатный клиент, добровольная поддержка/услуги настройки/B2B; optional cloud после проверки спроса и безопасной архитектуры. Цены/каналы не утверждены; не добавлять платёжный SDK, рекламу, обязательный аккаунт или paywall диагностики в текущие PR.
+
+Обратная связь: [руководство](diagnostic-support.md) и безопасные EN/RU/ZH issue templates. Никаких private provider URLs/raw configs в публичном issue; полный raw-log sanitizer ещё не реализован.

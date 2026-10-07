@@ -8,11 +8,11 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **665**.
+Всего tracked файлов: **667**.
 
 | Раздел | Файлов |
 |---|---|
-| `.github` | 9 |
+| `.github` | 10 |
 | `app` | 12 |
 | `app/src/androidTest` | 1 |
 | `app/src/main` | 11 |
@@ -198,7 +198,7 @@
 | `app/src/test` | 14 |
 | `buildScript` | 24 |
 | `buildSrc` | 2 |
-| `docs` | 20 |
+| `docs` | 21 |
 | `gradle` | 2 |
 | `libcore` | 42 |
 | `Корень` | 15 |
@@ -206,6 +206,7 @@
 ## .github
 
 - [`.github/ISSUE_TEMPLATE/bug-report-en.md`](../../.github/ISSUE_TEMPLATE/bug-report-en.md)
+- [`.github/ISSUE_TEMPLATE/bug-report-ru.md`](../../.github/ISSUE_TEMPLATE/bug-report-ru.md)
 - [`.github/ISSUE_TEMPLATE/bug-report-zh_cn.md`](../../.github/ISSUE_TEMPLATE/bug-report-zh_cn.md)
 - [`.github/ISSUE_TEMPLATE/feature_request-en.md`](../../.github/ISSUE_TEMPLATE/feature_request-en.md)
 - [`.github/ISSUE_TEMPLATE/feature_request-zh_cn.md`](../../.github/ISSUE_TEMPLATE/feature_request-zh_cn.md)
@@ -1354,6 +1355,7 @@
 - [`docs/branch-audit.md`](../../docs/branch-audit.md)
 - [`docs/decisions.md`](../../docs/decisions.md)
 - [`docs/development.md`](../../docs/development.md)
+- [`docs/diagnostic-support.md`](../../docs/diagnostic-support.md)
 - [`docs/emulator-testing.md`](../../docs/emulator-testing.md)
 - [`docs/features.md`](../../docs/features.md)
 - [`docs/monetization.md`](../../docs/monetization.md)
