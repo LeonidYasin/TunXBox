@@ -3,6 +3,7 @@ package io.nekohasekai.sagernet.ui
 import android.app.Application
 import android.content.Intent
 import android.os.Looper
+import kotlinx.coroutines.launch
 import io.nekohasekai.sagernet.SagerNet
 import io.nekohasekai.sagernet.R
 import io.nekohasekai.sagernet.ui.tv.MainBrowseFragment
@@ -525,6 +526,56 @@ class LaunchRegressionTest {
         val sender=io.nekohasekai.sagernet.ui.tv.TvTransferServer(bindAddress="127.0.0.1",allowExport=true,
             exportProvider={io.nekohasekai.sagernet.ui.tv.TransferExport("socks://127.0.0.1:1080",1)})
         try { assertEquals("export",android.net.Uri.parse(sender.getAppQrData()).getQueryParameter("mode")) } finally { sender.stop() }
+    }
+
+    @Test @Config(qualifiers = "ru-land")
+    fun phoneSubscriptionFailureIsPersistentLocalizedAndPrivate() {
+        TvUiPreferences.phoneMode = true
+        val controller = Robolectric.buildActivity(MainActivity::class.java, Intent(Intent.ACTION_MAIN)).setup().visible()
+        var task: kotlinx.coroutines.Job? = null
+        try {
+            val activity = controller.get()
+            activity.supportFragmentManager.executePendingTransactions(); shadowOf(Looper.getMainLooper()).idle()
+            val callback = io.nekohasekai.sagernet.group.GroupInterfaceAdapter(activity)
+            task = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main.immediate).launch {
+                callback.onUpdateFailure(io.nekohasekai.sagernet.database.ProxyGroup(name="Synthetic"),
+                    "Get https://example.invalid/sub/synthetic-token: x509 certificate has expired; password=synthetic-pass")
+            }
+            shadowOf(Looper.getMainLooper()).idle()
+            val dialog = org.robolectric.shadows.ShadowDialog.getLatestDialog() as androidx.appcompat.app.AlertDialog
+            assertTrue(dialog.isShowing)
+            val text = dialog.findViewById<android.widget.TextView>(android.R.id.message)!!.text.toString()
+            assertTrue(text.contains("SUB_TLS_TIME")); assertTrue(text.contains("Сертификат"))
+            assertFalse(text.contains("synthetic-token")); assertFalse(text.contains("synthetic-pass")); assertFalse(text.contains("example.invalid"))
+            assertTrue(task!!.isCompleted) // No update lock held while the user reads the dialog.
+            controller.pause().stop(); shadowOf(Looper.getMainLooper()).idle()
+            assertFalse(dialog.isShowing)
+        } finally { task?.cancel(); controller.destroy() }
+    }
+    @Test fun tvSubscriptionFailureShowsActionableDialogNotGenericToast() {
+        TvUiPreferences.phoneMode = false
+        val controller = Robolectric.buildActivity(MainActivityTv::class.java).setup().visible()
+        var task: kotlinx.coroutines.Job? = null
+        try {
+            val activity=controller.get()
+            activity.supportFragmentManager.executePendingTransactions(); shadowOf(Looper.getMainLooper()).idle()
+            val fragment=activity.supportFragmentManager.findFragmentById(R.id.tv_container) as MainBrowseFragment
+            val callback=MainBrowseFragment::class.java.getDeclaredField("subscriptionInterface").apply { isAccessible=true }
+                .get(fragment) as io.nekohasekai.sagernet.database.GroupManager.Interface
+            task=kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main.immediate).launch {
+                callback.onUpdateFailure(io.nekohasekai.sagernet.database.ProxyGroup(name="Synthetic"),
+                    "https://example.invalid/sub/synthetic-token: reality verification failed")
+            }
+            shadowOf(Looper.getMainLooper()).idle()
+            val dialog=org.robolectric.shadows.ShadowAlertDialog.getLatestAlertDialog()
+            assertTrue(dialog.isShowing)
+            val text=dialog.findViewById<android.widget.TextView>(android.R.id.message)!!.text.toString()
+            assertTrue(text.contains("SUB_REALITY"));assertFalse(text.contains("synthetic-token"));assertFalse(text.contains("example.invalid"))
+            assertTrue(dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).hasFocus())
+            assertTrue(MainBrowseFragment::class.java.getDeclaredField("updateFailureShown").apply { isAccessible=true }.getBoolean(fragment))
+            dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).performClick();shadowOf(Looper.getMainLooper()).idle()
+            assertFalse(dialog.isShowing)
+        } finally { task?.cancel(); controller.pause().stop().destroy() }
     }
 
 }

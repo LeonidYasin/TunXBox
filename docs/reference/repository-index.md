@@ -8,7 +8,7 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **657**.
+Всего tracked файлов: **660**.
 
 | Раздел | Файлов |
 |---|---|
@@ -69,6 +69,8 @@
 | `app/src/main/java/io/nekohasekai/sagernet/group/GroupInterfaceAdapter.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/group/GroupUpdater.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/group/RawUpdater.kt` | 1 |
+| `app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionFailureCategory.kt` | 1 |
+| `app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionFailurePresentation.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateGuard.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ktx/Asyncs.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ktx/Browsers.kt` | 1 |
@@ -190,7 +192,7 @@
 | `app/src/main/res/values-zh-rHK` | 1 |
 | `app/src/main/res/values-zh-rTW` | 1 |
 | `app/src/main/res/xml` | 24 |
-| `app/src/test` | 12 |
+| `app/src/test` | 13 |
 | `buildScript` | 24 |
 | `buildSrc` | 2 |
 | `docs` | 19 |
@@ -479,6 +481,14 @@
 ## app/src/main/java/io/nekohasekai/sagernet/group/RawUpdater.kt
 
 - [`app/src/main/java/io/nekohasekai/sagernet/group/RawUpdater.kt`](../../app/src/main/java/io/nekohasekai/sagernet/group/RawUpdater.kt)
+
+## app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionFailureCategory.kt
+
+- [`app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionFailureCategory.kt`](../../app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionFailureCategory.kt)
+
+## app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionFailurePresentation.kt
+
+- [`app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionFailurePresentation.kt`](../../app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionFailurePresentation.kt)
 
 ## app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateGuard.kt
 
@@ -1276,6 +1286,7 @@
 ## app/src/test
 
 - [`app/src/test/java/io/nekohasekai/sagernet/fmt/v2ray/UnsupportedV2RayTransportTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/fmt/v2ray/UnsupportedV2RayTransportTest.kt)
+- [`app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionFailureCategoryTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionFailureCategoryTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionUpdateGuardTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionUpdateGuardTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/BrandingRecoveryTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/BrandingRecoveryTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/LaunchRegressionTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/LaunchRegressionTest.kt)

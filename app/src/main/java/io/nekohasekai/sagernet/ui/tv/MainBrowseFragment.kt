@@ -47,6 +47,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
     private var loadJob: Job? = null
     private var subscriptionJob: Job? = null
     private var updateDeclined = false
+    private var updateFailureShown = false
     private var dialog: AlertDialog? = null
     private var focusedRow = ROW_ACTIONS
     private var focusedId = TOGGLE
@@ -402,14 +403,27 @@ class MainBrowseFragment : BrowseSupportFragment() {
         if (group?.type != GroupType.SUBSCRIPTION) { toast(R.string.tv_not_subscription); return }
         if (GroupUpdater.updating.contains(group.id) || subscriptionJob?.isActive == true) { toast(R.string.tv_updating); return }
         updateDeclined = false
+        updateFailureShown = false
         subscriptionJob = viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val result = withContext(Dispatchers.IO) { GroupUpdater.executeUpdate(group, true, subscriptionInterface) }
-                if (!updateDeclined) toast(if (result) R.string.tv_updated else R.string.tv_update_failed)
+                if (!updateDeclined) {
+                    if (result) toast(R.string.tv_updated)
+                    else if (!updateFailureShown) showSubscriptionFailure(null)
+                }
             } catch (cancelled: CancellationException) { throw cancelled }
-            catch (_: Exception) { toast(R.string.tv_update_failed) }
+            catch (error: Exception) { showSubscriptionFailure(error.message) }
             finally { requestSnapshot() }
         }
+    }
+    private fun showSubscriptionFailure(message: String?) {
+        if (!isAdded || view == null || !viewLifecycleOwner.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)) return
+        updateFailureShown = true
+        val current = show(AlertDialog.Builder(requireContext())
+            .setTitle(R.string.subscription_failure_title)
+            .setMessage(io.nekohasekai.sagernet.group.SubscriptionFailurePresentation.message(requireContext(), message))
+            .setPositiveButton(android.R.string.ok, null))
+        current.getButton(AlertDialog.BUTTON_POSITIVE)?.requestFocus()
     }
     private val subscriptionInterface = object : GroupManager.Interface {
         override suspend fun confirm(message: String): Boolean = withContext(Dispatchers.Main) {
@@ -423,7 +437,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
         }
         override suspend fun alert(message: String) { withContext(Dispatchers.Main) { toast(message) } }
         override suspend fun onUpdateSuccess(group: ProxyGroup, changed: Int, added: List<String>, updated: Map<String, String>, deleted: List<String>, duplicate: List<String>, byUser: Boolean) { requestSnapshot() }
-        override suspend fun onUpdateFailure(group: ProxyGroup, message: String) { withContext(Dispatchers.Main) { toast(R.string.tv_update_failed) } }
+        override suspend fun onUpdateFailure(group: ProxyGroup, message: String) { withContext(Dispatchers.Main) { showSubscriptionFailure(message) } }
     }
     private fun openProfileActions(id: Long) = launchWork {
         if (!serviceReady) { toast(R.string.tv_wait); return@launchWork }

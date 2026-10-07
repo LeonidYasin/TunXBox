@@ -583,4 +583,16 @@
     <string name="minimize">Minimize</string>
     <string name="app_list_permission_denied">Unable to read installed apps.\nThis is usually because the system has restricted app read permissions.\nPlease grant permissions in the system settings.</string>
     <string name="open_app_settings">Open System Settings</string>
+    <string name="subscription_failure_title">Subscription update failed</string>
+    <string name="subscription_failure_stage">Stage: downloading or processing the subscription. This is not a check of every imported profile.</string>
+    <string name="subscription_failure_tls_time">The server certificate is not valid at the device time. Check the date and time. If they are correct, ask the server administrator to renew or fix the certificate. Certificate verification remains enabled.</string>
+    <string name="subscription_failure_tls_trust">The secure connection could not verify the server certificate. The certificate chain or server name may be incorrect. Ask the provider to fix it; do not send the subscription to an untrusted endpoint.</string>
+    <string name="subscription_failure_reality">REALITY verification failed on the connection used for the request. Compare the selected profile with a working configuration: server, SNI, public key, short ID, fingerprint, flow and transport. The exact mismatch has not been established.</string>
+    <string name="subscription_failure_unsupported">The current core does not support a required transport. Importing a link does not prove compatibility. The transport is not silently replaced with TCP. A compatible core is required.</string>
+    <string name="subscription_failure_dns">The server name could not be resolved. Check the network, server address and DNS settings. This does not prove that the saved proxy credentials are invalid.</string>
+    <string name="subscription_failure_timeout">The request exceeded its time limit. Check connectivity and whether the subscription is reachable using the current route. No automatic retry or profile switch was performed.</string>
+    <string name="subscription_failure_http">The server returned an HTTP error. Check the subscription validity and access with the provider. Do not publish the full subscription URL.</string>
+    <string name="subscription_failure_empty">No supported profiles were found in the response. Check the export format with the provider. This does not mean that the subscription was successfully updated.</string>
+    <string name="subscription_failure_unknown">The operation failed, but the cause could not be reliably classified. The code below is safe to share. This summary is not a complete diagnostic report.</string>
+    <string name="subscription_failure_code">Diagnostic code: %1$s\nPrivate URLs and credentials are omitted from this message.</string>
 </resources>

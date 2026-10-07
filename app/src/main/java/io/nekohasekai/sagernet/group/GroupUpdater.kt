@@ -151,10 +151,12 @@ abstract class GroupUpdater {
                 } catch (cancelled: CancellationException) { throw cancelled }
                 catch (error: Throwable) {
                     // LAN imports need a safe, structured failure rather than false plus a raw URL in logs.
-                    // Existing phone/TV update callers retain the upstream notification behavior.
+                    // Manual phone/TV failures use safe localized guidance; background failures only log a code.
                     if (throwOnFailure) throw error
-                    Logs.w(error)
-                    userInterface?.onUpdateFailure(proxyGroup, error.readableMessage)
+                    // This boundary must not add a private subscription URL/credential dump to logs.
+                    Logs.w("Subscription update failed: ${SubscriptionFailureCategory.fromMessage(error.readableMessage).code}")
+                    // Background updates must not unexpectedly open a modal over another task.
+                    if (byUser) userInterface?.onUpdateFailure(proxyGroup, error.readableMessage)
                     false
                 }
             }

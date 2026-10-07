@@ -127,3 +127,10 @@ XrayEngine — Flutter MethodChannel facade, реальный lifecycle в Kotli
 ## Acceptance evidence
 
 Пока: скриншоты владельца и статический аудит baseline, официальные страницы. В реализации D1 пока только fail-closed builder; заметный локализованный UI ошибки ещё впереди. НЕ выполнены: воспроизведение с приватным провайдером, полная матрица клиентов, Xray integration, новый diagnostic UI, sanitizer или регулярный monitor. Предоставлять обезличенные fixtures; не помещать реальные подписочные токены/ключи в Git/CI/artifacts/issues. В каждом последующем PR отмечать точную core/build version и фактически прошедшие проверки.
+
+
+## D1: первый безопасный вывод ошибки обновления подписки
+
+В реализации: manual update failure теперь показывает заметный EN/RU диалог с этапом, advisory категорией, действием и фиксированным кодом, без raw URL/credentials. Категории: TLS time/trust, REALITY, unsupported, DNS, timeout, HTTP, empty и unknown. TLS time не объявляется исключительно expired: проверяются часы/сертификат без bypass. TV фокус OK, dismiss возвращает существующий фокус; Phone dialog закрывается при уходе activity в background и не удерживает update lock. TV общий toast не дублирует уже показанный диалог. Background update не открывает неожиданный modal. GroupUpdater boundary пишет только code, не raw exception dump.
+
+Добавлены 11 classifier tests и 2 real Activity/binder UI regression tests; полный CI новой ревизии ещё требуется. Строковые категории — подсказка, не строгая typed network diagnosis. Это НЕ новый core, НЕ certificate/server fix, НЕ complete report sanitizer и НЕ continuous health/failover. Native core/другие существующие log paths пока не считаются очищенными; raw report всё ещё не отправлять автоматически. Last-result history и диагностика всех handshake/URL-test экранов — следующие шаги.
