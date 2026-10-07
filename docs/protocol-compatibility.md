@@ -178,7 +178,7 @@ XrayEngine — Flutter MethodChannel facade, реальный lifecycle в Kotli
 
 S1 первый CI d4dfd413: Android 4KB/16KB и сборка прошли, но два Room fixtures не дошли до целевых assertions из-за Logs.d → Libcore JNI initializer на JVM. Исправление отделяет атомарное применение от native logging: убраны отладочные вызовы из pure DB application, без отключения тестов. Дополнительно настройки запроса копируются до сетевого suspension, чтобы in-place редактирование caller subscription не могло легализовать старый ответ. Исправленный CI ещё требуется.
 
-## D1/S1: сохранённый результат, этапы и ручная сводка (PR #5, awaiting CI)
+## D1/S1: сохранённый результат, этапы и ручная сводка (PR #5)
 
 - Последняя завершённая попытка для группы: outcome SUCCESS/FAILURE/CANCELLED, точный известный этап DOWNLOAD/PARSE/RESOLVE/APPLY (UPDATE если точнее неизвестно), timestamp, монотонная длительность, число сохранённых профилей при успехе и фиксированная категория при ошибке. Это не непрерывная история и не health report туннеля.
 - [Модель результата](../app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateResult.kt) не принимает raw strings из провайдера. [Журнал](../app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateJournal.kt) хранит максимум 64 группы в private SharedPreferences, один результат на группу. Старые записи удаляются, удаление группы удаляет её результат; новая запись сохраняется и при переводе часов назад. Android backup descriptors сейчас включают только перечисленные DB, не этот preference file.
@@ -195,3 +195,10 @@ CI: JVM protocol/UI suite теперь идёт после сборки debug in
 Дополнительно добавлены offline content:// JSON → parser → Room → callback → journal integration fixtures без native network: lock остаётся занят до callback, UI exception после commit не отменяет успех, cancellation после commit сохраняет SUCCESS и освобождает lock. Эти новые integration tests тоже awaiting CI.
 
 07b4c032 ранний CI 37645498295 остановился на JVM до AVD: остался один native debug log в applyProfiles (исправлен), FileProvider fixture был создан с синтетическим ProviderInfo без grantUriPermissions (теперь используется реальный manifest ProviderInfo), TV dialog dismiss проверялся до обработки main looper (ожидание idle добавлено). Тесты не отключены. Исправленный полный CI требуется.
+
+
+### Подтверждённый автоматический checkpoint 6691f76b
+
+Полный check-only [CI 37646909358](https://github.com/LeonidYasin/TunXBox/actions/runs/37646909358) завершился SUCCESS: JVM protocol/UI, Android 15 4KB/16KB, browser transfer, docs, packaging/update metadata и native alignment. Это заменяет вышеупомянутые pending CI статусы для atomic Room/journal/content-provider fixtures; исторические причины падений сохранены для аудита. Ни private subscription, ни реальный удалённый tunnel, ни физический TV не проверялись. Релиз/подпись/публикация были skipped; PR #5 остаётся draft.
+
+Следующая дополнительная проверка: существующий native Android smoke case расширен synthetic saved-failure экраном в TV/Phone, DPAD-переходом к TV diagnostic card/OK, проверкой отсутствия provider URL/token в отображаемой сводке и снимками обоих экранов. Число smoke cases (8) и прежние core/page-size assertions сохранены; новый экранный сценарий требует отдельного полного CI. Не выполнять запрос к fixture.invalid и не выдавать fixture за диагностику работающего туннеля.
