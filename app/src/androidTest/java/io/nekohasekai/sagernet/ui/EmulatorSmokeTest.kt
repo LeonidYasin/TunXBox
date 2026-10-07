@@ -214,12 +214,23 @@ class EmulatorSmokeTest {
             assertTrue("LAN activity did not resume in the expected orientation", ready)
             instrumentation.waitForIdleSync()
             scenario!!.onActivity { activity ->
+                val network = activity.findViewById<android.widget.Button>(R.id.lan_network)
+                val ports = activity.findViewById<android.widget.EditText>(R.id.lan_ports)
+                assertEquals(R.id.lan_ports, network.nextFocusDownId)
+                assertTrue(ports.isFocusable)
+                network.requestFocus()
                 assertFalse(activity.findViewById<android.widget.CheckBox>(R.id.lan_consent).isChecked)
                 assertFalse(activity.findViewById<android.widget.Button>(R.id.lan_scan).isEnabled)
                 assertEquals(android.view.View.GONE, activity.findViewById<android.view.View>(R.id.lan_cancel).visibility)
                 assertEquals(0, activity.findViewById<android.widget.LinearLayout>(R.id.lan_results).childCount)
                 assertEquals("Global panel must not overlap this creation tool", android.view.View.GONE, activity.findViewById<android.view.View>(R.id.stats).visibility)
             }
+            device.pressDPadDown()
+            instrumentation.waitForIdleSync()
+            scenario!!.onActivity { activity ->
+                assertTrue("D-pad must reach the ports editor", activity.findViewById<android.widget.EditText>(R.id.lan_ports).hasFocus())
+            }
+            device.pressDPadUp()
         }
         visibleText(text(R.string.lan_title))
         orientAndAssertIdle(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT, android.content.res.Configuration.ORIENTATION_PORTRAIT)

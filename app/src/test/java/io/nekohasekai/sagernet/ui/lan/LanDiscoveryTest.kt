@@ -15,15 +15,42 @@ class LanDiscoveryTest {
         for (good in listOf("10.1.2.3", "172.16.1.2", "172.31.255.2", "192.168.1.3")) assertNotNull(LanScope.create(good, 24))
         assertNull(LanScope.create("172.32.0.1", 24))
     }
-    @Test fun largeNetworkIsNarrowedAndLocalGatewayBroadcastExcluded() {
-        val scope = LanScope.create("10.45.3.12", 8, setOf("10.45.3.1", "10.45.3.13"))!!
-        assertEquals("10.45.3.0/24", scope.cidr); assertEquals(251, scope.hosts.size)
-        for (excluded in listOf("10.45.3.0", "10.45.3.255", "10.45.3.12", "10.45.3.1", "10.45.3.13", "10.45.4.1")) assertFalse(scope.contains(excluded))
+    @Test fun gatewayAndDeviceAreIncludedAndWindowsDeduplicated() {
+        val scope = LanScope.create("10.45.3.12", 8, setOf("10.45.3.1"))!!
+        assertEquals("10.45.3.0/24", scope.cidr); assertEquals(254, scope.hosts.size)
+        assertEquals(listOf("10.45.3.1"), scope.gateways)
+        assertTrue(scope.contains("10.45.3.12")); assertTrue(scope.contains("10.45.3.1"))
+        for (excluded in listOf("10.45.3.0", "10.45.3.255", "10.45.4.1")) assertFalse(scope.contains(excluded))
     }
     @Test fun smallSubnetNeverBroadens() {
-        val scope = LanScope.create("192.168.1.9", 30)!!
-        assertEquals(listOf("192.168.1.10"), scope.hosts)
+        val scope = LanScope.create("192.168.1.9", 30, setOf("192.168.1.10", "192.168.2.1"))!!
+        assertEquals(setOf("192.168.1.9", "192.168.1.10"), scope.hosts.toSet())
+        assertEquals(listOf("192.168.1.10"), scope.gateways)
         assertNull(LanScope.create("192.168.1.9", 31)); assertNull(LanScope.create("192.168.1.9", 0))
+    }
+    @Test fun gatewayWindowMultipleAddressesAndBounds() {
+        val scope = LanScope.create(listOf("10.45.3.12" to 16, "10.45.5.12" to 16), setOf("10.45.4.1", "8.8.8.8"))!!
+        assertEquals(762, scope.hosts.size); assertEquals(2, scope.localAddresses.size)
+        assertTrue(scope.contains("10.45.4.200")); assertFalse(scope.contains("8.8.8.8"))
+        val bounded = LanScope.create((1..10).map { "10.45.$it.12" to 16 }, emptySet())!!
+        assertTrue(bounded.limited); assertTrue(bounded.hosts.size <= 1024)
+        assertEquals(4, bounded.cidr.split(", ").size)
+        assertEquals(listOf(10808, 10809, 2080), LanScope.defaultPorts(2080))
+        assertEquals(listOf(10808, 10809), LanScope.defaultPorts(10808))
+    }
+    @Test fun allGatewayPortsCompleteBeforeLocalAndNeighbourProbes() = runBlocking {
+        val scope = LanScope.create("192.168.1.9", 29, setOf("192.168.1.10"))!!
+        val gatewayDone = AtomicInteger()
+        val localDone = AtomicInteger()
+        LanScanner({ host, _ ->
+            when (host) {
+                "192.168.1.10" -> { delay(10); gatewayDone.incrementAndGet() }
+                "192.168.1.9" -> { assertEquals(2, gatewayDone.get()); delay(10); localDone.incrementAndGet() }
+                else -> { assertEquals(2, gatewayDone.get()); assertEquals(2, localDone.get()) }
+            }
+            null
+        }).scan(scope, listOf(10808, 10809))
+        assertEquals(2, gatewayDone.get()); assertEquals(2, localDone.get())
     }
     @Test fun portsRejectDuplicatesAmbiguityAndUnboundedInput() {
         assertEquals(listOf(1, 1080, 65535), LanScope.ports("1, 1080, 65535"))

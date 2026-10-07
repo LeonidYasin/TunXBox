@@ -19,6 +19,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.core.view.doOnLayout
 import io.nekohasekai.sagernet.R
 import io.nekohasekai.sagernet.GroupType
+import io.nekohasekai.sagernet.database.DataStore
 import io.nekohasekai.sagernet.database.SagerDatabase
 import io.nekohasekai.sagernet.ui.ToolbarFragment
 import kotlinx.coroutines.*
@@ -39,10 +40,11 @@ class LanDiscoveryFragment : ToolbarFragment(R.layout.layout_lan_discovery) {
     private lateinit var networkButton: Button
     private lateinit var results: LinearLayout
     private val callback = object : ConnectivityManager.NetworkCallback() {
+        override fun onAvailable(network: Network) = changed()
         override fun onLost(network: Network) { view?.post { if (selected?.network == network) invalidateNetwork() } }
         override fun onLinkPropertiesChanged(network: Network, linkProperties: LinkProperties) = changed()
         override fun onCapabilitiesChanged(network: Network, caps: NetworkCapabilities) = changed()
-        private fun changed() { view?.post { selected?.let { if (!environment.current(it)) invalidateNetwork() } } }
+        private fun changed() { view?.post { if (selected == null && scan?.isActive != true) select(environment.networks().firstOrNull()) else selected?.let { if (!environment.current(it)) invalidateNetwork() } } }
     }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -60,6 +62,28 @@ class LanDiscoveryFragment : ToolbarFragment(R.layout.layout_lan_discovery) {
         scanButton = view.findViewById(R.id.lan_scan); cancelButton = view.findViewById(R.id.lan_cancel)
         networkButton = view.findViewById(R.id.lan_network); results = view.findViewById(R.id.lan_results)
         listOf(scanButton, cancelButton, networkButton).forEach(::styleAction)
+        if (savedInstanceState == null) ports.setText(LanScope.defaultPorts(DataStore.mixedPort).joinToString(","))
+        // TV EditText normally consumes arrows as cursor movement. Up/down leave the field;
+        // left/right still move the cursor, and OK explicitly opens the available input method.
+        ports.setOnKeyListener { _, key, event ->
+            val target = when (key) {
+                android.view.KeyEvent.KEYCODE_DPAD_UP -> networkButton
+                android.view.KeyEvent.KEYCODE_DPAD_DOWN -> if (consent.isEnabled) consent else status
+                else -> null
+            }
+            when {
+                target != null -> { if (event.action == android.view.KeyEvent.ACTION_DOWN) target.requestFocus(); true }
+                key == android.view.KeyEvent.KEYCODE_DPAD_CENTER || key == android.view.KeyEvent.KEYCODE_ENTER -> {
+                    if (event.action == android.view.KeyEvent.ACTION_UP) {
+                        ports.requestFocus()
+                        (requireContext().getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager)
+                            .showSoftInput(ports, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
+                    }
+                    true
+                }
+                else -> false
+            }
+        }
         consent.isChecked = false
         consent.setOnCheckedChangeListener { _, _ -> controls() }
         networkButton.setOnClickListener { chooseNetwork() }
@@ -109,15 +133,27 @@ class LanDiscoveryFragment : ToolbarFragment(R.layout.layout_lan_discovery) {
     }
     private fun select(network: LanNetwork?) {
         selected = network; consent.isChecked = false; results.removeAllViews()
-        scopeText.text = network?.let { getString(R.string.lan_scope_details, it.scope.localAddress, it.scope.cidr, it.scope.hosts.size) } ?: getString(R.string.lan_no_network)
+        scopeText.text = network?.let { scopeDetails(it) } ?: getString(R.string.lan_no_network)
         status.setText(R.string.lan_idle); controls()
     }
+    private fun scopeDetails(network: LanNetwork): String = getString(R.string.lan_scope_details,
+        network.scope.localAddresses.joinToString(", "), network.scope.cidr, network.scope.hosts.size,
+        network.scope.gateways.joinToString(", ").ifEmpty { "—" },
+        (network.scope.gateways + network.scope.localAddresses).distinct().filter { network.scope.contains(it) }.joinToString(", ")) +
+        if (network.scope.limited) "\n${getString(R.string.lan_scope_limited)}" else ""
     private fun chooseNetwork() {
         val networks = environment.networks()
-        if (networks.size < 2) { select(networks.firstOrNull()); return }
-        dialog = AlertDialog.Builder(requireContext()).setTitle(R.string.lan_refresh)
-            .setItems(networks.map { "${it.scope.localAddress} — ${it.scope.cidr}" }.toTypedArray()) { _, index -> select(networks[index]) }
-            .setNegativeButton(android.R.string.cancel, null).show()
+        dialog?.dismiss()
+        if (networks.isEmpty()) {
+            select(null)
+            dialog = AlertDialog.Builder(requireContext()).setTitle(R.string.lan_refresh)
+                .setMessage(getString(R.string.lan_no_network) + "\n\n" + environment.observed())
+                .setPositiveButton(android.R.string.ok, null).show()
+        } else {
+            dialog = AlertDialog.Builder(requireContext()).setTitle(R.string.lan_refresh)
+                .setItems(networks.map { scopeDetails(it) }.toTypedArray()) { _, index -> select(networks[index]) }
+                .setNegativeButton(android.R.string.cancel, null).show()
+        }
     }
     private fun invalidateNetwork() { stopScan(R.string.lan_network_changed); selected = null; scopeText.setText(R.string.lan_no_network); controls() }
     private fun stopScan(message: Int) {

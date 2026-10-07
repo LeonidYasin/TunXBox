@@ -586,9 +586,9 @@
 
     <!-- Manual LAN discovery: no background scan or automatic connection. -->
     <string name="lan_title">Find LAN proxies</string>
-    <string name="lan_explanation">Manual search only on a trusted Wi-Fi or Ethernet network. Get permission from the network owner. At most 254 addresses, 8 ports, 8 concurrent probes and 45 seconds. Wider networks are limited to the current /24 segment. No external traffic or credentials are sent; a detected listener is NOT proof that Internet works.</string>
+    <string name="lan_explanation">Manual search only on a trusted Wi-Fi or Ethernet network with permission. Check gateways first, then device addresses, then neighbours. At most four /24-or-smaller windows, 1024 addresses, 8 ports, 8 concurrent probes and 45 seconds. No external traffic or credentials are sent; finding a listener does NOT prove Internet works.</string>
     <string name="lan_refresh">Refresh / choose network</string>
-    <string name="lan_scope_details">Device: %1$s\nSearch scope: %2$s • %3$d peers\nLocal addresses, gateway, network and broadcast addresses are excluded.</string>
+    <string name="lan_scope_details">Device addresses: %1$s\nGateways (checked first): %4$s\nSearch ranges: %2$s • addresses: %3$d\nIncluded priority addresses: %5$s\nDevice and gateway addresses are included. Network/broadcast addresses are excluded.</string>
     <string name="lan_no_network">No suitable private IPv4 Wi-Fi/Ethernet network. IPv6-only, cellular, VPN and public networks are not scanned. Refresh after connecting.</string>
     <string name="lan_ports_label">Ports (comma-separated, up to 8 distinct values)</string>
     <string name="lan_ports_error">Enter 1–8 distinct ports from 1 to 65535, separated by commas.</string>
@@ -620,4 +620,5 @@
     <string name="lan_save_failed">Could not save the profile. Check that the local group still exists.</string>
     <string name="lan_protocol_label">Profile protocol</string>
     <string name="lan_choose_protocol">Choose protocol…</string>
+    <string name="lan_scope_limited">Scope is limited. Only the displayed ranges and up to eight priority addresses are checked.</string>
 </resources>

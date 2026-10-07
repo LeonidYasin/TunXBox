@@ -68,16 +68,21 @@ class LanScanner(private val probe: suspend (String, Int) -> ProxyCandidate?, pr
     suspend fun scan(scope: LanScope, ports: List<Int>, progress: suspend (Int, Int) -> Unit = { _, _ -> }): ScanReport {
         require(ports.isNotEmpty() && ports.size <= 8 && ports.distinct().size == ports.size && ports.all { it in 1..65535 })
         val tasks = scope.hosts.flatMap { host -> ports.map { host to it } }
-        val next = java.util.concurrent.atomic.AtomicInteger()
+        val gatewaySet = scope.gateways.toSet()
+        val localSet = scope.localAddresses.toSet() - gatewaySet
+        val stages = listOf(tasks.filter { it.first in gatewaySet }, tasks.filter { it.first in localSet },
+            tasks.filter { it.first !in gatewaySet && it.first !in localSet })
         val finished = java.util.concurrent.atomic.AtomicInteger()
         val results = java.util.concurrent.ConcurrentLinkedQueue<ProxyCandidate>()
         val done = withTimeoutOrNull(deadlineMs) {
-            coroutineScope {
+            for (stage in stages) {
+                val next = java.util.concurrent.atomic.AtomicInteger()
+                coroutineScope {
                 repeat(workers) { launch {
                     while (isActive && results.size < maxResults) {
                         val index = next.getAndIncrement()
-                        if (index >= tasks.size) break
-                        val (host, port) = tasks[index]
+                        if (index >= stage.size) break
+                        val (host, port) = stage[index]
                         probe(host, port)?.let { candidate ->
                             // Defensive boundary even if a probe implementation returns a different endpoint.
                             if (candidate.host == host && candidate.port == port) results.add(candidate)
@@ -86,6 +91,7 @@ class LanScanner(private val probe: suspend (String, Int) -> ProxyCandidate?, pr
                         if (completed % 8 == 0 || completed == tasks.size) progress(completed, tasks.size)
                     }
                 } }
+                } // Stage barrier: every gateway port finishes before probing local/peer hosts.
             }
             true
         }
