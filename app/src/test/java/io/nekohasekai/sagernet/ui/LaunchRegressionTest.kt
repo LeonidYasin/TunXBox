@@ -578,4 +578,86 @@ class LaunchRegressionTest {
         } finally { task?.cancel(); controller.pause().stop().destroy() }
     }
 
+    private fun subscriptionFixture(name: String) = io.nekohasekai.sagernet.database.ProxyGroup(
+        name = name, type = io.nekohasekai.sagernet.GroupType.SUBSCRIPTION,
+        subscription = io.nekohasekai.sagernet.database.SubscriptionBean().apply {
+            initializeDefaultValues(); link = "https://fixture.invalid/subscription"; lastUpdated = 123
+            subscriptionUserinfo = "old-info"
+        })
+    private fun subscriptionProfile(name: String, port: Int) = io.nekohasekai.sagernet.fmt.socks.SOCKSBean().apply {
+        initializeDefaultValues(); this.name = name; serverAddress = "192.168.1.22"; serverPort = port
+    }
+    @Test fun subscriptionCommitUpdatesProfilesAndMetadataTogetherWithoutConnecting() = kotlinx.coroutines.runBlocking {
+        val db = io.nekohasekai.sagernet.database.SagerDatabase
+        val group = io.nekohasekai.sagernet.database.GroupManager.createGroup(subscriptionFixture("Atomic success"))
+        val selected = io.nekohasekai.sagernet.database.DataStore.selectedProxy
+        val current = io.nekohasekai.sagernet.database.DataStore.currentProfile
+        try {
+            val old = io.nekohasekai.sagernet.database.ProfileManager.createProfile(group.id, subscriptionProfile("Keep", 1080))
+            old.userOrder = 7; db.proxyDao.updateProxy(old)
+            io.nekohasekai.sagernet.database.ProfileManager.createProfile(group.id, subscriptionProfile("Delete", 1081))
+            val result = io.nekohasekai.sagernet.group.RawUpdater.applyProfiles(group, group.subscription!!,
+                listOf(subscriptionProfile("New", 1082), subscriptionProfile("Keep", 1083)), "New group title", "new-info")
+            val rows = db.proxyDao.getByGroup(group.id)
+            assertEquals(listOf("New", "Keep"), rows.map { it.displayName() })
+            assertEquals(listOf(1L, 2L), rows.map { it.userOrder })
+            assertEquals(old.id, rows.single { it.displayName() == "Keep" }.id)
+            assertEquals(1083, (rows.last().requireBean() as io.nekohasekai.sagernet.fmt.socks.SOCKSBean).serverPort)
+            assertEquals("New group title", db.groupDao.getById(group.id)!!.name)
+            assertEquals("new-info", db.groupDao.getById(group.id)!!.subscription!!.subscriptionUserinfo)
+            assertTrue(result.group.subscription!!.lastUpdated > 123)
+            assertEquals("Atomic success", group.name) // Caller state changes only in doUpdate after commit.
+            assertEquals(123, group.subscription!!.lastUpdated.toInt())
+            assertEquals(selected, io.nekohasekai.sagernet.database.DataStore.selectedProxy)
+            assertEquals(current, io.nekohasekai.sagernet.database.DataStore.currentProfile)
+        } finally { db.proxyDao.deleteByGroup(group.id); db.groupDao.deleteById(group.id) }
+    }
+    @Test fun subscriptionMetadataWriteFailureRollsBackInsertUpdateAndDelete() = kotlinx.coroutines.runBlocking {
+        val db = io.nekohasekai.sagernet.database.SagerDatabase
+        val group = io.nekohasekai.sagernet.database.GroupManager.createGroup(subscriptionFixture("Atomic rollback"))
+        val sql = db.instance.openHelper.writableDatabase
+        val trigger = "subscription_rollback_${group.id}"
+        try {
+            io.nekohasekai.sagernet.database.ProfileManager.createProfile(group.id, subscriptionProfile("Keep", 1080))
+            io.nekohasekai.sagernet.database.ProfileManager.createProfile(group.id, subscriptionProfile("Delete", 1081))
+            val before = db.proxyDao.getByGroup(group.id).map { it.id to io.nekohasekai.sagernet.fmt.KryoConverters.serialize(it).toList() }
+            sql.execSQL("CREATE TRIGGER $trigger BEFORE UPDATE ON proxy_groups WHEN OLD.id = ${group.id} BEGIN SELECT RAISE(ABORT, 'synthetic metadata write failure'); END")
+            try {
+                io.nekohasekai.sagernet.group.RawUpdater.applyProfiles(group, group.subscription!!,
+                    listOf(subscriptionProfile("Keep", 1090), subscriptionProfile("New", 1091)), "Must not apply", "new-info")
+                fail("Injected DB failure must propagate")
+            } catch (_: android.database.sqlite.SQLiteException) { }
+            val after = db.proxyDao.getByGroup(group.id).map { it.id to io.nekohasekai.sagernet.fmt.KryoConverters.serialize(it).toList() }
+            assertEquals(before, after)
+            val stored = db.groupDao.getById(group.id)!!
+            assertEquals("Atomic rollback", stored.name); assertEquals(123, stored.subscription!!.lastUpdated.toInt())
+            assertEquals("old-info", stored.subscription!!.subscriptionUserinfo)
+            assertEquals(123, group.subscription!!.lastUpdated.toInt())
+        } finally { sql.execSQL("DROP TRIGGER IF EXISTS $trigger"); db.proxyDao.deleteByGroup(group.id); db.groupDao.deleteById(group.id) }
+    }
+    @Test fun emptySubscriptionNeverClearsWorkingGroup() = kotlinx.coroutines.runBlocking {
+        val db = io.nekohasekai.sagernet.database.SagerDatabase
+        val group = io.nekohasekai.sagernet.database.GroupManager.createGroup(subscriptionFixture("Empty rejected"))
+        try {
+            val old = io.nekohasekai.sagernet.database.ProfileManager.createProfile(group.id, subscriptionProfile("Keep", 1080))
+            try { io.nekohasekai.sagernet.group.RawUpdater.applyProfiles(group, group.subscription!!, emptyList()); fail("Empty subscription must be rejected") }
+            catch (_: IllegalArgumentException) { }
+            assertEquals(listOf(old.id), db.proxyDao.getByGroup(group.id).map { it.id })
+            assertEquals(123, db.groupDao.getById(group.id)!!.subscription!!.lastUpdated.toInt())
+        } finally { db.proxyDao.deleteByGroup(group.id); db.groupDao.deleteById(group.id) }
+    }
+    @Test fun subscriptionEditedDuringDownloadCannotBeOverwrittenByOldResult() = kotlinx.coroutines.runBlocking {
+        val db = io.nekohasekai.sagernet.database.SagerDatabase
+        val group = io.nekohasekai.sagernet.database.GroupManager.createGroup(subscriptionFixture("Edit guard"))
+        try {
+            val old = io.nekohasekai.sagernet.database.ProfileManager.createProfile(group.id, subscriptionProfile("Keep", 1080))
+            val edited = db.groupDao.getById(group.id)!!
+            edited.subscription!!.customUserAgent = "Updated fixture agent"; db.groupDao.updateGroup(edited)
+            try { io.nekohasekai.sagernet.group.RawUpdater.applyProfiles(group, group.subscription!!, listOf(subscriptionProfile("New", 1081))); fail("Stale result must be rejected") }
+            catch (_: IllegalStateException) { }
+            assertEquals(listOf(old.id), db.proxyDao.getByGroup(group.id).map { it.id })
+            assertEquals("Updated fixture agent", db.groupDao.getById(group.id)!!.subscription!!.customUserAgent)
+        } finally { db.proxyDao.deleteByGroup(group.id); db.groupDao.deleteById(group.id) }
+    }
+
 }
