@@ -712,7 +712,8 @@ class LaunchRegressionTest {
             assertTrue(dialog.isShowing); assertTrue(dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).hasFocus())
             val text = dialog.findViewById<android.widget.TextView>(android.R.id.message)!!.text.toString()
             assertTrue(text.contains("SUB_LOCAL_SAVE")); assertFalse(text.contains("https://"))
-            dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).performClick(); assertFalse(dialog.isShowing)
+            dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).performClick()
+            shadowOf(Looper.getMainLooper()).idle(); assertFalse(dialog.isShowing)
         } finally { journal.remove(id); io.nekohasekai.sagernet.database.DataStore.selectedGroup = old; controller.pause().stop().destroy() }
     }
 
@@ -754,7 +755,11 @@ class LaunchRegressionTest {
     private fun localSubscriptionFile(): Pair<java.io.File, String> {
         val app = RuntimeEnvironment.getApplication()
         val authority = "${app.packageName}.cache"
-        Robolectric.setupContentProvider(androidx.core.content.FileProvider::class.java, authority)
+        val info = app.packageManager.resolveContentProvider(authority, android.content.pm.PackageManager.GET_META_DATA)!!
+        assertTrue(info.grantUriPermissions); assertFalse(info.exported)
+        val provider = androidx.core.content.FileProvider()
+        provider.attachInfo(app, info)
+        org.robolectric.shadows.ShadowContentResolver.registerProviderInternal(authority, provider)
         val file = java.io.File(app.cacheDir, "subscription-fixture-${System.nanoTime()}.json")
         file.writeText("{\"outbounds\":[{\"type\":\"socks\",\"tag\":\"Offline fixture\",\"server\":\"192.168.1.22\",\"server_port\":10808}]}")
         return file to androidx.core.content.FileProvider.getUriForFile(app, authority, file).toString()

@@ -207,7 +207,6 @@ object RawUpdater : GroupUpdater() {
                     null
                 }
             }.toMap()
-            Logs.d("toReplace profiles: ${toReplace.size}")
 
             val toUpdate = ArrayList<ProxyEntity>()
             val added = mutableListOf<String>()
