@@ -546,8 +546,11 @@ class LaunchRegressionTest {
             portField.dispatchKeyEvent(android.view.KeyEvent(android.view.KeyEvent.ACTION_DOWN, android.view.KeyEvent.KEYCODE_DPAD_UP))
             assertTrue(networkAction.hasFocus())
             networkAction.performClick()
-            assertTrue(org.robolectric.shadows.ShadowAlertDialog.getLatestAlertDialog().isShowing)
-            org.robolectric.shadows.ShadowAlertDialog.getLatestAlertDialog().dismiss()
+            // AppCompat AlertDialog is a Dialog, not android.app.AlertDialog.
+            val networkDialog = org.robolectric.shadows.ShadowDialog.getLatestDialog()
+            assertNotNull("Refresh must open a dialog even without an eligible network", networkDialog)
+            assertTrue(networkDialog.isShowing)
+            networkDialog.dismiss()
             assertFalse(activity.findViewById<android.widget.CheckBox>(R.id.lan_consent).isChecked)
             assertFalse(activity.findViewById<android.widget.Button>(R.id.lan_scan).isEnabled)
             assertEquals(android.view.View.GONE, activity.findViewById<android.view.View>(R.id.lan_cancel).visibility)
