@@ -168,10 +168,14 @@ class EmulatorSmokeTest {
         assertTrue(message.text.contains("APK:"))
         assertFalse(message.text.contains("fixture.invalid"))
         assertFalse(message.text.contains("private-token-not-for-report"))
-        visibleText(text(R.string.subscription_attempt_share))
-        assertFalse("Opening diagnostic details must not auto-share", device.hasObject(By.pkg("com.android.intentresolver")))
+        // Capture while the dialog is open: finally closes activities even after an assertion.
         device.executeShellCommand("mkdir -p /sdcard/Download/TunXBoxSmoke")
         device.executeShellCommand("screencap -p /sdcard/Download/TunXBoxSmoke/$screenshot.png")
+        val share = requireNotNull(device.wait(Until.findObject(By.res("android", "button3")), timeout))
+        assertTrue("Explicit Share action must be enabled", share.isEnabled)
+        // Android/Material may transform the label to all caps without changing its meaning.
+        assertTrue(share.text.equals(text(R.string.subscription_attempt_share), ignoreCase = true))
+        assertFalse("Opening diagnostic details must not auto-share", device.hasObject(By.pkg("com.android.intentresolver")))
     }
 
     @Test fun launcherPickerOpensTvWithoutShareChooser() {
