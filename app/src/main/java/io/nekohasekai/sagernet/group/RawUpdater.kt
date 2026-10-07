@@ -50,9 +50,12 @@ object RawUpdater : GroupUpdater() {
         byUser: Boolean
     ) {
 
-        val link = subscription.link
-        var incomingName = proxyGroup.name
-        var incomingUserinfo = subscription.subscriptionUserinfo
+        // Freeze request settings before suspension; an editor may mutate the caller object.
+        val requestSubscription = KryoConverters.subscriptionDeserialize(KryoConverters.serialize(subscription))
+        val requestGroup = proxyGroup.copy(subscription = requestSubscription)
+        val link = requestSubscription.link
+        var incomingName = requestGroup.name
+        var incomingUserinfo = requestSubscription.subscriptionUserinfo
         var proxies: List<AbstractBean>
         if (link.startsWith("content://")) {
             val contentText = app.contentResolver.openInputStream(link.toUri())
@@ -73,8 +76,8 @@ object RawUpdater : GroupUpdater() {
                 if (DataStore.allowInsecureOnRequest) {
                     allowInsecure()
                 }
-                setURL(subscription.link)
-                setUserAgent(subscription.customUserAgent.takeIf { it.isNotBlank() } ?: USER_AGENT)
+                setURL(requestSubscription.link)
+                setUserAgent(requestSubscription.customUserAgent.takeIf { it.isNotBlank() } ?: USER_AGENT)
             }.execute()
             proxies = parseRaw(Util.getStringBox(response.contentString))
                 ?: error(app.getString(R.string.no_proxies_found))
@@ -83,7 +86,7 @@ object RawUpdater : GroupUpdater() {
                 Util.getStringBox(response.getHeader("Subscription-Userinfo"))
 
             // 修改默认名字
-            if (proxyGroup.name?.startsWith("Subscription #") == true) {
+            if (requestGroup.name?.startsWith("Subscription #") == true) {
                 var remoteName = Util.getStringBox(response.getHeader("content-disposition"))
                 if (remoteName.isNotBlank()) {
                     remoteName = Util.decodeFilename(remoteName)
@@ -109,9 +112,9 @@ object RawUpdater : GroupUpdater() {
         }
         proxies = proxiesMap.values.toList()
 
-        if (subscription.forceResolve) forceResolve(proxies, proxyGroup.id)
+        if (requestSubscription.forceResolve) forceResolve(proxies, proxyGroup.id)
 
-        val result = applyProfiles(proxyGroup, subscription, proxies, incomingName, incomingUserinfo)
+        val result = applyProfiles(requestGroup, requestSubscription, proxies, incomingName, incomingUserinfo)
         // Publish success and caller metadata only AFTER the Room transaction commits.
         proxyGroup.name = result.group.name
         subscription.subscriptionUserinfo = result.group.subscription!!.subscriptionUserinfo
@@ -142,7 +145,6 @@ object RawUpdater : GroupUpdater() {
             val exists = SagerDatabase.proxyDao.getByGroup(proxyGroup.id)
             val duplicate = ArrayList<String>()
             if (subscription.deduplication) {
-                Logs.d("Before deduplication: ${proxies.size}")
                 val uniqueProxies = LinkedHashSet<Protocols.Deduplication>()
                 val uniqueNames = HashMap<Protocols.Deduplication, String>()
                 for (_proxy in proxies) {
@@ -165,13 +167,9 @@ object RawUpdater : GroupUpdater() {
                 proxies = uniqueProxies.toList().map { it.bean }
             }
 
-            Logs.d("New profiles: ${proxies.size}")
-
             val nameMap = proxies.associateBy { bean ->
                 bean.displayName()
             }
-
-            Logs.d("Unique profiles: ${nameMap.size}")
 
             val toDelete = ArrayList<ProxyEntity>()
             val toReplace = exists.mapNotNull { entity ->
@@ -181,8 +179,6 @@ object RawUpdater : GroupUpdater() {
                     null
                 }
             }.toMap()
-
-            Logs.d("toDelete profiles: ${toDelete.size}")
             Logs.d("toReplace profiles: ${toReplace.size}")
 
             val toUpdate = ArrayList<ProxyEntity>()
@@ -207,20 +203,15 @@ object RawUpdater : GroupUpdater() {
                             entity.userOrder = userOrder
                             toUpdate.add(entity)
                             updated[entity.displayName()] = name
-
-                            Logs.d("Subscription profile processed")
                         }
 
                         entity.userOrder != userOrder -> {
                             entity.putBean(bean)
                             toUpdate.add(entity)
                             entity.userOrder = userOrder
-
-                            Logs.d("Subscription profile processed")
                         }
 
                         else -> {
-                            Logs.d("Subscription profile processed")
                         }
                     }
                 } else {
@@ -232,18 +223,13 @@ object RawUpdater : GroupUpdater() {
                             putBean(bean)
                         })
                     added.add(name)
-                    Logs.d("Subscription profile processed")
                 }
                 userOrder++
             }
 
-            SagerDatabase.proxyDao.updateProxy(toUpdate).also {
-                Logs.d("Updated profiles: $it")
-            }
+            SagerDatabase.proxyDao.updateProxy(toUpdate)
 
-            SagerDatabase.proxyDao.deleteProxy(toDelete).also {
-                Logs.d("Deleted profiles: $it")
-            }
+            SagerDatabase.proxyDao.deleteProxy(toDelete)
 
             val existCount = SagerDatabase.proxyDao.countByGroup(proxyGroup.id).toInt()
 
