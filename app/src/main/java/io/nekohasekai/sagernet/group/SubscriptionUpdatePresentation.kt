@@ -40,6 +40,14 @@ object SubscriptionUpdatePresentation {
             "\nAndroid API: ${Build.VERSION.SDK_INT}\nDevice supported ABIs: ${Build.SUPPORTED_ABIS.joinToString(", ")}" +
             "\nAttempt timestamp (epoch ms): ${record.attemptedAt}\n\n" + details(context, record)).take(8192)
     }
+    /** Real Android may assign message-scroll focus during window layout after show(). */
+    fun focusClose(dialog: android.app.Dialog) {
+        val close = dialog.findViewById<android.widget.Button>(android.R.id.button1) ?: return
+        close.isFocusable = true
+        close.isFocusableInTouchMode = true
+        close.requestFocus()
+        close.post { if (dialog.isShowing) close.requestFocus() }
+    }
     fun share(context: Context, record: SubscriptionUpdateResult) {
         val intent = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, report(context, record))
         try {

@@ -709,7 +709,9 @@ class LaunchRegressionTest {
             val fragment = controller.get().supportFragmentManager.findFragmentById(R.id.tv_container) as MainBrowseFragment
             MainBrowseFragment::class.java.getDeclaredMethod("handleAction", java.lang.Long.TYPE).apply { isAccessible = true }.invoke(fragment, 15L)
             val dialog = org.robolectric.shadows.ShadowDialog.getLatestDialog() as android.app.AlertDialog
+            shadowOf(Looper.getMainLooper()).idle()
             assertTrue(dialog.isShowing); assertTrue(dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).hasFocus())
+            assertTrue(dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).isFocusableInTouchMode)
             val text = dialog.findViewById<android.widget.TextView>(android.R.id.message)!!.text.toString()
             assertTrue(text.contains("SUB_LOCAL_SAVE")); assertFalse(text.contains("https://"))
             dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).performClick()

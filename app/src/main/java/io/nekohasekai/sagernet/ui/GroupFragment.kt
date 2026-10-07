@@ -345,7 +345,7 @@ class GroupFragment : ToolbarFragment(R.layout.layout_group),
                         io.nekohasekai.sagernet.group.SubscriptionUpdatePresentation.share(requireContext(), record)
                     }
                     val dialog = builder.show()
-                    dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE).requestFocus()
+                    io.nekohasekai.sagernet.group.SubscriptionUpdatePresentation.focusClose(dialog)
                 }
                 R.id.action_universal_qr -> {
                     QRCodeDialog(

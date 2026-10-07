@@ -364,7 +364,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
                 io.nekohasekai.sagernet.group.SubscriptionUpdatePresentation.share(requireContext(), record)
             }
             val current = show(builder)
-            current.getButton(AlertDialog.BUTTON_POSITIVE).requestFocus()
+            io.nekohasekai.sagernet.group.SubscriptionUpdatePresentation.focusClose(current)
         }
         MORE -> showImportMethods()
         PHONE_MODE -> switchPhoneMode()

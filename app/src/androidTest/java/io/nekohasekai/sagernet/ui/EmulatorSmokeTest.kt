@@ -163,6 +163,7 @@ class EmulatorSmokeTest {
         }
     }
     private fun assertSafeDiagnosticDialog(screenshot: String) {
+        device.waitForIdle()
         val message = requireNotNull(device.wait(Until.findObject(By.res("android", "message")), timeout))
         assertTrue(message.text.contains("SUB_TLS_TIME"))
         assertTrue(message.text.contains("APK:"))
@@ -171,6 +172,9 @@ class EmulatorSmokeTest {
         // Capture while the dialog is open: finally closes activities even after an assertion.
         device.executeShellCommand("mkdir -p /sdcard/Download/TunXBoxSmoke")
         device.executeShellCommand("screencap -p /sdcard/Download/TunXBoxSmoke/$screenshot.png")
+        val hierarchy = File(context.cacheDir, "$screenshot.xml")
+        device.dumpWindowHierarchy(hierarchy)
+        device.executeShellCommand("cp ${hierarchy.absolutePath} /sdcard/Download/TunXBoxSmoke/$screenshot.xml")
         val share = requireNotNull(device.wait(Until.findObject(By.res("android", "button3")), timeout))
         assertTrue("Explicit Share action must be enabled", share.isEnabled)
         // Android/Material may transform the label to all caps without changing its meaning.
