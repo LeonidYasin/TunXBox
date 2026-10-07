@@ -8,7 +8,7 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **660**.
+Всего tracked файлов: **665**.
 
 | Раздел | Файлов |
 |---|---|
@@ -72,6 +72,9 @@
 | `app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionFailureCategory.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionFailurePresentation.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateGuard.kt` | 1 |
+| `app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateJournal.kt` | 1 |
+| `app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdatePresentation.kt` | 1 |
+| `app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateResult.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ktx/Asyncs.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ktx/Browsers.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ktx/Dialogs.kt` | 1 |
@@ -192,10 +195,10 @@
 | `app/src/main/res/values-zh-rHK` | 1 |
 | `app/src/main/res/values-zh-rTW` | 1 |
 | `app/src/main/res/xml` | 24 |
-| `app/src/test` | 13 |
+| `app/src/test` | 14 |
 | `buildScript` | 24 |
 | `buildSrc` | 2 |
-| `docs` | 19 |
+| `docs` | 20 |
 | `gradle` | 2 |
 | `libcore` | 42 |
 | `Корень` | 15 |
@@ -493,6 +496,18 @@
 ## app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateGuard.kt
 
 - [`app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateGuard.kt`](../../app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateGuard.kt)
+
+## app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateJournal.kt
+
+- [`app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateJournal.kt`](../../app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateJournal.kt)
+
+## app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdatePresentation.kt
+
+- [`app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdatePresentation.kt`](../../app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdatePresentation.kt)
+
+## app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateResult.kt
+
+- [`app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateResult.kt`](../../app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateResult.kt)
 
 ## app/src/main/java/io/nekohasekai/sagernet/ktx/Asyncs.kt
 
@@ -1288,6 +1303,7 @@
 - [`app/src/test/java/io/nekohasekai/sagernet/fmt/v2ray/UnsupportedV2RayTransportTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/fmt/v2ray/UnsupportedV2RayTransportTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionFailureCategoryTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionFailureCategoryTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionUpdateGuardTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionUpdateGuardTest.kt)
+- [`app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionUpdateResultTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionUpdateResultTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/BrandingRecoveryTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/BrandingRecoveryTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/LaunchRegressionTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/LaunchRegressionTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/ReleaseUpdatePolicyTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/ReleaseUpdatePolicyTest.kt)
@@ -1340,6 +1356,7 @@
 - [`docs/development.md`](../../docs/development.md)
 - [`docs/emulator-testing.md`](../../docs/emulator-testing.md)
 - [`docs/features.md`](../../docs/features.md)
+- [`docs/monetization.md`](../../docs/monetization.md)
 - [`docs/project-map.md`](../../docs/project-map.md)
 - [`docs/protocol-compatibility.md`](../../docs/protocol-compatibility.md)
 - [`docs/reference/preferences.md`](../../docs/reference/preferences.md)

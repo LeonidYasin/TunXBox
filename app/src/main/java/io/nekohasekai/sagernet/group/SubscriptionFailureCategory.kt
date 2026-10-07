@@ -6,11 +6,12 @@ import java.util.Locale
 enum class SubscriptionFailureCategory(val code: String) {
     TLS_TIME("SUB_TLS_TIME"), TLS_TRUST("SUB_TLS_TRUST"), REALITY("SUB_REALITY"),
     UNSUPPORTED("SUB_UNSUPPORTED"), DNS("SUB_DNS"), TIMEOUT("SUB_TIMEOUT"),
-    HTTP("SUB_HTTP"), EMPTY("SUB_EMPTY"), UNKNOWN("SUB_UNKNOWN");
+    HTTP("SUB_HTTP"), EMPTY("SUB_EMPTY"), LOCAL_SAVE("SUB_LOCAL_SAVE"), CHANGED("SUB_CHANGED"), UNKNOWN("SUB_UNKNOWN");
 
     companion object {
         fun fromMessage(message: String?): SubscriptionFailureCategory {
             val text = message.orEmpty().take(16_384).lowercase(Locale.ROOT)
+            values().firstOrNull { text.trim().endsWith(it.code.lowercase(Locale.ROOT)) && text.startsWith("[sub_stage_") }?.let { return it }
             val tls = listOf("x509", "certificate", "tls", "сертификат").any { it in text }
             return when {
                 tls && listOf("has expired", "certificate expired", "not yet valid", "истёк", "истек").any { it in text } -> TLS_TIME
@@ -21,6 +22,7 @@ enum class SubscriptionFailureCategory(val code: String) {
                 listOf("timeout", "timed out", "deadline exceeded").any { it in text } -> TIMEOUT
                 Regex("""(?:http(?:/[^ ]+)?\s+|status(?: code)?[ :=]+)[45][0-9]{2}\b""").containsMatchIn(text) -> HTTP
                 listOf("no proxies found", "no profiles found", "не найдено профилей", "не найдены профили", "нет профилей").any { it in text } -> EMPTY
+                "subscription changed during update" in text -> CHANGED
                 else -> UNKNOWN
             }
         }

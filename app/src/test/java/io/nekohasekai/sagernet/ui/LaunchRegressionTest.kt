@@ -660,4 +660,152 @@ class LaunchRegressionTest {
         } finally { db.proxyDao.deleteByGroup(group.id); db.groupDao.deleteById(group.id) }
     }
 
+    @Test fun subscriptionJournalPersistsOnlyWhitelistedMetadataAndSupportsRemoval() {
+        val journal = io.nekohasekai.sagernet.group.SubscriptionUpdateJournal
+        val prefs = RuntimeEnvironment.getApplication().getSharedPreferences("subscription_update_results_v1", android.content.Context.MODE_PRIVATE)
+        prefs.edit().clear().commit()
+        try {
+            val result = io.nekohasekai.sagernet.group.SubscriptionUpdateResult(io.nekohasekai.sagernet.group.SubscriptionUpdateOutcome.FAILURE,
+                io.nekohasekai.sagernet.group.SubscriptionUpdateStage.DOWNLOAD, 1234, 50,
+                category = io.nekohasekai.sagernet.group.SubscriptionFailureCategory.TLS_TIME)
+            journal.write(12L, result)
+            assertEquals(result, journal.read(12L))
+            assertEquals(result.encode(), prefs.getString("12", null))
+            val text = io.nekohasekai.sagernet.group.SubscriptionUpdatePresentation.details(RuntimeEnvironment.getApplication(), journal.read(12L))
+            assertTrue(text.contains("SUB_TLS_TIME")); assertFalse(text.contains("https://")); assertFalse(text.contains("password="))
+            prefs.edit().putString("12", "corrupt synthetic-token").commit()
+            assertNull(journal.read(12L))
+            journal.write(12L, result); journal.remove(12L); assertNull(journal.read(12L))
+        } finally { prefs.edit().clear().commit() }
+    }
+    @Test fun subscriptionJournalIsBoundedEvenIfDeviceClockMovesBackwards() {
+        val journal = io.nekohasekai.sagernet.group.SubscriptionUpdateJournal
+        val prefs = RuntimeEnvironment.getApplication().getSharedPreferences("subscription_update_results_v1", android.content.Context.MODE_PRIVATE)
+        prefs.edit().clear().commit()
+        try {
+            for (id in 1L..70L) journal.write(id, io.nekohasekai.sagernet.group.SubscriptionUpdateResult(
+                io.nekohasekai.sagernet.group.SubscriptionUpdateOutcome.SUCCESS,
+                io.nekohasekai.sagernet.group.SubscriptionUpdateStage.APPLY, 1000 + id, 10, 3))
+            assertEquals(64, prefs.all.size)
+            journal.write(999L, io.nekohasekai.sagernet.group.SubscriptionUpdateResult(
+                io.nekohasekai.sagernet.group.SubscriptionUpdateOutcome.CANCELLED,
+                io.nekohasekai.sagernet.group.SubscriptionUpdateStage.UPDATE, 1, 0))
+            assertEquals(64, prefs.all.size); assertNotNull(journal.read(999L))
+        } finally { prefs.edit().clear().commit() }
+    }
+    @Test fun tvSubscriptionJournalIsAvailableWithRemoteOkFocus() {
+        TvUiPreferences.phoneMode = false
+        val controller = Robolectric.buildActivity(MainActivityTv::class.java).setup().visible()
+        val journal = io.nekohasekai.sagernet.group.SubscriptionUpdateJournal
+        val id = io.nekohasekai.sagernet.database.DataStore.selectedGroup.takeIf { it > 0 } ?: 987654L
+        val old = io.nekohasekai.sagernet.database.DataStore.selectedGroup
+        try {
+            io.nekohasekai.sagernet.database.DataStore.selectedGroup = id
+            journal.write(id, io.nekohasekai.sagernet.group.SubscriptionUpdateResult(
+                io.nekohasekai.sagernet.group.SubscriptionUpdateOutcome.FAILURE,
+                io.nekohasekai.sagernet.group.SubscriptionUpdateStage.APPLY, 1234, 50,
+                category = io.nekohasekai.sagernet.group.SubscriptionFailureCategory.LOCAL_SAVE))
+            controller.get().supportFragmentManager.executePendingTransactions(); shadowOf(Looper.getMainLooper()).idle()
+            val fragment = controller.get().supportFragmentManager.findFragmentById(R.id.tv_container) as MainBrowseFragment
+            MainBrowseFragment::class.java.getDeclaredMethod("handleAction", java.lang.Long.TYPE).apply { isAccessible = true }.invoke(fragment, 15L)
+            val dialog = org.robolectric.shadows.ShadowDialog.getLatestDialog() as android.app.AlertDialog
+            assertTrue(dialog.isShowing); assertTrue(dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).hasFocus())
+            val text = dialog.findViewById<android.widget.TextView>(android.R.id.message)!!.text.toString()
+            assertTrue(text.contains("SUB_LOCAL_SAVE")); assertFalse(text.contains("https://"))
+            dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).performClick(); assertFalse(dialog.isShowing)
+        } finally { journal.remove(id); io.nekohasekai.sagernet.database.DataStore.selectedGroup = old; controller.pause().stop().destroy() }
+    }
+
+    @Test fun emptyJsonSubscriptionIsParseFailureNotLocalStorageFailure() = kotlinx.coroutines.runBlocking {
+        for (text in listOf("", "  ", "[]", "{\"outbounds\":[]}")) {
+            try { io.nekohasekai.sagernet.group.RawUpdater.parseSubscriptionContent(text); fail("Empty response must not reach apply") }
+            catch (failure: io.nekohasekai.sagernet.group.SubscriptionUpdateFailure) {
+                assertEquals(io.nekohasekai.sagernet.group.SubscriptionUpdateStage.PARSE, failure.stage)
+                assertEquals(io.nekohasekai.sagernet.group.SubscriptionFailureCategory.EMPTY, failure.category)
+            }
+        }
+    }
+    @Test fun subscriptionJsonParsesOfflineWithoutClaimingRuntimeCompatibility() = kotlinx.coroutines.runBlocking {
+        val parsed = io.nekohasekai.sagernet.group.RawUpdater.parseSubscriptionContent(
+            "{\"outbounds\":[{\"type\":\"direct\"},{\"type\":\"socks\",\"tag\":\"Fixture\",\"server\":\"192.168.1.22\",\"server_port\":10808}]}")
+        assertEquals(1, parsed.size)
+        assertTrue(parsed.single() is moe.matsuri.nb4a.proxy.config.ConfigBean)
+        assertEquals("Fixture", parsed.single().name)
+    }
+
+    @Test fun subscriptionSummaryShareIsExplicitTextOnlyAndContainsNoProviderData() {
+        val app = RuntimeEnvironment.getApplication()
+        val record = io.nekohasekai.sagernet.group.SubscriptionUpdateResult(
+            io.nekohasekai.sagernet.group.SubscriptionUpdateOutcome.FAILURE,
+            io.nekohasekai.sagernet.group.SubscriptionUpdateStage.DOWNLOAD, 1234, 50,
+            category = io.nekohasekai.sagernet.group.SubscriptionFailureCategory.TLS_TIME)
+        val report = io.nekohasekai.sagernet.group.SubscriptionUpdatePresentation.report(app, record)
+        assertTrue(report.contains("SUB_TLS_TIME")); assertTrue(report.contains("Android API:"))
+        for (secret in listOf("https://", "password=", "synthetic-token", "private_key", "uuid=")) assertFalse(report.contains(secret))
+        io.nekohasekai.sagernet.group.SubscriptionUpdatePresentation.share(app, record)
+        val chooser = shadowOf(app).nextStartedActivity
+        assertEquals(Intent.ACTION_CHOOSER, chooser.action)
+        @Suppress("DEPRECATION") val target = chooser.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)!!
+        assertEquals(Intent.ACTION_SEND, target.action); assertEquals("text/plain", target.type)
+        assertEquals(report, target.getStringExtra(Intent.EXTRA_TEXT))
+        assertNull(target.data); assertFalse(target.hasExtra(Intent.EXTRA_STREAM))
+    }
+
+    private fun localSubscriptionFile(): Pair<java.io.File, String> {
+        val app = RuntimeEnvironment.getApplication()
+        val authority = "${app.packageName}.cache"
+        Robolectric.setupContentProvider(androidx.core.content.FileProvider::class.java, authority)
+        val file = java.io.File(app.cacheDir, "subscription-fixture-${System.nanoTime()}.json")
+        file.writeText("{\"outbounds\":[{\"type\":\"socks\",\"tag\":\"Offline fixture\",\"server\":\"192.168.1.22\",\"server_port\":10808}]}")
+        return file to androidx.core.content.FileProvider.getUriForFile(app, authority, file).toString()
+    }
+    private fun subscriptionCallback(success: suspend (io.nekohasekai.sagernet.database.ProxyGroup) -> Unit) =
+        object : io.nekohasekai.sagernet.database.GroupManager.Interface {
+            override suspend fun confirm(message: String) = true
+            override suspend fun alert(message: String) { }
+            override suspend fun onUpdateSuccess(group: io.nekohasekai.sagernet.database.ProxyGroup, changed: Int,
+                added: List<String>, updated: Map<String, String>, deleted: List<String>, duplicate: List<String>, byUser: Boolean) { success(group) }
+            override suspend fun onUpdateFailure(group: io.nekohasekai.sagernet.database.ProxyGroup, message: String) { fail("Offline update failed: $message") }
+        }
+    @Test fun subscriptionLockIsHeldThroughSuccessCallbackAndUiFailureDoesNotUndoCommit() = kotlinx.coroutines.runBlocking {
+        val (file, uri) = localSubscriptionFile()
+        val db = io.nekohasekai.sagernet.database.SagerDatabase
+        val group = io.nekohasekai.sagernet.database.GroupManager.createGroup(subscriptionFixture("Full local update").apply { subscription!!.link = uri })
+        var visited = false
+        try {
+            val callback = subscriptionCallback { applied ->
+                visited = true
+                assertTrue(applied.id in io.nekohasekai.sagernet.group.GroupUpdater.updating)
+                assertFalse(io.nekohasekai.sagernet.group.GroupUpdater.executeUpdate(applied, false, null))
+                throw IllegalStateException("Synthetic UI unavailable after commit")
+            }
+            assertTrue(io.nekohasekai.sagernet.group.GroupUpdater.executeUpdate(group, false, callback))
+            assertTrue(visited); assertFalse(group.id in io.nekohasekai.sagernet.group.GroupUpdater.updating)
+            assertEquals(1, db.proxyDao.getByGroup(group.id).size)
+            assertEquals(io.nekohasekai.sagernet.group.SubscriptionUpdateOutcome.SUCCESS,
+                io.nekohasekai.sagernet.group.SubscriptionUpdateJournal.read(group.id)!!.outcome)
+            assertTrue(db.groupDao.getById(group.id)!!.subscription!!.lastUpdated > 123)
+        } finally {
+            io.nekohasekai.sagernet.group.SubscriptionUpdateJournal.remove(group.id)
+            db.proxyDao.deleteByGroup(group.id); db.groupDao.deleteById(group.id); file.delete()
+        }
+    }
+    @Test fun cancellationAfterCommittedSubscriptionPreservesSuccessfulResultAndReleasesLock() = kotlinx.coroutines.runBlocking {
+        val (file, uri) = localSubscriptionFile()
+        val db = io.nekohasekai.sagernet.database.SagerDatabase
+        val group = io.nekohasekai.sagernet.database.GroupManager.createGroup(subscriptionFixture("Post-commit cancel").apply { subscription!!.link = uri })
+        try {
+            val callback = subscriptionCallback { throw kotlinx.coroutines.CancellationException("Synthetic post-commit cancel") }
+            try { io.nekohasekai.sagernet.group.GroupUpdater.executeUpdate(group, false, callback); fail("Cancellation must propagate") }
+            catch (_: kotlinx.coroutines.CancellationException) { }
+            assertFalse(group.id in io.nekohasekai.sagernet.group.GroupUpdater.updating)
+            assertEquals(1, db.proxyDao.getByGroup(group.id).size)
+            assertEquals(io.nekohasekai.sagernet.group.SubscriptionUpdateOutcome.SUCCESS,
+                io.nekohasekai.sagernet.group.SubscriptionUpdateJournal.read(group.id)!!.outcome)
+        } finally {
+            io.nekohasekai.sagernet.group.SubscriptionUpdateJournal.remove(group.id)
+            db.proxyDao.deleteByGroup(group.id); db.groupDao.deleteById(group.id); file.delete()
+        }
+    }
+
 }

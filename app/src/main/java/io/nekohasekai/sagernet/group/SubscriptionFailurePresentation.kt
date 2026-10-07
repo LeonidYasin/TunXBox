@@ -16,9 +16,14 @@ object SubscriptionFailurePresentation {
             SubscriptionFailureCategory.TIMEOUT -> R.string.subscription_failure_timeout
             SubscriptionFailureCategory.HTTP -> R.string.subscription_failure_http
             SubscriptionFailureCategory.EMPTY -> R.string.subscription_failure_empty
+            SubscriptionFailureCategory.LOCAL_SAVE -> R.string.subscription_failure_local_save
+            SubscriptionFailureCategory.CHANGED -> R.string.subscription_failure_changed
             SubscriptionFailureCategory.UNKNOWN -> R.string.subscription_failure_unknown
         }
-        return context.getString(R.string.subscription_failure_stage) + "\n\n" +
+        val stage = SubscriptionUpdateStage.values().firstOrNull { failure?.startsWith("[SUB_STAGE_${it.name}]") == true }
+        val stageMessage = stage?.let { context.getString(R.string.subscription_attempt_stage, SubscriptionUpdatePresentation.stage(context, it)) }
+            ?: context.getString(R.string.subscription_failure_stage)
+        return stageMessage + "\n\n" +
             context.getString(reason) + "\n\n" +
             context.getString(R.string.subscription_failure_code, category.code)
     }

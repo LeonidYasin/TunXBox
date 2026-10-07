@@ -73,6 +73,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
         private const val YOUTUBE = 12L
         private const val RESTART_APP = 13L
         private const val CLOSE_APP = 14L
+        private const val SUBSCRIPTION_DIAGNOSTICS = 15L
         private const val ROW_CONNECTION = 3L
     }
 
@@ -286,6 +287,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
         toolsAdapter.setItems(listOf(
             TvAction(PROFILE_ACTIONS, getString(R.string.tv_actions), getString(R.string.tv_actions_hint), R.drawable.ic_image_edit, DataStore.selectedProxy > 0),
             TvAction(UPDATE, getString(R.string.tv_update_group), getString(if (updating) R.string.tv_updating else if (group?.type != GroupType.SUBSCRIPTION) R.string.tv_not_subscription else R.string.tv_update_group), R.drawable.ic_social_share, group?.type == GroupType.SUBSCRIPTION && !updating),
+            TvAction(SUBSCRIPTION_DIAGNOSTICS, getString(R.string.subscription_attempt_title), getString(R.string.subscription_attempt_description), R.drawable.ic_social_share, group?.type == GroupType.SUBSCRIPTION),
             TvAction(TESTS, getString(R.string.tv_tests_title), getString(R.string.tv_tests_hint), R.drawable.ic_remote_groups),
             TvAction(FULL_TOOLS, getString(R.string.tv_all_functions), getString(R.string.tv_all_functions_hint), R.drawable.ic_baseline_more_vert_24),
             TvAction(HOME, getString(R.string.tv_home), getString(R.string.tv_home_hint), R.drawable.ic_baseline_more_vert_24),
@@ -353,6 +355,17 @@ class MainBrowseFragment : BrowseSupportFragment() {
         ADD_PROFILE -> showImportMethods()
         PROFILE_ACTIONS -> if (DataStore.selectedProxy > 0) openProfileActions(DataStore.selectedProxy) else toast(R.string.tv_choose_profile)
         UPDATE -> updateSubscription()
+        SUBSCRIPTION_DIAGNOSTICS -> {
+            val record = io.nekohasekai.sagernet.group.SubscriptionUpdateJournal.read(DataStore.selectedGroup)
+            val builder = AlertDialog.Builder(requireContext()).setTitle(R.string.subscription_attempt_title)
+                .setMessage(io.nekohasekai.sagernet.group.SubscriptionUpdatePresentation.run { record?.let { report(requireContext(), it) } ?: details(requireContext(), null) })
+                .setPositiveButton(android.R.string.ok, null)
+            if (record != null) builder.setNeutralButton(R.string.subscription_attempt_share) { _, _ ->
+                io.nekohasekai.sagernet.group.SubscriptionUpdatePresentation.share(requireContext(), record)
+            }
+            val current = show(builder)
+            current.getButton(AlertDialog.BUTTON_POSITIVE).requestFocus()
+        }
         MORE -> showImportMethods()
         PHONE_MODE -> switchPhoneMode()
         TESTS -> showTests()

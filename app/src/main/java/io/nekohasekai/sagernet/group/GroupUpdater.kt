@@ -15,6 +15,7 @@ import io.nekohasekai.sagernet.fmt.v2ray.StandardV2RayBean
 import io.nekohasekai.sagernet.fmt.v2ray.isTLS
 import io.nekohasekai.sagernet.ktx.*
 import kotlinx.coroutines.*
+import android.os.SystemClock
 import java.net.Inet4Address
 import java.net.InetAddress
 import java.util.*
@@ -139,6 +140,9 @@ abstract class GroupUpdater {
             // Existing phone callers keep their global adapter. TV passes a lifecycle-owned
             // interface and does not replace the process-global phone activity.
             SubscriptionUpdateGuard.withUpdateLock(proxyGroup.id, updating, { finishUpdate(proxyGroup) }) {
+                val previousResult = SubscriptionUpdateJournal.read(proxyGroup.id)
+                val attemptedAt = System.currentTimeMillis()
+                val startedAt = SystemClock.elapsedRealtime()
                 try {
                     GroupManager.postReload(proxyGroup.id)
                     val subscription = proxyGroup.subscription ?: return@withUpdateLock false
@@ -148,13 +152,25 @@ abstract class GroupUpdater {
                     }
                     RawUpdater.doUpdate(proxyGroup, subscription, userInterface, byUser)
                     true
-                } catch (cancelled: CancellationException) { throw cancelled }
+                } catch (cancelled: CancellationException) {
+                    val committed = SubscriptionUpdateJournal.read(proxyGroup.id)
+                    if (committed == previousResult || committed?.outcome != SubscriptionUpdateOutcome.SUCCESS) {
+                        SubscriptionUpdateJournal.write(proxyGroup.id, SubscriptionUpdateResult(SubscriptionUpdateOutcome.CANCELLED,
+                            SubscriptionUpdateStage.UPDATE, attemptedAt, (SystemClock.elapsedRealtime() - startedAt).coerceAtLeast(0)))
+                    }
+                    throw cancelled
+                }
                 catch (error: Throwable) {
+                    val failure = error as? SubscriptionUpdateFailure
+                    val category = failure?.category ?: SubscriptionFailureCategory.fromMessage(error.readableMessage)
+                    SubscriptionUpdateJournal.write(proxyGroup.id, SubscriptionUpdateResult(SubscriptionUpdateOutcome.FAILURE,
+                        failure?.stage ?: SubscriptionUpdateStage.UPDATE, attemptedAt,
+                        (SystemClock.elapsedRealtime() - startedAt).coerceAtLeast(0), category = category))
                     // LAN imports need a safe, structured failure rather than false plus a raw URL in logs.
                     // Manual phone/TV failures use safe localized guidance; background failures only log a code.
                     if (throwOnFailure) throw error
                     // This boundary must not add a private subscription URL/credential dump to logs.
-                    Logs.w("Subscription update failed: ${SubscriptionFailureCategory.fromMessage(error.readableMessage).code}")
+                    Logs.w("Subscription update failed: ${category.code}")
                     // Background updates must not unexpectedly open a modal over another task.
                     if (byUser) userInterface?.onUpdateFailure(proxyGroup, error.readableMessage)
                     false

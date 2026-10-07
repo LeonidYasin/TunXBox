@@ -8,6 +8,8 @@ import io.nekohasekai.sagernet.fmt.KryoConverters
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.CancellationException
+import android.os.SystemClock
 import java.util.concurrent.Callable
 import io.nekohasekai.sagernet.fmt.http.HttpBean
 import io.nekohasekai.sagernet.fmt.hysteria.HysteriaBean
@@ -50,6 +52,8 @@ object RawUpdater : GroupUpdater() {
         byUser: Boolean
     ) {
 
+        val attemptedAt = System.currentTimeMillis()
+        val startedAt = SystemClock.elapsedRealtime()
         // Freeze request settings before suspension; an editor may mutate the caller object.
         val requestSubscription = KryoConverters.subscriptionDeserialize(KryoConverters.serialize(subscription))
         val requestGroup = proxyGroup.copy(subscription = requestSubscription)
@@ -58,15 +62,13 @@ object RawUpdater : GroupUpdater() {
         var incomingUserinfo = requestSubscription.subscriptionUserinfo
         var proxies: List<AbstractBean>
         if (link.startsWith("content://")) {
-            val contentText = app.contentResolver.openInputStream(link.toUri())
-                ?.bufferedReader()
-                ?.readText()
-
-            proxies = contentText?.let { parseRaw(contentText) }
-                ?: error(app.getString(R.string.no_proxies_found_in_subscription))
+            val contentText = atStage(SubscriptionUpdateStage.DOWNLOAD) {
+                app.contentResolver.openInputStream(link.toUri())?.bufferedReader()?.use { it.readText() }
+            }
+            proxies = parseSubscriptionContent(contentText.orEmpty())
         } else {
 
-            val response = Libcore.newHttpClient().apply {
+            val response = atStage(SubscriptionUpdateStage.DOWNLOAD) { Libcore.newHttpClient().apply {
                 trySocks5(DataStore.mixedPort)
                 tryH3Direct()
                 when (DataStore.appTLSVersion) {
@@ -78,9 +80,8 @@ object RawUpdater : GroupUpdater() {
                 }
                 setURL(requestSubscription.link)
                 setUserAgent(requestSubscription.customUserAgent.takeIf { it.isNotBlank() } ?: USER_AGENT)
-            }.execute()
-            proxies = parseRaw(Util.getStringBox(response.contentString))
-                ?: error(app.getString(R.string.no_proxies_found))
+            }.execute() }
+            proxies = parseSubscriptionContent(Util.getStringBox(response.contentString))
 
             incomingUserinfo =
                 Util.getStringBox(response.getHeader("Subscription-Userinfo"))
@@ -112,19 +113,46 @@ object RawUpdater : GroupUpdater() {
         }
         proxies = proxiesMap.values.toList()
 
-        if (requestSubscription.forceResolve) forceResolve(proxies, proxyGroup.id)
+        if (requestSubscription.forceResolve) atStage(SubscriptionUpdateStage.RESOLVE) { forceResolve(proxies, proxyGroup.id) }
 
-        val result = applyProfiles(requestGroup, requestSubscription, proxies, incomingName, incomingUserinfo)
+        val result = atStage(SubscriptionUpdateStage.APPLY) {
+            applyProfiles(requestGroup, requestSubscription, proxies, incomingName, incomingUserinfo)
+        }
         // Publish success and caller metadata only AFTER the Room transaction commits.
         proxyGroup.name = result.group.name
         subscription.subscriptionUserinfo = result.group.subscription!!.subscriptionUserinfo
         subscription.lastUpdated = result.group.subscription!!.lastUpdated
-        finishUpdate(proxyGroup)
-        userInterface?.onUpdateSuccess(proxyGroup, result.changed, result.added, result.updated,
-            result.deleted, result.duplicate, byUser)
+        SubscriptionUpdateJournal.write(proxyGroup.id, SubscriptionUpdateResult(SubscriptionUpdateOutcome.SUCCESS,
+            SubscriptionUpdateStage.APPLY, attemptedAt, (SystemClock.elapsedRealtime() - startedAt).coerceAtLeast(0), result.totalProfiles))
+        // The outer guard releases once. Releasing here could unlock a second update before finally.
+        try {
+            userInterface?.onUpdateSuccess(proxyGroup, result.changed, result.added, result.updated,
+                result.deleted, result.duplicate, byUser)
+        } catch (cancelled: CancellationException) { throw cancelled }
+        catch (_: Exception) { android.util.Log.w("SubscriptionUpdate", "Success UI unavailable; database commit succeeded") }
     }
 
-    internal data class ApplyResult(val group: ProxyGroup, val changed: Int, val added: List<String>,
+    internal suspend fun parseSubscriptionContent(text: String): List<AbstractBean> = atStage(SubscriptionUpdateStage.PARSE) {
+        if (text.isBlank()) throw SubscriptionUpdateFailure(SubscriptionUpdateStage.PARSE,
+            SubscriptionFailureCategory.EMPTY, IllegalArgumentException("No profiles found"))
+        parseRaw(text)?.takeIf { it.isNotEmpty() }
+            ?: throw SubscriptionUpdateFailure(SubscriptionUpdateStage.PARSE, SubscriptionFailureCategory.EMPTY,
+                IllegalArgumentException("No profiles found"))
+    }
+
+    private suspend fun <T> atStage(stage: SubscriptionUpdateStage, work: suspend () -> T): T = try { work() }
+    catch (cancelled: CancellationException) { throw cancelled }
+    catch (error: SubscriptionUpdateFailure) { throw error }
+    catch (error: Exception) {
+        val category = when {
+            stage == SubscriptionUpdateStage.APPLY && error.message?.contains("Subscription changed during update") == true -> SubscriptionFailureCategory.CHANGED
+            stage == SubscriptionUpdateStage.APPLY -> SubscriptionFailureCategory.LOCAL_SAVE
+            else -> SubscriptionFailureCategory.fromMessage(error.readableMessage)
+        }
+        throw SubscriptionUpdateFailure(stage, category, error)
+    }
+
+    internal data class ApplyResult(val group: ProxyGroup, val totalProfiles: Int, val changed: Int, val added: List<String>,
         val updated: Map<String, String>, val deleted: List<String>, val duplicate: List<String>)
 
     /** Network/parser work is complete. One transaction applies profiles AND last-success metadata. */
@@ -245,7 +273,7 @@ object RawUpdater : GroupUpdater() {
                 name = if (current.name == proxyGroup.name) incomingName else current.name)
             SagerDatabase.groupDao.updateGroup(committedGroup)
             context.ensureActive()
-            ApplyResult(committedGroup, changed, added, updated, deleted, duplicate)
+            ApplyResult(committedGroup, proxies.size, changed, added, updated, deleted, duplicate)
         })
     }
 
