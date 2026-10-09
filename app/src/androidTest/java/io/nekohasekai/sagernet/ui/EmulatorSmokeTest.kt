@@ -111,8 +111,92 @@ class EmulatorSmokeTest {
         val expected = InstrumentationRegistry.getArguments().getString("expectedPageSize") ?: error("CI must specify page size")
         assertEquals(expected, device.executeShellCommand("getconf PAGESIZE").trim())
         assertTrue("Actual JNI core must load", Libcore.versionBox().isNotBlank())
-        startTv()
+        verifySavedDiagnosticsInBothModes()
     }
+    /** Synthetic saved failure only: no provider request, VPN consent or automatic upload. */
+    private fun verifySavedDiagnosticsInBothModes() {
+        val oldGroup = DataStore.selectedGroup
+        val group = runBlocking { GroupManager.createGroup(io.nekohasekai.sagernet.database.ProxyGroup(
+            name = "Offline diagnostic fixture", type = io.nekohasekai.sagernet.GroupType.SUBSCRIPTION,
+            subscription = io.nekohasekai.sagernet.database.SubscriptionBean().apply {
+                initializeDefaultValues(); link = "https://fixture.invalid/private-token-not-for-report"
+            })) }
+        val record = io.nekohasekai.sagernet.group.SubscriptionUpdateResult(
+            io.nekohasekai.sagernet.group.SubscriptionUpdateOutcome.FAILURE,
+            io.nekohasekai.sagernet.group.SubscriptionUpdateStage.DOWNLOAD,
+            1_791_324_000_000L, 1250, category = io.nekohasekai.sagernet.group.SubscriptionFailureCategory.TLS_TIME)
+        try {
+            DataStore.selectedGroup = group.id
+            io.nekohasekai.sagernet.group.SubscriptionUpdateJournal.write(group.id, record)
+            startTv()
+            assertNotNull(device.wait(Until.findObject(By.descStartsWith(text(R.string.tv_start)).focused(true)), timeout))
+            // Actions -> connection -> profiles -> tools, using real remote keys only.
+            repeat(3) { device.pressDPadDown(); device.waitForIdle() }
+            val title = text(R.string.subscription_attempt_title)
+            repeat(8) {
+                if (!device.hasObject(By.descStartsWith(title).focused(true))) {
+                    device.pressDPadRight(); device.waitForIdle()
+                }
+            }
+            assertNotNull("Saved diagnostic card must be reachable by DPAD",
+                device.findObject(By.descStartsWith(title).focused(true)))
+            device.pressDPadCenter()
+            assertSafeDiagnosticDialog("subscription_diagnostics_tv")
+            assertNotNull("TV dialog defaults to safe close, not Share",
+                device.wait(Until.findObject(By.res("android", "button1").focused(true)), timeout))
+            device.pressDPadCenter()
+            assertTrue(device.wait(Until.gone(By.res("android", "message")), timeout))
+            scenario?.close(); scenario = null
+
+            TvUiPreferences.phoneMode = true
+            scenario = ActivityScenario.launch<MainActivity>(Intent(context, MainActivity::class.java)
+                .putExtra("tv_tools", true).putExtra("tv_destination", R.id.nav_group))
+            val list = UiScrollable(UiSelector().resourceId("${context.packageName}:id/group_list"))
+            assertTrue(list.scrollIntoView(UiSelector().text("Offline diagnostic fixture")))
+            var card: UiObject2? = visibleText("Offline diagnostic fixture")
+            var options: UiObject2? = null
+            repeat(5) {
+                if (options == null) {
+                    options = card?.findObject(By.res(context.packageName, "options"))
+                    card = card?.parent
+                }
+            }
+            requireNotNull(options) { "Missing subscription group options" }.click()
+            visibleText(title).click()
+            assertSafeDiagnosticDialog("subscription_diagnostics_phone")
+            visibleText(text(android.R.string.ok)).click()
+            assertTrue(device.wait(Until.gone(By.res("android", "message")), timeout))
+            assertEquals("Viewing/closing must retain the saved result", record,
+                io.nekohasekai.sagernet.group.SubscriptionUpdateJournal.read(group.id))
+        } finally {
+            scenario?.close(); scenario = null
+            DataStore.selectedGroup = oldGroup
+            io.nekohasekai.sagernet.group.SubscriptionUpdateJournal.remove(group.id)
+            runBlocking { GroupManager.deleteGroup(group.id) }
+            TvUiPreferences.phoneMode = false
+        }
+    }
+    private fun assertSafeDiagnosticDialog(screenshot: String) {
+        device.waitForIdle()
+        val message = requireNotNull(device.wait(Until.findObject(By.res("android", "message")), timeout))
+        assertTrue(message.text.contains("SUB_TLS_TIME"))
+        assertTrue(message.text.contains("APK:"))
+        assertFalse(message.text.contains("fixture.invalid"))
+        assertFalse(message.text.contains("private-token-not-for-report"))
+        // Capture while the dialog is open: finally closes activities even after an assertion.
+        device.executeShellCommand("mkdir -p /sdcard/Download/TunXBoxSmoke")
+        device.executeShellCommand("screencap -p /sdcard/Download/TunXBoxSmoke/$screenshot.png")
+        val hierarchy = File(context.getExternalFilesDir(null), "smoke-artifacts/$screenshot.xml").apply { parentFile?.mkdirs() }
+        device.dumpWindowHierarchy(hierarchy)
+        val copied = device.executeShellCommand("cp ${hierarchy.absolutePath} /sdcard/Download/TunXBoxSmoke/$screenshot.xml && echo COPIED")
+        assertTrue("Synthetic dialog hierarchy must be exported", copied.contains("COPIED"))
+        val share = requireNotNull(device.wait(Until.findObject(By.res("android", "button3")), timeout))
+        assertTrue("Explicit Share action must be enabled", share.isEnabled)
+        // Android/Material may transform the label to all caps without changing its meaning.
+        assertTrue(share.text.equals(text(R.string.subscription_attempt_share), ignoreCase = true))
+        assertFalse("Opening diagnostic details must not auto-share", device.hasObject(By.pkg("com.android.intentresolver")))
+    }
+
     @Test fun launcherPickerOpensTvWithoutShareChooser() {
         scenario = ActivityScenario.launch<ModeSelectionActivity>(Intent(context, ModeSelectionActivity::class.java))
         val tv = requireNotNull(device.wait(Until.findObject(By.res(context.packageName, "mode_choose_tv")), timeout))

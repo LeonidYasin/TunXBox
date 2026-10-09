@@ -24,6 +24,7 @@
                 android:title="@string/action_export_file" />
         </menu>
     </item>
+    <item android:id="@+id/action_subscription_diagnostics" android:title="@string/subscription_attempt_title" />
     <item
         android:id="@+id/action_clear"
         android:title="@string/clear_profiles" />

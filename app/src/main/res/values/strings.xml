@@ -621,4 +621,37 @@
     <string name="lan_protocol_label">Profile protocol</string>
     <string name="lan_choose_protocol">Choose protocol…</string>
     <string name="lan_scope_limited">Scope is limited. Only the displayed ranges and up to eight priority addresses are checked.</string>
+
+    <string name="subscription_failure_title">Subscription update failed</string>
+    <string name="subscription_failure_stage">Stage: downloading or processing the subscription. This is not a check of every imported profile.</string>
+    <string name="subscription_failure_tls_time">The server certificate is not valid at the device time. Check the date and time. If they are correct, ask the server administrator to renew or fix the certificate. Certificate verification remains enabled.</string>
+    <string name="subscription_failure_tls_trust">The secure connection could not verify the server certificate. The certificate chain or server name may be incorrect. Ask the provider to fix it; do not send the subscription to an untrusted endpoint.</string>
+    <string name="subscription_failure_reality">REALITY verification failed on the connection used for the request. Compare the selected profile with a working configuration: server, SNI, public key, short ID, fingerprint, flow and transport. The exact mismatch has not been established.</string>
+    <string name="subscription_failure_unsupported">The current core does not support a required transport. Importing a link does not prove compatibility. The transport is not silently replaced with TCP. A compatible core is required.</string>
+    <string name="subscription_failure_dns">The server name could not be resolved. Check the network, server address and DNS settings. This does not prove that the saved proxy credentials are invalid.</string>
+    <string name="subscription_failure_timeout">The request exceeded its time limit. Check connectivity and whether the subscription is reachable using the current route. No automatic retry or profile switch was performed.</string>
+    <string name="subscription_failure_http">The server returned an HTTP error. Check the subscription validity and access with the provider. Do not publish the full subscription URL.</string>
+    <string name="subscription_failure_empty">No supported profiles were found in the response. Check the export format with the provider. This does not mean that the subscription was successfully updated.</string>
+    <string name="subscription_failure_unknown">The operation failed, but the cause could not be reliably classified. The code below is safe to share. This summary is not a complete diagnostic report.</string>
+    <string name="subscription_failure_code">Diagnostic code: %1$s\nPrivate URLs and credentials are omitted from this message.</string>
+    <string name="subscription_failure_local_save">Unable to apply the group locally. The atomic profile transaction was rolled back. Retry; check available storage if it happens again.</string>
+    <string name="subscription_failure_changed">Subscription settings changed during the request. The old response was not applied. Update again with the current settings.</string>
+    <string name="subscription_attempt_title">Subscription update diagnostics</string>
+    <string name="subscription_attempt_description">Last completed attempt; not a tunnel test</string>
+    <string name="subscription_attempt_none">No saved result for this group yet. Existing profiles can still be present. Update the subscription to record a new result.</string>
+    <string name="subscription_attempt_summary">Last attempt: %1$s — %2$s</string>
+    <string name="subscription_attempt_success">updated successfully</string>
+    <string name="subscription_attempt_failure">failed</string>
+    <string name="subscription_attempt_cancelled">cancelled</string>
+    <string name="subscription_attempt_stage">Stage: %1$s</string>
+    <string name="subscription_attempt_duration">Duration: %1$d ms</string>
+    <string name="subscription_attempt_profiles">Profiles saved in the group: %1$d. This does not verify that their tunnels work.</string>
+    <string name="subscription_attempt_privacy">Only the last completed attempt is retained for up to 64 groups. This local result contains no subscription links, profile names, credentials or raw logs. Nothing is uploaded automatically.</string>
+    <string name="subscription_stage_update">subscription update</string>
+    <string name="subscription_stage_download">fetching subscription</string>
+    <string name="subscription_stage_parse">reading configuration format</string>
+    <string name="subscription_stage_resolve">resolving profile addresses</string>
+    <string name="subscription_stage_apply">applying group locally</string>
+    <string name="subscription_attempt_share">Share this summary</string>
+    <string name="subscription_attempt_no_share">No app is available to share text.</string>
 </resources>

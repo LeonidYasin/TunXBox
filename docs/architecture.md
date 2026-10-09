@@ -71,6 +71,7 @@ stateDiagram-v2
 | Editor cache | profileCacheStore | Временные поля редактора, не место постоянного выбора режима |
 | Выбор UI | TvUiPreferences в configurationStore | Миграция старого cached key; lastChoice влияет на picker focus |
 | Assets | app assets + external/internal files | Generated GeoIP/GeoSite; пользовательские rule files; cache |
+| Subscription update result (PR #5) | [Whitelist model/journal](../app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateResult.kt), private SharedPreferences | Один completed result на группу, максимум 64; no URL/keys/raw logs, не tunnel health; не входит в текущие backup include lists |
 | Backup | JSON + Android platform backup descriptors | Может включать ключи профилей/настройки; не публиковать без redaction |
 | Signing | Только CI/private keystore + публичный certificate fingerprint | Не хранить private bundle в Room, APK или документации |
 

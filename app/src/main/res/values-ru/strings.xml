@@ -527,4 +527,37 @@
     <string name="lan_protocol_label">Протокол профиля</string>
     <string name="lan_choose_protocol">Выберите протокол…</string>
     <string name="lan_scope_limited">Область ограничена. Проверяются только показанные диапазоны и до восьми приоритетных адресов.</string>
+
+    <string name="subscription_failure_title">Не удалось обновить подписку</string>
+    <string name="subscription_failure_stage">Этап: загрузка или обработка подписки. Это не проверка работоспособности всех импортированных профилей.</string>
+    <string name="subscription_failure_tls_time">Сертификат сервера недействителен при текущем времени устройства. Проверьте дату и время. Если они верны, администратору сервера нужно обновить или исправить сертификат. Проверка сертификата остаётся включённой.</string>
+    <string name="subscription_failure_tls_trust">Не удалось проверить сертификат защищённого соединения. Возможна ошибка цепочки сертификатов или имени сервера. Обратитесь к провайдеру; не отправляйте подписку на недоверенный адрес.</string>
+    <string name="subscription_failure_reality">Соединение, использованное для запроса, не прошло проверку REALITY. Сравните выбранный профиль с рабочим: сервер, SNI, public key, short ID, fingerprint, flow и транспорт. Конкретное расхождение пока не установлено.</string>
+    <string name="subscription_failure_unsupported">Текущее ядро не поддерживает требуемый транспорт. Успешный импорт ссылки не доказывает совместимость. Транспорт не подменяется молча на TCP. Требуется совместимое ядро.</string>
+    <string name="subscription_failure_dns">Не удалось определить адрес сервера. Проверьте сеть, адрес подписки и DNS. Это не доказывает, что учётные данные сохранённых профилей неверны.</string>
+    <string name="subscription_failure_timeout">Время ожидания запроса истекло. Проверьте сеть и доступность подписки по текущему маршруту. Автоматическая повторная попытка или смена профиля не выполнялась.</string>
+    <string name="subscription_failure_http">Сервер вернул ошибку HTTP. Проверьте действительность подписки и доступ у провайдера. Не публикуйте полную ссылку подписки.</string>
+    <string name="subscription_failure_empty">В ответе не найдены поддерживаемые профили. Уточните формат экспорта у провайдера. Это не означает, что подписка успешно обновлена.</string>
+    <string name="subscription_failure_unknown">Операция не выполнена, но причину не удалось надёжно определить. Код ниже можно передать разработчику. Это краткое сообщение, а не полный диагностический отчёт.</string>
+    <string name="subscription_failure_code">Код диагностики: %1$s\nПриватные ссылки и учётные данные в это сообщение не включены.</string>
+    <string name="subscription_failure_local_save">Не удалось применить группу локально. Атомарная запись профилей отменена. Повторите попытку; при повторении проверьте свободное место.</string>
+    <string name="subscription_failure_changed">Настройки подписки изменились во время запроса. Старый ответ не применён. Обновите подписку с текущими настройками.</string>
+    <string name="subscription_attempt_title">Диагностика обновления подписки</string>
+    <string name="subscription_attempt_description">Последняя завершённая попытка; не проверка туннеля</string>
+    <string name="subscription_attempt_none">Для группы ещё нет сохранённого результата. В ней уже могут быть профили. Обновите подписку, чтобы записать новый результат.</string>
+    <string name="subscription_attempt_summary">Последняя попытка: %1$s — %2$s</string>
+    <string name="subscription_attempt_success">успешно обновлена</string>
+    <string name="subscription_attempt_failure">ошибка</string>
+    <string name="subscription_attempt_cancelled">отменена</string>
+    <string name="subscription_attempt_stage">Этап: %1$s</string>
+    <string name="subscription_attempt_duration">Длительность: %1$d мс</string>
+    <string name="subscription_attempt_profiles">В группе сохранено профилей: %1$d. Это не подтверждает работоспособность их туннелей.</string>
+    <string name="subscription_attempt_privacy">Хранится только последняя завершённая попытка для максимум 64 групп. В локальном результате нет ссылок подписок, имён профилей, учётных данных и сырых логов. Автоматической отправки нет.</string>
+    <string name="subscription_stage_update">обновление подписки</string>
+    <string name="subscription_stage_download">загрузка подписки</string>
+    <string name="subscription_stage_parse">разбор формата конфигураций</string>
+    <string name="subscription_stage_resolve">разрешение адресов профилей</string>
+    <string name="subscription_stage_apply">локальное применение группы</string>
+    <string name="subscription_attempt_share">Поделиться этой сводкой</string>
+    <string name="subscription_attempt_no_share">Нет приложения для передачи текста.</string>
 </resources>
