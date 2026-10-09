@@ -188,8 +188,10 @@ class EmulatorSmokeTest {
         device.executeShellCommand("screencap -p /sdcard/Download/TunXBoxSmoke/$screenshot.png")
         val hierarchy = File(context.getExternalFilesDir(null), "smoke-artifacts/$screenshot.xml").apply { parentFile?.mkdirs() }
         device.dumpWindowHierarchy(hierarchy)
-        val copied = device.executeShellCommand("cp ${hierarchy.absolutePath} /sdcard/Download/TunXBoxSmoke/$screenshot.xml && echo COPIED")
-        assertTrue("Synthetic dialog hierarchy must be exported", copied.contains("COPIED"))
+        // UiAutomation shell calls are not Bash scripts: avoid &&/echo chaining.
+        device.executeShellCommand("cp ${hierarchy.absolutePath} /sdcard/Download/TunXBoxSmoke/$screenshot.xml")
+        val copied = device.executeShellCommand("cat /sdcard/Download/TunXBoxSmoke/$screenshot.xml")
+        assertEquals("Synthetic dialog hierarchy must be exported completely", hierarchy.readText().trim(), copied.trim())
         val share = requireNotNull(device.wait(Until.findObject(By.res("android", "button3")), timeout))
         assertTrue("Explicit Share action must be enabled", share.isEnabled)
         // Android/Material may transform the label to all caps without changing its meaning.
