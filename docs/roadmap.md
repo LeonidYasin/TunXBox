@@ -190,3 +190,7 @@ Rc.127 не опубликована: тот же тест не достиг Tel
 ### Подтверждённое перекрытие About нижней панелью (после rc.128)
 
 Rc.128: единственный нативный список присутствует и объявлен scrollable, но test swipe начинается на y=1693, внутри StatsBar y=1666..1825. Журнал показывает timeout scrolling/no movement; ошибка Telegram reachability сохраняется. Следующий патч скрывает глобальные stats/FAB именно на About, как на LAN-tool, не затрагивая сервис/профиль. Android сценарий проверяет отсутствие overlay, доступность build/Telegram/support/full GPL, возврат stats на Configuration и сохранность selectedProxy/serviceState. Требуется CI PASS, не считать исправление подтверждённым до него.
+
+### Rc.129: About прошёл, устарел валидатор количества тестов
+
+195 JVM и все **11 Android 4KB** сценариев прошли без failures/errors/skips. Падение произошло ПОСЛЕ instrumentation: старый shell gate требовал ровно 10 тестов. Исправление: verified Python wrapper сохраняет прежний запуск/expectedPageSize/collect-trap, меняет только устаревший post-check на проверку полного набора @Test методов из Smoke source. Отсутствующие/дублированные/лишние cases, другая class, ошибки/пропуски и неверные XML counters отклоняются. Девять validator tests и actual rc.129 XML проверены локально. Shell/gradlew mode не меняется. Нужны 16KB и все release gates следующего CI.

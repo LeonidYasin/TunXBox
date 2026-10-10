@@ -8,7 +8,7 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **726**.
+Всего tracked файлов: **729**.
 
 | Раздел | Файлов |
 |---|---|
@@ -200,7 +200,7 @@
 | `app/src/main/res/values-zh-rTW` | 1 |
 | `app/src/main/res/xml` | 24 |
 | `app/src/test` | 18 |
-| `buildScript` | 31 |
+| `buildScript` | 34 |
 | `buildSrc` | 2 |
 | `docs` | 26 |
 | `gradle` | 2 |
@@ -1371,15 +1371,18 @@
 - [`buildScript/nkmr`](../../buildScript/nkmr)
 - [`buildScript/package_preview_apks.py`](../../buildScript/package_preview_apks.py)
 - [`buildScript/run_emulator_smoke.sh`](../../buildScript/run_emulator_smoke.sh)
+- [`buildScript/run_verified_emulator_smoke.py`](../../buildScript/run_verified_emulator_smoke.py)
 - [`buildScript/setup_signing.py`](../../buildScript/setup_signing.py)
 - [`buildScript/signing_bundle.py`](../../buildScript/signing_bundle.py)
 - [`buildScript/test_assets.py`](../../buildScript/test_assets.py)
+- [`buildScript/test_emulator_results.py`](../../buildScript/test_emulator_results.py)
 - [`buildScript/test_native_alignment.py`](../../buildScript/test_native_alignment.py)
 - [`buildScript/test_package_preview_apks.py`](../../buildScript/test_package_preview_apks.py)
 - [`buildScript/test_project_site.py`](../../buildScript/test_project_site.py)
 - [`buildScript/test_reality_patch.py`](../../buildScript/test_reality_patch.py)
 - [`buildScript/test_signing_bundle.py`](../../buildScript/test_signing_bundle.py)
 - [`buildScript/test_tv_transfer_page.cjs`](../../buildScript/test_tv_transfer_page.cjs)
+- [`buildScript/verify_emulator_results.py`](../../buildScript/verify_emulator_results.py)
 - [`buildScript/verify_native_alignment.py`](../../buildScript/verify_native_alignment.py)
 - [`buildScript/verify_update.py`](../../buildScript/verify_update.py)
 
