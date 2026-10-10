@@ -8,11 +8,11 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **654**.
+Всего tracked файлов: **672**.
 
 | Раздел | Файлов |
 |---|---|
-| `.github` | 9 |
+| `.github` | 10 |
 | `app` | 12 |
 | `app/src/androidTest` | 1 |
 | `app/src/main` | 11 |
@@ -64,12 +64,17 @@
 | `app/src/main/java/io/nekohasekai/sagernet/fmt/trojan` | 2 |
 | `app/src/main/java/io/nekohasekai/sagernet/fmt/trojan_go` | 2 |
 | `app/src/main/java/io/nekohasekai/sagernet/fmt/tuic` | 2 |
-| `app/src/main/java/io/nekohasekai/sagernet/fmt/v2ray` | 3 |
+| `app/src/main/java/io/nekohasekai/sagernet/fmt/v2ray` | 4 |
 | `app/src/main/java/io/nekohasekai/sagernet/fmt/wireguard` | 2 |
 | `app/src/main/java/io/nekohasekai/sagernet/group/GroupInterfaceAdapter.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/group/GroupUpdater.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/group/RawUpdater.kt` | 1 |
+| `app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionFailureCategory.kt` | 1 |
+| `app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionFailurePresentation.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateGuard.kt` | 1 |
+| `app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateJournal.kt` | 1 |
+| `app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdatePresentation.kt` | 1 |
+| `app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateResult.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ktx/Asyncs.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ktx/Browsers.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ktx/Dialogs.kt` | 1 |
@@ -190,10 +195,10 @@
 | `app/src/main/res/values-zh-rHK` | 1 |
 | `app/src/main/res/values-zh-rTW` | 1 |
 | `app/src/main/res/xml` | 24 |
-| `app/src/test` | 11 |
-| `buildScript` | 24 |
+| `app/src/test` | 14 |
+| `buildScript` | 29 |
 | `buildSrc` | 2 |
-| `docs` | 18 |
+| `docs` | 21 |
 | `gradle` | 2 |
 | `libcore` | 42 |
 | `Корень` | 15 |
@@ -201,6 +206,7 @@
 ## .github
 
 - [`.github/ISSUE_TEMPLATE/bug-report-en.md`](../../.github/ISSUE_TEMPLATE/bug-report-en.md)
+- [`.github/ISSUE_TEMPLATE/bug-report-ru.md`](../../.github/ISSUE_TEMPLATE/bug-report-ru.md)
 - [`.github/ISSUE_TEMPLATE/bug-report-zh_cn.md`](../../.github/ISSUE_TEMPLATE/bug-report-zh_cn.md)
 - [`.github/ISSUE_TEMPLATE/feature_request-en.md`](../../.github/ISSUE_TEMPLATE/feature_request-en.md)
 - [`.github/ISSUE_TEMPLATE/feature_request-zh_cn.md`](../../.github/ISSUE_TEMPLATE/feature_request-zh_cn.md)
@@ -459,6 +465,7 @@
 ## app/src/main/java/io/nekohasekai/sagernet/fmt/v2ray
 
 - [`app/src/main/java/io/nekohasekai/sagernet/fmt/v2ray/StandardV2RayBean.java`](../../app/src/main/java/io/nekohasekai/sagernet/fmt/v2ray/StandardV2RayBean.java)
+- [`app/src/main/java/io/nekohasekai/sagernet/fmt/v2ray/UnsupportedV2RayTransport.kt`](../../app/src/main/java/io/nekohasekai/sagernet/fmt/v2ray/UnsupportedV2RayTransport.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/fmt/v2ray/V2RayFmt.kt`](../../app/src/main/java/io/nekohasekai/sagernet/fmt/v2ray/V2RayFmt.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/fmt/v2ray/VMessBean.java`](../../app/src/main/java/io/nekohasekai/sagernet/fmt/v2ray/VMessBean.java)
 
@@ -479,9 +486,29 @@
 
 - [`app/src/main/java/io/nekohasekai/sagernet/group/RawUpdater.kt`](../../app/src/main/java/io/nekohasekai/sagernet/group/RawUpdater.kt)
 
+## app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionFailureCategory.kt
+
+- [`app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionFailureCategory.kt`](../../app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionFailureCategory.kt)
+
+## app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionFailurePresentation.kt
+
+- [`app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionFailurePresentation.kt`](../../app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionFailurePresentation.kt)
+
 ## app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateGuard.kt
 
 - [`app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateGuard.kt`](../../app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateGuard.kt)
+
+## app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateJournal.kt
+
+- [`app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateJournal.kt`](../../app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateJournal.kt)
+
+## app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdatePresentation.kt
+
+- [`app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdatePresentation.kt`](../../app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdatePresentation.kt)
+
+## app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateResult.kt
+
+- [`app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateResult.kt`](../../app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateResult.kt)
 
 ## app/src/main/java/io/nekohasekai/sagernet/ktx/Asyncs.kt
 
@@ -1274,7 +1301,10 @@
 
 ## app/src/test
 
+- [`app/src/test/java/io/nekohasekai/sagernet/fmt/v2ray/UnsupportedV2RayTransportTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/fmt/v2ray/UnsupportedV2RayTransportTest.kt)
+- [`app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionFailureCategoryTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionFailureCategoryTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionUpdateGuardTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionUpdateGuardTest.kt)
+- [`app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionUpdateResultTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionUpdateResultTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/BrandingRecoveryTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/BrandingRecoveryTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/LaunchRegressionTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/LaunchRegressionTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/ReleaseUpdatePolicyTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/ReleaseUpdatePolicyTest.kt)
@@ -1296,10 +1326,14 @@
 - [`buildScript/init/env_ndk.sh`](../../buildScript/init/env_ndk.sh)
 - [`buildScript/lib/assets.sh`](../../buildScript/lib/assets.sh)
 - [`buildScript/lib/core.sh`](../../buildScript/lib/core.sh)
+- [`buildScript/lib/core/apply_reality_hybrid.py`](../../buildScript/lib/core/apply_reality_hybrid.py)
 - [`buildScript/lib/core/build.sh`](../../buildScript/lib/core/build.sh)
+- [`buildScript/lib/core/build_verified.py`](../../buildScript/lib/core/build_verified.py)
 - [`buildScript/lib/core/get_source.sh`](../../buildScript/lib/core/get_source.sh)
 - [`buildScript/lib/core/get_source_env.sh`](../../buildScript/lib/core/get_source_env.sh)
 - [`buildScript/lib/core/init.sh`](../../buildScript/lib/core/init.sh)
+- [`buildScript/lib/core/reality-hybrid.json`](../../buildScript/lib/core/reality-hybrid.json)
+- [`buildScript/lib/core/reality-hybrid.patch`](../../buildScript/lib/core/reality-hybrid.patch)
 - [`buildScript/nkmr`](../../buildScript/nkmr)
 - [`buildScript/package_preview_apks.py`](../../buildScript/package_preview_apks.py)
 - [`buildScript/run_emulator_smoke.sh`](../../buildScript/run_emulator_smoke.sh)
@@ -1308,6 +1342,7 @@
 - [`buildScript/test_assets.py`](../../buildScript/test_assets.py)
 - [`buildScript/test_native_alignment.py`](../../buildScript/test_native_alignment.py)
 - [`buildScript/test_package_preview_apks.py`](../../buildScript/test_package_preview_apks.py)
+- [`buildScript/test_reality_patch.py`](../../buildScript/test_reality_patch.py)
 - [`buildScript/test_signing_bundle.py`](../../buildScript/test_signing_bundle.py)
 - [`buildScript/test_tv_transfer_page.cjs`](../../buildScript/test_tv_transfer_page.cjs)
 - [`buildScript/verify_native_alignment.py`](../../buildScript/verify_native_alignment.py)
@@ -1325,9 +1360,12 @@
 - [`docs/branch-audit.md`](../../docs/branch-audit.md)
 - [`docs/decisions.md`](../../docs/decisions.md)
 - [`docs/development.md`](../../docs/development.md)
+- [`docs/diagnostic-support.md`](../../docs/diagnostic-support.md)
 - [`docs/emulator-testing.md`](../../docs/emulator-testing.md)
 - [`docs/features.md`](../../docs/features.md)
+- [`docs/monetization.md`](../../docs/monetization.md)
 - [`docs/project-map.md`](../../docs/project-map.md)
+- [`docs/protocol-compatibility.md`](../../docs/protocol-compatibility.md)
 - [`docs/reference/preferences.md`](../../docs/reference/preferences.md)
 - [`docs/reference/repository-index.md`](../../docs/reference/repository-index.md)
 - [`docs/releases/1.5.0.md`](../../docs/releases/1.5.0.md)

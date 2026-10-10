@@ -127,7 +127,7 @@ jobs:
       - name: Build libcore.aar (if cache miss)
         run: |
           if [ ! -f app/libs/libcore.aar ]; then
-            ./run lib core
+            python3 buildScript/lib/core/build_verified.py
           else
             echo "libcore.aar restored from 16KB cache"
           fi
@@ -154,7 +154,9 @@ jobs:
         run: chmod +x gradlew
 
       - name: Check project documentation
-        run: python3 buildScript/check_project_docs.py
+        run: |
+          python3 buildScript/check_project_docs.py
+          python3 buildScript/test_reality_patch.py
 
       - name: Test browser transfer page
         run: node buildScript/test_tv_transfer_page.cjs
@@ -187,6 +189,21 @@ jobs:
           ./gradlew app:assemblePreviewDebug app:assemblePreviewDebugAndroidTest --stacktrace
           ./gradlew --stop
 
+      - name: Test protocol and remote UI
+        run: |
+          ./gradlew app:testPreviewDebugUnitTest --stacktrace
+          python3 - <<'PY'
+          import glob, xml.etree.ElementTree as ET
+          totals = dict(tests=0, failures=0, errors=0, skipped=0)
+          for path in glob.glob("app/build/test-results/testPreviewDebugUnitTest/TEST-*.xml"):
+              suite = ET.parse(path).getroot()
+              for key in totals:
+                  totals[key] += int(suite.get(key, "0"))
+          print("JUnit summary: " + ", ".join(f"{key}={value}" for key, value in totals.items()))
+          assert totals["tests"] > 0 and totals["failures"] == 0 and totals["errors"] == 0
+          PY
+          ./gradlew --stop
+
       - name: Enable hardware-accelerated emulator
         run: |
           test -c /dev/kvm
@@ -203,7 +220,7 @@ jobs:
           avd-name: tunxbox-smoke-4k
           ram-size: 2048M
           emulator-boot-timeout: 300
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          emulator-options: -no-window -gpu software -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
           script: bash buildScript/run_emulator_smoke.sh 4096
 
@@ -218,7 +235,7 @@ jobs:
           avd-name: tunxbox-smoke-16k
           ram-size: 2048M
           emulator-boot-timeout: 300
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          emulator-options: -no-window -gpu software -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
           script: bash buildScript/run_emulator_smoke.sh 16384
 
@@ -279,20 +296,6 @@ jobs:
 
       - name: Verify native 16KB page alignment
         run: python3 buildScript/verify_native_alignment.py app/build/outputs/apk/preview/release/*.apk
-
-      - name: Test protocol and remote UI
-        run: |
-          ./gradlew app:testPreviewDebugUnitTest --stacktrace
-          python3 - <<'PY'
-          import glob, xml.etree.ElementTree as ET
-          totals = dict(tests=0, failures=0, errors=0, skipped=0)
-          for path in glob.glob("app/build/test-results/testPreviewDebugUnitTest/TEST-*.xml"):
-              suite = ET.parse(path).getroot()
-              for key in totals:
-                  totals[key] += int(suite.get(key, "0"))
-          print("JUnit summary: " + ", ".join(f"{key}={value}" for key, value in totals.items()))
-          assert totals["tests"] > 0 and totals["failures"] == 0 and totals["errors"] == 0
-          PY
 
       - name: Upload unit-test reports
         if: always()

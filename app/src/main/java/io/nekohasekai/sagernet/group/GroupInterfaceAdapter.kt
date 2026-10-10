@@ -15,6 +15,7 @@ import kotlin.coroutines.resume
 
 /** Upstream phone presentation, with main-thread and activity-lifetime safeguards. */
 class GroupInterfaceAdapter(val context: ThemedActivity) : GroupManager.Interface {
+    private var failureDialog: androidx.appcompat.app.AlertDialog? = null
     private fun alive() = !context.isFinishing && !context.isDestroyed
     private suspend fun question(title: Int, message: String, confirm: Boolean): Boolean = withContext(Dispatchers.Main) {
         if (!alive()) return@withContext false
@@ -60,6 +61,24 @@ class GroupInterfaceAdapter(val context: ThemedActivity) : GroupManager.Interfac
         }
     }
     override suspend fun onUpdateFailure(group: ProxyGroup, message: String) {
-        withContext(Dispatchers.Main) { if (alive()) context.snackbar(message).show() }
+        withContext(Dispatchers.Main) {
+            if (!alive() || !context.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) return@withContext
+            failureDialog?.dismiss()
+            val current = MaterialAlertDialogBuilder(context)
+                .setTitle(R.string.subscription_failure_title)
+                .setMessage(SubscriptionFailurePresentation.message(context, message))
+                .setPositiveButton(android.R.string.ok, null).create()
+            val observer = LifecycleEventObserver { _, event ->
+                if (event == Lifecycle.Event.ON_STOP || event == Lifecycle.Event.ON_DESTROY) current.dismiss()
+            }
+            current.setOnDismissListener {
+                context.lifecycle.removeObserver(observer)
+                if (failureDialog === current) failureDialog = null
+            }
+            context.lifecycle.addObserver(observer)
+            failureDialog = current
+            current.show()
+            current.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)?.requestFocus()
+        }
     }
 }

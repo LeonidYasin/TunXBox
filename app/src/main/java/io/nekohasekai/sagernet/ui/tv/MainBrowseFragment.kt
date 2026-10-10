@@ -47,6 +47,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
     private var loadJob: Job? = null
     private var subscriptionJob: Job? = null
     private var updateDeclined = false
+    private var updateFailureShown = false
     private var dialog: AlertDialog? = null
     private var focusedRow = ROW_ACTIONS
     private var focusedId = TOGGLE
@@ -72,6 +73,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
         private const val YOUTUBE = 12L
         private const val RESTART_APP = 13L
         private const val CLOSE_APP = 14L
+        private const val SUBSCRIPTION_DIAGNOSTICS = 15L
         private const val ROW_CONNECTION = 3L
     }
 
@@ -285,6 +287,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
         toolsAdapter.setItems(listOf(
             TvAction(PROFILE_ACTIONS, getString(R.string.tv_actions), getString(R.string.tv_actions_hint), R.drawable.ic_image_edit, DataStore.selectedProxy > 0),
             TvAction(UPDATE, getString(R.string.tv_update_group), getString(if (updating) R.string.tv_updating else if (group?.type != GroupType.SUBSCRIPTION) R.string.tv_not_subscription else R.string.tv_update_group), R.drawable.ic_social_share, group?.type == GroupType.SUBSCRIPTION && !updating),
+            TvAction(SUBSCRIPTION_DIAGNOSTICS, getString(R.string.subscription_attempt_title), getString(R.string.subscription_attempt_description), R.drawable.ic_social_share, group?.type == GroupType.SUBSCRIPTION),
             TvAction(TESTS, getString(R.string.tv_tests_title), getString(R.string.tv_tests_hint), R.drawable.ic_remote_groups),
             TvAction(FULL_TOOLS, getString(R.string.tv_all_functions), getString(R.string.tv_all_functions_hint), R.drawable.ic_baseline_more_vert_24),
             TvAction(HOME, getString(R.string.tv_home), getString(R.string.tv_home_hint), R.drawable.ic_baseline_more_vert_24),
@@ -352,6 +355,17 @@ class MainBrowseFragment : BrowseSupportFragment() {
         ADD_PROFILE -> showImportMethods()
         PROFILE_ACTIONS -> if (DataStore.selectedProxy > 0) openProfileActions(DataStore.selectedProxy) else toast(R.string.tv_choose_profile)
         UPDATE -> updateSubscription()
+        SUBSCRIPTION_DIAGNOSTICS -> {
+            val record = io.nekohasekai.sagernet.group.SubscriptionUpdateJournal.read(DataStore.selectedGroup)
+            val builder = AlertDialog.Builder(requireContext()).setTitle(R.string.subscription_attempt_title)
+                .setMessage(io.nekohasekai.sagernet.group.SubscriptionUpdatePresentation.run { record?.let { report(requireContext(), it) } ?: details(requireContext(), null) })
+                .setPositiveButton(android.R.string.ok, null)
+            if (record != null) builder.setNeutralButton(R.string.subscription_attempt_share) { _, _ ->
+                io.nekohasekai.sagernet.group.SubscriptionUpdatePresentation.share(requireContext(), record)
+            }
+            val current = show(builder)
+            io.nekohasekai.sagernet.group.SubscriptionUpdatePresentation.focusClose(current)
+        }
         MORE -> showImportMethods()
         PHONE_MODE -> switchPhoneMode()
         TESTS -> showTests()
@@ -402,14 +416,27 @@ class MainBrowseFragment : BrowseSupportFragment() {
         if (group?.type != GroupType.SUBSCRIPTION) { toast(R.string.tv_not_subscription); return }
         if (GroupUpdater.updating.contains(group.id) || subscriptionJob?.isActive == true) { toast(R.string.tv_updating); return }
         updateDeclined = false
+        updateFailureShown = false
         subscriptionJob = viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val result = withContext(Dispatchers.IO) { GroupUpdater.executeUpdate(group, true, subscriptionInterface) }
-                if (!updateDeclined) toast(if (result) R.string.tv_updated else R.string.tv_update_failed)
+                if (!updateDeclined) {
+                    if (result) toast(R.string.tv_updated)
+                    else if (!updateFailureShown) showSubscriptionFailure(null)
+                }
             } catch (cancelled: CancellationException) { throw cancelled }
-            catch (_: Exception) { toast(R.string.tv_update_failed) }
+            catch (error: Exception) { showSubscriptionFailure(error.message) }
             finally { requestSnapshot() }
         }
+    }
+    private fun showSubscriptionFailure(message: String?) {
+        if (!isAdded || view == null || !viewLifecycleOwner.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)) return
+        updateFailureShown = true
+        val current = show(AlertDialog.Builder(requireContext())
+            .setTitle(R.string.subscription_failure_title)
+            .setMessage(io.nekohasekai.sagernet.group.SubscriptionFailurePresentation.message(requireContext(), message))
+            .setPositiveButton(android.R.string.ok, null))
+        current.getButton(AlertDialog.BUTTON_POSITIVE)?.requestFocus()
     }
     private val subscriptionInterface = object : GroupManager.Interface {
         override suspend fun confirm(message: String): Boolean = withContext(Dispatchers.Main) {
@@ -423,7 +450,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
         }
         override suspend fun alert(message: String) { withContext(Dispatchers.Main) { toast(message) } }
         override suspend fun onUpdateSuccess(group: ProxyGroup, changed: Int, added: List<String>, updated: Map<String, String>, deleted: List<String>, duplicate: List<String>, byUser: Boolean) { requestSnapshot() }
-        override suspend fun onUpdateFailure(group: ProxyGroup, message: String) { withContext(Dispatchers.Main) { toast(R.string.tv_update_failed) } }
+        override suspend fun onUpdateFailure(group: ProxyGroup, message: String) { withContext(Dispatchers.Main) { showSubscriptionFailure(message) } }
     }
     private fun openProfileActions(id: Long) = launchWork {
         if (!serviceReady) { toast(R.string.tv_wait); return@launchWork }
