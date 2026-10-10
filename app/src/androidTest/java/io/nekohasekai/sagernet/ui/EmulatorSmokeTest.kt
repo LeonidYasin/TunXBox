@@ -111,6 +111,23 @@ class EmulatorSmokeTest {
         val expected = InstrumentationRegistry.getArguments().getString("expectedPageSize") ?: error("CI must specify page size")
         assertEquals(expected, device.executeShellCommand("getconf PAGESIZE").trim())
         assertTrue("Actual JNI core must load", Libcore.versionBox().isNotBlank())
+        TvUiPreferences.phoneMode = true
+        scenario = ActivityScenario.launch<MainActivity>(Intent(context, MainActivity::class.java)
+            .putExtra("tv_tools", true).putExtra("tv_destination", R.id.nav_lan_discovery).putExtra("gateway_quick", true))
+        val gateway = requireNotNull(device.wait(Until.findObject(By.res(context.packageName, "lan_gateway_action")), timeout))
+        assertFalse(device.hasObject(By.res(context.packageName, "lan_ports")))
+        gateway.click()
+        val save = requireNotNull(device.wait(Until.findObject(By.res("android", "button1")), timeout))
+        assertTrue(save.text.equals(text(R.string.lan_save), ignoreCase=true))
+        assertTrue(device.hasObject(By.textContains(text(R.string.lan_gateway_unverified))))
+        assertFalse(device.hasObject(By.textContains(text(R.string.lan_tcp_unverified))))
+        device.executeShellCommand("screencap -p /sdcard/Download/TunXBoxSmoke/gateway_profile_confirmation.png")
+        // Explicit creation only; no selected profile change or VPN consent.
+        val selected = DataStore.selectedProxy
+        save.click()
+        visibleText(text(R.string.lan_gateway_saved))
+        assertEquals(selected,DataStore.selectedProxy)
+
         startTv()
     }
     @Test fun launcherPickerOpensTvWithoutShareChooser() {

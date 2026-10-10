@@ -403,7 +403,7 @@ class LaunchRegressionTest {
             click.onItemClicked(null, add, null, row)
             shadowOf(Looper.getMainLooper()).idle()
             val first = org.robolectric.shadows.ShadowAlertDialog.getLatestAlertDialog()
-            assertTrue(first.isShowing); assertEquals(8, first.listView.adapter.count)
+            assertTrue(first.isShowing); assertEquals(9, first.listView.adapter.count)
             val firstLabels = (0 until first.listView.adapter.count).map { first.listView.adapter.getItem(it).toString() }
             assertSame(fragment, activity.supportFragmentManager.findFragmentById(R.id.tv_container))
             first.dismiss(); shadowOf(Looper.getMainLooper()).idle()
@@ -625,4 +625,62 @@ class LaunchRegressionTest {
             assertFalse("Rotation must not display a fresh preview warning", restored?.isShowing == true && message == controller.get().getString(R.string.preview_version_hint))
         } finally { controller.pause().stop().destroy() }
     }
+    @Test fun managedGatewayRefreshKeepsIdCredentialsAndDoesNotSwitchVpn() = kotlinx.coroutines.runBlocking {
+        val db = io.nekohasekai.sagernet.database.SagerDatabase
+        val group = io.nekohasekai.sagernet.database.GroupManager.createGroup(io.nekohasekai.sagernet.database.ProxyGroup(name="Gateway managed fixture"))
+        val oldState = io.nekohasekai.sagernet.database.DataStore.serviceState
+        val selected = io.nekohasekai.sagernet.database.DataStore.selectedProxy
+        val active = io.nekohasekai.sagernet.database.DataStore.currentProfile
+        try {
+            io.nekohasekai.sagernet.database.DataStore.serviceState = io.nekohasekai.sagernet.bg.BaseService.State.Stopped
+            val first = io.nekohasekai.sagernet.ui.lan.GatewayProfileStore.save(io.nekohasekai.sagernet.ui.lan.ProxyCandidate("192.168.2.1",10808,
+                io.nekohasekai.sagernet.ui.lan.ProbeKind.TCP_UNVERIFIED),false,group.id,"My gateway","synthetic-user","synthetic-pass")
+            val next = io.nekohasekai.sagernet.ui.lan.GatewayProfileStore.save(io.nekohasekai.sagernet.ui.lan.ProxyCandidate("192.168.3.1",10808,
+                io.nekohasekai.sagernet.ui.lan.ProbeKind.TCP_UNVERIFIED),false,group.id,"Ignored rename","","",)
+            assertTrue(first.created);assertFalse(next.created);assertEquals(first.profile.id,next.profile.id)
+            val bean = db.proxyDao.getById(next.profile.id)!!.requireBean() as io.nekohasekai.sagernet.fmt.socks.SOCKSBean
+            assertEquals("192.168.3.1",bean.serverAddress);assertEquals("My gateway",bean.name)
+            assertEquals("synthetic-user",bean.username);assertEquals("synthetic-pass",bean.password)
+            assertEquals(selected,io.nekohasekai.sagernet.database.DataStore.selectedProxy)
+            assertEquals(active,io.nekohasekai.sagernet.database.DataStore.currentProfile)
+            io.nekohasekai.sagernet.database.DataStore.currentProfile = next.profile.id
+            io.nekohasekai.sagernet.database.DataStore.serviceState = io.nekohasekai.sagernet.bg.BaseService.State.Connected
+            try {
+                io.nekohasekai.sagernet.ui.lan.GatewayProfileStore.save(io.nekohasekai.sagernet.ui.lan.ProxyCandidate("192.168.4.1",10808,
+                    io.nekohasekai.sagernet.ui.lan.ProbeKind.TCP_UNVERIFIED),false,group.id,"Fixture","","")
+                fail("Active profile must not be rewritten")
+            } catch (_: IllegalStateException) { }
+            assertEquals("192.168.3.1",db.proxyDao.getById(next.profile.id)!!.requireBean().serverAddress)
+        } finally {
+            io.nekohasekai.sagernet.database.DataStore.serviceState=oldState
+            io.nekohasekai.sagernet.database.DataStore.currentProfile=active
+            db.proxyDao.deleteByGroup(group.id);db.groupDao.deleteById(group.id)
+        }
+    }
+    @Test fun gatewayActionDoesNotAdoptManualProfiles() = kotlinx.coroutines.runBlocking {
+        val db = io.nekohasekai.sagernet.database.SagerDatabase
+        val group = io.nekohasekai.sagernet.database.GroupManager.createGroup(io.nekohasekai.sagernet.database.ProxyGroup(name="Gateway manual fixture"))
+        try {
+            val candidate = io.nekohasekai.sagernet.ui.lan.ProxyCandidate("192.168.2.1",10808,io.nekohasekai.sagernet.ui.lan.ProbeKind.TCP_UNVERIFIED)
+            val manual = io.nekohasekai.sagernet.ui.lan.LanProfileStore.save(candidate,false,group.id,"Manual","","",true)
+            val first = io.nekohasekai.sagernet.ui.lan.GatewayProfileStore.save(candidate,false,group.id,"Gateway","","")
+            assertFalse(first.created); assertEquals(manual.profile.id,first.profile.id)
+            val next = io.nekohasekai.sagernet.ui.lan.GatewayProfileStore.save(candidate.copy(host="192.168.3.1"),false,group.id,"Gateway","","")
+            assertTrue(next.created);assertNotEquals(manual.profile.id,next.profile.id)
+            assertEquals("192.168.2.1",db.proxyDao.getById(manual.profile.id)!!.requireBean().serverAddress)
+        } finally { db.proxyDao.deleteByGroup(group.id);db.groupDao.deleteById(group.id) }
+    }
+    @Test fun quickGatewayScreenDoesNotStartScannerOrConnect() {
+        val controller = Robolectric.buildActivity(MainActivity::class.java,
+            Intent(RuntimeEnvironment.getApplication(),MainActivity::class.java).putExtra("tv_tools",true)
+                .putExtra("tv_destination",R.id.nav_lan_discovery).putExtra("gateway_quick",true)).setup().visible()
+        try {
+            controller.get().supportFragmentManager.executePendingTransactions();shadowOf(Looper.getMainLooper()).idle()
+            assertEquals(android.view.View.VISIBLE,controller.get().findViewById<android.view.View>(R.id.lan_gateway_action).visibility)
+            assertEquals(android.view.View.GONE,controller.get().findViewById<android.view.View>(R.id.lan_scan).visibility)
+            assertEquals(android.view.View.GONE,controller.get().findViewById<android.view.View>(R.id.lan_ports).visibility)
+            assertFalse(controller.get().intent.hasExtra("gateway_quick"))
+        } finally { controller.pause().stop().destroy() }
+    }
+
 }

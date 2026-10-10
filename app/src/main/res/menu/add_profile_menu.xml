@@ -25,6 +25,7 @@
             <item
                 android:id="@+id/action_send_to_tv"
                 android:title="@string/tv_send_group_qr" />
+            <item android:id="@+id/action_gateway_proxy" android:title="@string/lan_gateway_title" />
             <item android:id="@+id/action_lan_discovery" android:title="@string/lan_title" />
             <item android:title="@string/add_profile_methods_manual_settings">
                 <menu>

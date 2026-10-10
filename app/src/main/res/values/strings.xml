@@ -621,4 +621,12 @@
     <string name="lan_protocol_label">Profile protocol</string>
     <string name="lan_choose_protocol">Choose protocol…</string>
     <string name="lan_scope_limited">Scope is limited. Only the displayed ranges and up to eight priority addresses are checked.</string>
+    <string name="lan_gateway_title">Gateway proxy:10808</string>
+    <string name="lan_gateway_action">Determine gateway again / add profile</string>
+    <string name="lan_gateway_explanation">Determine the current default gateway of the selected trusted Wi-Fi/Ethernet network. No scanning or Internet test is performed. SOCKS5 on port10808 is an explicit assumption; choose HTTP if needed. Save to a basic group only. Repeating this action refreshes the address of a profile created by this action in that group, preserving its other settings. Stop that profile first if active. Manual profiles are not rewritten. VPN is not switched or restarted.</string>
+    <string name="lan_gateway_scope">Device addresses: %1$s\nDefault gateways: %2$s\nPort:10808</string>
+    <string name="lan_gateway_missing">No eligible private IPv4 default gateway was found. Choose the physical network or refresh; no gateway address is guessed.</string>
+    <string name="lan_gateway_saved">Gateway profile saved or its address refreshed. It was not connected automatically.</string>
+    <string name="lan_gateway_save_failed">Could not save the gateway profile. Use a basic group; stop the active gateway profile before changing its address.</string>
+    <string name="lan_gateway_unverified">Default gateway • port and protocol NOT checked</string>
 </resources>
