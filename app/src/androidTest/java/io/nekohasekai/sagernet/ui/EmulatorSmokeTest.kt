@@ -127,7 +127,10 @@ class EmulatorSmokeTest {
         save.click()
         visibleText(text(R.string.lan_gateway_saved))
         assertEquals(selected,DataStore.selectedProxy)
-
+        // Return to the TV fixture explicitly after testing the phone gateway screen.
+        scenario?.close()
+        scenario = null
+        TvUiPreferences.phoneMode = false
         startTv()
     }
     @Test fun launcherPickerOpensTvWithoutShareChooser() {
