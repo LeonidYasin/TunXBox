@@ -8,7 +8,7 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **690**.
+Всего tracked файлов: **726**.
 
 | Раздел | Файлов |
 |---|---|
@@ -200,11 +200,12 @@
 | `app/src/main/res/values-zh-rTW` | 1 |
 | `app/src/main/res/xml` | 24 |
 | `app/src/test` | 18 |
-| `buildScript` | 29 |
+| `buildScript` | 31 |
 | `buildSrc` | 2 |
-| `docs` | 23 |
+| `docs` | 26 |
 | `gradle` | 2 |
 | `libcore` | 42 |
+| `website` | 31 |
 | `Корень` | 15 |
 
 ## .github
@@ -1350,6 +1351,7 @@
 
 ## buildScript
 
+- [`buildScript/build_project_site.py`](../../buildScript/build_project_site.py)
 - [`buildScript/check_project_docs.py`](../../buildScript/check_project_docs.py)
 - [`buildScript/copyLocal.sh`](../../buildScript/copyLocal.sh)
 - [`buildScript/fdroid/prebuild.sh`](../../buildScript/fdroid/prebuild.sh)
@@ -1374,6 +1376,7 @@
 - [`buildScript/test_assets.py`](../../buildScript/test_assets.py)
 - [`buildScript/test_native_alignment.py`](../../buildScript/test_native_alignment.py)
 - [`buildScript/test_package_preview_apks.py`](../../buildScript/test_package_preview_apks.py)
+- [`buildScript/test_project_site.py`](../../buildScript/test_project_site.py)
 - [`buildScript/test_reality_patch.py`](../../buildScript/test_reality_patch.py)
 - [`buildScript/test_signing_bundle.py`](../../buildScript/test_signing_bundle.py)
 - [`buildScript/test_tv_transfer_page.cjs`](../../buildScript/test_tv_transfer_page.cjs)
@@ -1390,11 +1393,14 @@
 - [`docs/README.md`](../../docs/README.md)
 - [`docs/architecture.md`](../../docs/architecture.md)
 - [`docs/branch-audit.md`](../../docs/branch-audit.md)
+- [`docs/contributing-and-support.md`](../../docs/contributing-and-support.md)
 - [`docs/decisions.md`](../../docs/decisions.md)
 - [`docs/development.md`](../../docs/development.md)
 - [`docs/diagnostic-support.md`](../../docs/diagnostic-support.md)
 - [`docs/emulator-testing.md`](../../docs/emulator-testing.md)
 - [`docs/features.md`](../../docs/features.md)
+- [`docs/github-pages.md`](../../docs/github-pages.md)
+- [`docs/hysteria-health.md`](../../docs/hysteria-health.md)
 - [`docs/lan-discovery.md`](../../docs/lan-discovery.md)
 - [`docs/monetization.md`](../../docs/monetization.md)
 - [`docs/project-map.md`](../../docs/project-map.md)
@@ -1460,6 +1466,40 @@
 - [`libcore/stun/response.go`](../../libcore/stun/response.go)
 - [`libcore/stun/tests.go`](../../libcore/stun/tests.go)
 - [`libcore/stun/utils.go`](../../libcore/stun/utils.go)
+
+## website
+
+- [`website/.nojekyll`](../../website/.nojekyll)
+- [`website/guide/README.html`](../../website/guide/README.html)
+- [`website/guide/architecture.html`](../../website/guide/architecture.html)
+- [`website/guide/branch-audit.html`](../../website/guide/branch-audit.html)
+- [`website/guide/contributing-and-support.html`](../../website/guide/contributing-and-support.html)
+- [`website/guide/decisions.html`](../../website/guide/decisions.html)
+- [`website/guide/development.html`](../../website/guide/development.html)
+- [`website/guide/diagnostic-support.html`](../../website/guide/diagnostic-support.html)
+- [`website/guide/emulator-testing.html`](../../website/guide/emulator-testing.html)
+- [`website/guide/features.html`](../../website/guide/features.html)
+- [`website/guide/github-pages.html`](../../website/guide/github-pages.html)
+- [`website/guide/hysteria-health.html`](../../website/guide/hysteria-health.html)
+- [`website/guide/lan-discovery.html`](../../website/guide/lan-discovery.html)
+- [`website/guide/monetization.html`](../../website/guide/monetization.html)
+- [`website/guide/project-map.html`](../../website/guide/project-map.html)
+- [`website/guide/protocol-compatibility.html`](../../website/guide/protocol-compatibility.html)
+- [`website/guide/readme.html`](../../website/guide/readme.html)
+- [`website/guide/reference/preferences.html`](../../website/guide/reference/preferences.html)
+- [`website/guide/releases/1.5.0.html`](../../website/guide/releases/1.5.0.html)
+- [`website/guide/roadmap.html`](../../website/guide/roadmap.html)
+- [`website/guide/scenarios.html`](../../website/guide/scenarios.html)
+- [`website/guide/security.html`](../../website/guide/security.html)
+- [`website/guide/signing-and-updates.html`](../../website/guide/signing-and-updates.html)
+- [`website/guide/support-services-proposal.html`](../../website/guide/support-services-proposal.html)
+- [`website/guide/tv-readiness-plan.html`](../../website/guide/tv-readiness-plan.html)
+- [`website/guide/tv-transfer.html`](../../website/guide/tv-transfer.html)
+- [`website/guide/ui-quality-review.html`](../../website/guide/ui-quality-review.html)
+- [`website/index.html`](../../website/index.html)
+- [`website/project-map.svg`](../../website/project-map.svg)
+- [`website/site-manifest.json`](../../website/site-manifest.json)
+- [`website/site.css`](../../website/site.css)
 
 ## Корень
 

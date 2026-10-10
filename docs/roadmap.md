@@ -154,3 +154,23 @@ Unit/fixture tests для release selection, rolling RC, ABI, versionCode, по�
 ## R12 — прозрачный About и добровольное сопровождение
 
 Полные build facts и копируемая сводка, правильная поддержка TunXBox, краткая лицензия с полным GPL/notices по кнопке. Контакты владельца добавляются только после явного предоставления публичных email/Telegram. [Проект условий сопровождения](support-services-proposal.md): разовая диагностика/согласованный bug fix или регулярное сопровождение; гарантия только на согласованную поставленную работу. Не заменять GPL, не обещать отсутствие всех багов и не подключать платежи до утверждения условий.
+
+## Актуальный статус после PR4 и новый приоритет Hysteria2
+
+PR #4 merged в master (`99a8b6f2`) после CI 153 JVM + 10/10 Android 4KB/16KB и приёмки владельца gateway rc.120. Main не изменена. PR #5 ещё не merged. REALITY hybrid патч прошёл Linux-проверки; Android сборка/владелец — отдельные gates. Rc.124 остановилась на keyDispatchingTimedOut / отсутствии focused window в 16KB, не опубликована; rc.125 проверяет исправление REALITY и новый About с отдельным Android сценарием. Состояние rc.125 — [CI](https://github.com/LeonidYasin/TunXBox/actions/runs/38084559423), не обещание PASS.
+
+### R11 — логический gateway host
+
+Отдельный PR после текущих приоритетов: явный logical-host вместо фиксированного IP, resolve на выбранной доверенной физической сети при старте/смене маршрута, контролируемый reconnect с debounce и сохранением manual stop; отсутствие шлюза объясняется без guessed .1, скрытого fallback или передачи credentials чужой сети. Принятый PR4 делает только explicit add/refresh, не это автообновление.
+
+### R12 — контакты, сайт и поддержка
+
+Согласован публичный email leonidyasin@gmail.com; Telegram ожидается. README/документация/карта/статический GitHub Pages сайт приглашают участвовать кодом, тестами, переводами, UX, документацией, распространением, оборудованием и добровольным спонсорством. [Способы](contributing-and-support.md), [публикация](github-pages.md). Issues пока отключены; почта — рабочий канал. Не принимать платежи и не обещать гарантию до утверждения условий.
+
+### R13 — стабильность Hysteria2 и понятный health
+
+[Расследование и DoD](hysteria-health.md). Приоритет до следующего stable: воспроизводимость на реальном устройстве → классификация transport/network ошибок → opt-in ограниченные измерения RTT/неуспешных проб/скорости → компактные Phone/TV индикаторы и bounded reconnect history → подтверждённое исправление. Не путать VPN started с Internet verified, нулевой idle-трафик с ошибкой, HTTPS probe loss с UDP packet loss. Непрерывный monitoring и auto-failover пока не реализованы.
+
+### Дополнительная проверка About
+
+Rc.125: 195 JVM PASS; Android 4KB 11 tests / 1 failure на достижимости карточки поддержки после закрытия build-details. Остальные 10 smoke tests прошли. Два вложенных viewport-sized scroll-контейнера мешали внешней прокрутке; исправление делает внешний NestedScrollView единственным владельцем прокрутки, content/RecyclerView wrap-content. Тест не убран и должен пройти на обеих page sizes перед следующим выпуском.

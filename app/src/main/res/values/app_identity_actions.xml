@@ -22,5 +22,7 @@
     <string name="about_copy_build_info">Copy build information</string>
     <string name="about_license_full">Full license and notices</string>
     <string name="about_license_short">TunXBox is an independent NekoBox/SagerNet fork under GNU GPL v3 or later. Attribution and full terms are retained. The free software comes without warranty; optional paid support requires a separately agreed service contract.</string>
-    <string name="about_support_terms">Optional services may include one-off diagnosis and an agreed bug fix, or recurring maintenance support. This is a proposal: prices, contacts, response times, acceptance criteria and warranty terms are not approved yet. The app does not accept payments. Payment does not restrict GPL rights or guarantee third-party VPS/provider availability. Free bug reports remain available on GitHub.</string>
+    <string name="about_support_terms">Optional services may include one-off diagnosis and an agreed bug fix, or recurring maintenance support. This is a proposal: prices, response times, acceptance criteria and warranty terms are not approved yet. The app does not accept payments. Payment does not restrict GPL rights or guarantee third-party VPS/provider availability. Free bug reports remain available on GitHub.</string>
+    <string name="project_contact_tunxbox">Contact TunXBox</string>
+    <string name="project_contact_copied">No email app found. The support address was copied.</string>
 </resources>

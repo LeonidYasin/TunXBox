@@ -157,6 +157,7 @@ jobs:
         run: |
           python3 buildScript/check_project_docs.py
           python3 buildScript/test_reality_patch.py
+          python3 buildScript/test_project_site.py
 
       - name: Test browser transfer page
         run: node buildScript/test_tv_transfer_page.cjs

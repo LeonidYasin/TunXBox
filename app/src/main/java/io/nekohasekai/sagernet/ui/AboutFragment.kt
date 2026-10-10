@@ -200,26 +200,28 @@ class AboutFragment : ToolbarFragment(R.layout.layout_about) {
                                 .icon(R.drawable.ic_baseline_bug_report_24)
                                 .text(R.string.project_report_issue)
                                 .setOnClickAction {
-                                    requireContext().launchCustomTab(
-                                        ProjectLinks.ISSUES
-                                    )
+                                    contactSupport()
                                 }
                                 .build())
-                        .build())
-                .addCard(
-                    MaterialAboutCard.Builder().outline(false).title(R.string.project_upstream)
                         .addItem(MaterialAboutActionItem.Builder()
-                            .text(R.string.project_upstream_neko).subText(R.string.project_upstream_hint)
-                            .setOnClickAction { requireContext().launchCustomTab(ProjectLinks.UPSTREAM) }.build())
+                            .text(R.string.project_contact_tunxbox).subText(ProjectLinks.SUPPORT_EMAIL)
+                            .setOnClickAction { contactSupport() }.build())
                         .addItem(MaterialAboutActionItem.Builder()
                             .icon(R.drawable.ic_baseline_card_giftcard_24)
                             .text(R.string.project_upstream_support).subText(R.string.project_upstream_support_hint)
                             .setOnClickAction {
                                 MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.project_upstream_support)
                                     .setMessage(R.string.about_support_terms)
-                                    .setPositiveButton(R.string.project_report_issue) { _, _ -> requireContext().launchCustomTab(ProjectLinks.ISSUES) }
+                                    .setPositiveButton(R.string.project_contact_tunxbox) { _, _ -> contactSupport() }
                                     .setNegativeButton(android.R.string.cancel, null).show()
                             }.build())
+                        .build())
+                .addCard(
+                    MaterialAboutCard.Builder().outline(false).title(R.string.project_upstream)
+                        .addItem(MaterialAboutActionItem.Builder()
+                            .text(R.string.project_upstream_neko).subText(R.string.project_upstream_hint)
+                            .setOnClickAction { requireContext().launchCustomTab(ProjectLinks.UPSTREAM) }.build())
+
                         .build())
                 .build()
 
@@ -228,8 +230,29 @@ class AboutFragment : ToolbarFragment(R.layout.layout_about) {
         override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
             super.onViewCreated(view, savedInstanceState)
 
+            // The outer About NestedScrollView owns scrolling, including support/license.
+            // A viewport-sized inner RecyclerView made lower cards unreachable to the outer scroller.
+            view.layoutParams?.let { params ->
+                params.height = android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+                view.layoutParams = params
+            }
             view.findViewById<RecyclerView>(R.id.mal_recyclerview).apply {
                 overScrollMode = RecyclerView.OVER_SCROLL_NEVER
+                isNestedScrollingEnabled = false
+                layoutParams = layoutParams.apply { height = android.view.ViewGroup.LayoutParams.WRAP_CONTENT }
+            }
+        }
+
+        private fun contactSupport() {
+            // Explicit user action only; no diagnostics, profile or credentials are attached.
+            val uri = Uri.parse("mailto:${ProjectLinks.SUPPORT_EMAIL}").buildUpon()
+                .appendQueryParameter("subject", "TunXBox support").build()
+            try {
+                startActivity(Intent(Intent.ACTION_SENDTO, uri))
+            } catch (_: android.content.ActivityNotFoundException) {
+                val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                clipboard.setPrimaryClip(android.content.ClipData.newPlainText("TunXBox support", ProjectLinks.SUPPORT_EMAIL))
+                Toast.makeText(requireContext(), R.string.project_contact_copied, Toast.LENGTH_LONG).show()
             }
         }
 

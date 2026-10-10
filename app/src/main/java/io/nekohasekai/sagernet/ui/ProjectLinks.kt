@@ -1,6 +1,7 @@
 package io.nekohasekai.sagernet.ui
 
 object ProjectLinks {
+    const val SUPPORT_EMAIL = "leonidyasin@gmail.com"
     const val REPOSITORY = "https://github.com/LeonidYasin/TunXBox"
     const val RELEASES = "$REPOSITORY/releases"
     val PREVIEW_API get() = "https://api.github.com/repos/LeonidYasin/TunXBox/releases/tags/v${io.nekohasekai.sagernet.BuildConfig.VERSION_NAME.substringBefore('-')}-rc"

@@ -1,117 +1,50 @@
-# TunXBox for Android
+# TunXBox for Android TV & Phone
 
-TunXBox is an Android TV / phone client based on the open-source NekoBox project and sing-box. It adds a remote-first TV interface, a phone interface, local QR/browser profile transfer, group tests, and connection traffic/status.
+**Ваш VPN-клиент. Ваши серверы. Ваш контроль.** TunXBox — независимый открытый Android-клиент на базе NekoBox/SagerNet и sing-box. Интерфейс для пульта и телефона, профили/группы, локальный обмен QR/браузером и безопасная диагностика. Проект не продаёт VPN-серверы и не гарантирует доступность вашего провайдера.
 
-- **TunXBox downloads:** [stable 1.5.0](https://github.com/LeonidYasin/TunXBox/releases/tag/v1.5.0) · [separate RC channel](https://github.com/LeonidYasin/TunXBox/releases/tag/v1.5.0-rc).
-- **TunXBox issues:** [report a problem](https://github.com/LeonidYasin/TunXBox/issues).
-- **Project documentation and complete mind map:** [docs/README.md](docs/README.md) · [project map](docs/project-map.md).
-- **Roadmap / releases and next PRs:** [docs/roadmap.md](docs/roadmap.md).
-- **TV / local transfer guide:** [docs/tv-transfer.md](docs/tv-transfer.md).
-- **APK signing and updates:** [docs/signing-and-updates.md](docs/signing-and-updates.md).
-- `SHA256SUMS.txt` verifies downloaded APK bytes; it is not an Android installer or a replacement for the APK signing certificate.
-- TV and phone interfaces are included in each APK. Choose ARM64, ARM32, or universal according to your device; the manifest records the actual ABIs.
-- Closing/restarting the UI does not send a VPN disconnect command. Stop the connection explicitly before exiting if required.
+## Скачать и проверить
 
-TunXBox is a fork, not the official NekoBox distribution. Original licensing, authorship and upstream documentation are retained below. There are currently no advertising offers published by TunXBox; the app does not automatically open the old upstream promotions page.
+- [Стабильная 1.5.0](https://github.com/LeonidYasin/TunXBox/releases/tag/v1.5.0) — неизменяемый опубликованный выпуск.
+- [Тестовый канал 1.6.0-rc](https://github.com/LeonidYasin/TunXBox/releases/tag/v1.6.0-rc) — только сборки, прошедшие обязательные CI gates. Новые изменения в ветке не означают, что APK уже опубликован.
+- [CI rc.125](https://github.com/LeonidYasin/TunXBox/actions/runs/38084559423) выявил недоступность нижней карточки About при прокрутке: 195 JVM прошли, Android 4KB 10 из 11 прошли; новый About-сценарий упал. Исправление отдельной итерацией, rc.125 не опубликована; rc.120 не выдаётся за новую сборку.
+- Каждый APK содержит Phone/TV. ABI, полная версия/code, commit и signer указаны в manifest/сведениях сборки. Проверяйте `SHA256SUMS.txt`; checksum не заменяет сертификат подписи Android.
+- [Подпись и обновления](docs/signing-and-updates.md), [проверка устройства](docs/emulator-testing.md). Прямая загрузка/установка из приложения — план R10, не готовая функция.
 
-## Upstream NekoBox documentation (not TunXBox download links)
+## Честный статус
 
-[![API](https://img.shields.io/badge/API-21%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=21)
-[![Releases](https://img.shields.io/github/v/release/MatsuriDayo/NekoBoxForAndroid)](https://github.com/MatsuriDayo/NekoBoxForAndroid/releases)
-[![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-orange.svg)](https://www.gnu.org/licenses/gpl-3.0)
+| Направление | Состояние |
+|---|---|
+| TV/Phone, QR и локальный обмен | Базовые функции опубликованы; проверяйте сценарии своего устройства |
+| LAN-поиск и явный профиль gateway:10808 | PR #4 принят владельцем и merged в master (`99a8b6f2`); не включён задним числом в stable 1.5.0 |
+| Подписки, сохранённые результаты и безопасные отчёты | Доработки PR #5 / проверочная интеграция; PR #5 ещё не merged |
+| TCP VLESS REALITY на новых Xray | Патч проверен в Linux-прототипе; Android CI и ручная приёмка новой сборки обязательны |
+| XHTTP | Полная работоспособность не заявляется; отдельное направление |
+| Hysteria2 | Владелец сообщил о нестабильности и низкой скорости; причина пока неизвестна. [Расследование](docs/hysteria-health.md) |
+| Логический хост «шлюз», автообновление адреса, updater | Отдельные будущие задачи, не готовые функции |
 
-sing-box / universal proxy toolchain for Android.
+## Документация и сайт
 
-一款使用 sing-box 的 Android 通用代理软件.
+- [Полная карта проекта](docs/project-map.md), [документация](docs/README.md), [roadmap](docs/roadmap.md).
+- [Каталог функций](docs/features.md), [архитектура](docs/architecture.md), [сценарии](docs/scenarios.md), [QR/LAN](docs/tv-transfer.md), [реестр каждого файла](docs/reference/repository-index.md).
+- [Исходник сайта](website/index.html) и [публикация GitHub Pages](docs/github-pages.md). Планируемый адрес: https://LeonidYasin.github.io/TunXBox/ — статус публикации подтверждается отдельно, не одним наличием ветки.
 
-## 下载 / Downloads
+## Поддержать TunXBox
 
-[![GitHub All Releases](https://img.shields.io/github/downloads/Matsuridayo/NekoBoxForAndroid/total?label=downloads-total&logo=github&style=flat-square)](https://github.com/Matsuridayo/NekoBoxForAndroid/releases)
+Помощь не сводится к деньгам: [варианты участия](docs/contributing-and-support.md).
 
-[GitHub Releases 下载](https://github.com/Matsuridayo/NekoBoxForAndroid/releases)
+- Тестирование на телефонах/Android TV, разных версиях Android и сетях, доступность пульта/экранных читалок.
+- Воспроизводимые баг-репорты и обезличенные диагностические сводки.
+- Код: Kotlin/Android, Go/ядро, импорт протоколов, тесты/CI, безопасность.
+- Переводы, документация, UX/дизайн, помощь новым пользователям и распространение проверенных ссылок.
+- Тестовое оборудование, добровольная инфраструктурная помощь и спонсорство разработки.
+- Разовая финансовая поддержка или регулярное сопровождение — пока по обсуждению с владельцем; платёжных реквизитов/автосписаний в приложении нет.
 
-**Google Play 版本自 2024 年 5 月起已被第三方控制，为非开源版本，请不要下载。**
+**Публичный контакт:** [leonidyasin@gmail.com](mailto:leonidyasin@gmail.com). Telegram не указан: владелец ещё не предоставил публичный адрес. GitHub Issues/Discussions сейчас отключены; не выдавать их за работающий канал. До включения отправляйте безопасные отчёты по почте. Не публикуйте подписки, UUID, пароли, private keys или сырые логи.
 
-**The Google Play version has been controlled by a third party since May 2024 and is a non-open
-source version. Please do not download it.**
+## Лицензия и добровольное сопровождение
 
-## 更新日志 & Telegram 发布频道 / Changelog & Telegram Channel
+GNU GPL v3 или более поздняя версия; исходное авторство и [уведомление](LICENSE) сохранены, полный GPL включён в [COPYING приложения](app/src/main/assets/COPYING). [Проект услуг](docs/support-services-proposal.md) — не новая лицензия и не действующая оферта. Добровольная оплата услуг не ограничивает GPL; договорная гарантия возможна только на согласованную выполненную работу, не на отсутствие всех багов.
 
-https://t.me/Matsuridayo
+## Credits / upstream
 
-## 项目主页 & 文档 / Homepage & Documents
-
-https://matsuridayo.github.io
-
-## 支持的代理协议 / Supported Proxy Protocols
-
-* SOCKS (4/4a/5)
-* HTTP(S)
-* SSH
-* Shadowsocks
-* VMess
-* Trojan
-* VLESS
-* AnyTLS
-* ShadowTLS
-* TUIC
-* Hysteria 1/2
-* WireGuard
-* Trojan-Go (trojan-go-plugin)
-* NaïveProxy (naive-plugin)
-* Mieru (mieru-plugin)
-
-请到[这里](https://matsuridayo.github.io/nb4a-plugin/)下载插件以获得完整的代理支持.
-
-Please visit [here](https://matsuridayo.github.io/nb4a-plugin/) to download plugins for full proxy
-supports.
-
-## 支持的订阅格式 / Supported Subscription Format
-
-* 一些广泛使用的格式 (如 Shadowsocks, ClashMeta 和 v2rayN)
-* sing-box 出站
-
-仅支持解析出站，即节点。分流规则等信息会被忽略。
-
-* Some widely used formats (like Shadowsocks, ClashMeta and v2rayN)
-* sing-box outbound
-
-Only resolving outbound, i.e. nodes, is supported. Information such as diversion rules are ignored.
-
-## 捐助 / Donate
-
-<details>
-
-如果这个项目对您有帮助, 可以通过捐赠的方式帮助我们维持这个项目.
-
-捐赠满等额 50 USD 可以在「[捐赠榜](https://mtrdnt.pages.dev/donation_list)」显示头像, 如果您未被添加到这里,
-欢迎联系我们补充.
-
-Donations of 50 USD or more can display your avatar on
-the [Donation List](https://mtrdnt.pages.dev/donation_list). If you are not added here, please
-contact us to add it.
-
-USDT TRC20
-
-`TRhnA7SXE5Sap5gSG3ijxRmdYFiD4KRhPs`
-
-XMR
-
-`49bwESYQjoRL3xmvTcjZKHEKaiGywjLYVQJMUv79bXonGiyDCs8AzE3KiGW2ytTybBCpWJUvov8SjZZEGg66a4e59GXa6k5`
-
-</details>
-
-## Credits
-
-Core:
-
-- [SagerNet/sing-box](https://github.com/SagerNet/sing-box)
-
-Android GUI:
-
-- [shadowsocks/shadowsocks-android](https://github.com/shadowsocks/shadowsocks-android)
-- [SagerNet/SagerNet](https://github.com/SagerNet/SagerNet)
-
-Web Dashboard:
-
-- [Yacd-meta](https://github.com/MetaCubeX/Yacd-meta)
+[NekoBox for Android](https://github.com/MatsuriDayo/NekoBoxForAndroid), [SagerNet](https://github.com/SagerNet/SagerNet), [sing-box](https://github.com/SagerNet/sing-box), [shadowsocks-android](https://github.com/shadowsocks/shadowsocks-android), [Yacd-meta](https://github.com/MetaCubeX/Yacd-meta). TunXBox не является официальной сборкой этих проектов; их лицензии и вклад сохраняются. Ссылки на сторонние кошельки/донаты не используются для поддержки TunXBox.
