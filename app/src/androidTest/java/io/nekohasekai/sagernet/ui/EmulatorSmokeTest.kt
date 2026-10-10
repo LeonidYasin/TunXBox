@@ -120,6 +120,8 @@ class EmulatorSmokeTest {
         gateway.click()
         val save = requireNotNull(device.wait(Until.findObject(By.res("android", "button1")), timeout))
         assertTrue(save.text.equals(text(R.string.lan_save), ignoreCase=true))
+        assertTrue(device.hasObject(By.textContains(text(R.string.lan_gateway_unverified))))
+        assertFalse(device.hasObject(By.textContains(text(R.string.lan_tcp_unverified))))
         device.executeShellCommand("screencap -p /sdcard/Download/TunXBoxSmoke/gateway_profile_confirmation.png")
         // Explicit creation only; no selected profile change or VPN consent.
         val selected = DataStore.selectedProxy

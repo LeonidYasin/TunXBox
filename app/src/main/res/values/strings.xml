@@ -677,4 +677,5 @@
     <string name="network_reason_timeout">The current core URL check timed out. The proxy handshake, network or test endpoint may be unavailable. No automatic reconnect or profile switch was performed.</string>
     <string name="network_reason_http">The URL check returned an HTTP error. Check the configured test endpoint; an endpoint error is not proof that the entire VPN tunnel is broken. This does not update the subscription.</string>
     <string name="network_reason_unknown">The current core URL check failed without a recognized error signature. Report this NET code, build version and time; a cause is not invented and private raw native messages are not exported.</string>
+    <string name="lan_gateway_unverified">Default gateway • port and protocol NOT checked</string>
 </resources>

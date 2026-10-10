@@ -248,7 +248,7 @@ class LanDiscoveryFragment : ToolbarFragment(R.layout.layout_lan_discovery) {
                 }
                 panel.addView(input); return input
             }
-            panel.addView(TextView(context).apply { text = "${candidate.host}:${candidate.port}\n${kindLabel(candidate.kind)}\n${getString(if (gatewayQuick) R.string.lan_gateway_explanation else R.string.lan_save_warning)}"; textSize = 18f })
+            panel.addView(TextView(context).apply { text = "${candidate.host}:${candidate.port}\n${if (gatewayQuick) getString(R.string.lan_gateway_unverified) else kindLabel(candidate.kind)}\n${getString(if (gatewayQuick) R.string.lan_gateway_explanation else R.string.lan_save_warning)}"; textSize = 18f })
             val name = field(R.string.lan_name, "LAN ${candidate.host}:${candidate.port}", limit = 128)
             panel.addView(TextView(context).apply { text = getString(R.string.lan_protocol_label); textSize = 18f })
             val protocol = Spinner(context).apply {
