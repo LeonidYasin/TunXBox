@@ -186,3 +186,7 @@ Rc.126 не опубликована: 11 Android 4KB / 1 failure на той ж�
 ### Исправление архитектуры About после rc.127
 
 Rc.127 не опубликована: тот же тест не достиг Telegram; остальные 10 Android 4KB сценариев прошли. Точечное отключение nested/inner scroll не решило реальную проблему. Следующая итерация удаляет внешний NestedScrollView полностью: intro, информация о сборке, контакты, upstream attribution и лицензия — карточки единственного нативного MaterialAbout RecyclerView. Полный GPL/notices открываются по фокусируемой action row. Прежние assertions сохранены, селектор прокрутки явно указывает единственный список. Требуется полный CI/приёмка, не объявлять устранённым до PASS.
+
+### Подтверждённое перекрытие About нижней панелью (после rc.128)
+
+Rc.128: единственный нативный список присутствует и объявлен scrollable, но test swipe начинается на y=1693, внутри StatsBar y=1666..1825. Журнал показывает timeout scrolling/no movement; ошибка Telegram reachability сохраняется. Следующий патч скрывает глобальные stats/FAB именно на About, как на LAN-tool, не затрагивая сервис/профиль. Android сценарий проверяет отсутствие overlay, доступность build/Telegram/support/full GPL, возврат stats на Configuration и сохранность selectedProxy/serviceState. Требуется CI PASS, не считать исправление подтверждённым до него.

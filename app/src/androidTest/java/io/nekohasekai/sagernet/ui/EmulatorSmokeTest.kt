@@ -113,6 +113,8 @@ class EmulatorSmokeTest {
             .putExtra("tv_tools", true).putExtra("tv_destination", R.id.nav_about))
         val scroll = UiScrollable(UiSelector().resourceId(context.packageName + ":id/mal_recyclerview"))
         assertTrue(scroll.scrollIntoView(UiSelector().text(text(R.string.about_build_details))))
+        assertFalse("Global traffic panel must not cover About", device.hasObject(By.res(context.packageName, "stats")))
+        assertFalse("Global service button must not cover About", device.hasObject(By.res(context.packageName, "fab")))
         visibleText(text(R.string.about_build_details)).click()
         val message = requireNotNull(device.wait(Until.findObject(By.res("android", "message")), timeout)).text
         assertTrue(message.contains(io.nekohasekai.sagernet.BuildConfig.VERSION_NAME))
@@ -142,6 +144,13 @@ class EmulatorSmokeTest {
         assertTrue(full.contains("GNU GENERAL PUBLIC LICENSE"))
         assertTrue(full.contains("TERMS AND CONDITIONS"))
         device.findObject(By.res("android", "button1")).click()
+        assertTrue(device.wait(Until.gone(By.res("android", "message")), timeout))
+        val selected = DataStore.selectedProxy
+        val state = DataStore.serviceState
+        scenario?.onActivity { (it as MainActivity).displayFragmentWithId(R.id.nav_configuration) }
+        assertTrue("Traffic panel returns on profiles", device.wait(Until.hasObject(By.res(context.packageName, "stats")), timeout))
+        assertEquals("About navigation must not select a different profile", selected, DataStore.selectedProxy)
+        assertEquals("About navigation must not change VPN service state", state, DataStore.serviceState)
     }
 
     @Test fun nativeCoreLoadsOnActualExpectedPageSize() {
