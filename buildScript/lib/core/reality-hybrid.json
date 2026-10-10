@@ -1,0 +1,15 @@
+{
+  "sourceCommit": "aed32ee3066cdbc7d471e3e0415c5134088962df",
+  "files": [
+    {
+      "path": "common/tls/reality_client.go",
+      "beforeSha256": "94729f2d1a6da4f329b71288b470bfa4533a0531d454dfa46c305e981e1104da",
+      "afterSha256": "5c45fe77f6945a6677c8816e6098fada990b11cb9f0577ae294c06201f088e36"
+    },
+    {
+      "path": "common/tls/reality_hybrid_test.go",
+      "beforeSha256": null,
+      "afterSha256": "cba269e0ba23c01375798d999c4bb913fe0684e49c73994d3c833b9a09346ad0"
+    }
+  ]
+}

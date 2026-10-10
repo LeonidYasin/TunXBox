@@ -8,7 +8,7 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **667**.
+Всего tracked файлов: **672**.
 
 | Раздел | Файлов |
 |---|---|
@@ -196,7 +196,7 @@
 | `app/src/main/res/values-zh-rTW` | 1 |
 | `app/src/main/res/xml` | 24 |
 | `app/src/test` | 14 |
-| `buildScript` | 24 |
+| `buildScript` | 29 |
 | `buildSrc` | 2 |
 | `docs` | 21 |
 | `gradle` | 2 |
@@ -1326,10 +1326,14 @@
 - [`buildScript/init/env_ndk.sh`](../../buildScript/init/env_ndk.sh)
 - [`buildScript/lib/assets.sh`](../../buildScript/lib/assets.sh)
 - [`buildScript/lib/core.sh`](../../buildScript/lib/core.sh)
+- [`buildScript/lib/core/apply_reality_hybrid.py`](../../buildScript/lib/core/apply_reality_hybrid.py)
 - [`buildScript/lib/core/build.sh`](../../buildScript/lib/core/build.sh)
+- [`buildScript/lib/core/build_verified.py`](../../buildScript/lib/core/build_verified.py)
 - [`buildScript/lib/core/get_source.sh`](../../buildScript/lib/core/get_source.sh)
 - [`buildScript/lib/core/get_source_env.sh`](../../buildScript/lib/core/get_source_env.sh)
 - [`buildScript/lib/core/init.sh`](../../buildScript/lib/core/init.sh)
+- [`buildScript/lib/core/reality-hybrid.json`](../../buildScript/lib/core/reality-hybrid.json)
+- [`buildScript/lib/core/reality-hybrid.patch`](../../buildScript/lib/core/reality-hybrid.patch)
 - [`buildScript/nkmr`](../../buildScript/nkmr)
 - [`buildScript/package_preview_apks.py`](../../buildScript/package_preview_apks.py)
 - [`buildScript/run_emulator_smoke.sh`](../../buildScript/run_emulator_smoke.sh)
@@ -1338,6 +1342,7 @@
 - [`buildScript/test_assets.py`](../../buildScript/test_assets.py)
 - [`buildScript/test_native_alignment.py`](../../buildScript/test_native_alignment.py)
 - [`buildScript/test_package_preview_apks.py`](../../buildScript/test_package_preview_apks.py)
+- [`buildScript/test_reality_patch.py`](../../buildScript/test_reality_patch.py)
 - [`buildScript/test_signing_bundle.py`](../../buildScript/test_signing_bundle.py)
 - [`buildScript/test_tv_transfer_page.cjs`](../../buildScript/test_tv_transfer_page.cjs)
 - [`buildScript/verify_native_alignment.py`](../../buildScript/verify_native_alignment.py)
