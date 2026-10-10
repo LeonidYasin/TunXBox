@@ -138,7 +138,7 @@ class StatsBar @JvmOverloads constructor(
             if (DataStore.currentProfile != profile || !DataStore.serviceState.connected) return@launch
             io.nekohasekai.sagernet.group.ConnectionTestPresentation.save(result)
             setStatus(io.nekohasekai.sagernet.group.ConnectionTestPresentation.summary(context, result))
-            if (!result.available && activity.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)) {
+            if (!result.available && isShown && activity.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
                 testDialog?.dismiss()
                 testDialog = io.nekohasekai.sagernet.group.ConnectionTestPresentation.show(context, result)
             }

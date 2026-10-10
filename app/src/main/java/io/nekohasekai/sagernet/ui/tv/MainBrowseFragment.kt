@@ -610,7 +610,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
                     health = io.nekohasekai.sagernet.group.ConnectionTestPresentation.summary(requireContext(), result)
                 }
             }
-            finally { refreshCards() }
+            finally { if (view != null && isAdded) refreshCards() }
         }
     }
     private fun bytes(value: Long): String = android.text.format.Formatter.formatFileSize(requireContext(), value.coerceAtLeast(0))

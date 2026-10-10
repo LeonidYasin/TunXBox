@@ -14,7 +14,13 @@ object ConnectionTestPresentation {
         else context.getString(R.string.network_test_failed, "NET_${result.category!!.name}")
     fun details(context: Context, result: ConnectionTestResult): String = summary(context, result) +
         "\n\n" + java.text.DateFormat.getDateTimeInstance().format(java.util.Date(result.attemptedAt)) +
-        (result.category?.let { "\n\n" + SubscriptionFailurePresentation.reason(context, it) } ?: "") +
+        (result.category?.let { "\n\n" + when (it) {
+            SubscriptionFailureCategory.DNS -> context.getString(R.string.network_reason_dns)
+            SubscriptionFailureCategory.TIMEOUT -> context.getString(R.string.network_reason_timeout)
+            SubscriptionFailureCategory.HTTP -> context.getString(R.string.network_reason_http)
+            SubscriptionFailureCategory.UNKNOWN -> context.getString(R.string.network_reason_unknown)
+            else -> SubscriptionFailurePresentation.reason(context, it)
+        } } ?: "") +
         "\n\n" + context.getString(R.string.network_test_scope)
     fun show(context: Context, result: ConnectionTestResult): AlertDialog = AlertDialog.Builder(context)
         .setTitle(R.string.network_test_title).setMessage(details(context, result))

@@ -673,4 +673,8 @@
     <string name="lan_gateway_missing">No eligible private IPv4 default gateway was found. Choose the physical network or refresh; no gateway address is guessed.</string>
     <string name="lan_gateway_saved">Gateway profile saved or its address refreshed. It was not connected automatically.</string>
     <string name="lan_gateway_save_failed">Could not save the gateway profile. Use a basic group; stop the active gateway profile before changing its address.</string>
+    <string name="network_reason_dns">The core URL check failed during name resolution. Check tunnel DNS/server reachability and the configured test endpoint. This is not a subscription update error.</string>
+    <string name="network_reason_timeout">The current core URL check timed out. The proxy handshake, network or test endpoint may be unavailable. No automatic reconnect or profile switch was performed.</string>
+    <string name="network_reason_http">The URL check returned an HTTP error. Check the configured test endpoint; an endpoint error is not proof that the entire VPN tunnel is broken. This does not update the subscription.</string>
+    <string name="network_reason_unknown">The current core URL check failed without a recognized error signature. Report this NET code, build version and time; a cause is not invented and private raw native messages are not exported.</string>
 </resources>
