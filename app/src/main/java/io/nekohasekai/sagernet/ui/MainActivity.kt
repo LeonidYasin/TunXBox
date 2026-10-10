@@ -201,6 +201,15 @@ class MainActivity : ThemedActivity(),
         }
     }
 
+    fun connectionTestReport(): io.nekohasekai.sagernet.group.ConnectionTestResult {
+        val service = connection.service
+        if (!DataStore.serviceState.connected || service == null) return io.nekohasekai.sagernet.group.ConnectionTestResult(
+            DataStore.currentProfile.coerceAtLeast(0), System.currentTimeMillis(), -1, io.nekohasekai.sagernet.group.SubscriptionFailureCategory.CORE)
+        return io.nekohasekai.sagernet.group.ConnectionTestResult.decode(service.testConnectionReport())
+            ?: io.nekohasekai.sagernet.group.ConnectionTestResult(DataStore.currentProfile.coerceAtLeast(0), System.currentTimeMillis(), -1,
+                io.nekohasekai.sagernet.group.SubscriptionFailureCategory.UNKNOWN)
+    }
+
     fun urlTest(): Int {
         if (!DataStore.serviceState.connected || connection.service == null) {
             error("not started")
@@ -414,7 +423,13 @@ class MainActivity : ThemedActivity(),
             R.id.nav_route -> displayFragment(RouteFragment())
             R.id.nav_settings -> displayFragment(SettingsFragment())
             R.id.nav_traffic -> displayFragment(WebviewFragment())
-            R.id.nav_lan_discovery -> displayFragment(io.nekohasekai.sagernet.ui.lan.LanDiscoveryFragment())
+            R.id.nav_lan_discovery -> {
+                val quick = intent.getBooleanExtra("gateway_quick", false)
+                intent.removeExtra("gateway_quick")
+                displayFragment(io.nekohasekai.sagernet.ui.lan.LanDiscoveryFragment().apply {
+                    arguments = android.os.Bundle().apply { putBoolean("gateway_quick", quick) }
+                })
+            }
             R.id.nav_tools -> displayFragment(ToolsFragment())
             R.id.nav_logcat -> displayFragment(LogcatFragment())
             R.id.nav_faq -> {

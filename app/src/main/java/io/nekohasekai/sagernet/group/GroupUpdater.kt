@@ -162,7 +162,7 @@ abstract class GroupUpdater {
                 }
                 catch (error: Throwable) {
                     val failure = error as? SubscriptionUpdateFailure
-                    val category = failure?.category ?: SubscriptionFailureCategory.fromMessage(error.readableMessage)
+                    val category = failure?.category ?: SubscriptionFailureCategory.fromThrowable(error)
                     SubscriptionUpdateJournal.write(proxyGroup.id, SubscriptionUpdateResult(SubscriptionUpdateOutcome.FAILURE,
                         failure?.stage ?: SubscriptionUpdateStage.UPDATE, attemptedAt,
                         (SystemClock.elapsedRealtime() - startedAt).coerceAtLeast(0), category = category))
@@ -172,7 +172,7 @@ abstract class GroupUpdater {
                     // This boundary must not add a private subscription URL/credential dump to logs.
                     Logs.w("Subscription update failed: ${category.code}")
                     // Background updates must not unexpectedly open a modal over another task.
-                    if (byUser) userInterface?.onUpdateFailure(proxyGroup, error.readableMessage)
+                    if (byUser) userInterface?.onUpdateFailure(proxyGroup, "[SUB_STAGE_${failure?.stage?.name ?: "UPDATE"}] ${category.code}")
                     false
                 }
             }

@@ -89,7 +89,7 @@ class StatsBar @JvmOverloads constructor(
         if ((state == BaseService.State.Connected).also { hideOnScroll = it }) {
             postWhenStarted {
                 if (allowShow) performShow()
-                setStatus(app.getText(R.string.vpn_connected))
+                setStatus(app.getText(R.string.network_test_not_checked))
             }
         } else {
             postWhenStarted {
@@ -122,40 +122,26 @@ class StatsBar @JvmOverloads constructor(
         }"
     }
 
+    private var testDialog: androidx.appcompat.app.AlertDialog? = null
+    override fun onDetachedFromWindow() { testDialog?.dismiss(); testDialog = null; super.onDetachedFromWindow() }
     fun testConnection() {
         val activity = context as MainActivity
+        val profile = DataStore.currentProfile
         isEnabled = false
         setStatus(app.getText(R.string.connection_test_testing))
-        runOnDefaultDispatcher {
-            try {
-                val elapsed = activity.urlTest()
-                onMainDispatcher {
-                    isEnabled = true
-                    setStatus(
-                        app.getString(
-                            if (DataStore.connectionTestURL.startsWith("https://")) {
-                                R.string.connection_test_available
-                            } else {
-                                R.string.connection_test_available_http
-                            }, elapsed
-                        )
-                    )
-                }
-
-            } catch (e: Exception) {
-                Logs.w(e.toString())
-                onMainDispatcher {
-                    isEnabled = true
-                    setStatus(app.getText(R.string.connection_test_testing))
-
-                    activity.snackbar(
-                        app.getString(
-                            R.string.connection_test_error, e.readableMessage
-                        )
-                    ).show()
-                }
+        activity.lifecycleScope.launch {
+            val result = try { kotlinx.coroutines.withContext(Dispatchers.IO) { activity.connectionTestReport() } }
+            catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (error: Exception) { io.nekohasekai.sagernet.group.ConnectionTestResult(profile.coerceAtLeast(0), System.currentTimeMillis(), -1,
+                io.nekohasekai.sagernet.group.SubscriptionFailureCategory.fromThrowable(error)) }
+            finally { isEnabled = true }
+            if (DataStore.currentProfile != profile || !DataStore.serviceState.connected) return@launch
+            io.nekohasekai.sagernet.group.ConnectionTestPresentation.save(result)
+            setStatus(io.nekohasekai.sagernet.group.ConnectionTestPresentation.summary(context, result))
+            if (!result.available && activity.lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)) {
+                testDialog?.dismiss()
+                testDialog = io.nekohasekai.sagernet.group.ConnectionTestPresentation.show(context, result)
             }
         }
     }
-
 }

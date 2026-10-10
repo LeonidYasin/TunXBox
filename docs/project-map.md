@@ -67,3 +67,5 @@ mindmap
 PR #5: [этапы/сохранённый результат/ручная сводка](protocol-compatibility.md); не смешивать с готовностью health/failover. [Модели монетизации](monetization.md) — гипотезы после качества, без платёжного runtime/backend/paywall.
 
 [Безопасная обратная связь](diagnostic-support.md): шаги воспроизведения, значение фиксированных кодов, whitelist report и запрет публикации секретов/raw logs без проверки. Issue templates EN/RU/ZH больше не предлагают открыто прикладывать реальные подписочные ссылки.
+
+После rc.117: explicit default-gateway:10808 profile/refresh и structured current-core URL-test diagnostics — в следующей проверочной итерации, не в уже опубликованной rc.117. [Порядок и границы](roadmap.md), [проверка и обратная связь](diagnostic-support.md).

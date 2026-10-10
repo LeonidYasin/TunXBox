@@ -654,4 +654,23 @@
     <string name="subscription_stage_apply">applying group locally</string>
     <string name="subscription_attempt_share">Share this summary</string>
     <string name="subscription_attempt_no_share">No app is available to share text.</string>
+    <string name="failure_closed">The peer closed or reset the connection (EOF/reset). Check server availability, transport compatibility and network filtering. This message alone cannot identify which one caused the close.</string>
+    <string name="failure_refused">Connection was refused or the local proxy listener was unavailable. Check the server/port and whether the proxy is running.</string>
+    <string name="failure_network">The network reported no route or an unreachable destination. Check the physical connection and routing.</string>
+    <string name="failure_handshake">TLS/QUIC handshake failed. Check TLS settings, SNI, supported versions and the server; certificate bypass is not enabled automatically.</string>
+    <string name="failure_core">The VPN core is not running. Connect a profile and wait for startup before testing access.</string>
+    <string name="failure_busy">A connection check is already running. Wait for it to finish.</string>
+    <string name="failure_invalid">The request URL or scheme is invalid. Check the configured address locally without sharing its private tokens.</string>
+    <string name="network_test_title">Current connection diagnostics</string>
+    <string name="network_test_not_checked">VPN service started; Internet access not checked. Select status to test.</string>
+    <string name="network_test_ok">Core URL check succeeded: %1$d ms</string>
+    <string name="network_test_failed">Core URL check failed. Code: %1$s</string>
+    <string name="network_test_scope">This is one explicit 3-second URL check through the running core using the configured test endpoint. It does not certify all sites, UDP or a separate DNS test. No direct fallback is used when the core is absent. Subscription update errors are a separate operation. Private URLs and raw errors are omitted.</string>
+    <string name="lan_gateway_title">Gateway proxy:10808</string>
+    <string name="lan_gateway_action">Determine gateway again / add profile</string>
+    <string name="lan_gateway_explanation">Determine the current default gateway of the selected trusted Wi-Fi/Ethernet network. No scanning or Internet test is performed. SOCKS5 on port10808 is an explicit assumption; choose HTTP if needed. Save to a basic group only. Repeating this action refreshes the address of a profile created by this action in that group, preserving its other settings. Stop that profile first if active. Manual profiles are not rewritten. VPN is not switched or restarted.</string>
+    <string name="lan_gateway_scope">Device addresses: %1$s\nDefault gateways: %2$s\nPort:10808</string>
+    <string name="lan_gateway_missing">No eligible private IPv4 default gateway was found. Choose the physical network or refresh; no gateway address is guessed.</string>
+    <string name="lan_gateway_saved">Gateway profile saved or its address refreshed. It was not connected automatically.</string>
+    <string name="lan_gateway_save_failed">Could not save the gateway profile. Use a basic group; stop the active gateway profile before changing its address.</string>
 </resources>

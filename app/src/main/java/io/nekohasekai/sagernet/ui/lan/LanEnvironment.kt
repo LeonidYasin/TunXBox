@@ -24,6 +24,12 @@ class LanEnvironment(context: Context) {
         val fingerprint = listOf(network.toString(), links.interfaceName, links.linkAddresses.toString(), links.routes.toString()).joinToString("|")
         LanNetwork(network, scope, fingerprint)
     }
+    fun defaultGateways(selected: LanNetwork): List<ProxyCandidate> {
+        if (!current(selected)) return emptyList()
+        val defaults = manager.getLinkProperties(selected.network)?.routes.orEmpty()
+            .filter { it.isDefaultRoute && it.gateway is Inet4Address }.mapNotNull { it.gateway?.hostAddress }
+        return GatewayProfileTargets.candidates(selected.scope, defaults)
+    }
     /** Read-only inventory, including ineligible networks. Never used as scan targets. */
     fun observed(): String = manager.allNetworks.joinToString("\n\n") { network ->
         val links = manager.getLinkProperties(network)

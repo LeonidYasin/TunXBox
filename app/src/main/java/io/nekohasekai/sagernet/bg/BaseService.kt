@@ -139,6 +139,22 @@ class BaseService {
             callbacks.unregister(cb)
         }
 
+        private val reportBusy = java.util.concurrent.atomic.AtomicBoolean(false)
+        override fun testConnectionReport(): String {
+            val profile = DataStore.currentProfile.coerceAtLeast(0)
+            val time = System.currentTimeMillis()
+            fun failed(category: io.nekohasekai.sagernet.group.SubscriptionFailureCategory) =
+                io.nekohasekai.sagernet.group.ConnectionTestResult(profile, time, -1, category).encode()
+            val box = data?.proxy?.box ?: return failed(io.nekohasekai.sagernet.group.SubscriptionFailureCategory.CORE)
+            if (!reportBusy.compareAndSet(false, true)) return failed(io.nekohasekai.sagernet.group.SubscriptionFailureCategory.BUSY)
+            return try {
+                val elapsed = Libcore.urlTest(box, DataStore.connectionTestURL, 3000)
+                if (elapsed < 0) failed(io.nekohasekai.sagernet.group.SubscriptionFailureCategory.UNKNOWN)
+                else io.nekohasekai.sagernet.group.ConnectionTestResult(profile, time, elapsed).encode()
+            } catch (error: Exception) {
+                failed(io.nekohasekai.sagernet.group.SubscriptionFailureCategory.fromThrowable(error))
+            } finally { reportBusy.set(false) }
+        }
         override fun urlTest(): Int {
             if (data?.proxy?.box == null) {
                 error("core not started")

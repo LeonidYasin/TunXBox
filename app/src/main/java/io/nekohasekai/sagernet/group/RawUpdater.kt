@@ -57,7 +57,9 @@ object RawUpdater : GroupUpdater() {
         // Freeze request settings before suspension; an editor may mutate the caller object.
         val requestSubscription = KryoConverters.subscriptionDeserialize(KryoConverters.serialize(subscription))
         val requestGroup = proxyGroup.copy(subscription = requestSubscription)
-        val link = requestSubscription.link
+        val link = requestSubscription.link.orEmpty()
+        if (link.isBlank()) throw SubscriptionUpdateFailure(SubscriptionUpdateStage.DOWNLOAD,
+            SubscriptionFailureCategory.INVALID, IllegalArgumentException("Invalid URL"))
         var incomingName = requestGroup.name
         var incomingUserinfo = requestSubscription.subscriptionUserinfo
         var proxies: List<AbstractBean>
@@ -81,7 +83,8 @@ object RawUpdater : GroupUpdater() {
                 setURL(requestSubscription.link)
                 setUserAgent(requestSubscription.customUserAgent.takeIf { it.isNotBlank() } ?: USER_AGENT)
             }.execute() }
-            proxies = parseSubscriptionContent(Util.getStringBox(response.contentString))
+            val body = atStage(SubscriptionUpdateStage.DOWNLOAD) { Util.getStringBox(response.contentString) }
+            proxies = parseSubscriptionContent(body)
 
             incomingUserinfo =
                 Util.getStringBox(response.getHeader("Subscription-Userinfo"))
@@ -147,7 +150,7 @@ object RawUpdater : GroupUpdater() {
         val category = when {
             stage == SubscriptionUpdateStage.APPLY && error.message?.contains("Subscription changed during update") == true -> SubscriptionFailureCategory.CHANGED
             stage == SubscriptionUpdateStage.APPLY -> SubscriptionFailureCategory.LOCAL_SAVE
-            else -> SubscriptionFailureCategory.fromMessage(error.readableMessage)
+            else -> SubscriptionFailureCategory.fromThrowable(error)
         }
         throw SubscriptionUpdateFailure(stage, category, error)
     }

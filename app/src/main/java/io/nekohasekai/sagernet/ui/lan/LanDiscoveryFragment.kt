@@ -26,6 +26,8 @@ import kotlinx.coroutines.*
 
 /** Shared phone/remote screen. Opening it NEVER scans or changes the running VPN. */
 class LanDiscoveryFragment : ToolbarFragment(R.layout.layout_lan_discovery) {
+    private val gatewayQuick get() = arguments?.getBoolean("gateway_quick", false) == true
+    private lateinit var gatewayButton: Button
     private lateinit var environment: LanEnvironment
     private var selected: LanNetwork? = null
     private var scan: Job? = null
@@ -90,7 +92,19 @@ class LanDiscoveryFragment : ToolbarFragment(R.layout.layout_lan_discovery) {
         scanButton.setOnClickListener { startScan() }
         cancelButton.setOnClickListener { stopScan(R.string.lan_cancelled) }
         select(environment.networks().firstOrNull())
-        networkButton.requestFocus()
+        gatewayButton = view.findViewById(R.id.lan_gateway_action)
+        if (gatewayQuick) {
+            toolbar.setTitle(R.string.lan_gateway_title)
+            view.findViewById<TextView>(R.id.lan_explanation).setText(R.string.lan_gateway_explanation)
+            listOf(ports, consent, scanButton, cancelButton, view.findViewById<View>(R.id.lan_ports_label)).forEach { it.visibility = View.GONE }
+            gatewayButton.visibility = View.VISIBLE; styleAction(gatewayButton)
+            gatewayButton.setOnClickListener { chooseCurrentGateway() }
+            networkButton.nextFocusDownId = R.id.lan_gateway_action
+            networkButton.nextFocusForwardId = R.id.lan_gateway_action
+            gatewayButton.nextFocusUpId = R.id.lan_network
+            scopeText.text = selected?.let { scopeDetails(it) } ?: getString(R.string.lan_no_network)
+            gatewayButton.requestFocus()
+        } else networkButton.requestFocus()
     }
     override fun onResume() {
         super.onResume()
@@ -139,7 +153,24 @@ class LanDiscoveryFragment : ToolbarFragment(R.layout.layout_lan_discovery) {
         scopeText.text = network?.let { scopeDetails(it) } ?: getString(R.string.lan_no_network)
         status.setText(R.string.lan_idle); controls()
     }
-    private fun scopeDetails(network: LanNetwork): String = getString(R.string.lan_scope_details,
+    private fun chooseCurrentGateway() {
+        val available = environment.networks()
+        val fresh = available.firstOrNull { it.network == selected?.network }
+            ?: available.singleOrNull()
+        if (fresh == null) { chooseNetwork(); return }
+        select(fresh)
+        val candidates = environment.defaultGateways(fresh)
+        if (candidates.isEmpty()) { status.setText(R.string.lan_gateway_missing); status.requestFocus(); return }
+        if (candidates.size == 1) confirmProfile(fresh, candidates.single())
+        else {
+            dialog?.dismiss()
+            dialog = AlertDialog.Builder(requireContext()).setTitle(R.string.lan_gateway_title)
+                .setItems(candidates.map { "${it.host}:${it.port}" }.toTypedArray()) { _, i -> confirmProfile(fresh, candidates[i]) }
+                .setNegativeButton(android.R.string.cancel, null).show()
+        }
+    }
+    private fun scopeDetails(network: LanNetwork): String = if (gatewayQuick) getString(R.string.lan_gateway_scope,
+        network.scope.localAddresses.joinToString(", "), environment.defaultGateways(network).joinToString(", ") { it.host }.ifEmpty { "—" }) else getString(R.string.lan_scope_details,
         network.scope.localAddresses.joinToString(", "), network.scope.cidr, network.scope.hosts.size,
         network.scope.gateways.joinToString(", ").ifEmpty { "—" },
         (network.scope.gateways + network.scope.localAddresses).distinct().filter { network.scope.contains(it) }.joinToString(", ")) +
@@ -217,7 +248,7 @@ class LanDiscoveryFragment : ToolbarFragment(R.layout.layout_lan_discovery) {
                 }
                 panel.addView(input); return input
             }
-            panel.addView(TextView(context).apply { text = "${candidate.host}:${candidate.port}\n${kindLabel(candidate.kind)}\n${getString(R.string.lan_save_warning)}"; textSize = 18f })
+            panel.addView(TextView(context).apply { text = "${candidate.host}:${candidate.port}\n${kindLabel(candidate.kind)}\n${getString(if (gatewayQuick) R.string.lan_gateway_explanation else R.string.lan_save_warning)}"; textSize = 18f })
             val name = field(R.string.lan_name, "LAN ${candidate.host}:${candidate.port}", limit = 128)
             panel.addView(TextView(context).apply { text = getString(R.string.lan_protocol_label); textSize = 18f })
             val protocol = Spinner(context).apply {
@@ -227,7 +258,7 @@ class LanDiscoveryFragment : ToolbarFragment(R.layout.layout_lan_discovery) {
                 setSelection(when (candidate.kind) {
                     ProbeKind.SOCKS5, ProbeKind.SOCKS5_AUTH -> 1
                     ProbeKind.HTTP_AUTH -> 2
-                    else -> 0
+                    else -> if (gatewayQuick) 1 else 0
                 })
                 isEnabled = candidate.kind in setOf(ProbeKind.HTTP_UNVERIFIED, ProbeKind.TCP_UNVERIFIED)
             }
@@ -261,11 +292,14 @@ class LanDiscoveryFragment : ToolbarFragment(R.layout.layout_lan_discovery) {
                 val profileName = name.text.toString().trim(); val user = username.text.toString(); val secret = password.text.toString()
                 viewLifecycleOwner.lifecycleScope.launch {
                     try {
-                        val saved = withContext(Dispatchers.IO) { LanProfileStore.save(candidate, useHttp, groupId, profileName, user, secret, protocolConfirmed = true) }
-                        confirmation.dismiss(); status.setText(if (saved.created) R.string.lan_saved else R.string.lan_duplicate)
+                        val saved = withContext(Dispatchers.IO) {
+                            if (gatewayQuick) GatewayProfileStore.save(candidate, useHttp, groupId, profileName, user, secret)
+                            else LanProfileStore.save(candidate, useHttp, groupId, profileName, user, secret, protocolConfirmed = true)
+                        }
+                        confirmation.dismiss(); status.setText(if (gatewayQuick) R.string.lan_gateway_saved else if (saved.created) R.string.lan_saved else R.string.lan_duplicate)
                         status.requestFocus()
                     } catch (cancelled: CancellationException) { throw cancelled }
-                    catch (_: Exception) { status.setText(R.string.lan_save_failed); confirmation.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = true }
+                    catch (_: Exception) { status.setText(if (gatewayQuick) R.string.lan_gateway_save_failed else R.string.lan_save_failed); confirmation.getButton(AlertDialog.BUTTON_POSITIVE).isEnabled = true }
                 }
             }
         }

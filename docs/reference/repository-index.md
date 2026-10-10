@@ -8,7 +8,7 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **675**.
+Всего tracked файлов: **681**.
 
 | Раздел | Файлов |
 |---|---|
@@ -66,6 +66,8 @@
 | `app/src/main/java/io/nekohasekai/sagernet/fmt/tuic` | 2 |
 | `app/src/main/java/io/nekohasekai/sagernet/fmt/v2ray` | 4 |
 | `app/src/main/java/io/nekohasekai/sagernet/fmt/wireguard` | 2 |
+| `app/src/main/java/io/nekohasekai/sagernet/group/ConnectionTestPresentation.kt` | 1 |
+| `app/src/main/java/io/nekohasekai/sagernet/group/ConnectionTestResult.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/group/GroupInterfaceAdapter.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/group/GroupUpdater.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/group/RawUpdater.kt` | 1 |
@@ -127,7 +129,7 @@
 | `app/src/main/java/io/nekohasekai/sagernet/ui/ToolsFragment.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/VpnRequestActivity.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/WebviewFragment.kt` | 1 |
-| `app/src/main/java/io/nekohasekai/sagernet/ui/lan` | 5 |
+| `app/src/main/java/io/nekohasekai/sagernet/ui/lan` | 7 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/profile` | 16 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/tv` | 19 |
 | `app/src/main/java/io/nekohasekai/sagernet/utils/Commandline.kt` | 1 |
@@ -196,7 +198,7 @@
 | `app/src/main/res/values-zh-rHK` | 1 |
 | `app/src/main/res/values-zh-rTW` | 1 |
 | `app/src/main/res/xml` | 24 |
-| `app/src/test` | 15 |
+| `app/src/test` | 17 |
 | `buildScript` | 24 |
 | `buildSrc` | 2 |
 | `docs` | 22 |
@@ -475,6 +477,14 @@
 - [`app/src/main/java/io/nekohasekai/sagernet/fmt/wireguard/WireGuardBean.java`](../../app/src/main/java/io/nekohasekai/sagernet/fmt/wireguard/WireGuardBean.java)
 - [`app/src/main/java/io/nekohasekai/sagernet/fmt/wireguard/WireGuardFmt.kt`](../../app/src/main/java/io/nekohasekai/sagernet/fmt/wireguard/WireGuardFmt.kt)
 
+## app/src/main/java/io/nekohasekai/sagernet/group/ConnectionTestPresentation.kt
+
+- [`app/src/main/java/io/nekohasekai/sagernet/group/ConnectionTestPresentation.kt`](../../app/src/main/java/io/nekohasekai/sagernet/group/ConnectionTestPresentation.kt)
+
+## app/src/main/java/io/nekohasekai/sagernet/group/ConnectionTestResult.kt
+
+- [`app/src/main/java/io/nekohasekai/sagernet/group/ConnectionTestResult.kt`](../../app/src/main/java/io/nekohasekai/sagernet/group/ConnectionTestResult.kt)
+
 ## app/src/main/java/io/nekohasekai/sagernet/group/GroupInterfaceAdapter.kt
 
 - [`app/src/main/java/io/nekohasekai/sagernet/group/GroupInterfaceAdapter.kt`](../../app/src/main/java/io/nekohasekai/sagernet/group/GroupInterfaceAdapter.kt)
@@ -721,6 +731,8 @@
 
 ## app/src/main/java/io/nekohasekai/sagernet/ui/lan
 
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/lan/GatewayProfileStore.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/lan/GatewayProfileStore.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/lan/GatewayProfileTargets.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/lan/GatewayProfileTargets.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/lan/LanDiscoveryFragment.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/lan/LanDiscoveryFragment.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/lan/LanEnvironment.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/lan/LanEnvironment.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/lan/LanProfileStore.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/lan/LanProfileStore.kt)
@@ -1312,6 +1324,7 @@
 ## app/src/test
 
 - [`app/src/test/java/io/nekohasekai/sagernet/fmt/v2ray/UnsupportedV2RayTransportTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/fmt/v2ray/UnsupportedV2RayTransportTest.kt)
+- [`app/src/test/java/io/nekohasekai/sagernet/group/FailureAndConnectionTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/group/FailureAndConnectionTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionFailureCategoryTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionFailureCategoryTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionUpdateGuardTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionUpdateGuardTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionUpdateResultTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionUpdateResultTest.kt)
@@ -1319,6 +1332,7 @@
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/LaunchRegressionTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/LaunchRegressionTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/ReleaseUpdatePolicyTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/ReleaseUpdatePolicyTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/RemoteReadabilityTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/RemoteReadabilityTest.kt)
+- [`app/src/test/java/io/nekohasekai/sagernet/ui/lan/GatewayProfileTargetsTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/lan/GatewayProfileTargetsTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/lan/LanDiscoveryTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/lan/LanDiscoveryTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/RemoteUiTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/RemoteUiTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/TransferImportInputTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/TransferImportInputTest.kt)
