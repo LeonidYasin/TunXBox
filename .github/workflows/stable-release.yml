@@ -99,7 +99,7 @@ jobs:
       - name: Build libcore.aar (if cache miss)
         run: |
           if [ ! -f app/libs/libcore.aar ]; then
-            ./run lib core
+            python3 buildScript/lib/core/build_verified.py
           else
             echo "libcore.aar restored from 16KB cache"
           fi
@@ -126,7 +126,9 @@ jobs:
         run: chmod +x gradlew
 
       - name: Check project documentation
-        run: python3 buildScript/check_project_docs.py
+        run: |
+          python3 buildScript/check_project_docs.py
+          python3 buildScript/test_reality_patch.py
 
       - name: Test browser transfer page
         run: node buildScript/test_tv_transfer_page.cjs
