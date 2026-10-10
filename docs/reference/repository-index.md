@@ -8,14 +8,14 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **686**.
+Всего tracked файлов: **690**.
 
 | Раздел | Файлов |
 |---|---|
 | `.github` | 10 |
 | `app` | 12 |
 | `app/src/androidTest` | 1 |
-| `app/src/main` | 11 |
+| `app/src/main` | 12 |
 | `app/src/main/java/com/github/shadowsocks/plugin` | 2 |
 | `app/src/main/java/io/nekohasekai/sagernet/BootReceiver.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/Constants.kt` | 1 |
@@ -90,6 +90,7 @@
 | `app/src/main/java/io/nekohasekai/sagernet/ktx/TvDeviceUtil.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ktx/Utils.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/plugin/PluginManager.kt` | 1 |
+| `app/src/main/java/io/nekohasekai/sagernet/ui/AboutBuildInfo.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/AboutFragment.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/AppLifecycleActions.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/AppListActivity.kt` | 1 |
@@ -198,10 +199,10 @@
 | `app/src/main/res/values-zh-rHK` | 1 |
 | `app/src/main/res/values-zh-rTW` | 1 |
 | `app/src/main/res/xml` | 24 |
-| `app/src/test` | 17 |
+| `app/src/test` | 18 |
 | `buildScript` | 29 |
 | `buildSrc` | 2 |
-| `docs` | 22 |
+| `docs` | 23 |
 | `gradle` | 2 |
 | `libcore` | 42 |
 | `Корень` | 15 |
@@ -245,6 +246,7 @@
 - [`app/src/main/aidl/io/nekohasekai/sagernet/aidl/ISagerNetServiceCallback.aidl`](../../app/src/main/aidl/io/nekohasekai/sagernet/aidl/ISagerNetServiceCallback.aidl)
 - [`app/src/main/aidl/io/nekohasekai/sagernet/aidl/SpeedDisplayData.aidl`](../../app/src/main/aidl/io/nekohasekai/sagernet/aidl/SpeedDisplayData.aidl)
 - [`app/src/main/aidl/io/nekohasekai/sagernet/aidl/TrafficData.aidl`](../../app/src/main/aidl/io/nekohasekai/sagernet/aidl/TrafficData.aidl)
+- [`app/src/main/assets/COPYING`](../../app/src/main/assets/COPYING)
 - [`app/src/main/assets/LICENSE`](../../app/src/main/assets/LICENSE)
 - [`app/src/main/assets/proxy_packagename.txt`](../../app/src/main/assets/proxy_packagename.txt)
 - [`app/src/main/assets/tv-transfer.html`](../../app/src/main/assets/tv-transfer.html)
@@ -572,6 +574,10 @@
 ## app/src/main/java/io/nekohasekai/sagernet/plugin/PluginManager.kt
 
 - [`app/src/main/java/io/nekohasekai/sagernet/plugin/PluginManager.kt`](../../app/src/main/java/io/nekohasekai/sagernet/plugin/PluginManager.kt)
+
+## app/src/main/java/io/nekohasekai/sagernet/ui/AboutBuildInfo.kt
+
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/AboutBuildInfo.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/AboutBuildInfo.kt)
 
 ## app/src/main/java/io/nekohasekai/sagernet/ui/AboutFragment.kt
 
@@ -1328,6 +1334,7 @@
 - [`app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionFailureCategoryTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionFailureCategoryTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionUpdateGuardTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionUpdateGuardTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionUpdateResultTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionUpdateResultTest.kt)
+- [`app/src/test/java/io/nekohasekai/sagernet/ui/AboutBuildInfoTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/AboutBuildInfoTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/BrandingRecoveryTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/BrandingRecoveryTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/LaunchRegressionTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/LaunchRegressionTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/ReleaseUpdatePolicyTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/ReleaseUpdatePolicyTest.kt)
@@ -1399,6 +1406,7 @@
 - [`docs/scenarios.md`](../../docs/scenarios.md)
 - [`docs/security.md`](../../docs/security.md)
 - [`docs/signing-and-updates.md`](../../docs/signing-and-updates.md)
+- [`docs/support-services-proposal.md`](../../docs/support-services-proposal.md)
 - [`docs/tv-readiness-plan.md`](../../docs/tv-readiness-plan.md)
 - [`docs/tv-transfer.md`](../../docs/tv-transfer.md)
 - [`docs/ui-quality-review.md`](../../docs/ui-quality-review.md)

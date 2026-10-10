@@ -107,6 +107,39 @@ class EmulatorSmokeTest {
         visibleText(title).click()
     }
 
+    @Test fun aboutShowsBuildIdentitySupportAndFullLicense() {
+        TvUiPreferences.phoneMode = true
+        scenario = ActivityScenario.launch<MainActivity>(Intent(context, MainActivity::class.java)
+            .putExtra("tv_tools", true).putExtra("tv_destination", R.id.nav_about))
+        val scroll = UiScrollable(UiSelector().scrollable(true))
+        assertTrue(scroll.scrollIntoView(UiSelector().text(text(R.string.about_build_details))))
+        visibleText(text(R.string.about_build_details)).click()
+        val message = requireNotNull(device.wait(Until.findObject(By.res("android", "message")), timeout)).text
+        assertTrue(message.contains(io.nekohasekai.sagernet.BuildConfig.VERSION_NAME))
+        assertTrue(message.contains(io.nekohasekai.sagernet.BuildConfig.BUILD_COMMIT))
+        assertTrue(message.contains("Android versionCode"))
+        assertTrue(message.contains("Installed signing certificate SHA-256"))
+        assertTrue(message.contains("CI build number / run ID"))
+        assertNotNull(device.findObject(By.res("android", "button3")))
+        device.findObject(By.res("android", "button1")).click()
+        assertTrue(device.wait(Until.gone(By.res("android", "message")), timeout))
+        assertTrue(scroll.scrollIntoView(UiSelector().text(text(R.string.project_upstream_support))))
+        assertTrue(text(R.string.project_upstream_support).contains("TunXBox"))
+        visibleText(text(R.string.project_upstream_support)).click()
+        assertTrue(requireNotNull(device.wait(Until.findObject(By.res("android", "message")), timeout)).text.contains("GPL"))
+        device.findObject(By.res("android", "button2")).click()
+        assertTrue(device.wait(Until.gone(By.res("android", "message")), timeout))
+        assertTrue(scroll.scrollIntoView(UiSelector().resourceId(context.packageName + ":id/license_full")))
+        val license = requireNotNull(device.findObject(By.res(context.packageName, "license_full")))
+        assertTrue(license.isFocusable)
+        license.click()
+        val full = requireNotNull(device.wait(Until.findObject(By.res("android", "message")), timeout)).text
+        assertTrue(full.contains("Copyright (C) 2021 by nekohasekai"))
+        assertTrue(full.contains("GNU GENERAL PUBLIC LICENSE"))
+        assertTrue(full.contains("TERMS AND CONDITIONS"))
+        device.findObject(By.res("android", "button1")).click()
+    }
+
     @Test fun nativeCoreLoadsOnActualExpectedPageSize() {
         val expected = InstrumentationRegistry.getArguments().getString("expectedPageSize") ?: error("CI must specify page size")
         assertEquals(expected, device.executeShellCommand("getconf PAGESIZE").trim())

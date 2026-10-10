@@ -8,7 +8,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
-import android.text.util.Linkify
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.component1
@@ -50,11 +49,20 @@ class AboutFragment : ToolbarFragment(R.layout.layout_about) {
             .replace(R.id.about_fragment_holder, AboutContent())
             .commitAllowingStateLoss()
 
-        runOnDefaultDispatcher {
-            val license = view.context.assets.open("LICENSE").bufferedReader().readText()
-            onMainDispatcher {
-                binding.license.text = license
-                Linkify.addLinks(binding.license, Linkify.EMAIL_ADDRESSES or Linkify.WEB_URLS)
+        binding.license.setText(R.string.about_license_short)
+        binding.licenseFull.setOnClickListener {
+            runOnIoDispatcher {
+                val notice = view.context.assets.open("LICENSE").bufferedReader().use { it.readText() }
+                val terms = view.context.assets.open("COPYING").bufferedReader().use { it.readText() }
+                runOnMainDispatcher {
+                    if (!isAdded) return@runOnMainDispatcher
+                    MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.license)
+                        .setMessage(notice + "\n\n" + terms)
+                        .setPositiveButton(android.R.string.ok, null).show().also { dialog ->
+                            dialog.findViewById<android.widget.TextView>(android.R.id.message)?.setTextIsSelectable(true)
+                            dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).requestFocus()
+                        }
+                }
             }
         }
     }
@@ -91,7 +99,12 @@ class AboutFragment : ToolbarFragment(R.layout.layout_about) {
                             MaterialAboutActionItem.Builder()
                                 .text(R.string.app_build_identity)
                                 .subText(getString(R.string.app_build_identity_value, BuildConfig.APPLICATION_ID, BuildConfig.VERSION_CODE))
+                                .setOnClickAction { showBuildInfo() }
                                 .build())
+                        .addItem(MaterialAboutActionItem.Builder()
+                            .text(R.string.about_build_details)
+                            .subText("${BuildConfig.VERSION_NAME} · #${BuildConfig.BUILD_RUN_NUMBER} · ${BuildConfig.BUILD_COMMIT.take(8)}")
+                            .setOnClickAction { showBuildInfo() }.build())
                         .addItem(
                             MaterialAboutActionItem.Builder()
                                 .text(R.string.check_update_release)
@@ -201,7 +214,12 @@ class AboutFragment : ToolbarFragment(R.layout.layout_about) {
                         .addItem(MaterialAboutActionItem.Builder()
                             .icon(R.drawable.ic_baseline_card_giftcard_24)
                             .text(R.string.project_upstream_support).subText(R.string.project_upstream_support_hint)
-                            .setOnClickAction { requireContext().launchCustomTab(ProjectLinks.UPSTREAM_DONATE) }.build())
+                            .setOnClickAction {
+                                MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.project_upstream_support)
+                                    .setMessage(R.string.about_support_terms)
+                                    .setPositiveButton(R.string.project_report_issue) { _, _ -> requireContext().launchCustomTab(ProjectLinks.ISSUES) }
+                                    .setNegativeButton(android.R.string.cancel, null).show()
+                            }.build())
                         .build())
                 .build()
 
@@ -213,6 +231,37 @@ class AboutFragment : ToolbarFragment(R.layout.layout_about) {
             view.findViewById<RecyclerView>(R.id.mal_recyclerview).apply {
                 overScrollMode = RecyclerView.OVER_SCROLL_NEVER
             }
+        }
+
+        private fun showBuildInfo() {
+            val facts = listOf(
+                "App" to "TunXBox ${BuildConfig.VERSION_NAME}",
+                "Android versionCode" to BuildConfig.VERSION_CODE.toString(),
+                "Package" to BuildConfig.APPLICATION_ID,
+                "Variant" to "${BuildConfig.FLAVOR}/${BuildConfig.BUILD_TYPE}",
+                "Source commit" to BuildConfig.BUILD_COMMIT,
+                "Checkout ref" to BuildConfig.BUILD_SOURCE_REF,
+                "CI build number / run ID" to "${BuildConfig.BUILD_RUN_NUMBER} / ${BuildConfig.BUILD_RUN_ID}",
+                "CI URL" to if (BuildConfig.BUILD_RUN_ID == "local") "local build" else "${ProjectLinks.REPOSITORY}/actions/runs/${BuildConfig.BUILD_RUN_ID}",
+                "Build time (UTC)" to BuildConfig.BUILD_TIME_UTC,
+                "sing-box runtime" to runCatching { Libcore.versionBox() }.getOrDefault("unavailable"),
+                "sing-box source" to BuildConfig.CORE_SOURCE_COMMIT,
+                "libneko source" to BuildConfig.LIBNEKO_SOURCE_COMMIT,
+                "REALITY patch SHA-256" to BuildConfig.CORE_PATCH_SHA256,
+                "Installed signing certificate SHA-256" to runCatching { installedSigner() }.getOrDefault("unavailable"),
+                "Android / API" to "${Build.VERSION.RELEASE} / ${Build.VERSION.SDK_INT}",
+                "Device supported ABIs (not APK contents)" to Build.SUPPORTED_ABIS.joinToString(", ")
+            )
+            val summary = AboutBuildInfo.format(facts)
+            MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.about_build_details)
+                .setMessage(summary)
+                .setNeutralButton(R.string.about_copy_build_info) { _, _ ->
+                    val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                    clipboard.setPrimaryClip(android.content.ClipData.newPlainText("TunXBox build", summary))
+                }.setPositiveButton(android.R.string.ok, null).show().also { dialog ->
+                    dialog.findViewById<android.widget.TextView>(android.R.id.message)?.setTextIsSelectable(true)
+                    dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).requestFocus()
+                }
         }
 
         private fun installedSigner(): String {

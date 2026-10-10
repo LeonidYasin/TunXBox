@@ -159,12 +159,38 @@ fun Project.setupApp() {
     val buildSequence = System.getenv("TUNXBOX_BUILD_SEQUENCE")?.toIntOrNull() ?: 0
     require(versionBase in 1..2100 && buildSequence in 0..999998) { "Invalid Android version sequence" }
     val verCode = versionBase * 1_000_000 + 999999
+    // Actual checkout identity, not the workflow's possibly different trigger SHA.
+    fun gitValue(vararg args: String): String = runCatching {
+        val process = ProcessBuilder(listOf("git") + args).directory(rootProject.projectDir).start()
+        val value = process.inputStream.bufferedReader().readText().trim()
+        if (process.waitFor() == 0) value else ""
+    }.getOrDefault("")
+    val sourceCommit = gitValue("rev-parse", "HEAD").takeIf { it.matches(Regex("[0-9a-f]{40}")) } ?: "unknown"
+    require(System.getenv("CI") != "true" || sourceCommit != "unknown") { "CI requires actual checkout SHA" }
+    val sourceRef = gitValue("symbolic-ref", "--short", "HEAD").ifBlank { "detached" }
+    val pins = rootProject.file("buildScript/lib/core/get_source_env.sh").readText()
+    fun sourcePin(name: String): String = Regex(name + "=\"([0-9a-f]{40})\"").find(pins)?.groupValues?.get(1) ?: "unknown"
+    val patch = rootProject.file("buildScript/lib/core/reality-hybrid.patch")
+    val patchHash = if (patch.exists()) java.security.MessageDigest.getInstance("SHA-256")
+        .digest(patch.readBytes()).joinToString("") { "%02x".format(it.toInt() and 255) } else "none"
+    val buildRun = System.getenv("GITHUB_RUN_NUMBER")?.takeIf { it.matches(Regex("[0-9]+")) } ?: "local"
+    val buildRunId = System.getenv("GITHUB_RUN_ID")?.takeIf { it.matches(Regex("[0-9]+")) } ?: "local"
+    val buildTime = java.time.Instant.now().toString()
+    fun quoted(value: String) = "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
     android.apply {
         defaultConfig {
             applicationId = pkgName
             versionCode = verCode
             versionName = verName
             buildConfigField("String", "PRE_VERSION_NAME", "\"\"")
+            buildConfigField("String", "BUILD_COMMIT", quoted(sourceCommit))
+            buildConfigField("String", "BUILD_SOURCE_REF", quoted(sourceRef))
+            buildConfigField("String", "BUILD_RUN_NUMBER", quoted(buildRun))
+            buildConfigField("String", "BUILD_RUN_ID", quoted(buildRunId))
+            buildConfigField("String", "BUILD_TIME_UTC", quoted(buildTime))
+            buildConfigField("String", "CORE_SOURCE_COMMIT", quoted(sourcePin("COMMIT_SING_BOX")))
+            buildConfigField("String", "LIBNEKO_SOURCE_COMMIT", quoted(sourcePin("COMMIT_LIBNEKO")))
+            buildConfigField("String", "CORE_PATCH_SHA256", quoted(patchHash))
         }
     }
     setupAppCommon()

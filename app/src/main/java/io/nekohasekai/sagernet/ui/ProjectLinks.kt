@@ -8,5 +8,4 @@ object ProjectLinks {
     const val ISSUES = "$REPOSITORY/issues"
     const val DOCUMENTATION = "$REPOSITORY#readme"
     const val UPSTREAM = "https://github.com/MatsuriDayo/NekoBoxForAndroid"
-    const val UPSTREAM_DONATE = "https://matsuridayo.github.io/index_docs/#donate"
 }
