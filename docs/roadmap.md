@@ -182,3 +182,7 @@ Rc.125: 195 JVM PASS; Android 4KB 11 tests / 1 failure на достижимос
 ### Следующая итерация после rc.126
 
 Rc.126 не опубликована: 11 Android 4KB / 1 failure на той же достижимости About, остальные 10 прошли. Wrap-content/isNestedScrollingEnabled сами по себе не устранили перехват свайпов внутренним RecyclerView. Следующая итерация запрещает вертикальную прокрутку его LayoutManager, задаёт явный id внешнему ScrollView и сохраняет прежние assertions плюс достижимость Telegram. Issues включены; [Hysteria2 issue #6](https://github.com/LeonidYasin/TunXBox/issues/6) хранит расследование R13.
+
+### Исправление архитектуры About после rc.127
+
+Rc.127 не опубликована: тот же тест не достиг Telegram; остальные 10 Android 4KB сценариев прошли. Точечное отключение nested/inner scroll не решило реальную проблему. Следующая итерация удаляет внешний NestedScrollView полностью: intro, информация о сборке, контакты, upstream attribution и лицензия — карточки единственного нативного MaterialAbout RecyclerView. Полный GPL/notices открываются по фокусируемой action row. Прежние assertions сохранены, селектор прокрутки явно указывает единственный список. Требуется полный CI/приёмка, не объявлять устранённым до PASS.

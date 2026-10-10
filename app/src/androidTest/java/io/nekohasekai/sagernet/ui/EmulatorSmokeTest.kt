@@ -111,7 +111,7 @@ class EmulatorSmokeTest {
         TvUiPreferences.phoneMode = true
         scenario = ActivityScenario.launch<MainActivity>(Intent(context, MainActivity::class.java)
             .putExtra("tv_tools", true).putExtra("tv_destination", R.id.nav_about))
-        val scroll = UiScrollable(UiSelector().resourceId(context.packageName + ":id/about_scroll"))
+        val scroll = UiScrollable(UiSelector().resourceId(context.packageName + ":id/mal_recyclerview"))
         assertTrue(scroll.scrollIntoView(UiSelector().text(text(R.string.about_build_details))))
         visibleText(text(R.string.about_build_details)).click()
         val message = requireNotNull(device.wait(Until.findObject(By.res("android", "message")), timeout)).text
@@ -131,10 +131,12 @@ class EmulatorSmokeTest {
         assertTrue(requireNotNull(device.wait(Until.findObject(By.res("android", "message")), timeout)).text.contains("GPL"))
         device.findObject(By.res("android", "button2")).click()
         assertTrue(device.wait(Until.gone(By.res("android", "message")), timeout))
-        assertTrue(scroll.scrollIntoView(UiSelector().resourceId(context.packageName + ":id/license_full")))
-        val license = requireNotNull(device.findObject(By.res(context.packageName, "license_full")))
-        assertTrue(license.isFocusable)
-        license.click()
+        assertTrue("Full license action must be reachable", scroll.scrollIntoView(UiSelector().text(text(R.string.about_license_full))))
+        var license: UiObject2? = visibleText(text(R.string.about_license_full))
+        repeat(6) { if (license?.isClickable != true) license = license?.parent }
+        val licenseAction = requireNotNull(license) { "Full license must have a clickable action row" }
+        assertTrue("Full license action remains remote-focusable", licenseAction.isFocusable)
+        licenseAction.click()
         val full = requireNotNull(device.wait(Until.findObject(By.res("android", "message")), timeout)).text
         assertTrue(full.contains("Copyright (C) 2021 by nekohasekai"))
         assertTrue(full.contains("GNU GENERAL PUBLIC LICENSE"))

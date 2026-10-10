@@ -21,7 +21,6 @@ import com.danielstone.materialaboutlibrary.model.MaterialAboutCard
 import com.danielstone.materialaboutlibrary.model.MaterialAboutList
 import io.nekohasekai.sagernet.BuildConfig
 import io.nekohasekai.sagernet.R
-import io.nekohasekai.sagernet.databinding.LayoutAboutBinding
 import io.nekohasekai.sagernet.ktx.*
 import io.nekohasekai.sagernet.plugin.PluginManager.loadString
 import io.nekohasekai.sagernet.utils.PackageCache
@@ -40,8 +39,6 @@ class AboutFragment : ToolbarFragment(R.layout.layout_about) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val binding = LayoutAboutBinding.bind(view)
-
         ViewCompat.setOnApplyWindowInsetsListener(view, ListListener)
         toolbar.setTitle(R.string.menu_about)
 
@@ -49,22 +46,6 @@ class AboutFragment : ToolbarFragment(R.layout.layout_about) {
             .replace(R.id.about_fragment_holder, AboutContent())
             .commitAllowingStateLoss()
 
-        binding.license.setText(R.string.about_license_short)
-        binding.licenseFull.setOnClickListener {
-            runOnIoDispatcher {
-                val notice = view.context.assets.open("LICENSE").bufferedReader().use { it.readText() }
-                val terms = view.context.assets.open("COPYING").bufferedReader().use { it.readText() }
-                runOnMainDispatcher {
-                    if (!isAdded) return@runOnMainDispatcher
-                    MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.license)
-                        .setMessage(notice + "\n\n" + terms)
-                        .setPositiveButton(android.R.string.ok, null).show().also { dialog ->
-                            dialog.findViewById<android.widget.TextView>(android.R.id.message)?.setTextIsSelectable(true)
-                            dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).requestFocus()
-                        }
-                }
-            }
-        }
     }
 
     class AboutContent : MaterialAboutFragment() {
@@ -81,6 +62,10 @@ class AboutFragment : ToolbarFragment(R.layout.layout_about) {
 
         override fun getMaterialAboutList(activityContext: Context): MaterialAboutList {
             return MaterialAboutList.Builder()
+                .addCard(MaterialAboutCard.Builder().outline(false)
+                    .title(R.string.app_name_long)
+                    .addItem(MaterialAboutActionItem.Builder().text(R.string.app_desc).build())
+                    .build())
                 .addCard(
                     MaterialAboutCard.Builder()
                         .outline(false)
@@ -224,8 +209,12 @@ class AboutFragment : ToolbarFragment(R.layout.layout_about) {
                         .addItem(MaterialAboutActionItem.Builder()
                             .text(R.string.project_upstream_neko).subText(R.string.project_upstream_hint)
                             .setOnClickAction { requireContext().launchCustomTab(ProjectLinks.UPSTREAM) }.build())
-
                         .build())
+                .addCard(MaterialAboutCard.Builder().outline(false).title(R.string.license)
+                    .addItem(MaterialAboutActionItem.Builder().text(R.string.about_license_short).build())
+                    .addItem(MaterialAboutActionItem.Builder().text(R.string.about_license_full)
+                        .setOnClickAction { showFullLicense() }.build())
+                    .build())
                 .build()
 
         }
@@ -233,21 +222,26 @@ class AboutFragment : ToolbarFragment(R.layout.layout_about) {
         override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
             super.onViewCreated(view, savedInstanceState)
 
-            // The outer About NestedScrollView owns scrolling, including support/license.
-            // A viewport-sized inner RecyclerView made lower cards unreachable to the outer scroller.
-            view.layoutParams?.let { params ->
-                params.height = android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-                view.layoutParams = params
-            }
+            // A single native list owns all scrolling, including intro, support and license.
             view.findViewById<RecyclerView>(R.id.mal_recyclerview).apply {
                 overScrollMode = RecyclerView.OVER_SCROLL_NEVER
-                isNestedScrollingEnabled = false
-                // Disabling nested scrolling alone does not stop RecyclerView consuming swipes.
-                // Only the outer ScrollView may move the content, including lower support cards.
-                layoutManager = object : androidx.recyclerview.widget.LinearLayoutManager(requireContext()) {
-                    override fun canScrollVertically() = false
+            }
+        }
+
+        private fun showFullLicense() {
+            val assets = requireContext().assets
+            runOnIoDispatcher {
+                val notice = assets.open("LICENSE").bufferedReader().use { it.readText() }
+                val terms = assets.open("COPYING").bufferedReader().use { it.readText() }
+                runOnMainDispatcher {
+                    if (!isAdded) return@runOnMainDispatcher
+                    MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.license)
+                        .setMessage(notice + "\n\n" + terms)
+                        .setPositiveButton(android.R.string.ok, null).show().also { dialog ->
+                            dialog.findViewById<android.widget.TextView>(android.R.id.message)?.setTextIsSelectable(true)
+                            dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).requestFocus()
+                        }
                 }
-                layoutParams = layoutParams.apply { height = android.view.ViewGroup.LayoutParams.WRAP_CONTENT }
             }
         }
 
