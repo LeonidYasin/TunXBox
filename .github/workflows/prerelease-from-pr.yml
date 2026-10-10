@@ -353,8 +353,9 @@ jobs:
         run: |
           set -euo pipefail
           SHORT_SHA="${BUILD_SHA:0:8}"
+          INSTALLED_VERSION=$(python3 -c 'import json; print(json.load(open("dist/apk-manifest.json"))["installedVersionName"])')
           NOTES="Rolling pre-release APK for testing before merge.
-          Version: ${VERSION}
+          Version: ${INSTALLED_VERSION}
           Built from commit: ${BUILD_SHA}
           Branch: ${{ github.event.pull_request.head.ref || github.ref_name }}
           Platform: Android 5.0+; TV and phone interfaces in the same APK.
@@ -390,10 +391,10 @@ jobs:
             echo "Pre-release $TAG exists - refreshing notes + overwriting APK with the fresh build."
             # Recreating a rolling tag through an authorized integration can turn its release into a draft.
             # Explicitly reattach and publish it only AFTER all APK gates succeeded.
-            gh release edit "$TAG" --tag "$TAG" --draft=false --prerelease --notes "$NOTES" --target "$BUILD_SHA"
+            gh release edit "$TAG" --title "TunXBox ${INSTALLED_VERSION} (rolling pre-release)" --tag "$TAG" --draft=false --prerelease --notes "$NOTES" --target "$BUILD_SHA"
           else
             gh release create "$TAG" \
-              --title "TunXBox $TAG (rolling pre-release)" \
+              --title "TunXBox ${INSTALLED_VERSION} (rolling pre-release)" \
               --notes "$NOTES" \
               --target "$BUILD_SHA" \
               --prerelease
@@ -437,7 +438,7 @@ jobs:
           # Finally verify visible names, stored asset names and HTTP download filenames agree.
           gh api "repos/${{ github.repository }}/releases/tags/$TAG" > /tmp/release-final.json
           python3 - <<'PYNAMES'
-          import json, pathlib, urllib.parse
+          import json, pathlib, urllib.parse, urllib.request, email.message
           release = json.loads(pathlib.Path('/tmp/release-final.json').read_text())
           expected = {item['name'] for item in json.loads(pathlib.Path('dist/apk-manifest.json').read_text())['apks']}
           actual = set()
@@ -446,9 +447,14 @@ jobs:
                   continue
               assert asset.get('label') in (None, '', asset['name']), 'Misleading display label'
               assert urllib.parse.unquote(asset['browser_download_url'].rsplit('/', 1)[-1]) == asset['name']
+              with urllib.request.urlopen(asset['browser_download_url'], timeout=60) as response:
+                  assert response.status == 200
+                  header = email.message.Message()
+                  header['Content-Disposition'] = response.headers.get('Content-Disposition', '')
+                  assert header.get_filename() == asset['name'], 'HTTP download filename differs from Assets'
               actual.add(asset['name'])
           assert actual == expected, 'Rolling release contains stale or missing APKs'
-          print('Asset names and download URLs agree; no obsolete APKs')
+          print('Asset labels, names, URLs and HTTP Content-Disposition filenames agree; no obsolete APKs')
           PYNAMES
           echo "Rolling pre-release ready: $TAG (commit $SHORT_SHA)"
           echo "Release publishedAt: $(gh release view "$TAG" --json publishedAt -q .publishedAt)"

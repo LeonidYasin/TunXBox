@@ -61,3 +61,9 @@ OpenSSL сам запросит пароль. Восстановленный `si
 
 - Установить два последовательных APK с новым постоянным сертификатом через Android installer без удаления и убедиться, что профили/настройки сохранены.
 - Проверить реальный пульт, TV-прошивку и VPN: JVM-тесты не запускают JNI/Go и не имитируют системную установку приложения.
+
+## Информативные имена новых APK
+
+Имя новых файлов строится из фактических `versionName` и `versionCode`, прочитанных из подписанного APK, а не только базовой версии/taga. Формат: `TunXBox-{installedVersionName}-android-tv-phone-{ABI}-{flavor}-release-vc{versionCode}-g{shortCommit}.apk`. Например, `TunXBox-1.6.0-rc.120-android-tv-phone-universal-preview-release-vc48000120-gfe912123.apk` — пример формата, не переименование ранее опубликованного файла. Номер RC должен совпадать с build sequence в versionCode; universal означает фактические четыре ABI. `preview-release` — тестовый канал, но подписанная release-сборка, не debug. Stable использует фактическую версию без RC и `oss-release`.
+
+Для rolling RC публикация сверяет имя файла/manifest/SHA256SUMS, Assets label/name, URL и реальный HTTP `Content-Disposition` после redirects. Заголовок release page показывает установленную версию с номером RC. При расхождении проверка падает; стабильные ранее опубликованные Assets не переименовываются. Имена APK не содержат ключей или данных подписки.
