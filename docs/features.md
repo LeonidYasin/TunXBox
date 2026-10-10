@@ -41,6 +41,7 @@ mindmap
       Ссылка и подписка
       Буфер и файл
       QR и браузер
+      LAN поиск — кандидат 1.6.0
     Редактирование
       17 редакторов
       Цепочки и custom config
@@ -60,6 +61,8 @@ mindmap
 | F08 | Группы и подписки, обновление и metadata | [GroupFragment](../app/src/main/java/io/nekohasekai/sagernet/ui/GroupFragment.kt), [GroupUpdater](../app/src/main/java/io/nekohasekai/sagernet/group/GroupUpdater.kt), [SubscriptionUpdater](../app/src/main/java/io/nekohasekai/sagernet/bg/SubscriptionUpdater.kt). HTTP(S), sn/clash wrappers; доступ к URL требуется принимающему устройству. |
 | F09 | Цепочки, selector group, front/landing proxy | [ProxyGroup](../app/src/main/java/io/nekohasekai/sagernet/database/ProxyGroup.kt), [ConfigBuilder](../app/src/main/java/io/nekohasekai/sagernet/fmt/ConfigBuilder.kt), ChainSettings. Связи используют локальные DB IDs. Остаточные XML balancer resources сами по себе не доказывают доступную автоматическую балансировку. |
 | F10 | Явные QR receive/send; копия целой группы | [TvTransferServer](../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvTransferServer.kt), [TvTransferClient](../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvTransferClient.kt), [TvGroupTransfer](../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvGroupTransfer.kt). Группа не сводится к одному выбранному профилю. Копируются beans/порядок/внутренние ссылки, а не глобальные настройки или подписка. |
+
+| F19 | Ручной LAN-поиск: кандидат 1.6.0, не stable 1.5.0 | [Scope/архитектура/приёмка](lan-discovery.md). Shared TV/Phone; opt-in, физическая сеть, protocol evidence, cancel/deadline, ручной save/dedupe. Не Internet-health test и не auto-connect. |
 
 ### Форматы и протоколы
 

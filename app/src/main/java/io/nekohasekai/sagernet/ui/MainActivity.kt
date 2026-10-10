@@ -164,7 +164,7 @@ class MainActivity : ThemedActivity(),
             }
         }
 
-        if (isPreview && !intent.getBooleanExtra("tv_tools", false)) {
+        if (savedInstanceState == null && isPreview && !intent.getBooleanExtra("tv_tools", false)) {
             MaterialAlertDialogBuilder(this)
                 .setTitle(BuildConfig.PRE_VERSION_NAME)
                 .setMessage(R.string.preview_version_hint)
@@ -387,10 +387,13 @@ class MainActivity : ThemedActivity(),
 
     @SuppressLint("CommitTransaction")
     fun displayFragment(fragment: ToolbarFragment) {
-        if (fragment is ConfigurationFragment) {
+        // BottomAppBar translation is not a reliable hide before its first layout.
+        // This creation tool must not have an overlapping global VPN control panel.
+        binding.stats.visibility = if (fragment is io.nekohasekai.sagernet.ui.lan.LanDiscoveryFragment) View.GONE else View.VISIBLE
+        if (fragment is ConfigurationFragment || (DataStore.showBottomBar && fragment !is io.nekohasekai.sagernet.ui.lan.LanDiscoveryFragment)) {
             binding.stats.allowShow = true
             binding.fab.show()
-        } else if (!DataStore.showBottomBar) {
+        } else {
             binding.stats.allowShow = false
             binding.stats.performHide()
             binding.fab.hide()
@@ -411,6 +414,13 @@ class MainActivity : ThemedActivity(),
             R.id.nav_route -> displayFragment(RouteFragment())
             R.id.nav_settings -> displayFragment(SettingsFragment())
             R.id.nav_traffic -> displayFragment(WebviewFragment())
+            R.id.nav_lan_discovery -> {
+                val quick = intent.getBooleanExtra("gateway_quick", false)
+                intent.removeExtra("gateway_quick")
+                displayFragment(io.nekohasekai.sagernet.ui.lan.LanDiscoveryFragment().apply {
+                    arguments = android.os.Bundle().apply { putBoolean("gateway_quick", quick) }
+                })
+            }
             R.id.nav_tools -> displayFragment(ToolsFragment())
             R.id.nav_logcat -> displayFragment(LogcatFragment())
             R.id.nav_faq -> {

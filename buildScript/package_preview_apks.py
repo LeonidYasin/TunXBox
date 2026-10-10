@@ -24,9 +24,13 @@ def apk_abis(path):
     return sorted(abis)
 
 
-def apk_name(version, commit, abis, channel="rc", flavor="preview"):
+def apk_name(version, commit, abis, channel="rc", flavor="preview", version_code=None):
     if not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?", version):
         raise ValueError("Invalid version")
+    if type(version_code) is not int or not 0 < version_code <= 2100000000:
+        raise ValueError("Expected actual positive Android versionCode")
+    if not abis or len(set(abis)) != len(abis) or not set(abis) <= SUPPORTED_ABIS:
+        raise ValueError("Invalid native ABI set")
     if not re.fullmatch(r"[0-9a-f]{40}", commit):
         raise ValueError("Expected full lowercase commit SHA")
     if set(abis) == SUPPORTED_ABIS:
@@ -41,8 +45,11 @@ def apk_name(version, commit, abis, channel="rc", flavor="preview"):
         raise ValueError("Invalid release channel/flavor")
     if channel == "stable" and not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version):
         raise ValueError("Stable version must not have a prerelease suffix")
-    release_version = version if channel == "stable" or "-" in version else version + "-rc"
-    return f"TunXBox-{release_version}-android-tv-phone-{architecture}-{flavor}-release-{commit[:8]}.apk"
+    if channel == "rc":
+        match = re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+-rc\.([1-9][0-9]*)", version)
+        if not match or int(match[1]) != version_code % 1000000:
+            raise ValueError("Numbered RC versionName must match actual versionCode sequence")
+    return f"TunXBox-{version}-android-tv-phone-{architecture}-{flavor}-release-vc{version_code}-g{commit[:8]}.apk"
 
 
 def read_identity(source, apksigner, aapt):
@@ -79,7 +86,9 @@ def package(apk_dir, output_dir, version, commit, apksigner, aapt, certificate, 
         abis = apk_abis(source)
         if channel == "stable" and installed_version != version:
             raise ValueError("Stable APK versionName does not match release")
-        name = apk_name(version, commit, abis, channel, flavor)
+        if channel == "rc" and not re.fullmatch(re.escape(version) + r"-rc\.[1-9][0-9]*", installed_version):
+            raise ValueError("RC APK versionName does not match release series")
+        name = apk_name(installed_version, commit, abis, channel, flavor, code)
         if name in seen:
             raise ValueError(f"Ambiguous duplicate ABI output: {name}")
         seen.add(name)

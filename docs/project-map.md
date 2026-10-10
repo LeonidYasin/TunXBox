@@ -4,7 +4,7 @@
 
 TunXBox — Android-клиент на базе NekoBox/SagerNet и форка sing-box, а не поставщик VPN-подписки, облачный синхронизатор или официальная сборка upstream. Код UI сохраняет namespace `io.nekohasekai.sagernet`, установленный пакет — `com.tunxbox.app`.
 
-Это карта возможностей и исходников принятого master после PR #1. «Есть в коде» не означает «проверено на всех устройствах». Динамическая доступность зависит от API Android, режима, группы, состояния сервиса и установленных плагинов. Неиспользуемые наследованные ресурсы тоже входят в [реестр](reference/repository-index.md), но не объявляются доступными функциями.
+Это карта принятого baseline и текущей отдельной feature-ветки. Ручной LAN-поиск пока кандидат 1.6.0 и не входит в стабильную 1.5.0; [границы и приёмка](lan-discovery.md). «Есть в коде» не означает «проверено на всех устройствах». Динамическая доступность зависит от API Android, режима, группы, состояния сервиса и установленных плагинов. Неиспользуемые наследованные ресурсы тоже входят в [реестр](reference/repository-index.md), но не объявляются доступными функциями.
 
 ```mermaid
 %%{init: {"theme": "base", "themeVariables": {"primaryColor": "#E5F2FC", "primaryTextColor": "#2C2C2B", "primaryBorderColor": "#2783DE", "lineColor": "#7D7A75", "secondaryColor": "#E8F1EC", "tertiaryColor": "#F9F8F7", "fontFamily": "Arial", "cScale0": "#E5F2FC", "cScaleLabel0": "#2C2C2B", "cScale1": "#E5F2FC", "cScaleLabel1": "#2C2C2B", "cScale2": "#E5F2FC", "cScaleLabel2": "#2C2C2B", "cScale3": "#E5F2FC", "cScaleLabel3": "#2C2C2B", "cScale4": "#E5F2FC", "cScaleLabel4": "#2C2C2B", "cScale5": "#E5F2FC", "cScaleLabel5": "#2C2C2B", "cScale6": "#E5F2FC", "cScaleLabel6": "#2C2C2B", "cScale7": "#E5F2FC", "cScaleLabel7": "#2C2C2B", "cScale8": "#E5F2FC", "cScaleLabel8": "#2C2C2B", "cScale9": "#E5F2FC", "cScaleLabel9": "#2C2C2B", "cScale10": "#E5F2FC", "cScaleLabel10": "#2C2C2B", "cScale11": "#E5F2FC", "cScaleLabel11": "#2C2C2B"}}}%%
@@ -12,6 +12,7 @@ mindmap
   root((TunXBox))
     Интерфейсы
     Профили и группы
+      Ручной LAN поиск — кандидат 1.6.0
     Подключение и диагностика
     Маршруты и настройки
     QR и обмен
@@ -32,6 +33,7 @@ mindmap
 | Профили | 17 ручных редакторов; импорт, CRUD, выбор, активный профиль, QR, файл/буфер, цепочки и custom config | [Каталог](features.md#профили-и-группы), [XML-параметры](reference/preferences.md) |
 | Группы | Обычные/подписки, обновления, сортировка, дубликаты, тесты, selectors/front/landing, полная локальная копия группы | [F05–F10](features.md#профили-и-группы), [сценарии](scenarios.md) |
 | Подключение | VPN/локальный proxy, согласие Android, :bg foreground service, старт/стоп, tile/shortcuts, уведомления | [Архитектура](architecture.md), [S08–S11](scenarios.md) |
+| Ручной LAN-поиск | Физическая RFC1918 сеть, opt-in, ограниченный scan, protocol evidence, ручной выбор/сохранение; не auto-connect/failover | [F19 / приёмка](lan-discovery.md) |
 | Диагностика | Трафик, активный tunnel URL test, TCP/URL тесты группы, история результатов, логи, STUN, dashboard | [F11–F14](features.md#подключение-и-диагностика) |
 | Маршруты/настройки | Правила, per-app routing, DNS/IPv6/sniffing, TUN/MTU, TLS, mixed port, assets, power/network policies | [F15–F18](features.md#настройки-и-инструменты), [справочник](reference/preferences.md) |
 | QR/обмен | Явные receive/export/scanner направления; браузер без установки; индивидуальный QR и группа по LAN; токены/лимиты | [Руководство](tv-transfer.md), [границы доверия](security.md) |
@@ -50,3 +52,7 @@ mindmap
 4. **Риски:** [security](security.md) → [signing](signing-and-updates.md) → [decisions](decisions.md).
 
 Ни mind map, ни число тестов не являются разрешением автоматически слить PR. Приёмка владельца на телефоне и приставке остаётся отдельным этапом.
+
+## Динамический хост шлюза — план отдельного PR
+
+[Roadmap R11](roadmap.md#r11--динамический-хост-шлюз-по-умолчанию): логический host mode, разрешение actual default gateway выбранной доверенной physical сети, отображение адреса и контролируемое переподключение активного профиля при изменениях. Не DNS alias, не бесконтрольная отправка credentials в новую сеть и не непрерывный health/failover. В PR4/rc.120 реализовано только явное добавление/ручное обновление IP; владелец этот сценарий подтвердил. Динамический режим ещё не реализован.

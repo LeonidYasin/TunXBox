@@ -201,9 +201,9 @@ jobs:
           arch: x86_64
           profile: pixel_2
           avd-name: tunxbox-smoke-4k
-          ram-size: 2048M
+          ram-size: 3072M
           emulator-boot-timeout: 300
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          emulator-options: -no-window -gpu software -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
           script: bash buildScript/run_emulator_smoke.sh 4096
 
@@ -216,9 +216,9 @@ jobs:
           arch: x86_64
           profile: pixel_2
           avd-name: tunxbox-smoke-16k
-          ram-size: 2048M
+          ram-size: 3072M
           emulator-boot-timeout: 300
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          emulator-options: -no-window -gpu software -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
           script: bash buildScript/run_emulator_smoke.sh 16384
 
@@ -352,8 +352,9 @@ jobs:
         run: |
           set -euo pipefail
           SHORT_SHA="${BUILD_SHA:0:8}"
+          INSTALLED_VERSION=$(python3 -c 'import json; print(json.load(open("dist/apk-manifest.json"))["installedVersionName"])')
           NOTES="Rolling pre-release APK for testing before merge.
-          Version: ${VERSION}
+          Version: ${INSTALLED_VERSION}
           Built from commit: ${BUILD_SHA}
           Branch: ${{ github.event.pull_request.head.ref || github.ref_name }}
           Platform: Android 5.0+; TV and phone interfaces in the same APK.
@@ -361,14 +362,22 @@ jobs:
           APKs use the pinned persistent TunXBox signing key. New builds have increasing Android versionCode.
           Legacy builds signed with temporary keys require one-time export/backup and uninstall before this signing migration; later updates preserve app data.
           Universal APK includes all four bundled ABIs: ARM32, ARM64, x86 and x86_64 when confirmed by apk-manifest.json.
-          Actual filenames match Assets and download filenames; see SHA256SUMS.txt and apk-manifest.json."
+          Actual filenames match Assets and download filenames; see SHA256SUMS.txt and apk-manifest.json.
+          LAN UI PNGs are synthetic PreviewDebug emulator evidence, not physical-device or signed Release screenshots."
 
-          # Do not overwrite a newer release, even if an older workflow is rerun.
-          if gh release download "$TAG" --pattern apk-manifest.json --dir previous-release >/dev/null 2>&1; then
-            ALLOW_LEGACY=""
-            if [ "${{ github.event.inputs.allow_legacy_signer_migration }}" = "true" ]; then ALLOW_LEGACY="--allow-legacy"; fi
-            python3 buildScript/verify_update.py previous-release/apk-manifest.json dist/apk-manifest.json $ALLOW_LEGACY
+          # Fail closed: a NEW RC series must also upgrade over the current stable release.
+          # An existing RC must retain a readable manifest; a download failure is not a new series.
+          mkdir -p previous-release
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release download "$TAG" --pattern apk-manifest.json --dir previous-release
+          else
+            STABLE_TAG=$(gh api "repos/${{ github.repository }}/releases/latest" --jq .tag_name)
+            test -n "$STABLE_TAG"
+            gh release download "$STABLE_TAG" --pattern apk-manifest.json --dir previous-release
           fi
+          ALLOW_LEGACY=""
+          if [ "${{ github.event.inputs.allow_legacy_signer_migration }}" = "true" ]; then ALLOW_LEGACY="--allow-legacy"; fi
+          python3 buildScript/verify_update.py previous-release/apk-manifest.json dist/apk-manifest.json $ALLOW_LEGACY
           # Roll the git tag onto the CURRENT commit so the release page shows the
           # fresh source revision instead of a stale one. Without this, --clobber
           # updates only the APK asset and the tag keeps pointing at an old SHA.
@@ -381,16 +390,25 @@ jobs:
             echo "Pre-release $TAG exists - refreshing notes + overwriting APK with the fresh build."
             # Recreating a rolling tag through an authorized integration can turn its release into a draft.
             # Explicitly reattach and publish it only AFTER all APK gates succeeded.
-            gh release edit "$TAG" --tag "$TAG" --draft=false --prerelease --notes "$NOTES" --target "$BUILD_SHA"
+            gh release edit "$TAG" --title "TunXBox ${INSTALLED_VERSION} (rolling pre-release)" --tag "$TAG" --draft=false --prerelease --notes "$NOTES" --target "$BUILD_SHA"
           else
             gh release create "$TAG" \
-              --title "TunXBox $TAG (rolling pre-release)" \
+              --title "TunXBox ${INSTALLED_VERSION} (rolling pre-release)" \
               --notes "$NOTES" \
               --target "$BUILD_SHA" \
               --prerelease
           fi
           # Upload the REAL names; #label changes only GitHub display text, not download names.
           gh release upload "$TAG" dist/*.apk dist/SHA256SUMS.txt dist/apk-manifest.json --clobber
+          # Whitelisted synthetic PreviewDebug evidence only, captured BEFORE signing secrets.
+          # Never publish general logcat/hierarchy/QR screenshots or arbitrary diagnostic artifacts.
+          for orientation in portrait landscape; do
+            SOURCE=$(find build/emulator-results/4096/screens -type f -name "lan_discovery_${orientation}.png" -print)
+            test -s "$SOURCE"
+            NAME="TunXBox-${VERSION}-android-emulator-preview-debug-lan-${orientation}-${SHORT_SHA}.png"
+            cp "$SOURCE" "dist/$NAME"
+            gh release upload "$TAG" "dist/$NAME" --clobber
+          done
 
           # Verify uploaded bytes before removing superseded APKs from this rolling release.
           gh release view "$TAG" --json assets > /tmp/release-assets.json
@@ -419,7 +437,7 @@ jobs:
           # Finally verify visible names, stored asset names and HTTP download filenames agree.
           gh api "repos/${{ github.repository }}/releases/tags/$TAG" > /tmp/release-final.json
           python3 - <<'PYNAMES'
-          import json, pathlib, urllib.parse
+          import json, pathlib, urllib.parse, urllib.request, email.message
           release = json.loads(pathlib.Path('/tmp/release-final.json').read_text())
           expected = {item['name'] for item in json.loads(pathlib.Path('dist/apk-manifest.json').read_text())['apks']}
           actual = set()
@@ -428,9 +446,14 @@ jobs:
                   continue
               assert asset.get('label') in (None, '', asset['name']), 'Misleading display label'
               assert urllib.parse.unquote(asset['browser_download_url'].rsplit('/', 1)[-1]) == asset['name']
+              with urllib.request.urlopen(asset['browser_download_url'], timeout=60) as response:
+                  assert response.status == 200
+                  header = email.message.Message()
+                  header['Content-Disposition'] = response.headers.get('Content-Disposition', '')
+                  assert header.get_filename() == asset['name'], 'HTTP download filename differs from Assets'
               actual.add(asset['name'])
           assert actual == expected, 'Rolling release contains stale or missing APKs'
-          print('Asset names and download URLs agree; no obsolete APKs')
+          print('Asset labels, names, URLs and HTTP Content-Disposition filenames agree; no obsolete APKs')
           PYNAMES
           echo "Rolling pre-release ready: $TAG (commit $SHORT_SHA)"
           echo "Release publishedAt: $(gh release view "$TAG" --json publishedAt -q .publishedAt)"

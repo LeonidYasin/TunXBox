@@ -463,6 +463,11 @@ class ConfigurationFragment @JvmOverloads constructor(
             return true
         }
         when (item.itemId) {
+            R.id.action_gateway_proxy -> (requireActivity() as MainActivity).displayFragment(
+                io.nekohasekai.sagernet.ui.lan.LanDiscoveryFragment().apply {
+                    arguments = android.os.Bundle().apply { putBoolean("gateway_quick", true) }
+                })
+            R.id.action_lan_discovery -> (requireActivity() as MainActivity).displayFragmentWithId(R.id.nav_lan_discovery)
             R.id.action_scan_qr_code -> {
                 startActivity(Intent(context, ScannerActivity::class.java))
             }

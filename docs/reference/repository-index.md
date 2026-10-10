@@ -8,7 +8,7 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **654**.
+Всего tracked файлов: **665**.
 
 | Раздел | Файлов |
 |---|---|
@@ -122,6 +122,7 @@
 | `app/src/main/java/io/nekohasekai/sagernet/ui/ToolsFragment.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/VpnRequestActivity.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/WebviewFragment.kt` | 1 |
+| `app/src/main/java/io/nekohasekai/sagernet/ui/lan` | 7 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/profile` | 16 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/tv` | 19 |
 | `app/src/main/java/io/nekohasekai/sagernet/utils/Commandline.kt` | 1 |
@@ -156,7 +157,7 @@
 | `app/src/main/res/drawable` | 125 |
 | `app/src/main/res/drawable-v26` | 3 |
 | `app/src/main/res/font` | 1 |
-| `app/src/main/res/layout` | 47 |
+| `app/src/main/res/layout` | 48 |
 | `app/src/main/res/menu` | 18 |
 | `app/src/main/res/mipmap-anydpi-v26` | 1 |
 | `app/src/main/res/mipmap-hdpi` | 2 |
@@ -190,10 +191,10 @@
 | `app/src/main/res/values-zh-rHK` | 1 |
 | `app/src/main/res/values-zh-rTW` | 1 |
 | `app/src/main/res/xml` | 24 |
-| `app/src/test` | 11 |
+| `app/src/test` | 13 |
 | `buildScript` | 24 |
 | `buildSrc` | 2 |
-| `docs` | 18 |
+| `docs` | 19 |
 | `gradle` | 2 |
 | `libcore` | 42 |
 | `Корень` | 15 |
@@ -691,6 +692,16 @@
 
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/WebviewFragment.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/WebviewFragment.kt)
 
+## app/src/main/java/io/nekohasekai/sagernet/ui/lan
+
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/lan/GatewayProfileStore.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/lan/GatewayProfileStore.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/lan/GatewayProfileTargets.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/lan/GatewayProfileTargets.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/lan/LanDiscoveryFragment.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/lan/LanDiscoveryFragment.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/lan/LanEnvironment.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/lan/LanEnvironment.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/lan/LanProfileStore.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/lan/LanProfileStore.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/lan/LanScope.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/lan/LanScope.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/lan/ProxyProbe.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/lan/ProxyProbe.kt)
+
 ## app/src/main/java/io/nekohasekai/sagernet/ui/profile
 
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/profile/ChainSettingsActivity.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/profile/ChainSettingsActivity.kt)
@@ -1043,6 +1054,7 @@
 - [`app/src/main/res/layout/layout_group_list.xml`](../../app/src/main/res/layout/layout_group_list.xml)
 - [`app/src/main/res/layout/layout_icon_list_item_2.xml`](../../app/src/main/res/layout/layout_icon_list_item_2.xml)
 - [`app/src/main/res/layout/layout_import.xml`](../../app/src/main/res/layout/layout_import.xml)
+- [`app/src/main/res/layout/layout_lan_discovery.xml`](../../app/src/main/res/layout/layout_lan_discovery.xml)
 - [`app/src/main/res/layout/layout_loading.xml`](../../app/src/main/res/layout/layout_loading.xml)
 - [`app/src/main/res/layout/layout_logcat.xml`](../../app/src/main/res/layout/layout_logcat.xml)
 - [`app/src/main/res/layout/layout_loglevel_help.xml`](../../app/src/main/res/layout/layout_loglevel_help.xml)
@@ -1279,6 +1291,8 @@
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/LaunchRegressionTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/LaunchRegressionTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/ReleaseUpdatePolicyTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/ReleaseUpdatePolicyTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/RemoteReadabilityTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/RemoteReadabilityTest.kt)
+- [`app/src/test/java/io/nekohasekai/sagernet/ui/lan/GatewayProfileTargetsTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/lan/GatewayProfileTargetsTest.kt)
+- [`app/src/test/java/io/nekohasekai/sagernet/ui/lan/LanDiscoveryTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/lan/LanDiscoveryTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/RemoteUiTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/RemoteUiTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/TransferImportInputTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/TransferImportInputTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/TransferImportServerTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/TransferImportServerTest.kt)
@@ -1327,6 +1341,7 @@
 - [`docs/development.md`](../../docs/development.md)
 - [`docs/emulator-testing.md`](../../docs/emulator-testing.md)
 - [`docs/features.md`](../../docs/features.md)
+- [`docs/lan-discovery.md`](../../docs/lan-discovery.md)
 - [`docs/project-map.md`](../../docs/project-map.md)
 - [`docs/reference/preferences.md`](../../docs/reference/preferences.md)
 - [`docs/reference/repository-index.md`](../../docs/reference/repository-index.md)
