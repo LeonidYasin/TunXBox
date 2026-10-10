@@ -86,4 +86,4 @@ PR #5: [этапы/сохранённый результат/ручная сво
 
 ## Текущие уточнения
 
-[Hysteria2 / R13](hysteria-health.md): непостоянное соединение и скорость требуют расследования; новые indicators не объявляются реализованными. [Поддержка и участие](contributing-and-support.md), [GitHub Pages](github-pages.md), [добровольное сопровождение](support-services-proposal.md). Контакт — leonidyasin@gmail.com; Telegram ещё не задан. Rc.125 — отдельная проверочная сборка, её состояние видно в CI; PR #5 не merged.
+[Hysteria2 / R13](hysteria-health.md): непостоянное соединение и скорость требуют расследования; новые indicators не объявляются реализованными. [Поддержка и участие](contributing-and-support.md), [GitHub Pages](github-pages.md), [добровольное сопровождение](support-services-proposal.md). Контакт — leonidyasin@gmail.com; Telegram: [@LEONI_YA](https://t.me/LEONI_YA). Rc.125 — отдельная проверочная сборка, её состояние видно в CI; PR #5 не merged.

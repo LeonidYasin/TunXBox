@@ -165,7 +165,7 @@ PR #4 merged в master (`99a8b6f2`) после CI 153 JVM + 10/10 Android 4KB/16
 
 ### R12 — контакты, сайт и поддержка
 
-Согласован публичный email leonidyasin@gmail.com; Telegram ожидается. README/документация/карта/статический GitHub Pages сайт приглашают участвовать кодом, тестами, переводами, UX, документацией, распространением, оборудованием и добровольным спонсорством. [Способы](contributing-and-support.md), [публикация](github-pages.md). Issues пока отключены; почта — рабочий канал. Не принимать платежи и не обещать гарантию до утверждения условий.
+Согласован публичный email leonidyasin@gmail.com; Telegram согласован: [@LEONI_YA](https://t.me/LEONI_YA). README/документация/карта/статический GitHub Pages сайт приглашают участвовать кодом, тестами, переводами, UX, документацией, распространением, оборудованием и добровольным спонсорством. [Способы](contributing-and-support.md), [публикация](github-pages.md). Issues включены владельцем; также доступны почта и Telegram. Не принимать платежи и не обещать гарантию до утверждения условий.
 
 ### R13 — стабильность Hysteria2 и понятный health
 
@@ -178,3 +178,7 @@ Rc.125: 195 JVM PASS; Android 4KB 11 tests / 1 failure на достижимос
 ### Публикация сайта R12
 
 Статический сайт [TunXBox](https://leonidyasin.github.io/TunXBox/) опубликован отдельной веткой gh-pages; [deployment](https://github.com/LeonidYasin/TunXBox/actions/runs/38085797255) SUCCESS, HTTP 200/email/карта проверены. Source приложения с почтой и исправлением About — `d427c270`, сборка [rc.126](https://github.com/LeonidYasin/TunXBox/actions/runs/38085616473) проходит независимые gates. Отсутствие новой APK-публикации не скрывается за опубликованным сайтом.
+
+### Следующая итерация после rc.126
+
+Rc.126 не опубликована: 11 Android 4KB / 1 failure на той же достижимости About, остальные 10 прошли. Wrap-content/isNestedScrollingEnabled сами по себе не устранили перехват свайпов внутренним RecyclerView. Следующая итерация запрещает вертикальную прокрутку его LayoutManager, задаёт явный id внешнему ScrollView и сохраняет прежние assertions плюс достижимость Telegram. Issues включены; [Hysteria2 issue #6](https://github.com/LeonidYasin/TunXBox/issues/6) хранит расследование R13.

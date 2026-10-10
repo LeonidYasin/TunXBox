@@ -33,3 +33,7 @@ Hysteria2 на физическом устройстве то передаёт �
 ## Definition of Done
 
 Fixtures для blocked UDP, неправильной аутентификации, времени/цепочки TLS, DNS и медленного/нестабильного канала; точная категория или честный unknown. Ограниченность проб, отмена, отсутствие автоматического профайл-switch/TLS bypass, redaction tests, стабильный D-pad статус и физическая приёмка. Сначала диагностика, затем подтверждённое исправление; это gate следующего стабильного релиза, а не отмена текущей TCP REALITY проверки.
+
+## Трекер
+
+[Issue #6](https://github.com/LeonidYasin/TunXBox/issues/6) создан после включения Issues владельцем. Публичные контакты: [email](mailto:leonidyasin@gmail.com), [Telegram @LEONI_YA](https://t.me/LEONI_YA).

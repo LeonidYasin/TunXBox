@@ -12,7 +12,7 @@
 
 [Deployment 38085797255](https://github.com/LeonidYasin/TunXBox/actions/runs/38085797255) завершился SUCCESS; публичный https://leonidyasin.github.io/TunXBox/ отвечает HTTP 200, email и карта подтверждены. Публичный неавторизованный GET Pages API может возвращать 404 — это не заменяет проверку deployment и публичного сайта.
 
-Настройки на будущее: **Settings → Pages → Deploy from a branch → gh-pages → / (root)**. Уже работающий сайт повторно включать не требуется. Для GitHub баг-репортов отдельно **Settings → General → Features → Issues**; Discussions — по желанию. Эти функции сейчас выключены, поэтому рабочий канал — почта. У MCP пока нет инструментов управления этими настройками; [запрос](https://github.com/LeonidYasin/mcp-server/issues/68).
+Настройки на будущее: **Settings → Pages → Deploy from a branch → gh-pages → / (root)**. Уже работающий сайт повторно включать не требуется. Для GitHub баг-репортов отдельно **Settings → General → Features → Issues**; Discussions — по желанию. Issues уже включены владельцем и подтверждены API; также доступны email и [Telegram](https://t.me/LEONI_YA). Discussions не объявлены включёнными. У MCP пока нет инструментов управления этими настройками; [запрос](https://github.com/LeonidYasin/mcp-server/issues/68).
 
 Публичный адрес: https://leonidyasin.github.io/TunXBox/ . После активации проверить HTTP 200 и наличие «TunXBox»/контакта/актуальной карты, а также ссылки и мобильную ширину. Наличие gh-pages ветки само по себе не доказывает live deployment. HTTPS и пользовательские настройки домена не менять неявно.
 

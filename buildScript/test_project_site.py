@@ -24,7 +24,7 @@ class SiteTests(unittest.TestCase):
     dest=(p.parent/urllib.parse.unquote(u.path)).resolve()
     self.assertTrue(dest.is_relative_to(self.root));self.assertTrue(dest.is_file(),(p,href))
  def test_explicit_contact_and_honest_status(self):
-  s=(self.root/'index.html').read_text();self.assertIn('mailto:leonidyasin@gmail.com',s);self.assertIn('причина неизвестна',s);self.assertIn('не действующая оферта',s);self.assertIn('PR5 ещё не merged',s)
+  s=(self.root/'index.html').read_text();self.assertIn('mailto:leonidyasin@gmail.com',s);self.assertIn('https://t.me/LEONI_YA',s);self.assertIn('/issues',s);self.assertIn('причина неизвестна',s);self.assertIn('не действующая оферта',s);self.assertIn('PR5 ещё не merged',s)
  def test_no_tracking_forms_or_remote_scripts(self):
   for p in self.root.rglob('*.html'):
    q=Links();q.feed(p.read_text());self.assertNotIn('script',q.tags);self.assertNotIn('iframe',q.tags);self.assertNotIn('form',q.tags)

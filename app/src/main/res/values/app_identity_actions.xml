@@ -25,4 +25,5 @@
     <string name="about_support_terms">Optional services may include one-off diagnosis and an agreed bug fix, or recurring maintenance support. This is a proposal: prices, response times, acceptance criteria and warranty terms are not approved yet. The app does not accept payments. Payment does not restrict GPL rights or guarantee third-party VPS/provider availability. Free bug reports remain available on GitHub.</string>
     <string name="project_contact_tunxbox">Contact TunXBox</string>
     <string name="project_contact_copied">No email app found. The support address was copied.</string>
+    <string name="project_telegram_tunxbox">TunXBox owner on Telegram</string>
 </resources>

@@ -1,6 +1,6 @@
 # Как поддержать TunXBox
 
-Публичная почта владельца: [leonidyasin@gmail.com](mailto:leonidyasin@gmail.com). Telegram пока не предоставлен. Issues/Discussions репозитория сейчас выключены; бесплатная обратная связь идёт по почте до их активации. Не отправляйте секреты в публичный репозиторий.
+Публичная почта владельца: [leonidyasin@gmail.com](mailto:leonidyasin@gmail.com). Telegram: [@LEONI_YA](https://t.me/LEONI_YA). [GitHub Issues](https://github.com/LeonidYasin/TunXBox/issues) включены; бесплатная обратная связь доступна там, по почте и в Telegram. Discussions отдельно не проверены. Не отправляйте секреты в публичный репозиторий.
 
 | Способ | Полезный результат |
 |---|---|

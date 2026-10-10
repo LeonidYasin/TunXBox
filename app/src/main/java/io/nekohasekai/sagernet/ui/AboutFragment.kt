@@ -200,12 +200,15 @@ class AboutFragment : ToolbarFragment(R.layout.layout_about) {
                                 .icon(R.drawable.ic_baseline_bug_report_24)
                                 .text(R.string.project_report_issue)
                                 .setOnClickAction {
-                                    contactSupport()
+                                    requireContext().launchCustomTab(ProjectLinks.ISSUES)
                                 }
                                 .build())
                         .addItem(MaterialAboutActionItem.Builder()
                             .text(R.string.project_contact_tunxbox).subText(ProjectLinks.SUPPORT_EMAIL)
                             .setOnClickAction { contactSupport() }.build())
+                        .addItem(MaterialAboutActionItem.Builder()
+                            .text(R.string.project_telegram_tunxbox).subText("@LEONI_YA")
+                            .setOnClickAction { requireContext().launchCustomTab(ProjectLinks.SUPPORT_TELEGRAM) }.build())
                         .addItem(MaterialAboutActionItem.Builder()
                             .icon(R.drawable.ic_baseline_card_giftcard_24)
                             .text(R.string.project_upstream_support).subText(R.string.project_upstream_support_hint)
@@ -239,6 +242,11 @@ class AboutFragment : ToolbarFragment(R.layout.layout_about) {
             view.findViewById<RecyclerView>(R.id.mal_recyclerview).apply {
                 overScrollMode = RecyclerView.OVER_SCROLL_NEVER
                 isNestedScrollingEnabled = false
+                // Disabling nested scrolling alone does not stop RecyclerView consuming swipes.
+                // Only the outer ScrollView may move the content, including lower support cards.
+                layoutManager = object : androidx.recyclerview.widget.LinearLayoutManager(requireContext()) {
+                    override fun canScrollVertically() = false
+                }
                 layoutParams = layoutParams.apply { height = android.view.ViewGroup.LayoutParams.WRAP_CONTENT }
             }
         }

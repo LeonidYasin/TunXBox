@@ -50,4 +50,6 @@ Whitelist сводка PR #5 включает APK/API/supported ABIs, время
 
 ## Контакт и нестабильный канал
 
-Публичная почта владельца: [leonidyasin@gmail.com](mailto:leonidyasin@gmail.com). Приложение открывает почтовый клиент только по нажатию, без автоматического attachment/upload; при отсутствии клиента копирует email. Issues пока выключены. Для Hysteria2 используйте [план воспроизведения и безопасных индикаторов](hysteria-health.md); не публикуйте production ключи или подписку.
+Публичная почта владельца: [leonidyasin@gmail.com](mailto:leonidyasin@gmail.com). Приложение открывает почтовый клиент только по нажатию, без автоматического attachment/upload; при отсутствии клиента копирует email. Issues включены; [отправить баг-репорт](https://github.com/LeonidYasin/TunXBox/issues). Для Hysteria2 используйте [план воспроизведения и безопасных индикаторов](hysteria-health.md); не публикуйте production ключи или подписку.
+
+Публичный Telegram: [@LEONI_YA](https://t.me/LEONI_YA). Переход к контакту/Issues — только по действию пользователя; секреты и raw logs не отправляются автоматически.

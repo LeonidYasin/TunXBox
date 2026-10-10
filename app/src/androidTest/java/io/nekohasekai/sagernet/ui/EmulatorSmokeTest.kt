@@ -111,7 +111,7 @@ class EmulatorSmokeTest {
         TvUiPreferences.phoneMode = true
         scenario = ActivityScenario.launch<MainActivity>(Intent(context, MainActivity::class.java)
             .putExtra("tv_tools", true).putExtra("tv_destination", R.id.nav_about))
-        val scroll = UiScrollable(UiSelector().scrollable(true))
+        val scroll = UiScrollable(UiSelector().resourceId(context.packageName + ":id/about_scroll"))
         assertTrue(scroll.scrollIntoView(UiSelector().text(text(R.string.about_build_details))))
         visibleText(text(R.string.about_build_details)).click()
         val message = requireNotNull(device.wait(Until.findObject(By.res("android", "message")), timeout)).text
@@ -123,6 +123,8 @@ class EmulatorSmokeTest {
         assertNotNull(device.findObject(By.res("android", "button3")))
         device.findObject(By.res("android", "button1")).click()
         assertTrue(device.wait(Until.gone(By.res("android", "message")), timeout))
+        assertTrue("Public Telegram contact must be reachable", scroll.scrollIntoView(UiSelector().text(text(R.string.project_telegram_tunxbox))))
+        assertTrue(device.hasObject(By.text("@LEONI_YA")))
         assertTrue(scroll.scrollIntoView(UiSelector().text(text(R.string.project_upstream_support))))
         assertTrue(text(R.string.project_upstream_support).contains("TunXBox"))
         visibleText(text(R.string.project_upstream_support)).click()
