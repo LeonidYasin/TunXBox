@@ -26,7 +26,7 @@
 
 - [Полная карта проекта](docs/project-map.md), [документация](docs/README.md), [roadmap](docs/roadmap.md).
 - [Каталог функций](docs/features.md), [архитектура](docs/architecture.md), [сценарии](docs/scenarios.md), [QR/LAN](docs/tv-transfer.md), [реестр каждого файла](docs/reference/repository-index.md).
-- [Исходник сайта](website/index.html) и [публикация GitHub Pages](docs/github-pages.md). Планируемый адрес: https://LeonidYasin.github.io/TunXBox/ — статус публикации подтверждается отдельно, не одним наличием ветки.
+- [Исходник сайта](website/index.html) и [публикация GitHub Pages](docs/github-pages.md). [Публичный сайт](https://leonidyasin.github.io/TunXBox/) опубликован: deployment прошёл, HTTP 200 и содержимое проверены.
 
 ## Поддержать TunXBox
 

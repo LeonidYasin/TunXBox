@@ -174,3 +174,7 @@ PR #4 merged в master (`99a8b6f2`) после CI 153 JVM + 10/10 Android 4KB/16
 ### Дополнительная проверка About
 
 Rc.125: 195 JVM PASS; Android 4KB 11 tests / 1 failure на достижимости карточки поддержки после закрытия build-details. Остальные 10 smoke tests прошли. Два вложенных viewport-sized scroll-контейнера мешали внешней прокрутке; исправление делает внешний NestedScrollView единственным владельцем прокрутки, content/RecyclerView wrap-content. Тест не убран и должен пройти на обеих page sizes перед следующим выпуском.
+
+### Публикация сайта R12
+
+Статический сайт [TunXBox](https://leonidyasin.github.io/TunXBox/) опубликован отдельной веткой gh-pages; [deployment](https://github.com/LeonidYasin/TunXBox/actions/runs/38085797255) SUCCESS, HTTP 200/email/карта проверены. Source приложения с почтой и исправлением About — `d427c270`, сборка [rc.126](https://github.com/LeonidYasin/TunXBox/actions/runs/38085616473) проходит независимые gates. Отсутствие новой APK-публикации не скрывается за опубликованным сайтом.
