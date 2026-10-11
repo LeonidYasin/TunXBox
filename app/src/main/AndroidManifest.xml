@@ -323,6 +323,10 @@
             android:authorities="${applicationId}.androidx-startup"
             tools:node="remove" />
 
+        <receiver android:name="io.nekohasekai.sagernet.ui.update.UpdateInstalledReceiver" android:exported="false">
+            <intent-filter><action android:name="android.intent.action.MY_PACKAGE_REPLACED" /></intent-filter>
+        </receiver>
+
         <receiver
             android:name="io.nekohasekai.sagernet.BootReceiver"
             android:enabled="false"

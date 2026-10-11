@@ -48,3 +48,7 @@ GNU GPL v3 или более поздняя версия; исходное ав�
 ## Credits / upstream
 
 [NekoBox for Android](https://github.com/MatsuriDayo/NekoBoxForAndroid), [SagerNet](https://github.com/SagerNet/SagerNet), [sing-box](https://github.com/SagerNet/sing-box), [shadowsocks-android](https://github.com/shadowsocks/shadowsocks-android), [Yacd-meta](https://github.com/MetaCubeX/Yacd-meta). TunXBox не является официальной сборкой этих проектов; их лицензии и вклад сохраняются. Ссылки на сторонние кошельки/донаты не используются для поддержки TunXBox.
+
+## Следующий UI-кандидат
+
+[Граф ТВ-навигации](docs/tv-navigation.md), [автопроверка активного туннеля перед YouTube](docs/tv-connection-health.md) и более явная обратная связь докачки/установки подготовлены отдельно; опубликованная rc.133 не содержит этих будущих изменений.

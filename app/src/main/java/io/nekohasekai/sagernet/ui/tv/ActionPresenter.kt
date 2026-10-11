@@ -48,7 +48,7 @@ class ActionPresenter : Presenter() {
     override fun onBindViewHolder(viewHolder: ViewHolder, item: Any?) {
         val holder = viewHolder as ActionViewHolder
         val action = item as TvAction
-        val lines = if (action.id == 8L) 8 else 3
+        val lines = 3
         holder.subtitle.minLines = lines
         holder.subtitle.maxLines = lines
         holder.title.text = action.title; holder.subtitle.text = action.subtitle; holder.icon.setImageResource(action.icon)

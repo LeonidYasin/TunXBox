@@ -44,7 +44,7 @@ class AppUpdateFragment : ToolbarFragment(R.layout.layout_app_updates) {
         view.findViewById<RadioGroup>(R.id.update_channels).setOnCheckedChangeListener { _,_ -> offer=null;ready=null;pendingInstall=false;status.setText(R.string.update_idle);render() }
         status.setText(R.string.update_idle)
         check.setOnClickListener { checkLatest() };download.setOnClickListener { downloadApk() }
-        pause.setOnClickListener { progressEpoch++;job?.cancel();busy=false;status.setText(R.string.update_paused);render() }
+        pause.setOnClickListener { progressEpoch++;job?.cancel();busy=false;showPaused();render() }
         install.setOnClickListener { installReady() };render()
     }
     private fun render() {
@@ -70,6 +70,8 @@ class AppUpdateFragment : ToolbarFragment(R.layout.layout_app_updates) {
             val build=withContext(Dispatchers.IO) { updater.check(channel) }
             offer=build
             status.text=getString(R.string.update_offer,BuildConfig.VERSION_NAME,build.version,build.versionCode,build.offer.apk.name,build.offer.apk.size,build.commit)
+            val saved=updater.savedBytes(build)
+            if(saved>0)status.append("\n\n"+getString(R.string.update_saved_bytes,saved,build.offer.apk.size))
             if(build.versionCode==BuildConfig.VERSION_CODE.toLong()) status.append("\n\n"+getString(R.string.update_same_version))
         }
     }
@@ -81,7 +83,7 @@ class AppUpdateFragment : ToolbarFragment(R.layout.layout_app_updates) {
                 scope.launch {
                     if(view!=null&&busy&&progressEpoch==epoch) {
                         progress.progress=(p.bytes*1000/p.total).toInt()
-                        status.text=if(p.bytes==p.total) getString(R.string.update_verifying) else getString(R.string.update_progress_text,p.bytes,p.total,p.bytesPerSecond,p.attempt)
+                        status.text=DownloadFeedback.text(requireContext(),p)
                     }
                 }
             } }
@@ -95,16 +97,21 @@ class AppUpdateFragment : ToolbarFragment(R.layout.layout_app_updates) {
             withContext(Dispatchers.IO) { updater.verifyReady(file,build) }
             if(!isResumed||!isAdded)return@work
             pendingInstall=!updater.canInstall()
-            updater.install(requireActivity(),file)
+            withContext(Dispatchers.IO) {UpdateReceipt.expect(requireContext().applicationContext,build.versionCode)}
+            try {updater.install(requireActivity(),file)} catch(error: Exception) {UpdateReceipt.clearExpected(requireContext());throw error}
             status.setText(if(pendingInstall) R.string.update_install_permission else R.string.update_install_launched)
         }
+    }
+    private fun showPaused() {
+        val build=offer
+        status.text=if(build==null)getString(R.string.update_paused) else getString(R.string.update_paused_bytes,updater.savedBytes(build),build.offer.apk.size)
     }
     override fun onResume() {
         super.onResume()
         if(pendingInstall&&view!=null&&!busy&&updater.canInstall()) {pendingInstall=false;installReady()}
     }
     override fun onStop() {
-        if(busy) {progressEpoch++;job?.cancel();busy=false;if(view!=null) {status.setText(R.string.update_paused);render()} }
+        if(busy) {progressEpoch++;job?.cancel();busy=false;if(view!=null) {showPaused();render()} }
         super.onStop()
     }
     override fun onDestroyView() {progressEpoch++;pendingInstall=false;job?.cancel();scope.cancel();super.onDestroyView()}

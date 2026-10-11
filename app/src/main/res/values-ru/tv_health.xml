@@ -1,0 +1,20 @@
+<resources>
+    <string name="tv_health_checking">Интернет: проверяем…</string>
+    <string name="tv_health_unchecked">Интернет: не проверен</string>
+    <string name="tv_health_ok">Интернет: URL доступен · %1$d мс</string>
+    <string name="tv_health_failed">Интернет: тест не прошёл · %1$s</string>
+    <string name="tv_health_age">Проверка %1$d с назад · OK — подробнее</string>
+    <string name="tv_health_rates">↑ %1$s/с   ↓ %2$s/с</string>
+    <string name="tv_health_reason_reality">REALITY: проверка не пройдена</string>
+    <string name="tv_health_reason_time">Сертификат: срок или часы</string>
+    <string name="tv_health_reason_tls">Ошибка TLS-соединения</string>
+    <string name="tv_health_reason_dns">Не удалось определить адрес</string>
+    <string name="tv_health_reason_timeout">Сервер не ответил вовремя</string>
+    <string name="tv_health_reason_network">Сеть недоступна</string>
+    <string name="tv_health_reason_refused">Сервер отказал в соединении</string>
+    <string name="tv_health_reason_unsupported">Протокол или транспорт не поддержан</string>
+    <string name="tv_health_reason_core">Ядро ещё не готово</string>
+    <string name="tv_health_reason_busy">Другая проверка уже идёт</string>
+    <string name="tv_health_reason_http">Ошибка тестового сайта</string>
+    <string name="tv_health_reason_unknown">Доступ не подтверждён</string>
+</resources>

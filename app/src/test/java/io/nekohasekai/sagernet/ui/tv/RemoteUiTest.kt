@@ -30,6 +30,14 @@ class RemoteUiTest {
         controller = result
         return result.setup().get()
     }
+    @Test fun compactHealthCardHasHumanErrorAndSameHeightAsOtherActions() {
+        val parent=FrameLayout(activity());val presenter=ActionPresenter()
+        val holder=presenter.onCreateViewHolder(parent) as ActionPresenter.ActionViewHolder
+        val reason=TvHealthReason.text(parent.context,io.nekohasekai.sagernet.group.SubscriptionFailureCategory.REALITY)
+        presenter.onBindViewHolder(holder,TvAction(8,reason,"Current profile\n↑ 0 ↓ 0\nNET_REALITY",R.drawable.ic_remote_groups))
+        assertEquals(3,holder.subtitle.minLines);assertEquals(3,holder.subtitle.maxLines)
+        assertTrue(holder.view.isFocusable);assertTrue(holder.title.text.contains("REALITY"))
+    }
     @After fun closeActivity() { controller?.pause()?.stop()?.destroy() }
     private fun layout(parent: View) {
         parent.measure(View.MeasureSpec.makeMeasureSpec(1000, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(1400, View.MeasureSpec.AT_MOST))

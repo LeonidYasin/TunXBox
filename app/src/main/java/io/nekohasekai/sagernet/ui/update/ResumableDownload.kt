@@ -11,8 +11,11 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /** Persistent private partial bytes; never an installable/verified APK until all checks pass. */
+enum class DownloadPhase { STARTING,RESUMING,RESTARTING,TRANSFERRING,RETRYING,VERIFYING }
+
 data class DownloadProgress(val bytes: Long, val total: Long, val bytesPerSecond: Long = 0,
-                            val attempt: Int = 1, val status: String = "Downloading")
+                            val attempt: Int = 1, val status: String = "Downloading",
+                            val phase: DownloadPhase = DownloadPhase.TRANSFERRING,val resumedFrom: Long=0)
 
 class ResumableDownload(
     private val open: (String, Long) -> HttpURLConnection,
@@ -37,7 +40,8 @@ class ResumableDownload(
                 attempt++
                 val offset = partial.length()
                 progress(DownloadProgress(offset, size, attempt = attempt,
-                    status = if (offset > 0) "Resuming saved download" else "Downloading"))
+                    status = if (offset > 0) "Resuming saved download" else "Downloading",
+                    phase=if(offset>0) DownloadPhase.RESUMING else DownloadPhase.STARTING,resumedFrom=offset))
                 try {
                     val connection = open(url, offset)
                     coroutineScope {
@@ -53,6 +57,7 @@ class ResumableDownload(
                             require(code == 200 || code == 206) { "Download returned HTTP $code" }
                             require(connection.getHeaderField("Content-Encoding").let { it == null || it == "identity" }) { "Unexpected download encoding" }
                             val append = code == 206
+                            if(!append&&offset>0)progress(DownloadProgress(0,size,attempt=attempt,phase=DownloadPhase.RESTARTING))
                             if (append) {
                                 val match = Regex("bytes ([0-9]+)-([0-9]+)/([0-9]+)").matchEntire(connection.getHeaderField("Content-Range") ?: "")
                                     ?: error("Invalid Content-Range; saved bytes retained")
@@ -77,7 +82,7 @@ class ResumableDownload(
                                     val now = System.nanoTime()
                                     if (now - lastEvent >= 250_000_000L || total == size) {
                                         val seconds = (now - started).coerceAtLeast(1L) / 1e9
-                                        progress(DownloadProgress(total, size, ((total - initial) / seconds).toLong(), attempt))
+                                        progress(DownloadProgress(total, size, ((total - initial) / seconds).toLong(), attempt,resumedFrom=initial))
                                         lastEvent = now
                                     }
                                 }
@@ -93,11 +98,11 @@ class ResumableDownload(
                 catch (failure: IOException) {
                     currentCoroutineContext().ensureActive()
                     if (attempt >= maxAttempts) throw IOException("Download paused after $maxAttempts attempts. Saved ${partial.length()} / $size bytes; press Resume download. ${failure.javaClass.simpleName}", failure)
-                    progress(DownloadProgress(partial.length(), size, attempt = attempt, status = "Connection interrupted; automatic retry"))
+                    progress(DownloadProgress(partial.length(), size, attempt = attempt, status = "Connection interrupted; automatic retry",phase=DownloadPhase.RETRYING))
                     delay((backoffMs * (1L shl (attempt - 1))).coerceAtMost(30_000))
                 }
             }
-            progress(DownloadProgress(size, size, attempt = attempt.coerceAtLeast(1), status = "Verifying complete APK"))
+            progress(DownloadProgress(size, size, attempt = attempt.coerceAtLeast(1), status = "Verifying complete APK",phase=DownloadPhase.VERIFYING))
             val digest = MessageDigest.getInstance("SHA-256")
             partial.inputStream().use { input ->
                 val buffer = ByteArray(32768)

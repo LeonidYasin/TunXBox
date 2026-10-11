@@ -71,6 +71,10 @@ class MainActivity : ThemedActivity(),
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if(io.nekohasekai.sagernet.ui.update.UpdateReceipt.consume(this)) {
+            android.widget.Toast.makeText(this,getString(R.string.update_installed_title,io.nekohasekai.sagernet.BuildConfig.VERSION_NAME),android.widget.Toast.LENGTH_LONG).show()
+            (getSystemService(android.content.Context.NOTIFICATION_SERVICE) as android.app.NotificationManager).cancel(1331)
+        }
         
         // TV Mode is DEFAULT for all devices
         // Only use Phone Mode if user explicitly requested it

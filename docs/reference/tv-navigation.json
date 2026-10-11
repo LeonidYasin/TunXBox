@@ -1,0 +1,181 @@
+{
+  "version": 1,
+  "nodes": {
+    "TV": "Главный экран ТВ",
+    "CONNECT": "Запуск выбранного профиля",
+    "CONNECTED": "Туннель запущен",
+    "HEALTH": "Результат URL-проверки",
+    "STATUS": "Подробности текущего соединения",
+    "YOUTUBE": "YouTube (внешнее приложение)",
+    "GROUPS": "Выбор группы",
+    "ADD": "Способы добавления",
+    "PROFILE_ACTIONS": "Действия профиля",
+    "SUB_UPDATE": "Обновить подписку",
+    "SUB_REPORT": "Отчёт подписки",
+    "GROUP_TESTS": "Тесты группы",
+    "ALL_TOOLS": "Все функции",
+    "PHONE": "Режим телефона",
+    "HOME": "Системный Home",
+    "RESTART": "Подтверждение перезапуска",
+    "CLOSE": "Подтверждение закрытия",
+    "UPDATER": "Обновление приложения",
+    "INSTALLER": "Установщик Android",
+    "PERMISSION": "Разрешение источника APK"
+  },
+  "edges": [
+    {
+      "from": "TV",
+      "to": "CONNECT",
+      "action": "TOGGLE",
+      "confirm": 1
+    },
+    {
+      "from": "CONNECT",
+      "to": "CONNECTED",
+      "confirm": 0
+    },
+    {
+      "from": "CONNECTED",
+      "to": "HEALTH",
+      "confirm": 0,
+      "label": "Авто URL-тест (foreground)"
+    },
+    {
+      "from": "CONNECTED",
+      "to": "STATUS",
+      "action": "STATUS",
+      "confirm": 1
+    },
+    {
+      "from": "STATUS",
+      "to": "HEALTH",
+      "confirm": 1,
+      "label": "Повторить активный тест"
+    },
+    {
+      "from": "HEALTH",
+      "to": "YOUTUBE",
+      "action": "YOUTUBE",
+      "confirm": 1
+    },
+    {
+      "from": "TV",
+      "to": "GROUPS",
+      "action": "GROUPS",
+      "confirm": 1
+    },
+    {
+      "from": "TV",
+      "to": "ADD",
+      "action": "ADD_PROFILE",
+      "confirm": 1
+    },
+    {
+      "from": "TV",
+      "to": "PROFILE_ACTIONS",
+      "action": "PROFILE_ACTIONS",
+      "confirm": 1
+    },
+    {
+      "from": "TV",
+      "to": "SUB_UPDATE",
+      "action": "UPDATE",
+      "confirm": 1
+    },
+    {
+      "from": "TV",
+      "to": "SUB_REPORT",
+      "action": "SUBSCRIPTION_DIAGNOSTICS",
+      "confirm": 1
+    },
+    {
+      "from": "TV",
+      "to": "GROUP_TESTS",
+      "action": "TESTS",
+      "confirm": 1
+    },
+    {
+      "from": "TV",
+      "to": "ALL_TOOLS",
+      "action": "FULL_TOOLS",
+      "confirm": 1
+    },
+    {
+      "from": "TV",
+      "to": "ADD",
+      "action": "MORE",
+      "confirm": 1
+    },
+    {
+      "from": "TV",
+      "to": "PHONE",
+      "action": "PHONE_MODE",
+      "confirm": 1
+    },
+    {
+      "from": "TV",
+      "to": "HOME",
+      "action": "HOME",
+      "confirm": 1
+    },
+    {
+      "from": "TV",
+      "to": "RESTART",
+      "action": "RESTART_APP",
+      "confirm": 1
+    },
+    {
+      "from": "TV",
+      "to": "CLOSE",
+      "action": "CLOSE_APP",
+      "confirm": 1
+    },
+    {
+      "from": "ALL_TOOLS",
+      "to": "UPDATER",
+      "menu": "nav_app_updates",
+      "confirm": 1
+    },
+    {
+      "from": "UPDATER",
+      "to": "PERMISSION",
+      "confirm": 1,
+      "label": "Разрешение при необходимости"
+    },
+    {
+      "from": "UPDATER",
+      "to": "INSTALLER",
+      "confirm": 1,
+      "label": "После Check + Download + verify"
+    },
+    {
+      "from": "PERMISSION",
+      "to": "INSTALLER",
+      "confirm": 1,
+      "label": "Разрешить и вернуться"
+    }
+  ],
+  "rows": {
+    "actions": [
+      "TOGGLE",
+      "GROUPS",
+      "ADD_PROFILE",
+      "PHONE_MODE"
+    ],
+    "connection": [
+      "STATUS",
+      "YOUTUBE"
+    ],
+    "tools": [
+      "PROFILE_ACTIONS",
+      "UPDATE",
+      "SUBSCRIPTION_DIAGNOSTICS",
+      "TESTS",
+      "FULL_TOOLS",
+      "HOME",
+      "MORE",
+      "RESTART_APP",
+      "CLOSE_APP"
+    ]
+  }
+}

@@ -8,7 +8,7 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **746**.
+Всего tracked файлов: **761**.
 
 | Раздел | Файлов |
 |---|---|
@@ -133,8 +133,8 @@
 | `app/src/main/java/io/nekohasekai/sagernet/ui/WebviewFragment.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/lan` | 7 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/profile` | 16 |
-| `app/src/main/java/io/nekohasekai/sagernet/ui/tv` | 19 |
-| `app/src/main/java/io/nekohasekai/sagernet/ui/update` | 6 |
+| `app/src/main/java/io/nekohasekai/sagernet/ui/tv` | 21 |
+| `app/src/main/java/io/nekohasekai/sagernet/ui/update` | 9 |
 | `app/src/main/java/io/nekohasekai/sagernet/utils/Commandline.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/utils/CrashHandler.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/utils/DefaultNetworkListener.kt` | 1 |
@@ -178,7 +178,7 @@
 | `app/src/main/res/raw` | 4 |
 | `app/src/main/res/raw-zh-rCN` | 4 |
 | `app/src/main/res/resources.properties` | 1 |
-| `app/src/main/res/values` | 18 |
+| `app/src/main/res/values` | 19 |
 | `app/src/main/res/values-ar` | 1 |
 | `app/src/main/res/values-be` | 1 |
 | `app/src/main/res/values-de` | 1 |
@@ -193,7 +193,7 @@
 | `app/src/main/res/values-night` | 2 |
 | `app/src/main/res/values-nl` | 1 |
 | `app/src/main/res/values-pt-rBR` | 1 |
-| `app/src/main/res/values-ru` | 8 |
+| `app/src/main/res/values-ru` | 9 |
 | `app/src/main/res/values-tr` | 1 |
 | `app/src/main/res/values-uk` | 1 |
 | `app/src/main/res/values-w600dp-h480dp` | 1 |
@@ -201,13 +201,13 @@
 | `app/src/main/res/values-zh-rHK` | 1 |
 | `app/src/main/res/values-zh-rTW` | 1 |
 | `app/src/main/res/xml` | 25 |
-| `app/src/test` | 20 |
-| `buildScript` | 34 |
+| `app/src/test` | 22 |
+| `buildScript` | 35 |
 | `buildSrc` | 2 |
-| `docs` | 28 |
+| `docs` | 31 |
 | `gradle` | 2 |
 | `libcore` | 42 |
-| `website` | 33 |
+| `website` | 35 |
 | `Корень` | 15 |
 
 ## .github
@@ -783,6 +783,8 @@
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvDiagnostics.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvDiagnostics.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvFunctionCatalog.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvFunctionCatalog.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvGroupTransfer.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvGroupTransfer.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvHealthReason.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvHealthReason.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvHealthSession.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvHealthSession.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvInteractionPolicy.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvInteractionPolicy.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvLayoutPolicy.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvLayoutPolicy.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvProfileAddCatalog.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvProfileAddCatalog.kt)
@@ -796,11 +798,14 @@
 ## app/src/main/java/io/nekohasekai/sagernet/ui/update
 
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/update/ApkInstallIntents.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/update/ApkInstallIntents.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/update/DownloadFeedback.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/update/DownloadFeedback.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/update/GitHubUpdater.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/update/GitHubUpdater.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/update/ReleaseCatalog.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/update/ReleaseCatalog.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/update/ResumableDownload.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/update/ResumableDownload.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/update/SignaturePolicy.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/update/SignaturePolicy.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/update/UpdateFileProvider.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/update/UpdateFileProvider.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/update/UpdateInstalledReceiver.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/update/UpdateInstalledReceiver.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/update/UpdateReceipt.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/update/UpdateReceipt.kt)
 
 ## app/src/main/java/io/nekohasekai/sagernet/utils/Commandline.kt
 
@@ -1223,6 +1228,7 @@
 - [`app/src/main/res/values/strings.xml`](../../app/src/main/res/values/strings.xml)
 - [`app/src/main/res/values/themes.xml`](../../app/src/main/res/values/themes.xml)
 - [`app/src/main/res/values/tv_feedback.xml`](../../app/src/main/res/values/tv_feedback.xml)
+- [`app/src/main/res/values/tv_health.xml`](../../app/src/main/res/values/tv_health.xml)
 - [`app/src/main/res/values/tv_ids.xml`](../../app/src/main/res/values/tv_ids.xml)
 - [`app/src/main/res/values/tv_layout.xml`](../../app/src/main/res/values/tv_layout.xml)
 - [`app/src/main/res/values/tv_strings.xml`](../../app/src/main/res/values/tv_strings.xml)
@@ -1293,6 +1299,7 @@
 - [`app/src/main/res/values-ru/remote_actions.xml`](../../app/src/main/res/values-ru/remote_actions.xml)
 - [`app/src/main/res/values-ru/strings.xml`](../../app/src/main/res/values-ru/strings.xml)
 - [`app/src/main/res/values-ru/tv_feedback.xml`](../../app/src/main/res/values-ru/tv_feedback.xml)
+- [`app/src/main/res/values-ru/tv_health.xml`](../../app/src/main/res/values-ru/tv_health.xml)
 - [`app/src/main/res/values-ru/tv_strings.xml`](../../app/src/main/res/values-ru/tv_strings.xml)
 
 ## app/src/main/res/values-tr
@@ -1365,10 +1372,12 @@
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/TransferImportInputTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/TransferImportInputTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/TransferImportServerTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/TransferImportServerTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/TransferProtocolTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/TransferProtocolTest.kt)
+- [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/TvHealthSessionTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/TvHealthSessionTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/TvInteractionPolicyTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/TvInteractionPolicyTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/TvLayoutPolicyTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/TvLayoutPolicyTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/update/ReleaseCatalogTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/update/ReleaseCatalogTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/update/ResumableDownloadTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/update/ResumableDownloadTest.kt)
+- [`app/src/test/java/io/nekohasekai/sagernet/ui/update/UpdateFeedbackTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/update/UpdateFeedbackTest.kt)
 
 ## buildScript
 
@@ -1402,6 +1411,7 @@
 - [`buildScript/test_project_site.py`](../../buildScript/test_project_site.py)
 - [`buildScript/test_reality_patch.py`](../../buildScript/test_reality_patch.py)
 - [`buildScript/test_signing_bundle.py`](../../buildScript/test_signing_bundle.py)
+- [`buildScript/test_tv_navigation.py`](../../buildScript/test_tv_navigation.py)
 - [`buildScript/test_tv_transfer_page.cjs`](../../buildScript/test_tv_transfer_page.cjs)
 - [`buildScript/verify_emulator_results.py`](../../buildScript/verify_emulator_results.py)
 - [`buildScript/verify_native_alignment.py`](../../buildScript/verify_native_alignment.py)
@@ -1432,6 +1442,7 @@
 - [`docs/protocol-compatibility.md`](../../docs/protocol-compatibility.md)
 - [`docs/reference/preferences.md`](../../docs/reference/preferences.md)
 - [`docs/reference/repository-index.md`](../../docs/reference/repository-index.md)
+- [`docs/reference/tv-navigation.json`](../../docs/reference/tv-navigation.json)
 - [`docs/releases/1.5.0.md`](../../docs/releases/1.5.0.md)
 - [`docs/roadmap.md`](../../docs/roadmap.md)
 - [`docs/scenarios.md`](../../docs/scenarios.md)
@@ -1439,6 +1450,8 @@
 - [`docs/signing-and-updates.md`](../../docs/signing-and-updates.md)
 - [`docs/subscription-passphrase.md`](../../docs/subscription-passphrase.md)
 - [`docs/support-services-proposal.md`](../../docs/support-services-proposal.md)
+- [`docs/tv-connection-health.md`](../../docs/tv-connection-health.md)
+- [`docs/tv-navigation.md`](../../docs/tv-navigation.md)
 - [`docs/tv-readiness-plan.md`](../../docs/tv-readiness-plan.md)
 - [`docs/tv-transfer.md`](../../docs/tv-transfer.md)
 - [`docs/ui-quality-review.md`](../../docs/ui-quality-review.md)
@@ -1521,6 +1534,8 @@
 - [`website/guide/signing-and-updates.html`](../../website/guide/signing-and-updates.html)
 - [`website/guide/subscription-passphrase.html`](../../website/guide/subscription-passphrase.html)
 - [`website/guide/support-services-proposal.html`](../../website/guide/support-services-proposal.html)
+- [`website/guide/tv-connection-health.html`](../../website/guide/tv-connection-health.html)
+- [`website/guide/tv-navigation.html`](../../website/guide/tv-navigation.html)
 - [`website/guide/tv-readiness-plan.html`](../../website/guide/tv-readiness-plan.html)
 - [`website/guide/tv-transfer.html`](../../website/guide/tv-transfer.html)
 - [`website/guide/ui-quality-review.html`](../../website/guide/ui-quality-review.html)

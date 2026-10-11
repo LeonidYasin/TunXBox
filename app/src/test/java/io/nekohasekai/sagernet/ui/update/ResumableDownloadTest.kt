@@ -33,13 +33,18 @@ class ResumableDownloadTest {
             assertEquals(7L, offset)
             Response(206, bytes.copyOfRange(7, bytes.size).inputStream(), "bytes 7-19/20")
         }, backoffMs = 0)
-        manager.download(url, bytes.size.toLong(), hash, file) {}
+        val events=mutableListOf<DownloadProgress>()
+        manager.download(url, bytes.size.toLong(), hash, file) {events.add(it)}
+        assertEquals(DownloadPhase.RESUMING,events.first().phase)
+        assertEquals(7L,events.first().resumedFrom)
         assertArrayEquals(bytes, file.readBytes())
     }
     @Test fun rangeIgnored200RestartsInsteadOfAppending() = run { file ->
         file.writeBytes(bytes.copyOfRange(0, 7))
+        val events=mutableListOf<DownloadProgress>()
         ResumableDownload({ _, _ -> Response(200, bytes.inputStream()) }, backoffMs = 0)
-            .download(url, 20, hash, file) {}
+            .download(url, 20, hash, file) {events.add(it)}
+        assertTrue(events.any {it.phase==DownloadPhase.RESTARTING&&it.bytes==0L})
         assertArrayEquals(bytes, file.readBytes())
     }
     @Test fun interruptedConnectionRetriesOnlyMissingBytes() = run { file ->
