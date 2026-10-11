@@ -159,6 +159,7 @@ jobs:
           python3 buildScript/test_reality_patch.py
           python3 buildScript/test_project_site.py
           python3 buildScript/test_emulator_results.py
+          python3 buildScript/test_tv_navigation.py
 
       - name: Test browser transfer page
         run: node buildScript/test_tv_transfer_page.cjs

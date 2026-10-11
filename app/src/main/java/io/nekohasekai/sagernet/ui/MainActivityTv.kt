@@ -31,6 +31,10 @@ class MainActivityTv : FragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if(io.nekohasekai.sagernet.ui.update.UpdateReceipt.consume(this)) {
+            android.widget.Toast.makeText(this,getString(R.string.update_installed_title,io.nekohasekai.sagernet.BuildConfig.VERSION_NAME),android.widget.Toast.LENGTH_LONG).show()
+            (getSystemService(android.content.Context.NOTIFICATION_SERVICE) as android.app.NotificationManager).cancel(1331)
+        }
         if (io.nekohasekai.sagernet.ui.tv.TvUiPreferences.phoneMode) {
             startActivity(android.content.Intent(this, MainActivity::class.java).apply {
                 putExtra("force_phone_mode", true)

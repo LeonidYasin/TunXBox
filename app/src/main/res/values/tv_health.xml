@@ -1,0 +1,20 @@
+<resources>
+    <string name="tv_health_checking">Internet: checking…</string>
+    <string name="tv_health_unchecked">Internet: not checked</string>
+    <string name="tv_health_ok">Internet: URL OK · %1$d ms</string>
+    <string name="tv_health_failed">Internet: test failed · %1$s</string>
+    <string name="tv_health_age">Checked %1$d seconds ago · OK for details</string>
+    <string name="tv_health_rates">↑ %1$s/s   ↓ %2$s/s</string>
+    <string name="tv_health_reason_reality">REALITY verification failed</string>
+    <string name="tv_health_reason_time">Certificate expired or clock incorrect</string>
+    <string name="tv_health_reason_tls">TLS verification or handshake failed</string>
+    <string name="tv_health_reason_dns">Address could not be resolved</string>
+    <string name="tv_health_reason_timeout">No response within the time limit</string>
+    <string name="tv_health_reason_network">Network unavailable</string>
+    <string name="tv_health_reason_refused">Server refused connection</string>
+    <string name="tv_health_reason_unsupported">Unsupported protocol or transport</string>
+    <string name="tv_health_reason_core">Core not ready</string>
+    <string name="tv_health_reason_busy">Another check is running</string>
+    <string name="tv_health_reason_http">Test website returned an error</string>
+    <string name="tv_health_reason_unknown">Access could not be confirmed</string>
+</resources>

@@ -36,6 +36,9 @@ class MainBrowseFragment : BrowseSupportFragment() {
     private var statsAt = 0L
     private var healthJob: Job? = null
     private var health = ""
+    private val healthSession=TvHealthSession()
+    private var healthResult: io.nekohasekai.sagernet.group.ConnectionTestResult?=null
+    private var serviceEpoch=0L
     private var testJob: Job? = null
     private lateinit var toolsAdapter: ArrayObjectAdapter
     private var phase = TvVpnPhase.IDLE
@@ -119,10 +122,11 @@ class MainBrowseFragment : BrowseSupportFragment() {
         DataStore.serviceState = state
         val previousPhase = phase
         phase = TvVpnPhase.fromServiceName(state.name)
-        if (phase != previousPhase || name != null && name != activeName) { healthJob?.cancel(); health = "" }
+        if (phase != previousPhase || name != null && name != activeName) { serviceEpoch++;healthJob?.cancel();health="";healthResult=null }
         if (phase in setOf(TvVpnPhase.IDLE, TvVpnPhase.STOPPED)) { stats = io.nekohasekai.sagernet.aidl.SpeedDisplayData(); statsAt = 0L; activeName = ""; health = "" }
         if (name != null && phase !in setOf(TvVpnPhase.IDLE, TvVpnPhase.STOPPED)) activeName = name
         refreshCards()
+        maybeAutoCheck()
         if (message != null) toast(message)
     }
 
@@ -200,7 +204,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
         connection.updateConnectionId(SagerConnection.CONNECTION_ID_MAIN_ACTIVITY_FOREGROUND)
         ProfileManager.addListener(profileListener); GroupManager.addListener(groupListener)
     }
-    override fun onResume() { super.onResume(); requestSnapshot() }
+    override fun onResume() { super.onResume(); requestSnapshot();maybeAutoCheck() }
     override fun onPause() { restoreAfterLoad = true; super.onPause() }
     override fun onStop() {
         ProfileManager.removeListener(profileListener); GroupManager.removeListener(groupListener)
@@ -247,7 +251,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
                     }
                     groups = snapshot.groups; profiles = snapshot.cards; selectedName = snapshot.selectedName; activeName = snapshot.activeName
                     val lostProfile = focusedRow == ROW_PROFILES && profiles.none { it.id == focusedId }
-                    refreshCards()
+                    refreshCards();maybeAutoCheck()
                     if (restoreAfterLoad || lostProfile) { restoreAfterLoad = false; restoreFocus() }
                 } catch (cancelled: CancellationException) { throw cancelled }
                 catch (_: Exception) { toast(R.string.tv_operation_failed) }
@@ -304,8 +308,18 @@ class MainBrowseFragment : BrowseSupportFragment() {
     }
     private fun refreshConnectionCards() {
         if (view == null || !::connectionAdapter.isInitialized) return
-        val info = getString(R.string.tv_connection_stats, phaseLabel(), activeName.ifBlank { getString(R.string.tv_no_selection) }, bytes(stats.txRateProxy) + "/s", bytes(stats.rxRateProxy) + "/s", bytes(stats.txTotal), bytes(stats.rxTotal)) + if (health.isBlank()) { if (phase == TvVpnPhase.CONNECTED) "\n" + getString(R.string.network_test_not_checked) else "" } else "\n" + health
-        val statusCards = mutableListOf(TvAction(STATUS, getString(R.string.tv_connection_status), info, R.drawable.ic_remote_groups))
+        val result=healthResult
+        val label=when {
+            phase!=TvVpnPhase.CONNECTED -> phaseLabel()
+            healthJob?.isActive==true&&result==null -> getString(R.string.tv_health_checking)
+            result==null -> getString(R.string.tv_health_unchecked)
+            result.available -> getString(R.string.tv_health_ok,result.elapsedMs)
+            else -> getString(R.string.tv_health_failed,TvHealthReason.text(requireContext(),result.category!!))
+        }
+        val age=result?.let { getString(R.string.tv_health_age,((System.currentTimeMillis()-it.attemptedAt).coerceAtLeast(0)/1000))+(it.category?.let { category -> " · NET_${category.name}" }?:"") }?:""
+        val info=activeName.ifBlank { getString(R.string.tv_no_selection) }+"\n"+
+            getString(R.string.tv_health_rates,bytes(stats.txRateProxy),bytes(stats.rxRateProxy))+"\n"+age
+        val statusCards = mutableListOf(TvAction(STATUS,label,info,R.drawable.ic_remote_groups))
         if (phase == TvVpnPhase.CONNECTED) statusCards.add(TvAction(YOUTUBE, getString(R.string.tv_youtube), getString(R.string.tv_youtube_hint), R.drawable.ic_baseline_more_vert_24))
         connectionAdapter.setItems(statusCards, diff)
     }
@@ -374,7 +388,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
         YOUTUBE -> openYoutube()
         RESTART_APP -> io.nekohasekai.sagernet.ui.AppLifecycleActions.confirm(requireActivity(), true)
         CLOSE_APP -> io.nekohasekai.sagernet.ui.AppLifecycleActions.confirm(requireActivity(), false)
-        STATUS -> show(AlertDialog.Builder(requireContext()).setTitle(R.string.tv_connection_status).setMessage(getString(R.string.tv_connection_explanation) + "\n\n" + getString(R.string.tv_stats_age, if (statsAt == 0L) "—" else ((SystemClock.elapsedRealtime() - statsAt) / 1000).toString()) +
+        STATUS -> show(AlertDialog.Builder(requireContext()).setTitle(R.string.tv_connection_status).setMessage(getString(R.string.tv_connection_explanation) + "\n\n" + getString(R.string.tv_connection_stats,phaseLabel(),activeName,bytes(stats.txRateProxy),bytes(stats.rxRateProxy),bytes(stats.txTotal),bytes(stats.rxTotal)) + "\n\n" + getString(R.string.tv_stats_age, if (statsAt == 0L) "—" else ((SystemClock.elapsedRealtime() - statsAt) / 1000).toString()) +
             (io.nekohasekai.sagernet.group.ConnectionTestPresentation.read(activeProfileId())?.let { "\n\n" + io.nekohasekai.sagernet.group.ConnectionTestPresentation.details(requireContext(), it) } ?: "")).setPositiveButton(R.string.tv_test_active) { _, _ -> testActiveConnection() }.setNeutralButton(R.string.tv_tests_title) { _, _ -> showTests() }.setNegativeButton(android.R.string.cancel, null))
     } }
     fun handlePlayPause() = execute(TvInteractionPolicy.media(phase, DataStore.selectedProxy, serviceReady))
@@ -575,43 +589,60 @@ class MainBrowseFragment : BrowseSupportFragment() {
             }.setNegativeButton(android.R.string.cancel, null))
     }
     internal fun updateTraffic(value: io.nekohasekai.sagernet.aidl.SpeedDisplayData) {
-        stats = value.copy(); statsAt = SystemClock.elapsedRealtime(); refreshConnectionCards()
+        stats = value.copy(); statsAt = SystemClock.elapsedRealtime(); refreshConnectionCards();maybeAutoCheck()
     }
-    private fun testActiveConnection() {
-        if (phase != TvVpnPhase.CONNECTED || healthJob?.isActive == true) { toast(R.string.tv_wait); return }
-        val service = connection.service ?: run { toast(R.string.tv_unavailable); return }
-        val testedProfile = activeProfileId()
-        health = getString(R.string.tv_test_starting); refreshCards()
-        healthJob = viewLifecycleOwner.lifecycleScope.launch {
+    private fun syncHealthSession() {
+        val changed=healthSession.sync(serviceReady&&phase==TvVpnPhase.CONNECTED,activeProfileId(),
+            "$serviceEpoch:${SagerNet.underlyingNetwork}")
+        if(changed){healthJob?.cancel();health="";healthResult=null;refreshConnectionCards()}
+    }
+    private fun maybeAutoCheck() {
+        if(view==null||!isResumed)return
+        syncHealthSession()
+        if(phase==TvVpnPhase.CONNECTED&&serviceReady&&healthJob?.isActive!=true) testActiveConnection(true)
+    }
+    private fun testActiveConnection(automatic: Boolean=false) {
+        if(view==null||!isResumed||phase!=TvVpnPhase.CONNECTED||healthJob?.isActive==true) {
+            if(!automatic)toast(R.string.tv_wait);return
+        }
+        val service=connection.service?:run {if(!automatic)toast(R.string.tv_unavailable);return}
+        syncHealthSession()
+        val token=healthSession.begin(force=!automatic)?:return
+        val testedProfile=token.profile
+        health=getString(R.string.tv_health_checking);healthResult=null
+        healthJob=viewLifecycleOwner.lifecycleScope.launch {
             try {
-                val result = withContext(Dispatchers.IO) {
+                var result=withContext(Dispatchers.IO) {
                     io.nekohasekai.sagernet.group.ConnectionTestResult.decode(service.testConnectionReport())
-                        ?: io.nekohasekai.sagernet.group.ConnectionTestResult(testedProfile.coerceAtLeast(0), System.currentTimeMillis(), -1,
+                        ?:io.nekohasekai.sagernet.group.ConnectionTestResult(testedProfile,System.currentTimeMillis(),-1,
                             io.nekohasekai.sagernet.group.SubscriptionFailureCategory.UNKNOWN)
                 }
                 ensureActive()
-                if (phase == TvVpnPhase.CONNECTED && activeProfileId() == testedProfile && result.profileId == testedProfile) {
+                if(result.profileId!=testedProfile)result=io.nekohasekai.sagernet.group.ConnectionTestResult(testedProfile,System.currentTimeMillis(),-1,
+                    io.nekohasekai.sagernet.group.SubscriptionFailureCategory.CHANGED)
+                if(phase==TvVpnPhase.CONNECTED&&activeProfileId()==testedProfile&&healthSession.finish(token)) {
+                    healthResult=result
                     io.nekohasekai.sagernet.group.ConnectionTestPresentation.save(result)
-                    health = io.nekohasekai.sagernet.group.ConnectionTestPresentation.summary(requireContext(), result)
-                    if (!result.available && isResumed) {
-                        val current = show(AlertDialog.Builder(requireContext()).setTitle(R.string.network_test_title)
-                            .setMessage(io.nekohasekai.sagernet.group.ConnectionTestPresentation.details(requireContext(), result))
-                            .setPositiveButton(android.R.string.ok, null))
+                    health=io.nekohasekai.sagernet.group.ConnectionTestPresentation.summary(requireContext(),result)
+                    // Automatic checks are inline: never steal focus or require an error OK click.
+                    if(!automatic&&!result.available&&isResumed) {
+                        val current=show(AlertDialog.Builder(requireContext()).setTitle(R.string.network_test_title)
+                            .setMessage(io.nekohasekai.sagernet.group.ConnectionTestPresentation.details(requireContext(),result))
+                            .setPositiveButton(android.R.string.ok,null))
                         io.nekohasekai.sagernet.group.SubscriptionUpdatePresentation.focusClose(current)
                     }
                 }
-            }
-            catch (cancelled: CancellationException) { health = ""; throw cancelled }
-            catch (error: Exception) {
-                val result = io.nekohasekai.sagernet.group.ConnectionTestResult(testedProfile.coerceAtLeast(0), System.currentTimeMillis(), -1,
-                    io.nekohasekai.sagernet.group.SubscriptionFailureCategory.fromThrowable(error))
-                if (phase == TvVpnPhase.CONNECTED && activeProfileId() == testedProfile) {
-                    io.nekohasekai.sagernet.group.ConnectionTestPresentation.save(result)
-                    health = io.nekohasekai.sagernet.group.ConnectionTestPresentation.summary(requireContext(), result)
+            } catch(cancelled: CancellationException) {healthSession.cancel(token);throw cancelled}
+            catch(error: Exception) {
+                if(phase==TvVpnPhase.CONNECTED&&activeProfileId()==testedProfile&&healthSession.finish(token)) {
+                    val result=io.nekohasekai.sagernet.group.ConnectionTestResult(testedProfile,System.currentTimeMillis(),-1,
+                        io.nekohasekai.sagernet.group.SubscriptionFailureCategory.fromThrowable(error))
+                    healthResult=result;io.nekohasekai.sagernet.group.ConnectionTestPresentation.save(result)
+                    health=io.nekohasekai.sagernet.group.ConnectionTestPresentation.summary(requireContext(),result)
                 }
-            }
-            finally { if (view != null && isAdded) refreshCards() }
+            } finally {if(view!=null&&isAdded)refreshConnectionCards()}
         }
+        refreshConnectionCards()
     }
     private fun bytes(value: Long): String = android.text.format.Formatter.formatFileSize(requireContext(), value.coerceAtLeast(0))
     internal fun openHome() {

@@ -100,6 +100,12 @@ class GitHubUpdater(private val context: Context) {
 
     fun partialFile(build: UpdateBuild): File = File(File(context.cacheDir, "update-downloads"), "partial-${build.sha256}.apk")
 
+    fun savedBytes(build: UpdateBuild): Long {
+        val ready=File(File(context.cacheDir,"updates"),build.offer.apk.name)
+        val bytes=if(ready.isFile)ready.length() else partialFile(build).length()
+        return bytes.coerceIn(0,build.offer.apk.size) // Advisory only, never authorizes installation.
+    }
+
     suspend fun download(build: UpdateBuild, progress: (DownloadProgress) -> Unit): VerifiedDownload = downloadLocks.getOrPut(build.sha256) { Mutex() }.withLock {
         val dir = File(context.cacheDir, "updates").apply { kotlin.check(mkdirs() || isDirectory) }
         val readyExisting = File(dir, build.offer.apk.name)
