@@ -1,4 +1,5 @@
 <resources>
+    <item type="id" name="diagnostic_check_progress_text"/>
     <item type="id" name="connection_summary_name"/>
     <item type="id" name="connection_summary_sent"/>
     <item type="id" name="connection_summary_received"/>
@@ -32,4 +33,8 @@
     <string name="diagnostic_timeout_short">timeout</string>
     <string name="diagnostic_repeat">Repeat active check</string>
     <string name="diagnostic_unsupported_action">This build cannot start the profile with this transport. No silent TCP fallback is used. Choose a supported profile or wait for a tested compatible core; changing your server blindly is not required.</string>
+    <string name="tv_operations_row">Profile, group and subscription operations</string>
+    <string name="diagnostic_stats_waiting">waiting for statistics</string>
+    <string name="diagnostic_check_progress">Internet check · %1$d / %2$d s</string>
+    <string name="diagnostic_check_cancelled">Check cancelled; VPN unchanged</string>
 </resources>

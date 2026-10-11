@@ -8,7 +8,7 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **781**.
+Всего tracked файлов: **783**.
 
 | Раздел | Файлов |
 |---|---|
@@ -66,6 +66,7 @@
 | `app/src/main/java/io/nekohasekai/sagernet/fmt/tuic` | 2 |
 | `app/src/main/java/io/nekohasekai/sagernet/fmt/v2ray` | 4 |
 | `app/src/main/java/io/nekohasekai/sagernet/fmt/wireguard` | 2 |
+| `app/src/main/java/io/nekohasekai/sagernet/group/BoundedConnectionCheck.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/group/ConnectionTestPresentation.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/group/ConnectionTestResult.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/group/GroupInterfaceAdapter.kt` | 1 |
@@ -204,7 +205,7 @@
 | `app/src/main/res/values-zh-rHK` | 1 |
 | `app/src/main/res/values-zh-rTW` | 1 |
 | `app/src/main/res/xml` | 25 |
-| `app/src/test` | 25 |
+| `app/src/test` | 26 |
 | `buildScript` | 35 |
 | `buildSrc` | 2 |
 | `docs` | 33 |
@@ -484,6 +485,10 @@
 
 - [`app/src/main/java/io/nekohasekai/sagernet/fmt/wireguard/WireGuardBean.java`](../../app/src/main/java/io/nekohasekai/sagernet/fmt/wireguard/WireGuardBean.java)
 - [`app/src/main/java/io/nekohasekai/sagernet/fmt/wireguard/WireGuardFmt.kt`](../../app/src/main/java/io/nekohasekai/sagernet/fmt/wireguard/WireGuardFmt.kt)
+
+## app/src/main/java/io/nekohasekai/sagernet/group/BoundedConnectionCheck.kt
+
+- [`app/src/main/java/io/nekohasekai/sagernet/group/BoundedConnectionCheck.kt`](../../app/src/main/java/io/nekohasekai/sagernet/group/BoundedConnectionCheck.kt)
 
 ## app/src/main/java/io/nekohasekai/sagernet/group/ConnectionTestPresentation.kt
 
@@ -1382,6 +1387,7 @@
 ## app/src/test
 
 - [`app/src/test/java/io/nekohasekai/sagernet/fmt/v2ray/UnsupportedV2RayTransportTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/fmt/v2ray/UnsupportedV2RayTransportTest.kt)
+- [`app/src/test/java/io/nekohasekai/sagernet/group/BoundedConnectionCheckTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/group/BoundedConnectionCheckTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/group/FailureAndConnectionTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/group/FailureAndConnectionTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionFailureCategoryTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionFailureCategoryTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionTitleTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionTitleTest.kt)

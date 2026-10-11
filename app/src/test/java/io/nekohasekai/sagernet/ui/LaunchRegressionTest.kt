@@ -15,6 +15,7 @@ import org.junit.After
 import android.content.ComponentName
 import io.nekohasekai.sagernet.Action
 import io.nekohasekai.sagernet.bg.VpnService
+import io.nekohasekai.sagernet.bg.BaseService
 import androidx.room.MultiInstanceInvalidationService
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.android.controller.ServiceController
@@ -61,6 +62,41 @@ class LaunchRegressionTest {
     }
     @After fun closeServices() { if (::vpn.isInitialized) vpn.destroy(); if (::room.isInitialized) room.destroy() }
 
+    @Test fun trafficCallbackIdentityUsesBinderNotAidlWrapper() {
+        val handle=object: android.os.Binder() {override fun queryLocalInterface(descriptor: String): android.os.IInterface?=null}
+        val first=io.nekohasekai.sagernet.aidl.ISagerNetServiceCallback.Stub.asInterface(handle)
+        val second=io.nekohasekai.sagernet.aidl.ISagerNetServiceCallback.Stub.asInterface(handle)
+        assertNotSame(first,second);assertSame(first.asBinder(),second.asBinder())
+        val server=BaseService.Binder()
+        try {
+            server.registerCallback(first,2);server.registerCallback(second,3)
+            assertEquals(1,server.callbackIdMap.size);assertEquals(3,server.callbackIdMap[handle])
+            assertFalse(server.callbackIdMap.containsValue(2))
+            server.registerCallback(second,2);assertEquals(2,server.callbackIdMap[first.asBinder()])
+            server.unregisterCallback(first);assertTrue(server.callbackIdMap.isEmpty())
+        } finally {server.close()}
+    }
+    @Test fun lateNativeSuccessCannotReplaceNewerTimeout() {
+        val journal=io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticJournal
+        val timeout=io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnostic(77,2000,
+            io.nekohasekai.sagernet.ui.diagnostics.DiagnosticStage.URL_TEST,
+            io.nekohasekai.sagernet.group.SubscriptionFailureCategory.TIMEOUT)
+        try {
+            journal.clear();journal.write(timeout)
+            journal.write(timeout.copy(at=1000,category=null,elapsed=10))
+            assertEquals(timeout,journal.read(77))
+        } finally {journal.clear()}
+    }
+    @Test fun statisticsDefaultMatchesPreferenceAndExplicitOffIsPreserved() {
+        val store=io.nekohasekai.sagernet.database.DataStore.configurationStore
+        val old=store.getString(io.nekohasekai.sagernet.Key.SPEED_INTERVAL)
+        try {
+            store.remove(io.nekohasekai.sagernet.Key.SPEED_INTERVAL)
+            assertEquals(1000,io.nekohasekai.sagernet.database.DataStore.speedInterval)
+            io.nekohasekai.sagernet.database.DataStore.speedInterval=0
+            assertEquals(0,io.nekohasekai.sagernet.database.DataStore.speedInterval)
+        } finally {if(old==null)store.remove(io.nekohasekai.sagernet.Key.SPEED_INTERVAL) else store.putString(io.nekohasekai.sagernet.Key.SPEED_INTERVAL,old)}
+    }
     @Test fun coldTvLaunchCreatesBrowseAndNeverStartsChooser() {
         TvUiPreferences.phoneMode = false
         val controller = Robolectric.buildActivity(MainActivityTv::class.java)
@@ -387,10 +423,14 @@ class LaunchRegressionTest {
             val focus = MainBrowseFragment::class.java.getDeclaredField("focusedId").apply { isAccessible = true }
             assertEquals(1L, focus.getLong(fragment))
             val toolsRow=(0 until fragment.adapter.size()).map {fragment.adapter[it] as androidx.leanback.widget.ListRow}
-                .single {it.headerItem.id==2L}
-            assertEquals(fragment.adapter.size()-1,(0 until fragment.adapter.size()).indexOfFirst {fragment.adapter[it]===toolsRow})
+                .single {it.headerItem.id==4L}
+            assertEquals(fragment.adapter.size()-2,(0 until fragment.adapter.size()).indexOfFirst {fragment.adapter[it]===toolsRow})
             val tools=toolsRow.adapter
-            assertEquals(listOf(13L,14L), (tools.size()-2 until tools.size()).map { (tools[it] as io.nekohasekai.sagernet.ui.tv.TvAction).id })
+            assertEquals(listOf(4L,5L,15L,9L,11L,6L,13L,14L),(0 until tools.size()).map {(tools[it] as io.nekohasekai.sagernet.ui.tv.TvAction).id})
+            val capabilities=fragment.adapter[fragment.adapter.size()-1] as androidx.leanback.widget.ListRow
+            assertEquals(2L,capabilities.headerItem.id)
+            assertEquals(10L,(capabilities.adapter[0] as io.nekohasekai.sagernet.ui.tv.TvAction).id)
+            assertTrue((1 until capabilities.adapter.size()).all {capabilities.adapter[it] is io.nekohasekai.sagernet.ui.tv.TvFunctionCard})
         } finally { controller.pause().stop().destroy() }
     }
     @Test fun tvTrafficDoesNotNotifyOtherScrollingRows() {

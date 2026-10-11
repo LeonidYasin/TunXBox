@@ -50,7 +50,14 @@ object ConnectionDiagnosticJournal {
     private const val KEY="tunxbox_connection_diagnostic_v1"
     fun clear() {runCatching {DataStore.configurationStore.remove(KEY)}}
     fun read(profile: Long)=runCatching {ConnectionDiagnostic.decode(DataStore.configurationStore.getString(KEY))?.takeIf {it.profile==profile}}.getOrNull()
-    fun write(value: ConnectionDiagnostic) { if(ConnectionDiagnostic.decode(value.encode())!=null)runCatching {DataStore.configurationStore.putString(KEY,value.encode())} }
+    fun write(value: ConnectionDiagnostic) {
+        if(ConnectionDiagnostic.decode(value.encode())==null)return
+        runCatching {
+            val previous=ConnectionDiagnostic.decode(DataStore.configurationStore.getString(KEY))
+            if(previous==null||previous.profile!=value.profile||previous.at<=value.at)
+                DataStore.configurationStore.putString(KEY,value.encode())
+        }
+    }
     fun startup(entity: ProxyEntity,category: SubscriptionFailureCategory,stage: DiagnosticStage=DiagnosticStage.STARTUP) = write(ConnectionDiagnostic.capture(entity,entity.id,stage,category))
     fun url(entity: ProxyEntity?,result: ConnectionTestResult)=write(ConnectionDiagnostic.capture(entity,result.profileId,DiagnosticStage.URL_TEST,result.category,result.attemptedAt,result.elapsedMs))
 }
@@ -62,6 +69,7 @@ object ConnectionDiagnosticReport {
         appendLine("CI: ${BuildConfig.BUILD_RUN_NUMBER} / ${BuildConfig.BUILD_RUN_ID}")
         appendLine("Core source: ${BuildConfig.CORE_SOURCE_COMMIT}")
         appendLine("sing-box: ${runCatching {Libcore.versionBox()}.getOrDefault("unavailable")}")
+        appendLine("Statistics interval setting: ${DataStore.speedInterval} ms; session totals independent of notification setting")
         appendLine("Android API: ${Build.VERSION.SDK_INT} · ABI: ${Build.SUPPORTED_ABIS.joinToString()}")
         appendLine()
         if(record==null)appendLine(context.getString(R.string.diagnostic_none)) else {

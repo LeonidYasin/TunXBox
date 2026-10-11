@@ -36,3 +36,8 @@ Server адаптирован из [ProxyDroid release 0f1c9bf15990](https://git
 - Android offline: синтетические totals при rate=0, реальный D-pad до Диагностики, безопасный отчёт, локальное QR/TXT скачивание и отключение ссылки без запуска VPN. Это UI/transport fixture, не доказательство throughput реального провайдера.
 - Rc.138: 235 JVM PASS; Android 4KB остановлен на устаревшем пути saved subscription report (3 Down/8 Right). Обновлён bounded обход динамических групп и catalog кнопок, assertions privacy/reachability/safe-close не удалены. 16KB нового кандидата обязательно.
 - Owner: установка поверх rc.135; реальный Hysteria traffic/counters; XHTTP full error; QR с отдельного телефона; 720p/1080p/large font/фон/сеть/close. Нули после настоящего обмена расследовать отдельно.
+
+
+### Коррекция по приёмке rc.143
+
+Rc.143 прошла 245 JVM и по 15 Android/API35/4KB и API36/16KB тестов. Владелец нашёл проблемы на Android 9/32-bit: NET_OK 180 ms без счётчиков и долгое повторение без прогресса. Новый кандидат: выбранная группа первая (без изменения Room userOrder), отдельная строка прежних операций перед последней строкой «Все возможности». Исправляется регистрация callback по IBinder, а не по новым AIDL Proxy wrapper; DataStore default interval согласован с XML (1000 ms). Session totals считаются и при отключённом notification interval, без выдуманных байтов. Повторный Binder URL-вызов ограничен 8 s ожидания через один изолированный daemon worker; BUSY не создаёт новые потоки, отмена не останавливает VPN; показаны spinner, прошедшие секунды и deadline. Запоздалый результат не должен заменить новый timeout. Нужны новые полный CI и физическая приёмка; по одному NET_OK не обещать скорость/YouTube/UDP.

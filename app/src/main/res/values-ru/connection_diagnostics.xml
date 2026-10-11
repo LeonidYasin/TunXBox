@@ -24,4 +24,8 @@
     <string name="diagnostic_timeout_short">таймаут</string>
     <string name="diagnostic_repeat">Повторить активную проверку</string>
     <string name="diagnostic_unsupported_action">Эта сборка не может запустить профиль с данным транспортом. Незаметная подмена на TCP не используется. Выберите поддерживаемый профиль либо дождитесь проверенного совместимого ядра; менять настройки сервера вслепую не требуется.</string>
+    <string name="tv_operations_row">Операции с профилями, группами и подписками</string>
+    <string name="diagnostic_stats_waiting">ожидание статистики</string>
+    <string name="diagnostic_check_progress">Проверка Интернета · %1$d / %2$d с</string>
+    <string name="diagnostic_check_cancelled">Проверка отменена; VPN не изменён</string>
 </resources>

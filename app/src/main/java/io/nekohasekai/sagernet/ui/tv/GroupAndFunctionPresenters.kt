@@ -26,6 +26,7 @@ class FunctionCardPresenter: Presenter() {
 /** Separate namespaces avoid focus collisions between group IDs and profile IDs. */
 object TvGroupRows {
  const val BASE=1_000_000_000_000L
+ fun orderedGroupIds(ids: List<Long>,selected: Long)=ids.filter {it==selected}+ids.filter {it!=selected}
  fun row(group: Long)=BASE+group
  fun focus(item: Any?)=when(item) {
   is TvConnectionCard -> item.id

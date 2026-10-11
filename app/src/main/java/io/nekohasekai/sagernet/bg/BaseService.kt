@@ -93,11 +93,12 @@ class BaseService {
         AutoCloseable {
         private val callbacks = object : RemoteCallbackList<ISagerNetServiceCallback>() {
             override fun onCallbackDied(callback: ISagerNetServiceCallback?, cookie: Any?) {
+                callback?.asBinder()?.let {callbackIdMap.remove(it)}
                 super.onCallbackDied(callback, cookie)
             }
         }
 
-        val callbackIdMap = mutableMapOf<ISagerNetServiceCallback, Int>()
+        val callbackIdMap = java.util.concurrent.ConcurrentHashMap<IBinder, Int>()
 
         override val coroutineContext = Dispatchers.Main.immediate + Job()
 
@@ -109,10 +110,10 @@ class BaseService {
                 Runtime.getRuntime().exit(0)
                 return
             }
-            if (!callbackIdMap.contains(cb)) {
+            if (!callbackIdMap.containsKey(cb.asBinder())) {
                 callbacks.register(cb)
             }
-            callbackIdMap[cb] = id
+            callbackIdMap[cb.asBinder()] = id
         }
 
         private val broadcastMutex = Mutex()
@@ -135,16 +136,18 @@ class BaseService {
         }
 
         override fun unregisterCallback(cb: ISagerNetServiceCallback) {
-            callbackIdMap.remove(cb)
+            callbackIdMap.remove(cb.asBinder())
             callbacks.unregister(cb)
         }
 
         private val reportBusy = java.util.concurrent.atomic.AtomicBoolean(false)
         override fun testConnectionReport(): String {
             val profile = DataStore.currentProfile.coerceAtLeast(0)
+            val capturedProxy=data?.proxy
             val time = System.currentTimeMillis()
             fun encoded(result: io.nekohasekai.sagernet.group.ConnectionTestResult): String {
-                io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticJournal.url(data?.proxy?.profile,result)
+                if(data?.proxy===capturedProxy&&DataStore.currentProfile==profile)
+                    io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticJournal.url(capturedProxy?.profile,result)
                 return result.encode()
             }
             fun failed(category: io.nekohasekai.sagernet.group.SubscriptionFailureCategory) =

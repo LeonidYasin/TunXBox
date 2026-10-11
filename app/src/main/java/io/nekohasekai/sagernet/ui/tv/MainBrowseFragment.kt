@@ -43,6 +43,10 @@ class MainBrowseFragment : BrowseSupportFragment() {
     private var serviceEpoch=0L
     private var testJob: Job? = null
     private lateinit var toolsAdapter: ArrayObjectAdapter
+    private lateinit var operationsAdapter: ArrayObjectAdapter
+    private var checkStartedAt=0L
+    private var checkProgress: android.widget.TextView?=null
+    private var checkDialog: AlertDialog?=null
     private var phase = TvVpnPhase.IDLE
     private var serviceReady = false
     private var profiles = emptyList<TvProfileCard>()
@@ -63,6 +67,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
     companion object {
         private const val ROW_ACTIONS = 0L
         private const val ROW_TOOLS = 2L
+        private const val ROW_OPERATIONS = 4L
         private const val TOGGLE = 1L
         private const val GROUPS = 2L
         private const val ADD_PROFILE = 3L
@@ -186,6 +191,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
         }
         actionsAdapter = ArrayObjectAdapter(ActionPresenter())
 
+        operationsAdapter = ArrayObjectAdapter(ActionPresenter())
         toolsAdapter = ArrayObjectAdapter(ClassPresenterSelector()
             .addClassPresenter(TvAction::class.java,ActionPresenter())
             .addClassPresenter(TvFunctionCard::class.java,FunctionCardPresenter()))
@@ -309,7 +315,8 @@ class MainBrowseFragment : BrowseSupportFragment() {
         ), diff)
         val updating = group != null && GroupUpdater.updating.contains(group.id)
         toolsAdapter.setItems(listOf(TvAction(FULL_TOOLS,getString(R.string.tv_all_functions),getString(R.string.tv_all_functions_hint),R.drawable.ic_baseline_more_vert_24))+
-            TvFunctionCatalog.entries(requireContext(),DataStore.enableClashAPI,io.nekohasekai.sagernet.ktx.isPlay).map {TvFunctionCard(it.id,it.title)}+listOf(
+            TvFunctionCatalog.entries(requireContext(),DataStore.enableClashAPI,io.nekohasekai.sagernet.ktx.isPlay).map {TvFunctionCard(it.id,it.title)}, diff)
+        operationsAdapter.setItems(listOf(
             TvAction(PROFILE_ACTIONS, getString(R.string.tv_actions), getString(R.string.tv_actions_hint), R.drawable.ic_image_edit, DataStore.selectedProxy > 0),
             TvAction(UPDATE, getString(R.string.tv_update_group), getString(if (updating) R.string.tv_updating else if (group?.type != GroupType.SUBSCRIPTION) R.string.tv_not_subscription else R.string.tv_update_group), R.drawable.ic_social_share, group?.type == GroupType.SUBSCRIPTION && !updating),
             TvAction(SUBSCRIPTION_DIAGNOSTICS, getString(R.string.subscription_attempt_title), getString(R.string.subscription_attempt_description), R.drawable.ic_social_share, group?.type == GroupType.SUBSCRIPTION),
@@ -322,7 +329,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
         val rows=mutableListOf(ListRow(HeaderItem(ROW_ACTIONS,getString(R.string.tv_row_actions)),actionsAdapter),
             ListRow(HeaderItem(ROW_CONNECTION,getString(R.string.tv_connection_row)),connectionAdapter))
         groupAdapters.keys.retainAll(groups.map {it.id}.toSet())
-        for(g in groups) {
+        for(g in TvGroupRows.orderedGroupIds(groups.map {it.id},DataStore.selectedGroup).map {id->groups.first {it.id==id}}) {
             val groupAdapter=groupAdapters.getOrPut(g.id){ArrayObjectAdapter(ClassPresenterSelector()
                 .addClassPresenter(TvGroupCard::class.java,GroupCardPresenter())
                 .addClassPresenter(TvProfileCard::class.java,ProfileCardPresenter {openProfileActions(it)})
@@ -334,6 +341,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
             groupAdapter.setItems(cards,diff)
             rows.add(ListRow(HeaderItem(TvGroupRows.row(g.id),g.displayName()),groupAdapter))
         }
+        rows.add(ListRow(HeaderItem(ROW_OPERATIONS,getString(R.string.tv_operations_row)),operationsAdapter))
         rows.add(ListRow(HeaderItem(ROW_TOOLS,getString(R.string.tv_all_functions)),toolsAdapter))
         rowAdapter.setItems(rows,object: DiffCallback<ListRow>() {
             override fun areItemsTheSame(old: ListRow,new: ListRow)=old.headerItem.id==new.headerItem.id
@@ -348,22 +356,22 @@ class MainBrowseFragment : BrowseSupportFragment() {
         val short=when {
             phase!=TvVpnPhase.CONNECTED&&failed!=null -> getString(R.string.diagnostic_failed_short,TvHealthReason.short(requireContext(),failed.category!!))
             phase!=TvVpnPhase.CONNECTED -> phaseLabel()
-            healthJob?.isActive==true -> getString(R.string.diagnostic_checking_short)
-            result==null -> getString(R.string.diagnostic_unchecked_short)
+            healthJob?.isActive==true -> checkingLabel()
+            result==null -> health.takeIf {it==getString(R.string.diagnostic_check_cancelled)}?:getString(R.string.diagnostic_unchecked_short)
             result.available -> getString(R.string.diagnostic_ok_short,result.elapsedMs)
             else -> getString(R.string.diagnostic_failed_short,TvHealthReason.short(requireContext(),result.category!!))
         }
         val statusCards=mutableListOf<Any>(TvConnectionCard(STATUS,
             activeName.ifBlank {selectedName.ifBlank {getString(R.string.tv_no_selection)}},
-            getString(R.string.diagnostic_sent,if(statsAt==0L)"—" else bytes(stats.txTotal)),
-            getString(R.string.diagnostic_received,if(statsAt==0L)"—" else bytes(stats.rxTotal)),short),
+            getString(R.string.diagnostic_sent,if(statsAt==0L)getString(R.string.diagnostic_stats_waiting) else bytes(stats.txTotal)),
+            getString(R.string.diagnostic_received,if(statsAt==0L)getString(R.string.diagnostic_stats_waiting) else bytes(stats.rxTotal)),short),
             TvAction(DIAGNOSTICS,getString(R.string.diagnostic_title),getString(R.string.diagnostic_card_hint),R.drawable.ic_remote_groups))
         if (phase == TvVpnPhase.CONNECTED) statusCards.add(TvAction(YOUTUBE, getString(R.string.tv_youtube), getString(R.string.tv_youtube_hint), R.drawable.ic_baseline_more_vert_24))
         connectionAdapter.setItems(statusCards, diff)
     }
     private fun restoreFocus() {
         if (dialog?.isShowing == true || parentFragmentManager.findFragmentByTag("connection_report")!=null || parentFragmentManager.findFragmentByTag("diagnostic_share")!=null || view == null) return
-        val items=when {focusedRow>=TvGroupRows.BASE -> groupAdapters[focusedRow-TvGroupRows.BASE]?:actionsAdapter;focusedRow==ROW_TOOLS->toolsAdapter;focusedRow==ROW_CONNECTION->connectionAdapter;else->actionsAdapter}
+        val items=when {focusedRow>=TvGroupRows.BASE -> groupAdapters[focusedRow-TvGroupRows.BASE]?:actionsAdapter;focusedRow==ROW_TOOLS->toolsAdapter;focusedRow==ROW_OPERATIONS->operationsAdapter;focusedRow==ROW_CONNECTION->connectionAdapter;else->actionsAdapter}
         val ids = (0 until items.size()).map { itemId(items[it]) }
         val index = TvInteractionPolicy.focusIndex(ids, focusedId)
         val row=(0 until rowAdapter.size()).indexOfFirst {(rowAdapter[it] as ListRow).headerItem.id==focusedRow}.coerceAtLeast(0)
@@ -663,10 +671,26 @@ class MainBrowseFragment : BrowseSupportFragment() {
         syncHealthSession()
         val token=healthSession.begin(force=!automatic)?:return
         val testedProfile=token.profile
-        health=getString(R.string.tv_health_checking);healthResult=null
+        health=getString(R.string.tv_health_checking);healthResult=null;checkStartedAt=SystemClock.elapsedRealtime()
+        if(!automatic) {
+            val builder=AlertDialog.Builder(requireContext())
+            val themed=builder.context
+            checkProgress=android.widget.TextView(themed).apply {id=R.id.diagnostic_check_progress_text;text=checkingLabel();textSize=18f;setPadding(24,16,24,16)}
+            val body=android.widget.LinearLayout(themed).apply {
+                orientation=android.widget.LinearLayout.VERTICAL
+                addView(android.widget.ProgressBar(themed));addView(checkProgress)
+            }
+            checkDialog=show(builder.setTitle(R.string.network_test_title).setView(body)
+                .setNegativeButton(android.R.string.cancel) {_,_->healthJob?.cancel()})
+            checkDialog?.setOnCancelListener {healthJob?.cancel()}
+            checkDialog?.getButton(AlertDialog.BUTTON_NEGATIVE)?.apply {isFocusableInTouchMode=true;requestFocus()}
+        }
         healthJob=viewLifecycleOwner.lifecycleScope.launch {
+            val ticker=launch {
+                while(isActive) {checkProgress?.text=checkingLabel();refreshConnectionCards();delay(250)}
+            }
             try {
-                var result=withContext(Dispatchers.IO) {
+                var result=io.nekohasekai.sagernet.group.BoundedConnectionCheck.shared.check(testedProfile) {
                     io.nekohasekai.sagernet.group.ConnectionTestResult.decode(service.testConnectionReport())
                         ?:io.nekohasekai.sagernet.group.ConnectionTestResult(testedProfile,System.currentTimeMillis(),-1,
                             io.nekohasekai.sagernet.group.SubscriptionFailureCategory.UNKNOWN)
@@ -676,14 +700,16 @@ class MainBrowseFragment : BrowseSupportFragment() {
                     io.nekohasekai.sagernet.group.SubscriptionFailureCategory.CHANGED)
                 if(phase==TvVpnPhase.CONNECTED&&activeProfileId()==testedProfile&&healthSession.finish(token)) {
                     healthResult=result
+                    saveCheckResult(result)
                     io.nekohasekai.sagernet.group.ConnectionTestPresentation.save(result)
                     health=io.nekohasekai.sagernet.group.ConnectionTestPresentation.summary(requireContext(),result)
                     // Automatic checks are inline: never steal focus or require an error OK click.
-                    if(!automatic&&!result.available&&isResumed) {
+                    if(!automatic&&isResumed) {
+                        checkDialog?.dismiss();checkDialog=null
                         showConnectionDiagnostics()
                     }
                 }
-            } catch(cancelled: CancellationException) {healthSession.cancel(token);throw cancelled}
+            } catch(cancelled: CancellationException) {if(healthSession.finish(token))health=getString(R.string.diagnostic_check_cancelled);throw cancelled}
             catch(error: Exception) {
                 if(phase==TvVpnPhase.CONNECTED&&activeProfileId()==testedProfile&&healthSession.finish(token)) {
                     val result=io.nekohasekai.sagernet.group.ConnectionTestResult(testedProfile,System.currentTimeMillis(),-1,
@@ -691,9 +717,24 @@ class MainBrowseFragment : BrowseSupportFragment() {
                     healthResult=result;io.nekohasekai.sagernet.group.ConnectionTestPresentation.save(result)
                     health=io.nekohasekai.sagernet.group.ConnectionTestPresentation.summary(requireContext(),result)
                 }
-            } finally {if(view!=null&&isAdded)refreshConnectionCards()}
+            } finally {
+                ticker.cancel();checkStartedAt=0L;checkProgress=null
+                checkDialog?.dismiss();checkDialog=null
+                if(view!=null&&isAdded)view?.post {if(view!=null&&isAdded)refreshConnectionCards()}
+            }
         }
         refreshConnectionCards()
+    }
+    private fun checkingLabel()=getString(R.string.diagnostic_check_progress,
+        ((SystemClock.elapsedRealtime()-checkStartedAt).coerceAtLeast(0)/1000).toInt(),
+        (io.nekohasekai.sagernet.group.BoundedConnectionCheck.LIMIT_MS/1000).toInt())
+    private fun saveCheckResult(result: io.nekohasekai.sagernet.group.ConnectionTestResult) {
+        val previous=io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticJournal.read(result.profileId)
+        val record=previous?.copy(at=result.attemptedAt,stage=io.nekohasekai.sagernet.ui.diagnostics.DiagnosticStage.URL_TEST,
+            category=result.category,elapsed=result.elapsedMs)
+            ?:io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnostic(result.profileId,result.attemptedAt,
+                io.nekohasekai.sagernet.ui.diagnostics.DiagnosticStage.URL_TEST,result.category,elapsed=result.elapsedMs)
+        io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticJournal.write(record)
     }
     private fun bytes(value: Long): String = android.text.format.Formatter.formatFileSize(requireContext(), value.coerceAtLeast(0))
     internal fun openHome() {

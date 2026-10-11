@@ -223,7 +223,18 @@
       "YOUTUBE"
     ],
     "tools": [
-      "FULL_TOOLS",
+      "FULL_TOOLS"
+    ],
+    "order": [
+      "actions",
+      "connection",
+      "group:selected-first",
+      "operations",
+      "tools"
+    ],
+    "groups": "Selected group first, others retain Room userOrder; selector followed by own profiles or empty hint",
+    "directCapabilities": "TvFunctionCatalog.entries with dashboard/play availability filters",
+    "operations": [
       "PROFILE_ACTIONS",
       "UPDATE",
       "SUBSCRIPTION_DIAGNOSTICS",
@@ -232,15 +243,7 @@
       "MORE",
       "RESTART_APP",
       "CLOSE_APP"
-    ],
-    "order": [
-      "actions",
-      "connection",
-      "group:*",
-      "tools"
-    ],
-    "groups": "Every group in Room userOrder; selector followed by own profiles or empty hint",
-    "directCapabilities": "TvFunctionCatalog.entries with dashboard/play availability filters"
+    ]
   },
   "launcher": [
     "release",
