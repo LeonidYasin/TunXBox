@@ -38,6 +38,16 @@ class AppUpdateFragment : ToolbarFragment(R.layout.layout_app_updates) {
         offer=null;ready=null;pendingInstall=false;busy=false
         scope=MainScope();updater=GitHubUpdater(requireContext().applicationContext)
         status=view.findViewById(R.id.update_status);progress=view.findViewById(R.id.update_progress)
+        // ScrollView.initScrollView() enables focus after superclass XML attributes.
+        // Enforce read-only preview after inflation, on every recreated view.
+        view.findViewById<android.widget.ScrollView>(R.id.update_log_scroll).apply {
+            isFocusableInTouchMode=false;isFocusable=false
+            descendantFocusability=android.view.ViewGroup.FOCUS_BLOCK_DESCENDANTS
+        }
+        view.findViewById<android.widget.ScrollView>(R.id.update_page_scroll).apply {
+            isFocusableInTouchMode=false;isFocusable=false
+            descendantFocusability=android.view.ViewGroup.FOCUS_AFTER_DESCENDANTS
+        }
         check=view.findViewById(R.id.update_check);download=view.findViewById(R.id.update_download)
         install=view.findViewById(R.id.update_install);pause=view.findViewById(R.id.update_pause)
         stable=view.findViewById(R.id.update_stable);test=view.findViewById(R.id.update_test)
