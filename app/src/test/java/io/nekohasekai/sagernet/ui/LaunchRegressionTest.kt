@@ -278,9 +278,14 @@ class LaunchRegressionTest {
             controller.get().supportFragmentManager.executePendingTransactions()
             val fragment = controller.get().supportFragmentManager.findFragmentById(R.id.tv_container) as MainBrowseFragment
             fragment.updateTraffic(io.nekohasekai.sagernet.aidl.SpeedDisplayData(txRateProxy = 2048, rxRateProxy = 4096, txTotal = 8192, rxTotal = 16384))
-            val row = fragment.adapter[1] as androidx.leanback.widget.ListRow
-            val status = row.adapter[0] as io.nekohasekai.sagernet.ui.tv.TvAction
-            assertEquals(8L, status.id); assertTrue(status.subtitle.contains("↑")); assertTrue(status.subtitle.contains("↓"))
+            val row = (0 until fragment.adapter.size()).map { fragment.adapter[it] as androidx.leanback.widget.ListRow }.single { it.headerItem.id == 3L }
+            val status = row.adapter[0] as io.nekohasekai.sagernet.ui.tv.TvConnectionCard
+            assertEquals(8L, status.id)
+            val context = controller.get()
+            assertEquals(context.getString(R.string.diagnostic_sent, android.text.format.Formatter.formatFileSize(context, 8192L)), status.sent)
+            assertEquals(context.getString(R.string.diagnostic_received, android.text.format.Formatter.formatFileSize(context, 16384L)), status.received)
+            assertTrue(status.sent.contains("↑")); assertTrue(status.received.contains("↓")); assertTrue(status.result.isNotBlank())
+            assertEquals(16L, (row.adapter[1] as io.nekohasekai.sagernet.ui.tv.TvAction).id)
             val actions = (fragment.adapter[0] as androidx.leanback.widget.ListRow).adapter
             assertEquals(listOf(1L, 2L, 3L, 7L), (0 until actions.size()).map { (actions[it] as io.nekohasekai.sagernet.ui.tv.TvAction).id })
         } finally { controller.pause().stop().destroy() }
