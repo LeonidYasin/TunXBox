@@ -114,7 +114,7 @@ class EmulatorSmokeTest {
         val oldGroup=DataStore.currentGroupId();val oldProfile=DataStore.selectedProxy;val state=DataStore.serviceState
         val group=runBlocking {GroupManager.createGroup(io.nekohasekai.sagernet.database.ProxyGroup(name="Diagnostic smoke"))}
         val bean=io.nekohasekai.sagernet.fmt.v2ray.VMessBean().apply {
-            initializeDefaultValues();isVLESS=true;type="xhttp";security="reality";serverAddress="secret-fixture.invalid"
+            alterId=-1;initializeDefaultValues();type="xhttp";security="reality";serverAddress="secret-fixture.invalid"
             uuid="secret-fixture-uuid";path="/secret-fixture-token";name="Diagnostic XHTTP"
         }
         val entity=runBlocking {io.nekohasekai.sagernet.database.ProfileManager.createProfile(group.id,bean)}

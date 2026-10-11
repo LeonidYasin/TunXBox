@@ -13,7 +13,7 @@ import org.robolectric.annotation.Config
 class ConnectionDiagnosticTest {
  @Test fun unsupportedXhttpHasStructuredStageWithoutPrivateParameters() {
   val entity=ProxyEntity(id=7,type=ProxyEntity.TYPE_VMESS,vmessBean=VMessBean().apply {
-   initializeDefaultValues();isVLESS=true;type="xhttp";security="reality";serverAddress="private.example";uuid="private-secret";name="private-name";path="/private-token"
+   alterId=-1;initializeDefaultValues();type="xhttp";security="reality";serverAddress="private.example";uuid="private-secret";name="private-name";path="/private-token"
   })
   val r=ConnectionDiagnostic.capture(entity,7,DiagnosticStage.STARTUP,C.UNSUPPORTED,1234)
   assertEquals("VLESS",r.protocol);assertEquals("xhttp",r.transport);assertEquals("reality",r.security)
