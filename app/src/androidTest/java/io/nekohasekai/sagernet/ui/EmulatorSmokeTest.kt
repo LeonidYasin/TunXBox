@@ -344,10 +344,22 @@ class EmulatorSmokeTest {
             assertNotNull("All capabilities must be reachable",device.findObject(By.descStartsWith(text(R.string.tv_all_functions)).focused(true)))
             val title = text(R.string.subscription_attempt_title)
             val buttonBudget=io.nekohasekai.sagernet.ui.tv.TvFunctionCatalog.entries(context,DataStore.enableClashAPI,io.nekohasekai.sagernet.ktx.isPlay).size+9
-            repeat(buttonBudget) {
+            repeat(buttonBudget * 2) {
                 if (!device.hasObject(By.descStartsWith(title).focused(true))) {
-                    device.pressDPadRight(); device.waitForIdle()
+                    val previous=device.findObject(By.focused(true))?.contentDescription
+                    android.util.Log.i("TunXBoxSmoke", "Report navigation focused: $previous")
+                    device.pressDPadRight()
+                    // A long Leanback row can still be scrolling after input delivery.
+                    if(previous!=null)device.wait(Until.gone(By.desc(previous).focused(true)),1000)
+                    device.waitForIdle()
                 }
+            }
+            if(!device.hasObject(By.descStartsWith(title).focused(true))) {
+                device.executeShellCommand("mkdir -p /sdcard/Download/TunXBoxSmoke")
+                val hierarchy=File(context.getExternalFilesDir(null),"saved_report_focus_failure.xml")
+                device.dumpWindowHierarchy(hierarchy)
+                device.executeShellCommand("cp ${hierarchy.absolutePath} /sdcard/Download/TunXBoxSmoke/saved_report_focus_failure.xml")
+                device.executeShellCommand("screencap -p /sdcard/Download/TunXBoxSmoke/saved_report_focus_failure.png")
             }
             assertNotNull("Saved diagnostic card must be reachable by DPAD",
                 device.findObject(By.descStartsWith(title).focused(true)))

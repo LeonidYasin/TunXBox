@@ -368,7 +368,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
         val index = TvInteractionPolicy.focusIndex(ids, focusedId)
         val row=(0 until rowAdapter.size()).indexOfFirst {(rowAdapter[it] as ListRow).headerItem.id==focusedRow}.coerceAtLeast(0)
         view?.post {
-            if (view == null || dialog?.isShowing == true) return@post
+            if (view == null || dialog?.isShowing == true || parentFragmentManager.findFragmentByTag("connection_report")!=null || parentFragmentManager.findFragmentByTag("diagnostic_share")!=null) return@post
             // Browse's three-argument overload unconditionally starts a headers
             // transition and throws when HEADERS_DISABLED. Select through the
             // embedded Rows fragment instead; no headers animation is needed.
@@ -377,7 +377,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
                 val selection = ListRowPresenter.SelectItemViewHolderTask(index).apply {
                     itemTask = object : Presenter.ViewHolderTask() {
                         override fun run(holder: Presenter.ViewHolder) {
-                            if (view == null || dialog?.isShowing == true) return
+                            if (view == null || dialog?.isShowing == true || parentFragmentManager.findFragmentByTag("connection_report")!=null || parentFragmentManager.findFragmentByTag("diagnostic_share")!=null) return
                             // Selection alone does not grant keyboard focus after a touch-based mode choice.
                             holder.view.isFocusableInTouchMode = true
                             holder.view.requestFocus()

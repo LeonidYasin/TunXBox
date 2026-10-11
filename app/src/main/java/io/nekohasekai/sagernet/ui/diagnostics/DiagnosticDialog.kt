@@ -38,7 +38,7 @@ class DiagnosticDialog: DialogFragment() {
         if(arguments?.getBoolean("repeat")==true)builder.setNegativeButton(R.string.diagnostic_repeat) {_,_->parentFragmentManager.setFragmentResult("diagnostic_repeat",Bundle())}
         return builder.create()
     }
-    override fun onStart() {super.onStart();(dialog as? android.app.AlertDialog)?.getButton(android.app.AlertDialog.BUTTON_POSITIVE)?.requestFocus()}
+    override fun onStart() {super.onStart();dialog?.let { io.nekohasekai.sagernet.group.SubscriptionUpdatePresentation.focusClose(it) }}
 }
 /** Explicit LAN export only. Back/onStop/expiry/network changes close the listener. */
 class DiagnosticShareDialog: DialogFragment() {
@@ -73,7 +73,7 @@ class DiagnosticShareDialog: DialogFragment() {
         return builder.setTitle(R.string.diagnostic_share).setView(frame).setPositiveButton(R.string.diagnostic_share_close,null).create()
     }
     override fun onStart() {
-        super.onStart();(dialog as? android.app.AlertDialog)?.getButton(android.app.AlertDialog.BUTTON_POSITIVE)?.requestFocus()
+        super.onStart();dialog?.let { io.nekohasekai.sagernet.group.SubscriptionUpdatePresentation.focusClose(it) }
         if(started){status.setText(R.string.diagnostic_share_expired);return}
         started=true
         job=lifecycleScope.launch {
