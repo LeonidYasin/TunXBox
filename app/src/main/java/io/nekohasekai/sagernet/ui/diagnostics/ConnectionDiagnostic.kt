@@ -41,7 +41,7 @@ data class ConnectionDiagnostic(val profile: Long,val at: Long,val stage: Diagno
             val protocol=runCatching {source?.displayType()}.getOrNull()?.takeIf {it in protocols}?:"unknown"
             return ConnectionDiagnostic(profile,at,stage,category,protocol,
                 bean?.type?.lowercase(java.util.Locale.ROOT)?.takeIf {it in transports}?:"unknown",
-                bean?.security?.lowercase(java.util.Locale.ROOT)?.takeIf {it in securities}?:"unknown",elapsed)
+                (if(!bean?.realityPubKey.isNullOrBlank())"reality" else bean?.security?.lowercase(java.util.Locale.ROOT))?.takeIf {it in securities}?:"unknown",elapsed)
         }
     }
 }

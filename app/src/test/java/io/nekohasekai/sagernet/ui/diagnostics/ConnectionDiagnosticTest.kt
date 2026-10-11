@@ -11,6 +11,15 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28],application=Application::class)
 class ConnectionDiagnosticTest {
+ @Test fun internallyNormalizedRealityIsNotReportedAsOrdinaryTls() {
+  val entity=ProxyEntity(id=9,type=ProxyEntity.TYPE_VMESS,vmessBean=VMessBean().apply {
+   alterId=-1;initializeDefaultValues();type="tcp";security="tls";realityPubKey="private-fixture-key";realityShortId="private-id"
+  })
+  val r=ConnectionDiagnostic.capture(entity,9,DiagnosticStage.URL_TEST,C.REALITY,1234)
+  assertEquals("reality",r.security)
+  assertFalse(r.encode().contains("private-fixture-key"));assertFalse(r.encode().contains("private-id"))
+ }
+
  @Test fun timeoutExplanationIsAboutConnectionNotSubscription() {
   val context=org.robolectric.RuntimeEnvironment.getApplication()
   val result=ConnectionDiagnosticReport.reason(context,C.TIMEOUT)
@@ -18,7 +27,7 @@ class ConnectionDiagnosticTest {
   assertFalse(result.contains(io.nekohasekai.sagernet.group.SubscriptionFailurePresentation.reason(context,C.TIMEOUT)))
  }
  @Test fun extendedReportContainsOnlyBoundedEvidenceNotPrivateInputs() {
-  val r=ExtendedConnectionDiagnostics.Report(1,1,"WIFI",1,1,true,true,false,false,false,2,123456,
+  val r=ExtendedConnectionDiagnostics.Report(1,1,"WIFI",1,1,true,true,false,false,false,false,2,123456,
     listOf(ExtendedConnectionDiagnostics.Step("ANDROID_STRICT_TLS","FAIL",120,C.TLS_TRUST,TlsEvidence.CHAIN)))
   val text=r.text();assertTrue(text.contains("TLS_CHAIN"));assertTrue(text.contains("NET_TLS_TRUST"))
   assertTrue(text.contains("not the existing VPN tunnel"));assertTrue(text.contains("hostname verification"))
