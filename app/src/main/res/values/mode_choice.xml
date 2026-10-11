@@ -6,10 +6,12 @@
     <string name="mode_tv_title">TV</string>
     <string name="mode_tv_hint">Large cards and remote control navigation</string>
     <string name="mode_phone_title">Smartphone</string>
-    <string name="mode_phone_hint">Touch controls and full profile settings</string>
+    <string name="mode_phone_hint">Touch controls and full profile/subscription settings</string>
     <item type="id" name="mode_build_info"/>
-    <item type="id" name="mode_about"/>
+    <item type="id" name="mode_release"/>
     <string name="mode_build_identity">Version %1$s · code %2$s\nCommit %3$s · CI #%4$s</string>
     <string name="mode_about_title">About TunXBox</string>
     <string name="mode_about_hint">Full build information, contacts and license</string>
+    <string name="mode_release_title">TunXBox · %1$s</string>
+    <string name="mode_release_hint">What is new and what to check in this release</string>
 </resources>

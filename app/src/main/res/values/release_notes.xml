@@ -1,0 +1,17 @@
+<resources>
+    <item type="id" name="release_title"/>
+    <item type="id" name="release_build_info"/>
+    <item type="id" name="release_back"/>
+    <item type="id" name="release_about"/>
+    <item type="id" name="release_changes"/>
+    <item type="id" name="release_checks"/>
+    <item type="id" name="release_limits"/>
+    <string name="release_back">Back to interface selection</string>
+    <string name="release_about">Full information about TunXBox</string>
+    <string name="release_changes_title">What is new in this APK</string>
+    <string name="release_changes_body">• Three launch cards: release information, TV and smartphone. The installed version is visible immediately.\n• Each group has its own TV row. Available sections have direct buttons.\n• Subscription names use provider metadata when available; custom names are preserved.\n• Automatic active-connection check appears before YouTube.\n• Update downloads explain resume or restart; verified installation uses the Android installer.</string>
+    <string name="release_checks_title">What to check</string>
+    <string name="release_checks_body">1. Launch with a remote: the last chosen mode is focused. Open the top card, read these notes, and press Back; focus should return to it.\n2. Enter TV. Reach every group and the direct section buttons. Choosing a group must not switch the VPN.\n3. Import or update a subscription with a provider title; rename it manually and update again. The custom name must remain.\n4. Connect a working profile without pressing Tests. Check the automatic result before YouTube, then check actual Internet access. Try a known failing profile and read its reason.\n5. When a newer APK is available, interrupt a download and retry. Check whether the UI says resume or restart. After installation verify the version on launch.\n6. Check smartphone mode, large fonts, portrait/landscape, and Back from About.</string>
+    <string name="release_limits_title">Known limits</string>
+    <string name="release_limits_body">These notes are bundled with the installed APK and work offline; they do not describe a newer GitHub release.\nMany groups require vertical scrolling.\nA started VPN service or TCP response does not prove Internet access. The URL check is not a continuous throughput or stability test. Hysteria instability remains under investigation; XHTTP support is not guaranteed.\nNo automatic background relaunch is forced after installation. The Android installer and notification permissions control the Open prompt. No report or private configuration is uploaded automatically.</string>
+</resources>

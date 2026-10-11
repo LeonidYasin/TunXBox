@@ -130,7 +130,7 @@ class LaunchRegressionTest {
             assertFalse(TvUiPreferences.phoneMode)
         } finally { controller.pause().stop().destroy() }
     }
-    @Test fun pickerShowsActualBuildAndAboutDoesNotChooseModeOrStartVpn() {
+    @Test fun pickerHasThreeCardsAndReleaseDoesNotChooseModeOrStartVpn() {
         TvUiPreferences.phoneMode=false
         val selected=io.nekohasekai.sagernet.database.DataStore.selectedProxy
         val state=io.nekohasekai.sagernet.database.DataStore.serviceState
@@ -138,21 +138,49 @@ class LaunchRegressionTest {
         try {
             val activity=controller.get()
             val version=activity.findViewById<android.widget.TextView>(R.id.mode_build_info).text.toString()
-            assertTrue(version.contains(io.nekohasekai.sagernet.BuildConfig.VERSION_NAME))
-            assertTrue(version.contains(io.nekohasekai.sagernet.BuildConfig.VERSION_CODE.toString()))
-            assertTrue(version.contains(io.nekohasekai.sagernet.BuildConfig.BUILD_COMMIT.take(8)))
-            assertTrue(version.contains(io.nekohasekai.sagernet.BuildConfig.BUILD_RUN_NUMBER))
+            assertEquals(activity.getString(R.string.mode_release_title,io.nekohasekai.sagernet.BuildConfig.VERSION_NAME),version)
+            val tv=activity.findViewById<android.view.View>(R.id.mode_choose_tv)
             val phone=activity.findViewById<android.view.View>(R.id.mode_choose_phone)
-            val about=activity.findViewById<android.view.View>(R.id.mode_about)
-            assertEquals(about.id,phone.nextFocusDownId);assertEquals(phone.id,about.nextFocusUpId)
-            about.performClick()
+            val release=activity.findViewById<android.view.View>(R.id.mode_release)
+            val column=release.parent as android.view.ViewGroup
+            assertEquals(listOf(release.id,tv.id,phone.id),(0 until column.childCount).map {column.getChildAt(it).id})
+            assertTrue(tv.hasFocus())
+            assertEquals(release.id,tv.nextFocusUpId);assertEquals(tv.id,release.nextFocusDownId)
+            assertEquals(phone.id,tv.nextFocusDownId);assertEquals(tv.id,phone.nextFocusUpId)
+            release.performClick()
             val target=shadowOf(activity).nextStartedActivity
-            assertEquals(MainActivity::class.java.name,target.component!!.className)
-            assertEquals(R.id.nav_about,target.getIntExtra("tv_destination",0))
-            assertTrue(target.getBooleanExtra("tv_tools",false));assertFalse(activity.isFinishing)
-            assertFalse(TvUiPreferences.phoneMode)
+            assertEquals(ReleaseNotesActivity::class.java.name,target.component!!.className)
+            assertFalse(activity.isFinishing);assertFalse(TvUiPreferences.phoneMode)
             assertEquals(selected,io.nekohasekai.sagernet.database.DataStore.selectedProxy)
             assertEquals(state,io.nekohasekai.sagernet.database.DataStore.serviceState)
+        } finally {controller.pause().stop().destroy()}
+    }
+    @Test fun bundledReleaseNotesShowActualBuildAndOpenFullAboutWithoutSelectingMode() {
+        TvUiPreferences.phoneMode=false
+        val selected=io.nekohasekai.sagernet.database.DataStore.selectedProxy
+        val state=io.nekohasekai.sagernet.database.DataStore.serviceState
+        val controller=Robolectric.buildActivity(ReleaseNotesActivity::class.java).setup().visible()
+        try {
+            val activity=controller.get()
+            val build=activity.findViewById<android.widget.TextView>(R.id.release_build_info).text.toString()
+            assertTrue(build.contains(io.nekohasekai.sagernet.BuildConfig.VERSION_NAME))
+            assertTrue(build.contains(io.nekohasekai.sagernet.BuildConfig.VERSION_CODE.toString()))
+            assertTrue(build.contains(io.nekohasekai.sagernet.BuildConfig.BUILD_COMMIT.take(8)))
+            assertTrue(build.contains(io.nekohasekai.sagernet.BuildConfig.BUILD_RUN_NUMBER))
+            for((id,text) in listOf(R.id.release_changes to R.string.release_changes_body,R.id.release_checks to R.string.release_checks_body,R.id.release_limits to R.string.release_limits_body)) {
+                val section=activity.findViewById<android.widget.TextView>(id)
+                assertTrue(section.isFocusable);assertTrue(section.text.contains(activity.getString(text)))
+            }
+            val details=activity.findViewById<android.view.View>(R.id.release_about)
+            assertEquals(R.id.release_about,activity.findViewById<android.view.View>(R.id.release_back).nextFocusDownId)
+            details.performClick()
+            val target=shadowOf(activity).nextStartedActivity
+            assertEquals(MainActivity::class.java.name,target.component!!.className)
+            assertEquals(R.id.nav_about,target.getIntExtra("tv_destination",0));assertTrue(target.getBooleanExtra("tv_tools",false))
+            assertFalse(TvUiPreferences.phoneMode);assertFalse(activity.isFinishing)
+            assertEquals(selected,io.nekohasekai.sagernet.database.DataStore.selectedProxy)
+            assertEquals(state,io.nekohasekai.sagernet.database.DataStore.serviceState)
+            activity.findViewById<android.view.View>(R.id.release_back).performClick();assertTrue(activity.isFinishing)
         } finally {controller.pause().stop().destroy()}
     }
     @Test fun pickerBackDoesNotChooseOrLaunch() {

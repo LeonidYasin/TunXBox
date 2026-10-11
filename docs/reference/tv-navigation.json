@@ -22,7 +22,8 @@
     "INSTALLER": "Установщик Android",
     "PERMISSION": "Разрешение источника APK",
     "MODE": "Старт: версия и выбор интерфейса",
-    "ABOUT": "О программе / полные сведения сборки"
+    "ABOUT": "О программе / полные сведения сборки",
+    "RELEASE": "Встроенные сведения о выпуске и проверки"
   },
   "edges": [
     {
@@ -165,16 +166,28 @@
     },
     {
       "from": "MODE",
+      "to": "RELEASE",
+      "confirm": 1,
+      "label": "TunXBox + версия"
+    },
+    {
+      "from": "RELEASE",
       "to": "ABOUT",
       "menu": "nav_about",
       "confirm": 1,
-      "label": "О программе без выбора режима"
+      "label": "Полные сведения"
     },
     {
       "from": "ABOUT",
+      "to": "RELEASE",
+      "confirm": 0,
+      "label": "Back; фокус на About"
+    },
+    {
+      "from": "RELEASE",
       "to": "MODE",
       "confirm": 0,
-      "label": "Back"
+      "label": "Back; фокус на выпуске"
     }
   ],
   "rows": {
@@ -207,5 +220,10 @@
     ],
     "groups": "Every group in Room userOrder; selector followed by own profiles or empty hint",
     "directCapabilities": "TvFunctionCatalog.entries with dashboard/play availability filters"
-  }
+  },
+  "launcher": [
+    "release",
+    "tv",
+    "phone"
+  ]
 }

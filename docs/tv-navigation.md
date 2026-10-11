@@ -26,6 +26,7 @@ flowchart LR
     PERMISSION["Разрешение источника APK"]
     MODE["Старт: версия и выбор интерфейса"]
     ABOUT["О программе / полные сведения сборки"]
+    RELEASE["Встроенные сведения о выпуске и проверки"]
     TV -->|"TOGGLE / OK 1"| CONNECT
     CONNECT -->|"автоматически / OK 0"| CONNECTED
     CONNECTED -->|"Авто URL-тест (foreground) / OK 0"| HEALTH
@@ -49,8 +50,10 @@ flowchart LR
     UPDATER -->|"После Check + Download + verify / OK 1"| INSTALLER
     PERMISSION -->|"Разрешить и вернуться / OK 1"| INSTALLER
     TV -->|"Прямая кнопка обновления / OK 1"| UPDATER
-    MODE -->|"О программе без выбора режима / OK 1"| ABOUT
-    ABOUT -->|"Back / OK 0"| MODE
+    MODE -->|"TunXBox + версия / OK 1"| RELEASE
+    RELEASE -->|"Полные сведения / OK 1"| ABOUT
+    ABOUT -->|"Back; фокус на About / OK 0"| RELEASE
+    RELEASE -->|"Back; фокус на выпуске / OK 0"| MODE
 ```
 
 ## Основной путь

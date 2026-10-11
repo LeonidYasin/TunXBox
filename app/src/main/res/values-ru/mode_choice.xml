@@ -2,10 +2,12 @@
     <string name="mode_choose_title">Выберите интерфейс</string>
     <string name="mode_choose_hint">Как вы хотите использовать TunXBox? Режим можно изменить позже.</string>
     <string name="mode_tv_title">ТВ</string>
-    <string name="mode_tv_hint">Крупные карточки и управление пультом</string>
+    <string name="mode_tv_hint">Управление пультом, строки групп и диагностика подключения</string>
     <string name="mode_phone_title">Смартфон</string>
-    <string name="mode_phone_hint">Сенсорное управление и полные настройки профилей</string>
+    <string name="mode_phone_hint">Сенсорное управление, профили, подписки и настройки</string>
     <string name="mode_build_identity">Версия %1$s · код %2$s\nКоммит %3$s · CI №%4$s</string>
     <string name="mode_about_title">О программе</string>
     <string name="mode_about_hint">Полные сведения о сборке, контакты и лицензия</string>
+    <string name="mode_release_title">TunXBox · %1$s</string>
+    <string name="mode_release_hint">Что нового и что проверить в этом выпуске</string>
 </resources>

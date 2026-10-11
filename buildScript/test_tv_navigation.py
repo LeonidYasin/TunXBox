@@ -46,6 +46,19 @@ class NavigationTest(unittest.TestCase):
   select=s.split('private fun selectGroup(id: Long)')[1].split('private fun chooseGroup()')[0]
   self.assertNotIn('SagerNet.',select);self.assertNotIn('execute(',select)
  def test_direct_updater_budget(self):self.assertEqual(1,confirmations(graph(),'TV','UPDATER'))
+ def test_three_launcher_cards_and_bundled_release_info(self):
+  s=(ROOT/'app/src/main/java/io/nekohasekai/sagernet/ui/ModeSelectionActivity.kt').read_text()
+  self.assertEqual(['release','tv','phone'],graph()['launcher'])
+  order=[s.index('val '+x+' = card(') for x in graph()['launcher']]
+  self.assertEqual(sorted(order),order);self.assertNotIn('val about = card(',s)
+  self.assertIn('BuildConfig.VERSION_NAME',s);self.assertIn('releaseCard?.requestFocus()',s)
+  page=(ROOT/'app/src/main/java/io/nekohasekai/sagernet/ui/ReleaseNotesActivity.kt').read_text()
+  self.assertIn('R.string.release_changes_body',page);self.assertIn('R.string.release_checks_body',page)
+  self.assertNotIn('GitHubUpdater',page);self.assertNotIn('SagerNet.',page)
+  manifest=ET.parse(ROOT/'app/src/main/AndroidManifest.xml');ns='{http://schemas.android.com/apk/res/android}'
+  activity=next(a for a in manifest.getroot().find('application').findall('activity') if a.get(ns+'name','').endswith('.ReleaseNotesActivity'))
+  self.assertEqual('false',activity.get(ns+'exported'))
+ def test_release_about_is_two_confirmations(self):self.assertEqual(2,confirmations(graph(),'MODE','ABOUT'))
  def test_ids_and_menu_entries_exist(self):
   d=graph();ids=set(d['nodes']);menu={x.get('{http://schemas.android.com/apk/res/android}id','').split('/')[-1] for x in ET.parse(ROOT/'app/src/main/res/menu/main_drawer_menu.xml').getroot().iter('item')}
   for e in d['edges']:

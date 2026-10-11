@@ -344,18 +344,30 @@ class EmulatorSmokeTest {
         assertFalse(TvUiPreferences.phoneMode)
         assertFalse(device.hasObject(By.pkg("com.android.intentresolver")))
     }
-    @Test fun launcherVersionAndAboutAreReachableByRemoteWithoutChoosingMode() {
+    @Test fun launcherReleaseNotesAndAboutWorkOfflineAndRestoreRemoteFocus() {
         val selected=DataStore.selectedProxy;val state=DataStore.serviceState
         scenario=ActivityScenario.launch<ModeSelectionActivity>(Intent(context,ModeSelectionActivity::class.java))
         val version=requireNotNull(device.wait(Until.findObject(By.res(context.packageName,"mode_build_info")),timeout)).text
-        assertTrue(version.contains(io.nekohasekai.sagernet.BuildConfig.VERSION_NAME))
-        assertTrue(version.contains(io.nekohasekai.sagernet.BuildConfig.BUILD_COMMIT.take(8)))
-        // Remembered mode may focus either TV or Phone; Down must reach About from either.
-        for(i in 0..2) {
-            if(device.hasObject(By.res(context.packageName,"mode_about").focused(true)))break
-            device.pressDPadDown();device.waitForIdle()
+        assertEquals(context.getString(R.string.mode_release_title,io.nekohasekai.sagernet.BuildConfig.VERSION_NAME),version)
+        assertNotNull(device.wait(Until.findObject(By.res(context.packageName,"mode_choose_tv").focused(true)),timeout))
+        device.pressDPadUp()
+        assertNotNull(device.wait(Until.findObject(By.res(context.packageName,"mode_release").focused(true)),timeout))
+        device.pressDPadCenter()
+        val build=requireNotNull(device.wait(Until.findObject(By.res(context.packageName,"release_build_info")),timeout)).text
+        assertTrue(build.contains(io.nekohasekai.sagernet.BuildConfig.VERSION_NAME))
+        assertTrue(build.contains(io.nekohasekai.sagernet.BuildConfig.BUILD_COMMIT.take(8)))
+        assertNotNull(device.wait(Until.findObject(By.res(context.packageName,"release_back").focused(true)),timeout))
+        fun reach(id: String,down: Boolean) {
+            // A tall text section needs scrolling before Android can focus the next section.
+            for(i in 0 until 40) {
+                if(device.hasObject(By.res(context.packageName,id).focused(true)))break
+                if(down)device.pressDPadDown() else device.pressDPadUp()
+                device.waitForIdle()
+            }
+            assertNotNull("Unreachable release section: $id",device.wait(Until.findObject(By.res(context.packageName,id).focused(true)),timeout))
         }
-        assertNotNull(device.wait(Until.findObject(By.res(context.packageName,"mode_about").focused(true)),timeout))
+        for(id in listOf("release_about","release_changes","release_checks","release_limits"))reach(id,true)
+        reach("release_about",false)
         device.pressDPadCenter()
         assertNotNull(device.wait(Until.findObject(By.res(context.packageName,"mal_recyclerview")),timeout))
         val scroll=UiScrollable(UiSelector().resourceId(context.packageName+":id/mal_recyclerview")).setAsVerticalList().setMaxSearchSwipes(30)
@@ -365,7 +377,9 @@ class EmulatorSmokeTest {
         val message=requireNotNull(device.wait(Until.findObject(By.res("android","message")),timeout)).text
         assertTrue(message.contains(io.nekohasekai.sagernet.BuildConfig.VERSION_NAME))
         device.pressBack();device.pressBack()
-        assertNotNull(device.wait(Until.findObject(By.res(context.packageName,"mode_about")),timeout))
+        assertNotNull(device.wait(Until.findObject(By.res(context.packageName,"release_about").focused(true)),timeout))
+        device.pressBack()
+        assertNotNull(device.wait(Until.findObject(By.res(context.packageName,"mode_release").focused(true)),timeout))
         assertEquals(selected,DataStore.selectedProxy);assertEquals(state,DataStore.serviceState)
         assertFalse(TvUiPreferences.phoneMode)
     }

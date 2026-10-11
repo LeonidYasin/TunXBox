@@ -8,7 +8,7 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **768**.
+Всего tracked файлов: **771**.
 
 | Раздел | Файлов |
 |---|---|
@@ -115,6 +115,7 @@
 | `app/src/main/java/io/nekohasekai/sagernet/ui/PromotionsFragment.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/QuickDisableShortcut.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/QuickEnableShortcut.kt` | 1 |
+| `app/src/main/java/io/nekohasekai/sagernet/ui/ReleaseNotesActivity.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/ReleaseUpdatePolicy.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/RemoteFocusHighlighter.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/RemoteProfileFocus.kt` | 1 |
@@ -179,7 +180,7 @@
 | `app/src/main/res/raw` | 4 |
 | `app/src/main/res/raw-zh-rCN` | 4 |
 | `app/src/main/res/resources.properties` | 1 |
-| `app/src/main/res/values` | 20 |
+| `app/src/main/res/values` | 21 |
 | `app/src/main/res/values-ar` | 1 |
 | `app/src/main/res/values-be` | 1 |
 | `app/src/main/res/values-de` | 1 |
@@ -194,7 +195,7 @@
 | `app/src/main/res/values-night` | 2 |
 | `app/src/main/res/values-nl` | 1 |
 | `app/src/main/res/values-pt-rBR` | 1 |
-| `app/src/main/res/values-ru` | 10 |
+| `app/src/main/res/values-ru` | 11 |
 | `app/src/main/res/values-tr` | 1 |
 | `app/src/main/res/values-uk` | 1 |
 | `app/src/main/res/values-w600dp-h480dp` | 1 |
@@ -678,6 +679,10 @@
 ## app/src/main/java/io/nekohasekai/sagernet/ui/QuickEnableShortcut.kt
 
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/QuickEnableShortcut.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/QuickEnableShortcut.kt)
+
+## app/src/main/java/io/nekohasekai/sagernet/ui/ReleaseNotesActivity.kt
+
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/ReleaseNotesActivity.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/ReleaseNotesActivity.kt)
 
 ## app/src/main/java/io/nekohasekai/sagernet/ui/ReleaseUpdatePolicy.kt
 
@@ -1229,6 +1234,7 @@
 - [`app/src/main/res/values/dimens.xml`](../../app/src/main/res/values/dimens.xml)
 - [`app/src/main/res/values/ic_launcher_background.xml`](../../app/src/main/res/values/ic_launcher_background.xml)
 - [`app/src/main/res/values/mode_choice.xml`](../../app/src/main/res/values/mode_choice.xml)
+- [`app/src/main/res/values/release_notes.xml`](../../app/src/main/res/values/release_notes.xml)
 - [`app/src/main/res/values/remote_actions.xml`](../../app/src/main/res/values/remote_actions.xml)
 - [`app/src/main/res/values/remote_focus.xml`](../../app/src/main/res/values/remote_focus.xml)
 - [`app/src/main/res/values/strings.xml`](../../app/src/main/res/values/strings.xml)
@@ -1303,6 +1309,7 @@
 - [`app/src/main/res/values-ru/app_updates.xml`](../../app/src/main/res/values-ru/app_updates.xml)
 - [`app/src/main/res/values-ru/crash_recovery.xml`](../../app/src/main/res/values-ru/crash_recovery.xml)
 - [`app/src/main/res/values-ru/mode_choice.xml`](../../app/src/main/res/values-ru/mode_choice.xml)
+- [`app/src/main/res/values-ru/release_notes.xml`](../../app/src/main/res/values-ru/release_notes.xml)
 - [`app/src/main/res/values-ru/remote_actions.xml`](../../app/src/main/res/values-ru/remote_actions.xml)
 - [`app/src/main/res/values-ru/strings.xml`](../../app/src/main/res/values-ru/strings.xml)
 - [`app/src/main/res/values-ru/tv_feedback.xml`](../../app/src/main/res/values-ru/tv_feedback.xml)
