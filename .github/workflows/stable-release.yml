@@ -199,15 +199,15 @@ jobs:
           disable-animations: true
           script: python3 buildScript/run_verified_emulator_smoke.py 4096 Oss
 
-      - name: Android 15 emulator smoke (16KB)
+      - name: Android 16 emulator smoke (16KB)
         timeout-minutes: 20
         uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # pinned v2
         with:
-          api-level: 35
+          api-level: 36
           target: google_apis_ps16k
           arch: x86_64
           profile: pixel_2
-          avd-name: tunxbox-smoke-16k
+          avd-name: tunxbox-smoke-16k-api36
           ram-size: 3072M
           emulator-boot-timeout: 300
           emulator-options: -no-window -gpu software -no-snapshot -noaudio -no-boot-anim
