@@ -19,10 +19,10 @@ import java.net.Inet4Address
 /** Fixed action bar, independently scrollable report, safe-close initial focus. */
 class DiagnosticDialog: DialogFragment() {
     companion object {
-        fun open(manager: FragmentManager,report: String,repeat: Boolean=false) {
+        fun open(manager: FragmentManager,report: String,repeat: Boolean=false,extended: Boolean=false) {
             if(manager.isStateSaved||manager.findFragmentByTag("connection_report")!=null)return
             require(report.toByteArray().size<=32*1024)
-            DiagnosticDialog().apply {arguments=Bundle().apply {putString("report",report);putBoolean("repeat",repeat)}}.show(manager,"connection_report")
+            DiagnosticDialog().apply {arguments=Bundle().apply {putString("report",report);putBoolean("repeat",repeat);putBoolean("extended",extended)}}.show(manager,"connection_report")
         }
     }
     override fun onCreateDialog(savedInstanceState: Bundle?): android.app.Dialog {
@@ -31,7 +31,13 @@ class DiagnosticDialog: DialogFragment() {
         fun dp(n: Int)=(n*density).toInt()
         val text=TextView(context).apply {id=R.id.diagnostic_report_text;text=arguments?.getString("report");textSize=16f;setPadding(dp(16),dp(12),dp(16),dp(12));isFocusable=true}
         val scroll=ScrollView(context).apply {addView(text);layoutParams=LinearLayout.LayoutParams(-1,dp((resources.configuration.screenHeightDp-220).coerceIn(120,500)))}
-        val body=LinearLayout(context).apply {orientation=LinearLayout.VERTICAL;addView(scroll)}
+        val body=LinearLayout(context).apply {
+            orientation=LinearLayout.VERTICAL;addView(scroll)
+            if(arguments?.getBoolean("extended")==true)addView(Button(context).apply {
+                id=R.id.diagnostic_extended_button;setText(R.string.diagnostic_extended)
+                setOnClickListener {parentFragmentManager.setFragmentResult("diagnostic_extended",Bundle());dismiss()}
+            })
+        }
         builder.setTitle(R.string.diagnostic_title).setView(body)
             .setNeutralButton(R.string.diagnostic_share) {_,_-> DiagnosticShareDialog.open(parentFragmentManager,arguments?.getString("report").orEmpty())}
             .setPositiveButton(android.R.string.ok,null)

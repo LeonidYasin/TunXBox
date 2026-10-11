@@ -80,7 +80,11 @@ object ConnectionDiagnosticReport {
             appendLine("Stage: ${record.stage} · Protocol: ${record.protocol} · Transport: ${record.transport} · Security: ${record.security}")
             appendLine("Code: ${record.category?.let {"NET_${it.name}"}?:"NET_OK"}")
             if(record.elapsed>=0)appendLine("URL RTT: ${record.elapsed} ms")
-            record.category?.let {appendLine(SubscriptionFailurePresentation.reason(context,it))}
+            record.category?.let {category->appendLine(when(category) {
+                SubscriptionFailureCategory.TIMEOUT->context.getString(R.string.diagnostic_timeout_explanation)
+                SubscriptionFailureCategory.TLS_TRUST->context.getString(R.string.diagnostic_tls_explanation)
+                else->SubscriptionFailurePresentation.reason(context,category)
+            })}
             if(record.stage==DiagnosticStage.STARTUP&&record.category==SubscriptionFailureCategory.UNSUPPORTED)
                 appendLine(context.getString(R.string.diagnostic_unsupported_action))
         }

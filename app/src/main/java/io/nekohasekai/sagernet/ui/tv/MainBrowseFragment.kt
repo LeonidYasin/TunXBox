@@ -42,6 +42,9 @@ class MainBrowseFragment : BrowseSupportFragment() {
     private var healthResult: io.nekohasekai.sagernet.group.ConnectionTestResult?=null
     private var serviceEpoch=0L
     private var testJob: Job? = null
+    private var extendedJob: Job?=null
+    private var extendedProbe: suspend (android.content.Context,ProxyEntity,suspend (String)->Unit)->io.nekohasekai.sagernet.ui.diagnostics.ExtendedConnectionDiagnostics.Report = {context,profile,progress->io.nekohasekai.sagernet.ui.diagnostics.ExtendedConnectionDiagnostics.run(context,profile,progress)}
+    private var extendedReport: io.nekohasekai.sagernet.ui.diagnostics.ExtendedConnectionDiagnostics.Report?=null
     private var qualityByProfile=emptyMap<Long,TvQualityResult>()
     private var qualityUrlProbe: suspend (ProxyEntity)->Int = {TvDiagnostics.url(it)}
     private var qualityTcpProbe: suspend (ProxyEntity)->Int = {TvDiagnostics.tcp(it)}
@@ -223,6 +226,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
         parentFragmentManager.setFragmentResultListener("diagnostic_repeat",viewLifecycleOwner) {_,_->
             if(phase==TvVpnPhase.CONNECTED)testActiveConnection()
         }
+        parentFragmentManager.setFragmentResultListener("diagnostic_extended",viewLifecycleOwner) {_,_->runExtendedDiagnostics()}
         restoreAfterLoad = true
         view.post { rowsSupportFragment?.verticalGridView?.setAnimateChildLayout(false) }
         refreshCards(); requestSnapshot()
@@ -237,7 +241,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
     override fun onStop() {
         ProfileManager.removeListener(profileListener); GroupManager.removeListener(groupListener)
         connection.updateConnectionId(SagerConnection.CONNECTION_ID_MAIN_ACTIVITY_BACKGROUND)
-        subscriptionJob?.cancel(); testJob?.cancel(); healthJob?.cancel()
+        subscriptionJob?.cancel(); testJob?.cancel(); healthJob?.cancel(); extendedJob?.cancel()
         dialog?.dismiss(); dialog = null
         super.onStop()
     }
@@ -456,7 +460,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
         val counters=phase==TvVpnPhase.CONNECTED&&statsAt>0L
         val report=io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticReport.text(requireContext(),record,
             if(counters)stats.txTotal else null,if(counters)stats.rxTotal else null)
-        io.nekohasekai.sagernet.ui.diagnostics.DiagnosticDialog.open(parentFragmentManager,report,phase==TvVpnPhase.CONNECTED)
+        io.nekohasekai.sagernet.ui.diagnostics.DiagnosticDialog.open(parentFragmentManager,report+(extendedReport?.takeIf {it.profile==profile}?.let {"\n\n"+it.text()}?:""),phase==TvVpnPhase.CONNECTED,profile>0)
     }
     fun handlePlayPause() = execute(TvInteractionPolicy.media(phase, DataStore.selectedProxy, serviceReady))
     fun showFocusedActions() {
@@ -675,6 +679,35 @@ class MainBrowseFragment : BrowseSupportFragment() {
         syncHealthSession()
         if(phase==TvVpnPhase.CONNECTED&&serviceReady&&healthJob?.isActive!=true) testActiveConnection(true)
     }
+    private fun runExtendedDiagnostics() {
+        if(view==null||!isResumed||extendedJob?.isActive==true||DataStore.runningTest){toast(R.string.tv_wait);return}
+        val id=if(phase==TvVpnPhase.CONNECTED)activeProfileId() else DataStore.selectedProxy
+        if(id<=0){toast(R.string.tv_choose_profile);return}
+        DataStore.runningTest=true
+        val progress=show(AlertDialog.Builder(requireContext()).setTitle(R.string.diagnostic_extended)
+            .setMessage(R.string.diagnostic_extended_scope).setNegativeButton(android.R.string.cancel){_,_->extendedJob?.cancel()})
+        progress.setOnCancelListener {extendedJob?.cancel()}
+        progress.getButton(AlertDialog.BUTTON_NEGATIVE)?.apply {isFocusableInTouchMode=true;requestFocus()}
+        extendedJob=viewLifecycleOwner.lifecycleScope.launch {
+            val start=SystemClock.elapsedRealtime();var stage="CONFIG_COMPATIBILITY"
+            val ticker=launch {while(isActive){progress.setMessage(getString(R.string.diagnostic_extended_progress,stage,(SystemClock.elapsedRealtime()-start)/1000)+"\n\n"+getString(R.string.diagnostic_extended_scope));delay(250)}}
+            try {
+                val entity=withContext(Dispatchers.IO){ProfileManager.getProfile(id)}?:return@launch
+                val fingerprint=io.nekohasekai.sagernet.fmt.KryoConverters.serialize(entity.requireBean())
+                val report=extendedProbe(requireContext().applicationContext,entity){stage=it}
+                ensureActive()
+                val fresh=withContext(Dispatchers.IO){ProfileManager.getProfile(id)}
+                if(fresh==null||!fingerprint.contentEquals(io.nekohasekai.sagernet.fmt.KryoConverters.serialize(fresh.requireBean()))||
+                    id!=(if(phase==TvVpnPhase.CONNECTED)activeProfileId() else DataStore.selectedProxy)){
+                    toast(R.string.tv_quality_changed);return@launch
+                }
+                extendedReport=report;progress.dismiss();showConnectionDiagnostics()
+            } catch(e: CancellationException){if(e is TimeoutCancellationException)toast(R.string.tv_quality_incomplete) else throw e}
+            catch(_: Exception){toast(R.string.tv_quality_incomplete)}
+            finally {ticker.cancel();DataStore.runningTest=false;if(progress.isShowing)progress.dismiss()}
+        }
+    }
+
     private fun testActiveConnection(automatic: Boolean=false) {
         if(view==null||!isResumed||phase!=TvVpnPhase.CONNECTED||healthJob?.isActive==true) {
             if(!automatic)toast(R.string.tv_wait);return

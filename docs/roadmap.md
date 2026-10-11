@@ -1,3 +1,7 @@
+## Расширенная диагностика — кандидат после rc150
+
+По [issue #10](https://github.com/LeonidYasin/TunXBox/issues/10): поэтапные CONFIG/physical/DNS/TCP/строгая Android TLS/3 profile URL, прогресс/отмена, whitelist QR/TXT. Не внутренняя трассировка Go и не готовое исправление профилей Happ. Подробности: [connection diagnostics](connection-diagnostics.md). Требуются CI и физическая проверка.
+
 ## Текущая сверка реализации (кандидат после rc148)
 
 Ниже исторические этапы; их старые статусы не равны состоянию текущего APK.

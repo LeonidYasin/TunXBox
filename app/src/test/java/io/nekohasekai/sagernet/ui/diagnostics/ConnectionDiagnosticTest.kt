@@ -11,6 +11,20 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28],application=Application::class)
 class ConnectionDiagnosticTest {
+ @Test fun timeoutReportIsAboutConnectionNotSubscription() {
+  val context=org.robolectric.RuntimeEnvironment.getApplication()
+  val result=ConnectionDiagnosticReport.text(context,ConnectionDiagnostic(1,1234,DiagnosticStage.URL_TEST,C.TIMEOUT))
+  assertTrue(result.contains(context.getString(io.nekohasekai.sagernet.R.string.diagnostic_timeout_explanation)))
+  assertFalse(result.contains(io.nekohasekai.sagernet.group.SubscriptionFailurePresentation.reason(context,C.TIMEOUT)))
+ }
+ @Test fun extendedReportContainsOnlyBoundedEvidenceNotPrivateInputs() {
+  val r=ExtendedConnectionDiagnostics.Report(1,1,"WIFI",1,1,true,true,false,false,false,2,123456,
+    listOf(ExtendedConnectionDiagnostics.Step("ANDROID_STRICT_TLS","FAIL",120,C.TLS_TRUST,TlsEvidence.CHAIN)))
+  val text=r.text();assertTrue(text.contains("TLS_CHAIN"));assertTrue(text.contains("NET_TLS_TRUST"))
+  assertTrue(text.contains("not the existing VPN tunnel"));assertTrue(text.contains("hostname verification"))
+  for(secret in listOf("private.example","private-password","private-key","private-profile"))assertFalse(text.contains(secret))
+ }
+
  @Test fun unsupportedXhttpHasStructuredStageWithoutPrivateParameters() {
   val entity=ProxyEntity(id=7,type=ProxyEntity.TYPE_VMESS,vmessBean=VMessBean().apply {
    alterId=-1;initializeDefaultValues();type="xhttp";security="reality";serverAddress="private.example";uuid="private-secret";name="private-name";path="/private-token"

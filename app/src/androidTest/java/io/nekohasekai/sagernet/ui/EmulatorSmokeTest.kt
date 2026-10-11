@@ -158,6 +158,38 @@ class EmulatorSmokeTest {
         }
     }
 
+    @Test fun extendedDiagnosisHasRealActionProgressCancelAndDoesNotSwitchVpn() {
+        val oldGroup=DataStore.currentGroupId();val oldProfile=DataStore.selectedProxy;val state=DataStore.serviceState
+        val group=runBlocking {GroupManager.createGroup(io.nekohasekai.sagernet.database.ProxyGroup(name="Extended diagnostic smoke"))}
+        val bean=io.nekohasekai.sagernet.fmt.socks.SOCKSBean().apply {initializeDefaultValues();serverAddress="fixture.invalid";serverPort=10808;name="Extended fixture"}
+        val entity=runBlocking {io.nekohasekai.sagernet.database.ProfileManager.createProfile(group.id,bean)}
+        try {
+            DataStore.selectedGroup=group.id;DataStore.selectedProxy=entity.id;startTv()
+            scenario!!.onActivity {activity->
+                val browse=(activity as MainActivityTv).supportFragmentManager.findFragmentById(R.id.tv_container)
+                    as io.nekohasekai.sagernet.ui.tv.MainBrowseFragment
+                val probe: suspend (android.content.Context,io.nekohasekai.sagernet.database.ProxyEntity,suspend (String)->Unit)->io.nekohasekai.sagernet.ui.diagnostics.ExtendedConnectionDiagnostics.Report = {_,_,progress->
+                    progress("ENDPOINT_DNS_FIXTURE");kotlinx.coroutines.awaitCancellation()
+                }
+                browse.javaClass.getDeclaredField("extendedProbe").apply {isAccessible=true}.set(browse,probe)
+            }
+            device.pressDPadDown();device.pressDPadRight();device.pressDPadCenter()
+            assertNotNull(device.wait(Until.findObject(By.res(context.packageName,"diagnostic_extended_button")),timeout))
+            // The report closes safely by default; move focus to actual full-check button.
+            val action=device.findObject(By.res(context.packageName,"diagnostic_extended_button"))
+            action.click() // explicit action through installed APK; progress/cancel are remote-tested below
+            assertNotNull(device.wait(Until.findObject(By.textContains("ENDPOINT_DNS_FIXTURE")),timeout))
+            assertTrue(DataStore.runningTest)
+            device.pressDPadCenter() // safe Cancel has initial dialog focus
+            val until=android.os.SystemClock.elapsedRealtime()+timeout
+            while(DataStore.runningTest&&android.os.SystemClock.elapsedRealtime()<until)Thread.sleep(100)
+            assertFalse(DataStore.runningTest);assertEquals(entity.id,DataStore.selectedProxy);assertEquals(state,DataStore.serviceState)
+        } finally {
+            scenario?.close();scenario=null
+            runBlocking {GroupManager.deleteGroup(group.id)};DataStore.selectedGroup=oldGroup;DataStore.selectedProxy=oldProfile
+        }
+    }
+
     @Test fun groupHeaderRanksUrlResultsWithoutSwitchingVpn() {
         val oldGroup=DataStore.currentGroupId();val selected=DataStore.selectedProxy;val state=DataStore.serviceState
         val group=runBlocking {GroupManager.createGroup(io.nekohasekai.sagernet.database.ProxyGroup(name="Quality smoke"))}

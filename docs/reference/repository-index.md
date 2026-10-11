@@ -8,7 +8,7 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **788**.
+Всего tracked файлов: **793**.
 
 | Раздел | Файлов |
 |---|---|
@@ -134,7 +134,7 @@
 | `app/src/main/java/io/nekohasekai/sagernet/ui/ToolsFragment.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/VpnRequestActivity.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/WebviewFragment.kt` | 1 |
-| `app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics` | 3 |
+| `app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics` | 5 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/lan` | 7 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/profile` | 16 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/tv` | 25 |
@@ -182,7 +182,7 @@
 | `app/src/main/res/raw` | 4 |
 | `app/src/main/res/raw-zh-rCN` | 4 |
 | `app/src/main/res/resources.properties` | 1 |
-| `app/src/main/res/values` | 23 |
+| `app/src/main/res/values` | 24 |
 | `app/src/main/res/values-ar` | 1 |
 | `app/src/main/res/values-be` | 1 |
 | `app/src/main/res/values-de` | 1 |
@@ -197,7 +197,7 @@
 | `app/src/main/res/values-night` | 2 |
 | `app/src/main/res/values-nl` | 1 |
 | `app/src/main/res/values-pt-rBR` | 1 |
-| `app/src/main/res/values-ru` | 13 |
+| `app/src/main/res/values-ru` | 14 |
 | `app/src/main/res/values-tr` | 1 |
 | `app/src/main/res/values-uk` | 1 |
 | `app/src/main/res/values-w600dp-h480dp` | 1 |
@@ -205,7 +205,7 @@
 | `app/src/main/res/values-zh-rHK` | 1 |
 | `app/src/main/res/values-zh-rTW` | 1 |
 | `app/src/main/res/xml` | 25 |
-| `app/src/test` | 27 |
+| `app/src/test` | 28 |
 | `buildScript` | 35 |
 | `buildSrc` | 2 |
 | `docs` | 33 |
@@ -763,6 +763,8 @@
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/ConnectionDiagnostic.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/ConnectionDiagnostic.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/DiagnosticDialog.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/DiagnosticDialog.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/DiagnosticShareServer.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/DiagnosticShareServer.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/ExtendedConnectionDiagnostics.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/ExtendedConnectionDiagnostics.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/TlsFailureEvidence.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/TlsFailureEvidence.kt)
 
 ## app/src/main/java/io/nekohasekai/sagernet/ui/lan
 
@@ -1248,6 +1250,7 @@
 - [`app/src/main/res/values/connection_diagnostics.xml`](../../app/src/main/res/values/connection_diagnostics.xml)
 - [`app/src/main/res/values/crash_recovery.xml`](../../app/src/main/res/values/crash_recovery.xml)
 - [`app/src/main/res/values/dimens.xml`](../../app/src/main/res/values/dimens.xml)
+- [`app/src/main/res/values/extended_diagnostics.xml`](../../app/src/main/res/values/extended_diagnostics.xml)
 - [`app/src/main/res/values/ic_launcher_background.xml`](../../app/src/main/res/values/ic_launcher_background.xml)
 - [`app/src/main/res/values/mode_choice.xml`](../../app/src/main/res/values/mode_choice.xml)
 - [`app/src/main/res/values/release_notes.xml`](../../app/src/main/res/values/release_notes.xml)
@@ -1326,6 +1329,7 @@
 - [`app/src/main/res/values-ru/app_updates.xml`](../../app/src/main/res/values-ru/app_updates.xml)
 - [`app/src/main/res/values-ru/connection_diagnostics.xml`](../../app/src/main/res/values-ru/connection_diagnostics.xml)
 - [`app/src/main/res/values-ru/crash_recovery.xml`](../../app/src/main/res/values-ru/crash_recovery.xml)
+- [`app/src/main/res/values-ru/extended_diagnostics.xml`](../../app/src/main/res/values-ru/extended_diagnostics.xml)
 - [`app/src/main/res/values-ru/mode_choice.xml`](../../app/src/main/res/values-ru/mode_choice.xml)
 - [`app/src/main/res/values-ru/release_notes.xml`](../../app/src/main/res/values-ru/release_notes.xml)
 - [`app/src/main/res/values-ru/remote_actions.xml`](../../app/src/main/res/values-ru/remote_actions.xml)
@@ -1404,6 +1408,7 @@
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/RemoteReadabilityTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/RemoteReadabilityTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/diagnostics/ConnectionDiagnosticTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/diagnostics/ConnectionDiagnosticTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/diagnostics/DiagnosticShareServerTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/diagnostics/DiagnosticShareServerTest.kt)
+- [`app/src/test/java/io/nekohasekai/sagernet/ui/diagnostics/TlsFailureEvidenceTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/diagnostics/TlsFailureEvidenceTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/lan/GatewayProfileTargetsTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/lan/GatewayProfileTargetsTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/lan/LanDiscoveryTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/lan/LanDiscoveryTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/RemoteUiTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/RemoteUiTest.kt)
