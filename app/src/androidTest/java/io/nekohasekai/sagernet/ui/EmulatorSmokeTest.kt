@@ -75,6 +75,41 @@ class EmulatorSmokeTest {
         } finally {outside.delete()}
     }
 
+    @Test fun tvListsEveryGroupAndRemoteSelectionDoesNotStartVpn() {
+        val originalGroup=DataStore.currentGroupId()
+        val selected=DataStore.selectedProxy;val state=DataStore.serviceState
+        val fixture=runBlocking { GroupManager.createGroup(io.nekohasekai.sagernet.database.ProxyGroup(name="Smoke row collection")) }
+        try {
+            startTv()
+            // Real D-pad, not a touch shortcut or fabricated focus selection.
+            val maxRows=runBlocking(kotlinx.coroutines.Dispatchers.IO) {SagerDatabase.groupDao.allGroups().size}+3
+            for(i in 0 until maxRows) {
+                if(device.hasObject(By.descStartsWith("Smoke row collection").focused(true)))break
+                device.pressDPadDown();device.waitForIdle()
+            }
+            assertNotNull(device.wait(Until.findObject(By.descStartsWith("Smoke row collection").focused(true)),timeout))
+            scenario!!.onActivity { activity ->
+                val browse=(activity as MainActivityTv).supportFragmentManager.findFragmentById(R.id.tv_container)
+                    as io.nekohasekai.sagernet.ui.tv.MainBrowseFragment
+                val rows=browse.adapter
+                val groupRows=(0 until rows.size()).map {rows[it] as androidx.leanback.widget.ListRow}
+                    .filter {it.headerItem.id>=io.nekohasekai.sagernet.ui.tv.TvGroupRows.BASE}
+                val expected=runBlocking(kotlinx.coroutines.Dispatchers.IO) {SagerDatabase.groupDao.allGroups().map {it.id}}
+                assertEquals(expected,groupRows.map {it.headerItem.id-io.nekohasekai.sagernet.ui.tv.TvGroupRows.BASE})
+                assertEquals(text(R.string.tv_all_functions),(rows[rows.size()-1] as androidx.leanback.widget.ListRow).headerItem.name)
+            }
+            device.pressDPadCenter()
+            assertEquals(fixture.id,DataStore.selectedGroup)
+            assertEquals(selected,DataStore.selectedProxy);assertEquals(state,DataStore.serviceState)
+            device.pressDPadRight();device.pressDPadCenter();assertChooser()
+            assertEquals(selected,DataStore.selectedProxy);assertEquals(state,DataStore.serviceState)
+        } finally {
+            scenario?.close();scenario=null
+            runBlocking {GroupManager.deleteGroup(fixture.id)}
+            DataStore.selectedGroup=originalGroup
+        }
+    }
+
     @Before fun prepare() {
         device.wakeUp()
         device.setOrientationNatural()

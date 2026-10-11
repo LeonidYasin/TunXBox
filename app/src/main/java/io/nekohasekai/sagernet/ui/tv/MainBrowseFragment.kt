@@ -30,7 +30,9 @@ import kotlin.coroutines.resume
 /** A remote-first screen. Stable adapter identities keep focus through service/DB updates. */
 class MainBrowseFragment : BrowseSupportFragment() {
     private lateinit var actionsAdapter: ArrayObjectAdapter
-    private lateinit var profilesAdapter: ArrayObjectAdapter
+    private lateinit var rowAdapter: ArrayObjectAdapter
+    private val groupAdapters=linkedMapOf<Long,ArrayObjectAdapter>()
+    private var groupProfiles=emptyMap<Long,List<TvProfileCard>>()
     private lateinit var connectionAdapter: ArrayObjectAdapter
     private var stats = io.nekohasekai.sagernet.aidl.SpeedDisplayData()
     private var statsAt = 0L
@@ -60,7 +62,6 @@ class MainBrowseFragment : BrowseSupportFragment() {
 
     companion object {
         private const val ROW_ACTIONS = 0L
-        private const val ROW_PROFILES = 1L
         private const val ROW_TOOLS = 2L
         private const val TOGGLE = 1L
         private const val GROUPS = 2L
@@ -81,7 +82,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
     }
 
     private val diff = TvRowDiff
-    private fun itemId(item: Any?) = when (item) { is TvAction -> item.id; is TvProfileCard -> item.id; else -> -1L }
+    private fun itemId(item: Any?)=TvGroupRows.focus(item)
     private fun toast(message: String) { if (isAdded && view != null) Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show() }
     private fun toast(resource: Int) = toast(getString(resource))
     private fun launchWork(work: suspend () -> Unit) {
@@ -176,22 +177,22 @@ class MainBrowseFragment : BrowseSupportFragment() {
             ellipsize = android.text.TextUtils.TruncateAt.END
         }
         actionsAdapter = ArrayObjectAdapter(ActionPresenter())
-        profilesAdapter = ArrayObjectAdapter(ProfileCardPresenter { openProfileActions(it) })
-        toolsAdapter = ArrayObjectAdapter(ActionPresenter())
+
+        toolsAdapter = ArrayObjectAdapter(ClassPresenterSelector()
+            .addClassPresenter(TvAction::class.java,ActionPresenter())
+            .addClassPresenter(TvFunctionCard::class.java,FunctionCardPresenter()))
         connectionAdapter = ArrayObjectAdapter(ActionPresenter())
-        adapter = ArrayObjectAdapter(StableTvRowPresenter(resources.configuration.screenWidthDp < 600)).apply {
-            add(ListRow(HeaderItem(ROW_ACTIONS, getString(R.string.tv_row_actions)), actionsAdapter))
-            add(ListRow(HeaderItem(ROW_CONNECTION, getString(R.string.tv_connection_row)), connectionAdapter))
-            add(ListRow(HeaderItem(ROW_PROFILES, getString(R.string.tv_row_profiles)), profilesAdapter))
-            add(ListRow(HeaderItem(ROW_TOOLS, getString(R.string.tv_row_tools)), toolsAdapter))
-        }
+        rowAdapter=ArrayObjectAdapter(StableTvRowPresenter(resources.configuration.screenWidthDp<600))
+        adapter=rowAdapter
         onItemViewSelectedListener = OnItemViewSelectedListener { _, item, _, row ->
             if (item != null && row is ListRow) { focusedRow = row.headerItem.id; focusedId = itemId(item) }
         }
         onItemViewClickedListener = OnItemViewClickedListener { _, item, _, _ ->
             when (item) {
                 is TvProfileCard -> selectProfile(item.id)
-                is TvEmptyHint -> showImportMethods()
+                is TvGroupCard -> selectGroup(item.id)
+                is TvFunctionCard -> openFullScreen(item.id)
+                is TvEmptyHint -> {if(item.groupId>0)selectGroup(item.groupId);showImportMethods()}
                 is TvAction -> if (item.available) handleAction(item.id) else toast(if (item.id == TOGGLE && DataStore.selectedProxy == 0L || item.id == PROFILE_ACTIONS) R.string.tv_choose_profile else if (item.id == UPDATE && groups.firstOrNull { it.id == DataStore.selectedGroup }?.type != GroupType.SUBSCRIPTION) R.string.tv_not_subscription else R.string.tv_wait)
             }
         }
@@ -223,7 +224,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
         super.onSaveInstanceState(outState)
     }
 
-    private data class Snapshot(val groups: List<ProxyGroup>, val cards: List<TvProfileCard>, val selectedName: String, val activeName: String)
+    private data class Snapshot(val groups: List<ProxyGroup>, val cards: Map<Long,List<TvProfileCard>>, val selectedName: String, val activeName: String)
     private fun requestSnapshot() {
         // Managers can call listeners on a worker thread. Post before accessing view lifecycle.
         view?.post {
@@ -236,21 +237,26 @@ class MainBrowseFragment : BrowseSupportFragment() {
                         DataStore.currentGroup() // Ensure a valid initial basic group exists.
                         val available = SagerDatabase.groupDao.allGroups()
                         if (available.none { it.id == DataStore.selectedGroup } && available.isNotEmpty()) DataStore.selectedGroup = available.first().id
-                        val currentGroup = available.firstOrNull { it.id == DataStore.selectedGroup }
-                        val entities = SagerDatabase.proxyDao.getByGroup(DataStore.selectedGroup)
-                        val ordered = when (currentGroup?.order) {
-                            GroupOrder.BY_NAME -> entities.sortedBy { it.displayName() }
-                            GroupOrder.BY_DELAY -> entities.sortedBy { if (it.status == 1) it.ping else 114514 }
-                            else -> entities
+                        val entities=SagerDatabase.proxyDao.getAll().groupBy {it.groupId}
+                        val cards=available.associate {group ->
+                            val entries=entities[group.id].orEmpty()
+                            val ordered=when(group.order) {
+                                GroupOrder.BY_NAME -> entries.sortedBy {it.displayName()}
+                                GroupOrder.BY_DELAY -> entries.sortedBy {if(it.status==1)it.ping else 114514}
+                                else -> entries.sortedBy {it.userOrder}
+                            }
+                            group.id to ordered.map {entity -> TvProfileCard(entity.id,entity.displayName().orEmpty(),
+                                entity.displayType()+when(entity.status){1->" · ${entity.ping} ms";2,3->" · ${getString(R.string.tv_test_unavailable)}";else->""},
+                                entity.requireBean().serverAddress.orEmpty(),false,null,group.id)}
                         }
-                        Snapshot(available, ordered.map { entity ->
-                            TvProfileCard(entity.id, entity.displayName().orEmpty(), entity.displayType() + when (entity.status) { 1 -> " · ${entity.ping} ms"; 2, 3 -> " · ${getString(R.string.tv_test_unavailable)}"; else -> "" },
-                                entity.requireBean().serverAddress.orEmpty(), false, null)
-                        }, ProfileManager.getProfile(DataStore.selectedProxy)?.displayName().orEmpty(),
+                        Snapshot(available,cards,ProfileManager.getProfile(DataStore.selectedProxy)?.displayName().orEmpty(),
                             ProfileManager.getProfile(activeProfileId())?.displayName().orEmpty())
                     }
-                    groups = snapshot.groups; profiles = snapshot.cards; selectedName = snapshot.selectedName; activeName = snapshot.activeName
-                    val lostProfile = focusedRow == ROW_PROFILES && profiles.none { it.id == focusedId }
+                    groups=snapshot.groups;groupProfiles=snapshot.cards;profiles=groupProfiles[DataStore.selectedGroup].orEmpty()
+                    selectedName=snapshot.selectedName;activeName=snapshot.activeName
+                    val lostProfile = focusedRow>=TvGroupRows.BASE &&
+                        (groups.none {TvGroupRows.row(it.id)==focusedRow} ||
+                         (focusedId>0 && groupProfiles[focusedRow-TvGroupRows.BASE].orEmpty().none {it.id==focusedId}))
                     refreshCards();maybeAutoCheck()
                     if (restoreAfterLoad || lostProfile) { restoreAfterLoad = false; restoreFocus() }
                 } catch (cancelled: CancellationException) { throw cancelled }
@@ -288,22 +294,37 @@ class MainBrowseFragment : BrowseSupportFragment() {
             TvAction(PHONE_MODE, getString(R.string.tv_phone_mode), getString(R.string.tv_phone_mode_hint), R.drawable.ic_remote_phone)
         ), diff)
         val updating = group != null && GroupUpdater.updating.contains(group.id)
-        toolsAdapter.setItems(listOf(
+        toolsAdapter.setItems(listOf(TvAction(FULL_TOOLS,getString(R.string.tv_all_functions),getString(R.string.tv_all_functions_hint),R.drawable.ic_baseline_more_vert_24))+
+            TvFunctionCatalog.entries(requireContext(),DataStore.enableClashAPI,io.nekohasekai.sagernet.ktx.isPlay).map {TvFunctionCard(it.id,it.title)}+listOf(
             TvAction(PROFILE_ACTIONS, getString(R.string.tv_actions), getString(R.string.tv_actions_hint), R.drawable.ic_image_edit, DataStore.selectedProxy > 0),
             TvAction(UPDATE, getString(R.string.tv_update_group), getString(if (updating) R.string.tv_updating else if (group?.type != GroupType.SUBSCRIPTION) R.string.tv_not_subscription else R.string.tv_update_group), R.drawable.ic_social_share, group?.type == GroupType.SUBSCRIPTION && !updating),
             TvAction(SUBSCRIPTION_DIAGNOSTICS, getString(R.string.subscription_attempt_title), getString(R.string.subscription_attempt_description), R.drawable.ic_social_share, group?.type == GroupType.SUBSCRIPTION),
             TvAction(TESTS, getString(R.string.tv_tests_title), getString(R.string.tv_tests_hint), R.drawable.ic_remote_groups),
-            TvAction(FULL_TOOLS, getString(R.string.tv_all_functions), getString(R.string.tv_all_functions_hint), R.drawable.ic_baseline_more_vert_24),
             TvAction(HOME, getString(R.string.tv_home), getString(R.string.tv_home_hint), R.drawable.ic_baseline_more_vert_24),
             TvAction(MORE, getString(R.string.tv_more_import), getString(R.string.tv_more_hint), R.drawable.ic_baseline_more_vert_24),
             TvAction(RESTART_APP, getString(R.string.app_restart), getString(R.string.app_restart_hint), R.drawable.ic_baseline_refresh_24),
             TvAction(CLOSE_APP, getString(R.string.app_close), getString(R.string.app_close_hint), R.drawable.ic_navigation_close)
         ), diff)
-        val cards: List<Any> = if (profiles.isEmpty()) listOf(TvEmptyHint(getString(R.string.tv_empty))) else profiles.map {
-            it.copy(selected = it.id == DataStore.selectedProxy,
-                activePhase = if (it.id == activeProfileId() && phase in setOf(TvVpnPhase.CONNECTING, TvVpnPhase.CONNECTED, TvVpnPhase.STOPPING)) phase else null)
+        val rows=mutableListOf(ListRow(HeaderItem(ROW_ACTIONS,getString(R.string.tv_row_actions)),actionsAdapter),
+            ListRow(HeaderItem(ROW_CONNECTION,getString(R.string.tv_connection_row)),connectionAdapter))
+        groupAdapters.keys.retainAll(groups.map {it.id}.toSet())
+        for(g in groups) {
+            val groupAdapter=groupAdapters.getOrPut(g.id){ArrayObjectAdapter(ClassPresenterSelector()
+                .addClassPresenter(TvGroupCard::class.java,GroupCardPresenter())
+                .addClassPresenter(TvProfileCard::class.java,ProfileCardPresenter {openProfileActions(it)})
+                .addClassPresenter(TvEmptyHint::class.java,ProfileCardPresenter {openProfileActions(it)}))}
+            val cards: List<Any> = listOf(TvGroupCard(g.id,g.displayName(),groupProfiles[g.id].orEmpty().size,g.id==DataStore.selectedGroup))+
+                if(groupProfiles[g.id].isNullOrEmpty())listOf(TvEmptyHint(getString(R.string.tv_empty),g.id))
+                else groupProfiles[g.id].orEmpty().map {it.copy(selected=it.id==DataStore.selectedProxy,
+                    activePhase=if(it.id==activeProfileId()&&phase in setOf(TvVpnPhase.CONNECTING,TvVpnPhase.CONNECTED,TvVpnPhase.STOPPING))phase else null)}
+            groupAdapter.setItems(cards,diff)
+            rows.add(ListRow(HeaderItem(TvGroupRows.row(g.id),g.displayName()),groupAdapter))
         }
-        profilesAdapter.setItems(cards, diff)
+        rows.add(ListRow(HeaderItem(ROW_TOOLS,getString(R.string.tv_all_functions)),toolsAdapter))
+        rowAdapter.setItems(rows,object: DiffCallback<ListRow>() {
+            override fun areItemsTheSame(old: ListRow,new: ListRow)=old.headerItem.id==new.headerItem.id
+            override fun areContentsTheSame(old: ListRow,new: ListRow)=old.headerItem.name==new.headerItem.name&&old.adapter===new.adapter
+        })
         refreshConnectionCards()
     }
     private fun refreshConnectionCards() {
@@ -325,10 +346,10 @@ class MainBrowseFragment : BrowseSupportFragment() {
     }
     private fun restoreFocus() {
         if (dialog?.isShowing == true || view == null) return
-        val items = when (focusedRow) { ROW_PROFILES -> profilesAdapter; ROW_TOOLS -> toolsAdapter; ROW_CONNECTION -> connectionAdapter; else -> actionsAdapter }
+        val items=when {focusedRow>=TvGroupRows.BASE -> groupAdapters[focusedRow-TvGroupRows.BASE]?:actionsAdapter;focusedRow==ROW_TOOLS->toolsAdapter;focusedRow==ROW_CONNECTION->connectionAdapter;else->actionsAdapter}
         val ids = (0 until items.size()).map { itemId(items[it]) }
         val index = TvInteractionPolicy.focusIndex(ids, focusedId)
-        val row = listOf(ROW_ACTIONS, ROW_CONNECTION, ROW_PROFILES, ROW_TOOLS).indexOf(focusedRow).coerceAtLeast(0)
+        val row=(0 until rowAdapter.size()).indexOfFirst {(rowAdapter[it] as ListRow).headerItem.id==focusedRow}.coerceAtLeast(0)
         view?.post {
             if (view == null || dialog?.isShowing == true) return@post
             // Browse's three-argument overload unconditionally starts a headers
@@ -393,7 +414,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
     } }
     fun handlePlayPause() = execute(TvInteractionPolicy.media(phase, DataStore.selectedProxy, serviceReady))
     fun showFocusedActions() {
-        if (focusedRow == ROW_PROFILES && focusedId > 0) openProfileActions(focusedId)
+        if (focusedRow>=TvGroupRows.BASE && focusedId>0) openProfileActions(focusedId)
         else if (DataStore.selectedProxy > 0) openProfileActions(DataStore.selectedProxy)
         else showImportMethods()
     }
@@ -411,11 +432,18 @@ class MainBrowseFragment : BrowseSupportFragment() {
     }
     private fun selectProfile(id: Long) {
         if (!TvInteractionPolicy.canSelect(phase)) { toast(R.string.tv_wait); return }
+        val card=groupProfiles.values.asSequence().flatten().firstOrNull {it.id==id} ?: return
         val old = DataStore.selectedProxy
         DataStore.selectedProxy = id
-        selectedName = profiles.firstOrNull { it.id == id }?.name.orEmpty()
+        DataStore.selectedGroup=card.groupId;profiles=groupProfiles[card.groupId].orEmpty()
+        selectedName=card.name
         refreshCards()
         launchWork { withContext(Dispatchers.IO) { ProfileManager.postUpdate(old, true); ProfileManager.postUpdate(id, true) } }
+    }
+    private fun selectGroup(id: Long) {
+        if(groups.none {it.id==id})return
+        DataStore.selectedGroup=id;profiles=groupProfiles[id].orEmpty();refreshCards()
+        // Browsing another group never reloads or switches the active VPN.
     }
     private fun chooseGroup() {
         if (groups.isEmpty()) { requestSnapshot(); return }
@@ -423,7 +451,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
         val checked = choices.indexOfFirst { it.id == DataStore.selectedGroup }
         show(AlertDialog.Builder(requireContext()).setTitle(R.string.tv_groups)
             .setSingleChoiceItems(choices.map { it.displayName() }.toTypedArray(), checked) { current, index ->
-                DataStore.selectedGroup = choices[index].id; current.dismiss(); requestSnapshot()
+                selectGroup(choices[index].id);current.dismiss()
             }.setNegativeButton(android.R.string.cancel, null))
     }
     private fun updateSubscription() {

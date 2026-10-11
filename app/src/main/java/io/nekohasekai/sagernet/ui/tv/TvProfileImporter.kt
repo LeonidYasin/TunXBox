@@ -38,7 +38,7 @@ object TvProfileImporter {
         if (url.isNullOrBlank()) throw TransferImportFailure(TransferImportError.SUBSCRIPTION_INVALID)
         val normalizedUrl = TransferImportInput.requireHttpSubscription(url)
         val group = ProxyGroup(type = GroupType.SUBSCRIPTION).apply {
-            name = (if (uri.scheme?.lowercase() == "sn" || uri.scheme?.lowercase() == "clash") uri.getQueryParameter("name") else null)
+            name = io.nekohasekai.sagernet.group.SubscriptionTitle.clean(if (uri.scheme?.lowercase() == "sn" || uri.scheme?.lowercase() == "clash") uri.getQueryParameter("name") else null)
                 ?: "Subscription #${System.currentTimeMillis()}"
             subscription = SubscriptionBean().apply { link = normalizedUrl }
         }

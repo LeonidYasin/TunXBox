@@ -40,5 +40,7 @@ object TvInteractionPolicy {
 /** Immutable rows allow DiffUtil to update labels without destroying focused views. */
 data class TvAction(val id: Long, val title: String, val subtitle: String, val icon: Int, val available: Boolean = true)
 data class TvProfileCard(val id: Long, val name: String, val protocol: String, val address: String,
-                         val selected: Boolean, val activePhase: TvVpnPhase?)
-data class TvEmptyHint(val message: String)
+                         val selected: Boolean, val activePhase: TvVpnPhase?,val groupId: Long=0)
+data class TvEmptyHint(val message: String,val groupId: Long=0)
+data class TvGroupCard(val id: Long,val name: String,val count: Int,val selected: Boolean)
+data class TvFunctionCard(val id: Int,val title: String)

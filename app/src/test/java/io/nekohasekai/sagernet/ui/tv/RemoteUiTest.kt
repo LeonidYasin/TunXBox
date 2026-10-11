@@ -38,6 +38,37 @@ class RemoteUiTest {
         assertEquals(3,holder.subtitle.minLines);assertEquals(3,holder.subtitle.maxLines)
         assertTrue(holder.view.isFocusable);assertTrue(holder.title.text.contains("REALITY"))
     }
+    @Test fun groupSelectorShowsChoiceAndClearsRecycledActivation() {
+        val parent=FrameLayout(activity());val presenter=GroupCardPresenter()
+        val holder=presenter.onCreateViewHolder(parent) as ActionPresenter.ActionViewHolder
+        presenter.onBindViewHolder(holder,TvGroupCard(7,"Collection",3,true))
+        assertTrue(holder.view.isActivated);assertEquals("Collection",holder.title.text.toString())
+        assertTrue(holder.subtitle.text.contains(parent.context.getString(R.string.tv_group_row_selected)))
+        presenter.onBindViewHolder(holder,TvGroupCard(8,"Other",0,false))
+        assertFalse(holder.view.isActivated);assertTrue(holder.view.isFocusable)
+        presenter.onUnbindViewHolder(holder);assertFalse(holder.view.isActivated)
+    }
+    @Test fun groupProfileAndEmptyHintHaveSeparateFocusNamespaces() {
+        val group=TvGroupCard(1,"Group",1,false)
+        val profile=TvProfileCard(1,"Profile","SOCKS","fixture",false,null,1)
+        assertNotEquals(TvGroupRows.focus(group),TvGroupRows.focus(profile))
+        assertNotEquals(TvGroupRows.focus(group),TvGroupRows.focus(TvEmptyHint("Empty",1)))
+        assertNotEquals(TvGroupRows.row(1),TvGroupRows.row(2))
+        assertFalse(TvRowDiff.areItemsTheSame(group,profile))
+        assertTrue(TvRowDiff.areItemsTheSame(group,group.copy(selected=true)))
+        assertFalse(TvRowDiff.areContentsTheSame(group,group.copy(selected=true)))
+    }
+    @Test fun eachCatalogEntryCanBindAsItsOwnFocusableButton() {
+        val parent=FrameLayout(activity());val presenter=FunctionCardPresenter()
+        val entries=TvFunctionCatalog.entries(parent.context,true,false)
+        assertTrue(entries.any {it.id==R.id.nav_app_updates})
+        assertEquals(entries.size,entries.map {it.id}.toSet().size)
+        for(entry in entries) {
+            val holder=presenter.onCreateViewHolder(parent) as ActionPresenter.ActionViewHolder
+            presenter.onBindViewHolder(holder,TvFunctionCard(entry.id,entry.title))
+            assertTrue(holder.view.isFocusable);assertEquals(entry.title,holder.title.text.toString())
+        }
+    }
     @After fun closeActivity() { controller?.pause()?.stop()?.destroy() }
     private fun layout(parent: View) {
         parent.measure(View.MeasureSpec.makeMeasureSpec(1000, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(1400, View.MeasureSpec.AT_MOST))

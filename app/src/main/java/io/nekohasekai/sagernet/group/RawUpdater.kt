@@ -68,6 +68,7 @@ object RawUpdater : GroupUpdater() {
                 app.contentResolver.openInputStream(link.toUri())?.bufferedReader()?.use { it.readText() }
             }
             proxies = parseSubscriptionContent(contentText.orEmpty())
+            incomingName=SubscriptionTitle.choose(requestGroup.name,null,null,contentText)
         } else {
 
             val response = atStage(SubscriptionUpdateStage.DOWNLOAD) { Libcore.newHttpClient().apply {
@@ -89,16 +90,10 @@ object RawUpdater : GroupUpdater() {
             incomingUserinfo =
                 Util.getStringBox(response.getHeader("Subscription-Userinfo"))
 
-            // 修改默认名字
-            if (requestGroup.name?.startsWith("Subscription #") == true) {
-                var remoteName = Util.getStringBox(response.getHeader("content-disposition"))
-                if (remoteName.isNotBlank()) {
-                    remoteName = Util.decodeFilename(remoteName)
-                    if (remoteName.isNotBlank()) {
-                        incomingName = remoteName
-                    }
-                }
-            }
+            incomingName=SubscriptionTitle.choose(requestGroup.name,
+                Util.getStringBox(response.getHeader("Profile-Title")),
+                Util.getStringBox(response.getHeader("Content-Disposition")),body)
+
         }
 
         val proxiesMap = LinkedHashMap<String, AbstractBean>()

@@ -8,7 +8,7 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **761**.
+Всего tracked файлов: **768**.
 
 | Раздел | Файлов |
 |---|---|
@@ -73,6 +73,7 @@
 | `app/src/main/java/io/nekohasekai/sagernet/group/RawUpdater.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionFailureCategory.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionFailurePresentation.kt` | 1 |
+| `app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionTitle.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateGuard.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateJournal.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdatePresentation.kt` | 1 |
@@ -133,7 +134,7 @@
 | `app/src/main/java/io/nekohasekai/sagernet/ui/WebviewFragment.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/lan` | 7 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/profile` | 16 |
-| `app/src/main/java/io/nekohasekai/sagernet/ui/tv` | 21 |
+| `app/src/main/java/io/nekohasekai/sagernet/ui/tv` | 22 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/update` | 9 |
 | `app/src/main/java/io/nekohasekai/sagernet/utils/Commandline.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/utils/CrashHandler.kt` | 1 |
@@ -178,7 +179,7 @@
 | `app/src/main/res/raw` | 4 |
 | `app/src/main/res/raw-zh-rCN` | 4 |
 | `app/src/main/res/resources.properties` | 1 |
-| `app/src/main/res/values` | 19 |
+| `app/src/main/res/values` | 20 |
 | `app/src/main/res/values-ar` | 1 |
 | `app/src/main/res/values-be` | 1 |
 | `app/src/main/res/values-de` | 1 |
@@ -193,7 +194,7 @@
 | `app/src/main/res/values-night` | 2 |
 | `app/src/main/res/values-nl` | 1 |
 | `app/src/main/res/values-pt-rBR` | 1 |
-| `app/src/main/res/values-ru` | 9 |
+| `app/src/main/res/values-ru` | 10 |
 | `app/src/main/res/values-tr` | 1 |
 | `app/src/main/res/values-uk` | 1 |
 | `app/src/main/res/values-w600dp-h480dp` | 1 |
@@ -201,13 +202,13 @@
 | `app/src/main/res/values-zh-rHK` | 1 |
 | `app/src/main/res/values-zh-rTW` | 1 |
 | `app/src/main/res/xml` | 25 |
-| `app/src/test` | 22 |
+| `app/src/test` | 23 |
 | `buildScript` | 35 |
 | `buildSrc` | 2 |
-| `docs` | 31 |
+| `docs` | 32 |
 | `gradle` | 2 |
 | `libcore` | 42 |
-| `website` | 35 |
+| `website` | 36 |
 | `Корень` | 15 |
 
 ## .github
@@ -510,6 +511,10 @@
 
 - [`app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionFailurePresentation.kt`](../../app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionFailurePresentation.kt)
 
+## app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionTitle.kt
+
+- [`app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionTitle.kt`](../../app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionTitle.kt)
+
 ## app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateGuard.kt
 
 - [`app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateGuard.kt`](../../app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateGuard.kt)
@@ -774,6 +779,7 @@
 ## app/src/main/java/io/nekohasekai/sagernet/ui/tv
 
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/ActionPresenter.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/ActionPresenter.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/GroupAndFunctionPresenters.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/GroupAndFunctionPresenters.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/MainBrowseFragment.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/MainBrowseFragment.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/ProfileCardPresenter.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/ProfileCardPresenter.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/QrCodeTransferFragment.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/QrCodeTransferFragment.kt)
@@ -1228,6 +1234,7 @@
 - [`app/src/main/res/values/strings.xml`](../../app/src/main/res/values/strings.xml)
 - [`app/src/main/res/values/themes.xml`](../../app/src/main/res/values/themes.xml)
 - [`app/src/main/res/values/tv_feedback.xml`](../../app/src/main/res/values/tv_feedback.xml)
+- [`app/src/main/res/values/tv_groups.xml`](../../app/src/main/res/values/tv_groups.xml)
 - [`app/src/main/res/values/tv_health.xml`](../../app/src/main/res/values/tv_health.xml)
 - [`app/src/main/res/values/tv_ids.xml`](../../app/src/main/res/values/tv_ids.xml)
 - [`app/src/main/res/values/tv_layout.xml`](../../app/src/main/res/values/tv_layout.xml)
@@ -1299,6 +1306,7 @@
 - [`app/src/main/res/values-ru/remote_actions.xml`](../../app/src/main/res/values-ru/remote_actions.xml)
 - [`app/src/main/res/values-ru/strings.xml`](../../app/src/main/res/values-ru/strings.xml)
 - [`app/src/main/res/values-ru/tv_feedback.xml`](../../app/src/main/res/values-ru/tv_feedback.xml)
+- [`app/src/main/res/values-ru/tv_groups.xml`](../../app/src/main/res/values-ru/tv_groups.xml)
 - [`app/src/main/res/values-ru/tv_health.xml`](../../app/src/main/res/values-ru/tv_health.xml)
 - [`app/src/main/res/values-ru/tv_strings.xml`](../../app/src/main/res/values-ru/tv_strings.xml)
 
@@ -1359,6 +1367,7 @@
 - [`app/src/test/java/io/nekohasekai/sagernet/fmt/v2ray/UnsupportedV2RayTransportTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/fmt/v2ray/UnsupportedV2RayTransportTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/group/FailureAndConnectionTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/group/FailureAndConnectionTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionFailureCategoryTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionFailureCategoryTest.kt)
+- [`app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionTitleTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionTitleTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionUpdateGuardTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionUpdateGuardTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionUpdateResultTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionUpdateResultTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/AboutBuildInfoTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/AboutBuildInfoTest.kt)
@@ -1451,6 +1460,7 @@
 - [`docs/subscription-passphrase.md`](../../docs/subscription-passphrase.md)
 - [`docs/support-services-proposal.md`](../../docs/support-services-proposal.md)
 - [`docs/tv-connection-health.md`](../../docs/tv-connection-health.md)
+- [`docs/tv-groups-subscriptions.md`](../../docs/tv-groups-subscriptions.md)
 - [`docs/tv-navigation.md`](../../docs/tv-navigation.md)
 - [`docs/tv-readiness-plan.md`](../../docs/tv-readiness-plan.md)
 - [`docs/tv-transfer.md`](../../docs/tv-transfer.md)
@@ -1535,6 +1545,7 @@
 - [`website/guide/subscription-passphrase.html`](../../website/guide/subscription-passphrase.html)
 - [`website/guide/support-services-proposal.html`](../../website/guide/support-services-proposal.html)
 - [`website/guide/tv-connection-health.html`](../../website/guide/tv-connection-health.html)
+- [`website/guide/tv-groups-subscriptions.html`](../../website/guide/tv-groups-subscriptions.html)
 - [`website/guide/tv-navigation.html`](../../website/guide/tv-navigation.html)
 - [`website/guide/tv-readiness-plan.html`](../../website/guide/tv-readiness-plan.html)
 - [`website/guide/tv-transfer.html`](../../website/guide/tv-transfer.html)

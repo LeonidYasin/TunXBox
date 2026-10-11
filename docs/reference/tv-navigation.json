@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "nodes": {
     "TV": "Главный экран ТВ",
     "CONNECT": "Запуск выбранного профиля",
@@ -153,6 +153,13 @@
       "to": "INSTALLER",
       "confirm": 1,
       "label": "Разрешить и вернуться"
+    },
+    {
+      "from": "TV",
+      "to": "UPDATER",
+      "menu": "nav_app_updates",
+      "confirm": 1,
+      "label": "Прямая кнопка обновления"
     }
   ],
   "rows": {
@@ -167,15 +174,23 @@
       "YOUTUBE"
     ],
     "tools": [
+      "FULL_TOOLS",
       "PROFILE_ACTIONS",
       "UPDATE",
       "SUBSCRIPTION_DIAGNOSTICS",
       "TESTS",
-      "FULL_TOOLS",
       "HOME",
       "MORE",
       "RESTART_APP",
       "CLOSE_APP"
-    ]
+    ],
+    "order": [
+      "actions",
+      "connection",
+      "group:*",
+      "tools"
+    ],
+    "groups": "Every group in Room userOrder; selector followed by own profiles or empty hint",
+    "directCapabilities": "TvFunctionCatalog.entries with dashboard/play availability filters"
   }
 }
