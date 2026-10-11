@@ -20,7 +20,9 @@
     "CLOSE": "Подтверждение закрытия",
     "UPDATER": "Обновление приложения",
     "INSTALLER": "Установщик Android",
-    "PERMISSION": "Разрешение источника APK"
+    "PERMISSION": "Разрешение источника APK",
+    "MODE": "Старт: версия и выбор интерфейса",
+    "ABOUT": "О программе / полные сведения сборки"
   },
   "edges": [
     {
@@ -160,6 +162,19 @@
       "menu": "nav_app_updates",
       "confirm": 1,
       "label": "Прямая кнопка обновления"
+    },
+    {
+      "from": "MODE",
+      "to": "ABOUT",
+      "menu": "nav_about",
+      "confirm": 1,
+      "label": "О программе без выбора режима"
+    },
+    {
+      "from": "ABOUT",
+      "to": "MODE",
+      "confirm": 0,
+      "label": "Back"
     }
   ],
   "rows": {

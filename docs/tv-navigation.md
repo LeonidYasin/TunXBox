@@ -24,6 +24,8 @@ flowchart LR
     UPDATER["Обновление приложения"]
     INSTALLER["Установщик Android"]
     PERMISSION["Разрешение источника APK"]
+    MODE["Старт: версия и выбор интерфейса"]
+    ABOUT["О программе / полные сведения сборки"]
     TV -->|"TOGGLE / OK 1"| CONNECT
     CONNECT -->|"автоматически / OK 0"| CONNECTED
     CONNECTED -->|"Авто URL-тест (foreground) / OK 0"| HEALTH
@@ -47,6 +49,8 @@ flowchart LR
     UPDATER -->|"После Check + Download + verify / OK 1"| INSTALLER
     PERMISSION -->|"Разрешить и вернуться / OK 1"| INSTALLER
     TV -->|"Прямая кнопка обновления / OK 1"| UPDATER
+    MODE -->|"О программе без выбора режима / OK 1"| ABOUT
+    ABOUT -->|"Back / OK 0"| MODE
 ```
 
 ## Основной путь

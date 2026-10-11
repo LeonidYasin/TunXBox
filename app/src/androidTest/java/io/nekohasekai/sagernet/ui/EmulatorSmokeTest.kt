@@ -344,6 +344,31 @@ class EmulatorSmokeTest {
         assertFalse(TvUiPreferences.phoneMode)
         assertFalse(device.hasObject(By.pkg("com.android.intentresolver")))
     }
+    @Test fun launcherVersionAndAboutAreReachableByRemoteWithoutChoosingMode() {
+        val selected=DataStore.selectedProxy;val state=DataStore.serviceState
+        scenario=ActivityScenario.launch<ModeSelectionActivity>(Intent(context,ModeSelectionActivity::class.java))
+        val version=requireNotNull(device.wait(Until.findObject(By.res(context.packageName,"mode_build_info")),timeout)).text
+        assertTrue(version.contains(io.nekohasekai.sagernet.BuildConfig.VERSION_NAME))
+        assertTrue(version.contains(io.nekohasekai.sagernet.BuildConfig.BUILD_COMMIT.take(8)))
+        // Remembered mode may focus either TV or Phone; Down must reach About from either.
+        for(i in 0..2) {
+            if(device.hasObject(By.res(context.packageName,"mode_about").focused(true)))break
+            device.pressDPadDown();device.waitForIdle()
+        }
+        assertNotNull(device.wait(Until.findObject(By.res(context.packageName,"mode_about").focused(true)),timeout))
+        device.pressDPadCenter()
+        assertNotNull(device.wait(Until.findObject(By.res(context.packageName,"mal_recyclerview")),timeout))
+        val scroll=UiScrollable(UiSelector().resourceId(context.packageName+":id/mal_recyclerview")).setAsVerticalList().setMaxSearchSwipes(30)
+        scroll.setSwipeDeadZonePercentage(0.25)
+        assertTrue(scroll.scrollIntoView(UiSelector().text(text(R.string.about_build_details))))
+        visibleText(text(R.string.about_build_details)).click()
+        val message=requireNotNull(device.wait(Until.findObject(By.res("android","message")),timeout)).text
+        assertTrue(message.contains(io.nekohasekai.sagernet.BuildConfig.VERSION_NAME))
+        device.pressBack();device.pressBack()
+        assertNotNull(device.wait(Until.findObject(By.res(context.packageName,"mode_about")),timeout))
+        assertEquals(selected,DataStore.selectedProxy);assertEquals(state,DataStore.serviceState)
+        assertFalse(TvUiPreferences.phoneMode)
+    }
     @Test fun topAndEmptyProfileCardOfferSameAddMethods() {
         startTv(); openTopAdd()
         device.pressBack()

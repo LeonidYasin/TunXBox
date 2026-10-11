@@ -37,9 +37,21 @@ class ModeSelectionActivity : ComponentActivity() {
             text = value; textSize = size; setTextColor(color)
         }
         column.addView(text("TunXBox", 16f, 0xFF67E8F9.toInt()))
+        column.addView(text(getString(R.string.mode_build_identity,
+            io.nekohasekai.sagernet.BuildConfig.VERSION_NAME,
+            io.nekohasekai.sagernet.BuildConfig.VERSION_CODE.toString(),
+            io.nekohasekai.sagernet.BuildConfig.BUILD_COMMIT.take(8),
+            io.nekohasekai.sagernet.BuildConfig.BUILD_RUN_NUMBER),18f,Color.WHITE).apply {
+                id=R.id.mode_build_info
+            },LinearLayout.LayoutParams(-1,-2).apply {topMargin=dp(8)})
+        if(io.nekohasekai.sagernet.ui.update.UpdateReceipt.consume(this)) {
+            column.addView(text(getString(R.string.update_installed_title,
+                io.nekohasekai.sagernet.BuildConfig.VERSION_NAME),18f,0xFF67E8F9.toInt()))
+            (getSystemService(NOTIFICATION_SERVICE) as android.app.NotificationManager).cancel(1331)
+        }
         column.addView(text(getString(R.string.mode_choose_title), 28f, Color.WHITE), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(12) })
         column.addView(text(getString(R.string.mode_choose_hint), 16f, 0xFFCBD5E1.toInt()), LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(12); bottomMargin = dp(24) })
-        fun card(idValue: Int, title: Int, description: Int, phone: Boolean): LinearLayout {
+        fun card(idValue: Int, title: Int, description: Int, action: () -> Unit): LinearLayout {
             val card = LinearLayout(this).apply {
                 id = idValue; orientation = LinearLayout.VERTICAL
                 isFocusable = true; isFocusableInTouchMode = true; isClickable = true
@@ -52,7 +64,7 @@ class ModeSelectionActivity : ComponentActivity() {
                         super.onInitializeAccessibilityNodeInfo(host, info); info.className = "android.widget.Button"
                     }
                 }
-                setOnClickListener { choose(phone) }
+                setOnClickListener { action() }
                 // A focusable-in-touch-mode View otherwise consumes the first tap only for focus.
                 setOnTouchListener { clicked, event ->
                     if (event.actionMasked == android.view.MotionEvent.ACTION_UP) {
@@ -65,9 +77,13 @@ class ModeSelectionActivity : ComponentActivity() {
             column.addView(card, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(16) })
             return card
         }
-        val tv = card(R.id.mode_choose_tv, R.string.mode_tv_title, R.string.mode_tv_hint, false)
-        val phone = card(R.id.mode_choose_phone, R.string.mode_phone_title, R.string.mode_phone_hint, true)
+        val tv = card(R.id.mode_choose_tv, R.string.mode_tv_title, R.string.mode_tv_hint) {choose(false)}
+        val phone = card(R.id.mode_choose_phone, R.string.mode_phone_title, R.string.mode_phone_hint) {choose(true)}
+        val about = card(R.id.mode_about, R.string.mode_about_title, R.string.mode_about_hint) {
+            startActivity(Intent(this,MainActivity::class.java).putExtra("tv_tools",true).putExtra("tv_destination",R.id.nav_about))
+        }
         tv.nextFocusDownId = phone.id; tv.nextFocusForwardId = phone.id; phone.nextFocusUpId = tv.id
+        phone.nextFocusDownId=about.id;phone.nextFocusForwardId=about.id;about.nextFocusUpId=phone.id
         setContentView(scroll)
         ViewCompat.setOnApplyWindowInsetsListener(scroll) { view, insets ->
             val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())

@@ -130,6 +130,31 @@ class LaunchRegressionTest {
             assertFalse(TvUiPreferences.phoneMode)
         } finally { controller.pause().stop().destroy() }
     }
+    @Test fun pickerShowsActualBuildAndAboutDoesNotChooseModeOrStartVpn() {
+        TvUiPreferences.phoneMode=false
+        val selected=io.nekohasekai.sagernet.database.DataStore.selectedProxy
+        val state=io.nekohasekai.sagernet.database.DataStore.serviceState
+        val controller=Robolectric.buildActivity(ModeSelectionActivity::class.java).setup().visible()
+        try {
+            val activity=controller.get()
+            val version=activity.findViewById<android.widget.TextView>(R.id.mode_build_info).text.toString()
+            assertTrue(version.contains(io.nekohasekai.sagernet.BuildConfig.VERSION_NAME))
+            assertTrue(version.contains(io.nekohasekai.sagernet.BuildConfig.VERSION_CODE.toString()))
+            assertTrue(version.contains(io.nekohasekai.sagernet.BuildConfig.BUILD_COMMIT.take(8)))
+            assertTrue(version.contains(io.nekohasekai.sagernet.BuildConfig.BUILD_RUN_NUMBER))
+            val phone=activity.findViewById<android.view.View>(R.id.mode_choose_phone)
+            val about=activity.findViewById<android.view.View>(R.id.mode_about)
+            assertEquals(about.id,phone.nextFocusDownId);assertEquals(phone.id,about.nextFocusUpId)
+            about.performClick()
+            val target=shadowOf(activity).nextStartedActivity
+            assertEquals(MainActivity::class.java.name,target.component!!.className)
+            assertEquals(R.id.nav_about,target.getIntExtra("tv_destination",0))
+            assertTrue(target.getBooleanExtra("tv_tools",false));assertFalse(activity.isFinishing)
+            assertFalse(TvUiPreferences.phoneMode)
+            assertEquals(selected,io.nekohasekai.sagernet.database.DataStore.selectedProxy)
+            assertEquals(state,io.nekohasekai.sagernet.database.DataStore.serviceState)
+        } finally {controller.pause().stop().destroy()}
+    }
     @Test fun pickerBackDoesNotChooseOrLaunch() {
         val controller = Robolectric.buildActivity(ModeSelectionActivity::class.java).setup()
         try {
@@ -311,7 +336,10 @@ class LaunchRegressionTest {
             val fragment = controller.get().supportFragmentManager.findFragmentById(R.id.tv_container) as MainBrowseFragment
             val focus = MainBrowseFragment::class.java.getDeclaredField("focusedId").apply { isAccessible = true }
             assertEquals(1L, focus.getLong(fragment))
-            val tools = (fragment.adapter[3] as androidx.leanback.widget.ListRow).adapter
+            val toolsRow=(0 until fragment.adapter.size()).map {fragment.adapter[it] as androidx.leanback.widget.ListRow}
+                .single {it.headerItem.id==2L}
+            assertEquals(fragment.adapter.size()-1,(0 until fragment.adapter.size()).indexOfFirst {fragment.adapter[it]===toolsRow})
+            val tools=toolsRow.adapter
             assertEquals(listOf(13L,14L), (tools.size()-2 until tools.size()).map { (tools[it] as io.nekohasekai.sagernet.ui.tv.TvAction).id })
         } finally { controller.pause().stop().destroy() }
     }
@@ -322,7 +350,7 @@ class LaunchRegressionTest {
             controller.get().supportFragmentManager.executePendingTransactions()
             val fragment = controller.get().supportFragmentManager.findFragmentById(R.id.tv_container) as MainBrowseFragment
             var updates = 0
-            for(index in listOf(0,2,3)) ((fragment.adapter[index] as androidx.leanback.widget.ListRow).adapter).registerObserver(object : androidx.leanback.widget.ObjectAdapter.DataObserver() {
+            for(row in (0 until fragment.adapter.size()).map {fragment.adapter[it] as androidx.leanback.widget.ListRow}.filter {it.headerItem.id!=3L}) row.adapter.registerObserver(object : androidx.leanback.widget.ObjectAdapter.DataObserver() {
                 override fun onChanged() { updates++ }
                 override fun onItemRangeChanged(positionStart: Int, itemCount: Int) { updates++ }
             })

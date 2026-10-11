@@ -5,4 +5,7 @@
     <string name="mode_tv_hint">Крупные карточки и управление пультом</string>
     <string name="mode_phone_title">Смартфон</string>
     <string name="mode_phone_hint">Сенсорное управление и полные настройки профилей</string>
+    <string name="mode_build_identity">Версия %1$s · код %2$s\nКоммит %3$s · CI №%4$s</string>
+    <string name="mode_about_title">О программе</string>
+    <string name="mode_about_hint">Полные сведения о сборке, контакты и лицензия</string>
 </resources>
