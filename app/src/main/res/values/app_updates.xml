@@ -26,4 +26,6 @@
     <string name="update_paused_bytes">Paused. Saved %1$d / %2$d bytes. Press Download / resume. Leaving the screen retains private cache; Android may clear it.</string>
     <string name="update_installed_title">TunXBox updated to %1$s</string>
     <string name="update_open_app">Open TunXBox</string>
+    <string name="update_status_title">Update status and details</string>
+    <string name="update_details_action">Show full details</string>
 </resources>

@@ -97,6 +97,29 @@ class LaunchRegressionTest {
             assertEquals(0,io.nekohasekai.sagernet.database.DataStore.speedInterval)
         } finally {if(old==null)store.remove(io.nekohasekai.sagernet.Key.SPEED_INTERVAL) else store.putString(io.nekohasekai.sagernet.Key.SPEED_INTERVAL,old)}
     }
+    @Test fun updaterLogIsMultilineAndNeverTrapsActionFocus() {
+        val app=RuntimeEnvironment.getApplication()
+        val controller=Robolectric.buildActivity(MainActivity::class.java,Intent(app,MainActivity::class.java)
+            .putExtra("tv_tools",true).putExtra("tv_destination",R.id.nav_app_updates)).setup().visible()
+        try {
+            val activity=controller.get();activity.supportFragmentManager.executePendingTransactions()
+            val fragment=activity.supportFragmentManager.findFragmentById(R.id.fragment_holder) as AppUpdateFragment
+            val status=activity.findViewById<android.widget.TextView>(R.id.update_status)
+            assertTrue(status.minLines>=8);assertFalse(status.isFocusable);assertFalse(status.isTextSelectable)
+            assertFalse(activity.findViewById<android.view.View>(R.id.update_log_scroll).isFocusable)
+            val check=activity.findViewById<android.view.View>(R.id.update_check)
+            val download=activity.findViewById<android.view.View>(R.id.update_download)
+            assertEquals(R.id.update_details,check.nextFocusDownId)
+            download.isEnabled=true;fragment.updateFocusOrder()
+            assertEquals(R.id.update_download,check.nextFocusDownId)
+            assertEquals(R.id.update_check,download.nextFocusUpId)
+            assertEquals(R.id.update_details,download.nextFocusDownId)
+            status.text="one\ntwo\nthree\nfour\nfive\nsix\nseven\neight"
+            activity.findViewById<android.view.View>(R.id.update_details).performClick()
+            val dialog=org.robolectric.shadows.ShadowDialog.getLatestDialog()
+            assertEquals(status.text.toString(),dialog.findViewById<android.widget.TextView>(android.R.id.message).text.toString())
+        } finally {controller.pause().stop().destroy()}
+    }
     @Test fun coldTvLaunchCreatesBrowseAndNeverStartsChooser() {
         TvUiPreferences.phoneMode = false
         val controller = Robolectric.buildActivity(MainActivityTv::class.java)

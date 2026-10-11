@@ -67,6 +67,50 @@ class EmulatorSmokeTest {
             assertTrue("Remote must reach and select test channel",activity.findViewById<android.widget.RadioButton>(R.id.update_test).isChecked)
             assertEquals(text(R.string.update_idle),activity.findViewById<android.widget.TextView>(R.id.update_status).text.toString())
         }
+        for(landscape in listOf(false,true)) {
+            val expected=if(landscape)android.content.res.Configuration.ORIENTATION_LANDSCAPE else android.content.res.Configuration.ORIENTATION_PORTRAIT
+            scenario!!.onActivity {it.requestedOrientation=if(landscape)android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE else android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT}
+            var orientationReady=false
+            val orientationDeadline=android.os.SystemClock.elapsedRealtime()+timeout
+            while(!orientationReady&&android.os.SystemClock.elapsedRealtime()<orientationDeadline) {
+                instrumentation.runOnMainSync {
+                    orientationReady=ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED).any {
+                        it is MainActivity&&it.resources.configuration.orientation==expected&&it.findViewById<android.view.View>(R.id.update_check)!=null
+                    }
+                }
+                if(!orientationReady)android.os.SystemClock.sleep(100)
+            }
+            assertTrue("Updater must resume in expected orientation",orientationReady)
+            instrumentation.waitForIdleSync()
+            assertNotNull(device.wait(Until.findObject(By.res(context.packageName,"update_check")),timeout))
+            val fixture=(1..12).joinToString("\n") {"Offline metadata line $it"}
+            scenario!!.onActivity {activity ->
+                val status=activity.findViewById<android.widget.TextView>(R.id.update_status)
+                status.text=fixture
+                assertTrue(status.minLines>=8);assertFalse(status.isFocusable);assertFalse(status.isTextSelectable)
+                val preview=activity.findViewById<android.view.View>(R.id.update_log_scroll)
+                assertFalse(preview.isFocusable)
+                assertTrue("Log preview must have a useful multi-line height",preview.layoutParams.height/activity.resources.displayMetrics.density>=190)
+                // Synthetic availability fixture only; never click Download or contact GitHub.
+                activity.findViewById<android.view.View>(R.id.update_download).isEnabled=true
+                val fragment=(activity as MainActivity).supportFragmentManager.findFragmentById(R.id.fragment_holder) as AppUpdateFragment
+                fragment.updateFocusOrder()
+                activity.findViewById<android.view.View>(R.id.update_check).requestFocus()
+            }
+            device.pressDPadDown()
+            assertNotNull("Exactly one Down must reach Download, not the log",
+                device.wait(Until.findObject(By.res(context.packageName,"update_download").focused(true)),timeout))
+            device.pressDPadUp()
+            assertNotNull(device.wait(Until.findObject(By.res(context.packageName,"update_check").focused(true)),timeout))
+            device.pressDPadDown();device.pressDPadDown()
+            assertNotNull("Disabled Pause/Install are skipped; details remain reachable",
+                device.wait(Until.findObject(By.res(context.packageName,"update_details").focused(true)),timeout))
+            device.pressDPadCenter()
+            assertEquals(fixture,requireNotNull(device.wait(Until.findObject(By.res("android","message")),timeout)).text)
+            assertNotNull(device.wait(Until.findObject(By.res("android","button1").focused(true)),timeout))
+            device.pressDPadCenter()
+            assertTrue(device.wait(Until.gone(By.res("android","message")),timeout))
+        }
         assertEquals(selected,DataStore.selectedProxy)
         assertEquals(state,DataStore.serviceState)
         val outside=File(context.cacheDir,"update-downloads/unverified.apk").apply { parentFile!!.mkdirs();writeText("fixture") }
