@@ -664,15 +664,21 @@ class EmulatorSmokeTest {
         assertTrue(build.contains(io.nekohasekai.sagernet.BuildConfig.BUILD_COMMIT.take(8)))
         assertNotNull(device.wait(Until.findObject(By.res(context.packageName,"release_back").focused(true)),timeout))
         fun reach(id: String,down: Boolean) {
-            // A tall text section needs scrolling before Android can focus the next section.
-            for(i in 0 until 40) {
+            // Explicit section routing must reach every control in at most five presses.
+            for(i in 0 until 5) {
                 if(device.hasObject(By.res(context.packageName,id).focused(true)))break
                 if(down)device.pressDPadDown() else device.pressDPadUp()
                 device.waitForIdle()
             }
             assertNotNull("Unreachable release section: $id",device.wait(Until.findObject(By.res(context.packageName,id).focused(true)),timeout))
         }
-        for(id in listOf("release_about","release_changes","release_checks","release_limits"))reach(id,true)
+        reach("release_about",true)
+        reach("release_changes",true)
+        device.pressDPadRight();device.waitForIdle()
+        assertNotNull("Reading long notes must retain the section focus",device.findObject(By.res(context.packageName,"release_changes").focused(true)))
+        device.pressDPadLeft();device.waitForIdle()
+        assertNotNull(device.findObject(By.res(context.packageName,"release_changes").focused(true)))
+        reach("release_checks",true);reach("release_limits",true)
         reach("release_about",false)
         device.pressDPadCenter()
         assertNotNull(device.wait(Until.findObject(By.res(context.packageName,"mal_recyclerview")),timeout))

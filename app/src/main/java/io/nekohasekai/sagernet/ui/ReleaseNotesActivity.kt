@@ -4,6 +4,7 @@ import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.view.Gravity
+import android.view.KeyEvent
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -24,7 +25,7 @@ class ReleaseNotesActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         fun dp(n: Int)=(n*resources.displayMetrics.density).toInt()
         val scroll=ScrollView(this).apply {
-            isFillViewport=true;setBackgroundColor(0xFF0F172A.toInt())
+            isFillViewport=true;isFocusable=false;isFocusableInTouchMode=false;setBackgroundColor(0xFF0F172A.toInt())
             clipToPadding=false;setPadding(dp(24),dp(24),dp(24),dp(24))
         }
         val column=LinearLayout(this).apply {orientation=LinearLayout.VERTICAL}
@@ -60,6 +61,7 @@ class ReleaseNotesActivity : ComponentActivity() {
             isFocusable=true;isFocusableInTouchMode=true
             setPadding(dp(16),dp(16),dp(16),dp(16));setBackgroundResource(R.drawable.mode_choice_background)
         }
+        label(getString(R.string.release_remote_hint),16f,android.view.View.NO_ID)
         val changes=section(R.string.release_changes_title,R.string.release_changes_body,R.id.release_changes)
         val checks=section(R.string.release_checks_title,R.string.release_checks_body,R.id.release_checks)
         val limits=section(R.string.release_limits_title,R.string.release_limits_body,R.id.release_limits)
@@ -67,6 +69,28 @@ class ReleaseNotesActivity : ComponentActivity() {
         for((index,item) in order.withIndex()) {
             if(index>0)item.nextFocusUpId=order[index-1].id
             if(index<order.lastIndex){item.nextFocusDownId=order[index+1].id;item.nextFocusForwardId=order[index+1].id}
+            // ScrollView.arrowScroll can skip a control beside a tall text block. Route
+            // section changes explicitly; horizontal keys keep long notes readable.
+            item.setOnKeyListener { _, key, event ->
+                when(key) {
+                    KeyEvent.KEYCODE_DPAD_UP,KeyEvent.KEYCODE_DPAD_DOWN -> {
+                        if(event.action==KeyEvent.ACTION_DOWN) {
+                            val target=order[(index+if(key==KeyEvent.KEYCODE_DPAD_UP)-1 else 1).coerceIn(0,order.lastIndex)]
+                            target.requestFocus()
+                            scroll.post { scroll.scrollTo(0,(center.top+column.top+target.top-scroll.paddingTop).coerceAtLeast(0)) }
+                        }
+                        true
+                    }
+                    KeyEvent.KEYCODE_DPAD_LEFT,KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                        if(event.action==KeyEvent.ACTION_DOWN) {
+                            val page=(scroll.height-scroll.paddingTop-scroll.paddingBottom).coerceAtLeast(dp(64))*3/4
+                            scroll.scrollBy(0,if(key==KeyEvent.KEYCODE_DPAD_LEFT)-page else page)
+                        }
+                        true
+                    }
+                    else -> false
+                }
+            }
         }
         setContentView(scroll)
         ViewCompat.setOnApplyWindowInsetsListener(scroll) {view,insets ->
