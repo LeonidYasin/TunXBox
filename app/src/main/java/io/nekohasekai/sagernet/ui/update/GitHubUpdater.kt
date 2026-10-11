@@ -104,8 +104,15 @@ class GitHubUpdater(private val context: Context) {
         val dir = File(context.cacheDir, "updates").apply { kotlin.check(mkdirs() || isDirectory) }
         val readyExisting = File(dir, build.offer.apk.name)
         if (readyExisting.isFile) {
-            verifyReady(readyExisting, build)
-            return@withLock VerifiedDownload(readyExisting, validatePackage(readyExisting,build))
+            try {
+                verifyReady(readyExisting, build)
+                return@withLock VerifiedDownload(readyExisting, validatePackage(readyExisting,build))
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (invalidCache: Exception) {
+                // Explicit Download must be able to repair a corrupt cached ready file.
+                // Never install it or keep returning the same stale-cache failure.
+                kotlin.check(readyExisting.delete()) { "Cannot remove the invalid cached APK. Clear the app cache (not app data) and retry." }
+            }
         }
         val partial = partialFile(build) // Outside the provider root; suffix remains .apk for Android parser.
         val downloaded = ResumableDownload({ url, offset -> connect(url, offset, download = true) })

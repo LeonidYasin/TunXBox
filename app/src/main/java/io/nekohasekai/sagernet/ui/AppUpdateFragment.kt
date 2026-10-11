@@ -34,6 +34,7 @@ class AppUpdateFragment : ToolbarFragment(R.layout.layout_app_updates) {
     override fun onViewCreated(view: View,savedInstanceState: Bundle?) {
         super.onViewCreated(view,savedInstanceState)
         toolbar.setTitle(R.string.menu_app_updates)
+        offer=null;ready=null;pendingInstall=false;busy=false
         scope=MainScope();updater=GitHubUpdater(requireContext().applicationContext)
         status=view.findViewById(R.id.update_status);progress=view.findViewById(R.id.update_progress)
         check=view.findViewById(R.id.update_check);download=view.findViewById(R.id.update_download)
