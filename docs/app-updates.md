@@ -34,3 +34,5 @@
 ## Первая итерация CI
 
 [rc.131](https://github.com/LeonidYasin/TunXBox/actions/runs/38097199934): компиляция/JVM прошли; 4KB smoke 10/12, остановлена публикация. Новый updater отображался, но тест искал исходный текст кнопки вместо Android all-caps; теперь селектор использует стабильный resource ID. About license-сценарий требует повторной проверки центрированной реальной прокрутки; его focus/click/full GPL assertions не удалены. Это не опубликованный APK.
+
+[rc.132](https://github.com/LeonidYasin/TunXBox/actions/runs/38098045109) тоже не опубликована: 4KB smoke выявил фокус updater в touch mode и повторную недостижимость license после длинного текста. Исправлена UI-разметка focusableInTouchMode; добавлены реальные DPAD Up/Center для выбора test без сети. Полная лицензия теперь открывается строкой перед длинным пояснением, а не после него. Все content/signature/gates остаются обязательными.

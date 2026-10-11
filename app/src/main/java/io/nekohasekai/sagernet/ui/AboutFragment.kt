@@ -211,9 +211,11 @@ class AboutFragment : ToolbarFragment(R.layout.layout_about) {
                             .setOnClickAction { requireContext().launchCustomTab(ProjectLinks.UPSTREAM) }.build())
                         .build())
                 .addCard(MaterialAboutCard.Builder().outline(false).title(R.string.license)
-                    .addItem(MaterialAboutActionItem.Builder().text(R.string.about_license_short).build())
+                    // Put the actionable row before the potentially multi-line legal summary.
+                    // On small/large-font screens the complete GPL must not sit below clipped text.
                     .addItem(MaterialAboutActionItem.Builder().text(R.string.about_license_full)
                         .setOnClickAction { showFullLicense() }.build())
+                    .addItem(MaterialAboutActionItem.Builder().text(R.string.about_license_short).build())
                     .build())
                 .build()
 

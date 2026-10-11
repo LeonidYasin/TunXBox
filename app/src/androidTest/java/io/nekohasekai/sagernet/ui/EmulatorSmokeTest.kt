@@ -61,6 +61,12 @@ class EmulatorSmokeTest {
             activity.findViewById<android.view.View>(R.id.update_check).requestFocus()
             assertTrue(activity.findViewById<android.view.View>(R.id.update_check).hasFocus())
         }
+        // Real remote input, without pressing Check (no network traffic in offline smoke).
+        device.pressDPadUp();device.pressDPadCenter()
+        scenario!!.onActivity { activity ->
+            assertTrue("Remote must reach and select test channel",activity.findViewById<android.widget.RadioButton>(R.id.update_test).isChecked)
+            assertEquals(text(R.string.update_idle),activity.findViewById<android.widget.TextView>(R.id.update_status).text.toString())
+        }
         assertEquals(selected,DataStore.selectedProxy)
         assertEquals(state,DataStore.serviceState)
         val outside=File(context.cacheDir,"update-downloads/unverified.apk").apply { parentFile!!.mkdirs();writeText("fixture") }
