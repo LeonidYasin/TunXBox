@@ -17,7 +17,12 @@ class DiagnosticShareServerTest {
  }
  @Test fun exactTokenDownloadsOnlyFixedReport() {DiagnosticShareServer(local,"safe diagnostic").use {s -> val response=request(s.url);assertTrue(response.startsWith("HTTP/1.1 200"));assertTrue(response.endsWith("safe diagnostic"));assertTrue(response.contains("no-store"));assertTrue(response.contains("TunXBox-diagnostics.txt"))}}
  @Test fun wrongTokenPostHostAndOriginCannotReadReport() {DiagnosticShareServer(local,"private report").use {s ->
-  for(r in listOf(request(s.url,"/wrong/diagnostics.txt"),request(s.url,method="POST"),request(s.url,host="evil.example"),request(s.url,origin="https://evil.example")) {assertTrue(r.startsWith("HTTP/1.1 404"));assertFalse(r.contains("private report"))}
+  val blocked=listOf(
+   request(s.url,"/wrong/diagnostics.txt"),request(s.url,method="POST"),
+   request(s.url,host="evil.example"),request(s.url,origin="https://evil.example"))
+  for(r in blocked) {
+   assertTrue(r.startsWith("HTTP/1.1 404"));assertFalse(r.contains("private report"))
+  }
  }}
  @Test fun closeAndExpiryDisableListener() {
   val s=DiagnosticShareServer(local,"report",lifetimeMs=30);Thread.sleep(150);assertFalse(s.isOpen);s.close()
