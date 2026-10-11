@@ -158,6 +158,51 @@ class EmulatorSmokeTest {
         }
     }
 
+    @Test fun groupHeaderRanksUrlResultsWithoutSwitchingVpn() {
+        val oldGroup=DataStore.currentGroupId();val selected=DataStore.selectedProxy;val state=DataStore.serviceState
+        val group=runBlocking {GroupManager.createGroup(io.nekohasekai.sagernet.database.ProxyGroup(name="Quality smoke"))}
+        val entries=runBlocking {(1..3).map {i->
+            val bean=io.nekohasekai.sagernet.fmt.socks.SOCKSBean().apply {
+                initializeDefaultValues();serverAddress="fixture.invalid";serverPort=10808;name="Quality $i"
+            }
+            io.nekohasekai.sagernet.database.ProfileManager.createProfile(group.id,bean)
+        }}
+        try {
+            DataStore.selectedGroup=group.id;startTv()
+            scenario!!.onActivity {activity->
+                val browse=(activity as MainActivityTv).supportFragmentManager.findFragmentById(R.id.tv_container)
+                    as io.nekohasekai.sagernet.ui.tv.MainBrowseFragment
+                val attempts=mutableMapOf<Long,Int>()
+                val probe: suspend (io.nekohasekai.sagernet.database.ProxyEntity)->Int = {profile->
+                    val n=attempts.getOrDefault(profile.id,0);attempts[profile.id]=n+1
+                    when(profile.id) {
+                        entries[0].id->throw java.net.SocketTimeoutException("fixture timeout")
+                        entries[1].id->if(n==0)throw java.net.SocketTimeoutException("fixture timeout") else 5
+                        else->100
+                    }
+                }
+                val tcp: suspend (io.nekohasekai.sagernet.database.ProxyEntity)->Int = {0}
+                browse.javaClass.getDeclaredField("qualityUrlProbe").apply {isAccessible=true}.set(browse,probe)
+                browse.javaClass.getDeclaredField("qualityTcpProbe").apply {isAccessible=true}.set(browse,tcp)
+                val actions=(browse.adapter[0] as androidx.leanback.widget.ListRow).adapter
+                assertEquals(listOf(1L,2L,3L,17L,7L),(0 until actions.size()).map {(actions[it] as io.nekohasekai.sagernet.ui.tv.TvAction).id})
+            }
+            device.pressDPadDown();device.pressDPadDown()
+            assertNotNull(device.wait(Until.findObject(By.descStartsWith("Quality smoke").focused(true)),timeout))
+            device.pressDPadCenter()
+            assertNotNull(device.wait(Until.findObject(By.text(text(R.string.tv_test_complete))),timeout))
+            val sorted=runBlocking(kotlinx.coroutines.Dispatchers.IO){SagerDatabase.proxyDao.getByGroup(group.id)}
+            assertEquals(listOf(entries[2].id,entries[1].id,entries[0].id),sorted.map {it.id})
+            assertEquals(listOf(1,1,2),sorted.map {it.status})
+            assertEquals(100,sorted[0].ping);assertEquals(5,sorted[1].ping)
+            assertEquals(selected,DataStore.selectedProxy);assertEquals(state,DataStore.serviceState)
+            device.pressBack();device.waitForIdle()
+        } finally {
+            scenario?.close();scenario=null
+            runBlocking {GroupManager.deleteGroup(group.id)};DataStore.selectedGroup=oldGroup
+        }
+    }
+
     @Test fun sessionCountersAndUnsupportedReportCanBeDownloadedByQrWithoutVpn() {
         val oldGroup=DataStore.currentGroupId();val oldProfile=DataStore.selectedProxy;val state=DataStore.serviceState
         val group=runBlocking {GroupManager.createGroup(io.nekohasekai.sagernet.database.ProxyGroup(name="Diagnostic smoke"))}

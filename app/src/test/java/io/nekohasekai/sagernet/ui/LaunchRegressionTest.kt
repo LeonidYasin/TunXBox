@@ -279,7 +279,7 @@ class LaunchRegressionTest {
             val fragment = controller.get().supportFragmentManager.findFragmentById(R.id.tv_container) as MainBrowseFragment
             val row = fragment.adapter[0] as androidx.leanback.widget.ListRow
             val actions = row.adapter
-            assertEquals(listOf(1L, 2L, 3L, 7L), (0 until actions.size()).map { (actions[it] as io.nekohasekai.sagernet.ui.tv.TvAction).id })
+            assertEquals(listOf(1L, 2L, 3L, 17L, 7L), (0 until actions.size()).map { (actions[it] as io.nekohasekai.sagernet.ui.tv.TvAction).id })
             val info = controller.get().packageManager.getActivityInfo(controller.get().componentName, 0)
             assertEquals(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_FULL_USER, info.screenOrientation)
             assertTrue(controller.get().resources.getDimension(R.dimen.tv_browse_rows_margin_start) / controller.get().resources.displayMetrics.density < 40)
@@ -344,9 +344,20 @@ class LaunchRegressionTest {
             assertEquals(context.getString(R.string.diagnostic_sent, android.text.format.Formatter.formatFileSize(context, 8192L)), status.sent)
             assertEquals(context.getString(R.string.diagnostic_received, android.text.format.Formatter.formatFileSize(context, 16384L)), status.received)
             assertTrue(status.sent.contains("↑")); assertTrue(status.received.contains("↓")); assertTrue(status.result.isNotBlank())
-            assertEquals(16L, (row.adapter[1] as io.nekohasekai.sagernet.ui.tv.TvAction).id)
+            val quality=row.adapter[1] as io.nekohasekai.sagernet.ui.tv.TvQualityCard
+            assertEquals(16L,quality.id)
+            assertEquals(context.getString(R.string.tv_quality_rates,android.text.format.Formatter.formatFileSize(context,2048L),android.text.format.Formatter.formatFileSize(context,4096L)),quality.traffic)
+            fragment.updateTraffic(io.nekohasekai.sagernet.aidl.SpeedDisplayData(txRateProxy=6000,rxRateProxy=10000))
+            val changed=row.adapter[1] as io.nekohasekai.sagernet.ui.tv.TvQualityCard
+            assertNotEquals(quality.traffic,changed.traffic)
+            assertTrue(io.nekohasekai.sagernet.ui.tv.TvRowDiff.areItemsTheSame(quality,changed))
+            assertFalse(io.nekohasekai.sagernet.ui.tv.TvRowDiff.areContentsTheSame(quality,changed))
+            val presenter=io.nekohasekai.sagernet.ui.tv.QualityCardPresenter()
+            val holder=presenter.onCreateViewHolder(android.widget.FrameLayout(context)) as io.nekohasekai.sagernet.ui.tv.QualityCardPresenter.Holder
+            presenter.onBindViewHolder(holder,changed)
+            assertEquals(listOf(2,1,1,1),holder.lines.map {it.maxLines})
             val actions = (fragment.adapter[0] as androidx.leanback.widget.ListRow).adapter
-            assertEquals(listOf(1L, 2L, 3L, 7L), (0 until actions.size()).map { (actions[it] as io.nekohasekai.sagernet.ui.tv.TvAction).id })
+            assertEquals(listOf(1L, 2L, 3L, 17L, 7L), (0 until actions.size()).map { (actions[it] as io.nekohasekai.sagernet.ui.tv.TvAction).id })
         } finally { controller.pause().stop().destroy() }
     }
     @Test fun tvHomeActionLeavesAppWithoutSharingOrDisconnectCommand() {

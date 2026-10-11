@@ -208,6 +208,12 @@
       "to": "DIAGNOSTICS",
       "confirm": 0,
       "label": "Отказ запуска: причина и отчёт"
+    },
+    {
+      "from": "TV",
+      "to": "UPDATER",
+      "action": "APP_UPDATE",
+      "confirm": 1
     }
   ],
   "rows": {
@@ -215,6 +221,7 @@
       "TOGGLE",
       "GROUPS",
       "ADD_PROFILE",
+      "APP_UPDATE",
       "PHONE_MODE"
     ],
     "connection": [

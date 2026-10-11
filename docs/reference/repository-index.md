@@ -8,7 +8,7 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **783**.
+Всего tracked файлов: **788**.
 
 | Раздел | Файлов |
 |---|---|
@@ -137,7 +137,7 @@
 | `app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics` | 3 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/lan` | 7 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/profile` | 16 |
-| `app/src/main/java/io/nekohasekai/sagernet/ui/tv` | 23 |
+| `app/src/main/java/io/nekohasekai/sagernet/ui/tv` | 25 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/update` | 9 |
 | `app/src/main/java/io/nekohasekai/sagernet/utils/Commandline.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/utils/CrashHandler.kt` | 1 |
@@ -182,7 +182,7 @@
 | `app/src/main/res/raw` | 4 |
 | `app/src/main/res/raw-zh-rCN` | 4 |
 | `app/src/main/res/resources.properties` | 1 |
-| `app/src/main/res/values` | 22 |
+| `app/src/main/res/values` | 23 |
 | `app/src/main/res/values-ar` | 1 |
 | `app/src/main/res/values-be` | 1 |
 | `app/src/main/res/values-de` | 1 |
@@ -197,7 +197,7 @@
 | `app/src/main/res/values-night` | 2 |
 | `app/src/main/res/values-nl` | 1 |
 | `app/src/main/res/values-pt-rBR` | 1 |
-| `app/src/main/res/values-ru` | 12 |
+| `app/src/main/res/values-ru` | 13 |
 | `app/src/main/res/values-tr` | 1 |
 | `app/src/main/res/values-uk` | 1 |
 | `app/src/main/res/values-w600dp-h480dp` | 1 |
@@ -205,7 +205,7 @@
 | `app/src/main/res/values-zh-rHK` | 1 |
 | `app/src/main/res/values-zh-rTW` | 1 |
 | `app/src/main/res/xml` | 25 |
-| `app/src/test` | 26 |
+| `app/src/test` | 27 |
 | `buildScript` | 35 |
 | `buildSrc` | 2 |
 | `docs` | 33 |
@@ -801,11 +801,13 @@
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/MainBrowseFragment.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/MainBrowseFragment.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/ProfileCardPresenter.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/ProfileCardPresenter.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/QrCodeTransferFragment.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/QrCodeTransferFragment.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/QualityCardPresenter.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/QualityCardPresenter.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/StableTvRowPresenter.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/StableTvRowPresenter.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TransferImportInput.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TransferImportInput.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TransferProtocol.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TransferProtocol.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvDiagnostics.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvDiagnostics.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvFunctionCatalog.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvFunctionCatalog.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvGroupQuality.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvGroupQuality.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvGroupTransfer.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvGroupTransfer.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvHealthReason.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvHealthReason.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvHealthSession.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvHealthSession.kt)
@@ -1258,6 +1260,7 @@
 - [`app/src/main/res/values/tv_health.xml`](../../app/src/main/res/values/tv_health.xml)
 - [`app/src/main/res/values/tv_ids.xml`](../../app/src/main/res/values/tv_ids.xml)
 - [`app/src/main/res/values/tv_layout.xml`](../../app/src/main/res/values/tv_layout.xml)
+- [`app/src/main/res/values/tv_quality.xml`](../../app/src/main/res/values/tv_quality.xml)
 - [`app/src/main/res/values/tv_strings.xml`](../../app/src/main/res/values/tv_strings.xml)
 
 ## app/src/main/res/values-ar
@@ -1330,6 +1333,7 @@
 - [`app/src/main/res/values-ru/tv_feedback.xml`](../../app/src/main/res/values-ru/tv_feedback.xml)
 - [`app/src/main/res/values-ru/tv_groups.xml`](../../app/src/main/res/values-ru/tv_groups.xml)
 - [`app/src/main/res/values-ru/tv_health.xml`](../../app/src/main/res/values-ru/tv_health.xml)
+- [`app/src/main/res/values-ru/tv_quality.xml`](../../app/src/main/res/values-ru/tv_quality.xml)
 - [`app/src/main/res/values-ru/tv_strings.xml`](../../app/src/main/res/values-ru/tv_strings.xml)
 
 ## app/src/main/res/values-tr
@@ -1406,6 +1410,7 @@
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/TransferImportInputTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/TransferImportInputTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/TransferImportServerTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/TransferImportServerTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/TransferProtocolTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/TransferProtocolTest.kt)
+- [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/TvGroupQualityTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/TvGroupQualityTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/TvHealthSessionTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/TvHealthSessionTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/TvInteractionPolicyTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/TvInteractionPolicyTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/TvLayoutPolicyTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/TvLayoutPolicyTest.kt)
