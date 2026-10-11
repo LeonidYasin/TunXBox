@@ -397,10 +397,38 @@ class EmulatorSmokeTest {
             assertNotNull(device.wait(Until.findObject(By.descStartsWith(text(R.string.tv_start)).focused(true)), timeout))
             // Selected group first, other group rows, then Operations, then Capabilities.
             val rowBudget=SagerDatabase.groupDao.allGroups().size+5
-            repeat(rowBudget) {
-                if(!device.hasObject(By.descStartsWith(text(R.string.tv_actions)).focused(true))) {
-                    device.pressDPadDown();device.waitForIdle()
+            fun operationsSelected(): Boolean {
+                var selected=false
+                scenario!!.onActivity {activity ->
+                    val browse=(activity as MainActivityTv).supportFragmentManager.findFragmentById(R.id.tv_container) as io.nekohasekai.sagernet.ui.tv.MainBrowseFragment
+                    selected=browse.javaClass.getDeclaredField("focusedRow").apply {isAccessible=true}.getLong(browse)==4L
                 }
+                return selected
+            }
+            repeat(rowBudget * 2) {
+                if(!operationsSelected()) {
+                    val previous=device.findObject(By.focused(true))?.contentDescription
+                    android.util.Log.i("TunXBoxSmoke","Operations navigation focused: $previous")
+                    device.pressDPadDown()
+                    if(previous!=null)device.wait(Until.gone(By.desc(previous).focused(true)),1000)
+                    device.waitForIdle()
+                }
+            }
+            // Vertical focus follows spatial column, not necessarily card zero in a row.
+            repeat(16) {
+                if(!device.hasObject(By.descStartsWith(text(R.string.tv_actions)).focused(true))) {
+                    val previous=device.findObject(By.focused(true))?.contentDescription
+                    device.pressDPadLeft()
+                    if(previous!=null)device.wait(Until.gone(By.desc(previous).focused(true)),1000)
+                    device.waitForIdle()
+                }
+            }
+            if(!device.hasObject(By.descStartsWith(text(R.string.tv_actions)).focused(true))) {
+                val hierarchy=File(context.getExternalFilesDir(null),"operations_focus_failure.xml")
+                device.dumpWindowHierarchy(hierarchy)
+                device.executeShellCommand("mkdir -p /sdcard/Download/TunXBoxSmoke")
+                device.executeShellCommand("cp ${hierarchy.absolutePath} /sdcard/Download/TunXBoxSmoke/operations_focus_failure.xml")
+                device.executeShellCommand("screencap -p /sdcard/Download/TunXBoxSmoke/operations_focus_failure.png")
             }
             assertNotNull("Operations must be reachable",device.findObject(By.descStartsWith(text(R.string.tv_actions)).focused(true)))
             val title = text(R.string.subscription_attempt_title)

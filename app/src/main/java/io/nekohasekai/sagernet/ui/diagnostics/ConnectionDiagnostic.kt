@@ -53,9 +53,12 @@ object ConnectionDiagnosticJournal {
     fun write(value: ConnectionDiagnostic) {
         if(ConnectionDiagnostic.decode(value.encode())==null)return
         runCatching {
-            val previous=ConnectionDiagnostic.decode(DataStore.configurationStore.getString(KEY))
-            if(previous==null||previous.profile!=value.profile||previous.at<=value.at)
-                DataStore.configurationStore.putString(KEY,value.encode())
+            // SQLite transaction serializes the :bg native result and UI timeout writes.
+            io.nekohasekai.sagernet.database.preference.PublicDatabase.instance.runInTransaction {
+                val previous=ConnectionDiagnostic.decode(DataStore.configurationStore.getString(KEY))
+                if(previous==null||previous.profile!=value.profile||previous.at<=value.at)
+                    DataStore.configurationStore.putString(KEY,value.encode())
+            }
         }
     }
     fun startup(entity: ProxyEntity,category: SubscriptionFailureCategory,stage: DiagnosticStage=DiagnosticStage.STARTUP) = write(ConnectionDiagnostic.capture(entity,entity.id,stage,category))
