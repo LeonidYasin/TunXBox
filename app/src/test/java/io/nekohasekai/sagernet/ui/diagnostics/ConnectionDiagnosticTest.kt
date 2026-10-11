@@ -11,9 +11,9 @@ import org.robolectric.annotation.Config
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk=[28],application=Application::class)
 class ConnectionDiagnosticTest {
- @Test fun timeoutReportIsAboutConnectionNotSubscription() {
+ @Test fun timeoutExplanationIsAboutConnectionNotSubscription() {
   val context=org.robolectric.RuntimeEnvironment.getApplication()
-  val result=ConnectionDiagnosticReport.text(context,ConnectionDiagnostic(1,1234,DiagnosticStage.URL_TEST,C.TIMEOUT))
+  val result=ConnectionDiagnosticReport.reason(context,C.TIMEOUT)
   assertTrue(result.contains(context.getString(io.nekohasekai.sagernet.R.string.diagnostic_timeout_explanation)))
   assertFalse(result.contains(io.nekohasekai.sagernet.group.SubscriptionFailurePresentation.reason(context,C.TIMEOUT)))
  }

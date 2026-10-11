@@ -65,6 +65,12 @@ object ConnectionDiagnosticJournal {
     fun url(entity: ProxyEntity?,result: ConnectionTestResult)=write(ConnectionDiagnostic.capture(entity,result.profileId,DiagnosticStage.URL_TEST,result.category,result.attemptedAt,result.elapsedMs))
 }
 object ConnectionDiagnosticReport {
+    fun reason(context: Context,category: SubscriptionFailureCategory)=when(category) {
+        SubscriptionFailureCategory.TIMEOUT->context.getString(R.string.diagnostic_timeout_explanation)
+        SubscriptionFailureCategory.TLS_TRUST->context.getString(R.string.diagnostic_tls_explanation)
+        else->SubscriptionFailurePresentation.reason(context,category)
+    }
+
     fun text(context: Context,record: ConnectionDiagnostic?,sent: Long?=null,received: Long?=null): String = buildString {
         appendLine("TunXBox connection diagnostic · schema 1")
         appendLine("APK: ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
@@ -80,11 +86,7 @@ object ConnectionDiagnosticReport {
             appendLine("Stage: ${record.stage} · Protocol: ${record.protocol} · Transport: ${record.transport} · Security: ${record.security}")
             appendLine("Code: ${record.category?.let {"NET_${it.name}"}?:"NET_OK"}")
             if(record.elapsed>=0)appendLine("URL RTT: ${record.elapsed} ms")
-            record.category?.let {category->appendLine(when(category) {
-                SubscriptionFailureCategory.TIMEOUT->context.getString(R.string.diagnostic_timeout_explanation)
-                SubscriptionFailureCategory.TLS_TRUST->context.getString(R.string.diagnostic_tls_explanation)
-                else->SubscriptionFailurePresentation.reason(context,category)
-            })}
+            record.category?.let {category->appendLine(reason(context,category))}
             if(record.stage==DiagnosticStage.STARTUP&&record.category==SubscriptionFailureCategory.UNSUPPORTED)
                 appendLine(context.getString(R.string.diagnostic_unsupported_action))
         }

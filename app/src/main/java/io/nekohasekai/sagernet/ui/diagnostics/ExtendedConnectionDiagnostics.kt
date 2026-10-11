@@ -27,6 +27,7 @@ object ExtendedConnectionDiagnostics {
    val chainLength: Int,val certExpiry: Long?,val steps: List<Step>) {
   fun text()=buildString {
    appendLine("Extended diagnostic · opt-in · ${LIMIT_MS/1000}s maximum")
+   appendLine("Last completed attempt epoch ms: $at")
    appendLine("Physical network: $network · resolved IPv4=$ipv4 IPv6=$ipv6")
    appendLine("TLS flags: SNI configured=$sni ALPN configured=$alpn custom CA=$customCa ECH=$ech allowInsecure configured=$insecure")
    appendLine("Android strict TLS probe: chain length=$chainLength expiry epoch ms=${certExpiry?:"unavailable"}")
