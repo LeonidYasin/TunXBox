@@ -45,6 +45,36 @@ class EmulatorSmokeTest {
     private val timeout = 15_000L
     private var scenario: ActivityScenario<out android.app.Activity>? = null
 
+    @Test fun appUpdatesIsOfflineUntilRequestedAndPreservesVpnState() {
+        val selected=DataStore.selectedProxy
+        val state=DataStore.serviceState
+        scenario=ActivityScenario.launch<MainActivity>(Intent(context,MainActivity::class.java)
+            .putExtra("tv_tools",true).putExtra("tv_destination",R.id.nav_app_updates))
+        assertNotNull("Updater check action must be visible",device.wait(Until.findObject(By.res(context.packageName,"update_check")),timeout))
+        scenario!!.onActivity { activity ->
+            assertTrue(activity.findViewById<android.widget.RadioButton>(R.id.update_stable).isChecked)
+            assertTrue(activity.findViewById<android.view.View>(R.id.update_check).isEnabled)
+            assertFalse(activity.findViewById<android.view.View>(R.id.update_download).isEnabled)
+            assertFalse(activity.findViewById<android.view.View>(R.id.update_install).isEnabled)
+            assertEquals(text(R.string.update_idle),activity.findViewById<android.widget.TextView>(R.id.update_status).text.toString())
+            assertEquals(android.view.View.GONE,activity.findViewById<android.view.View>(R.id.stats).visibility)
+            activity.findViewById<android.view.View>(R.id.update_check).requestFocus()
+            assertTrue(activity.findViewById<android.view.View>(R.id.update_check).hasFocus())
+        }
+        // Real remote input, without pressing Check (no network traffic in offline smoke).
+        device.pressDPadUp();device.pressDPadCenter()
+        scenario!!.onActivity { activity ->
+            assertTrue("Remote must reach and select test channel",activity.findViewById<android.widget.RadioButton>(R.id.update_test).isChecked)
+            assertEquals(text(R.string.update_idle),activity.findViewById<android.widget.TextView>(R.id.update_status).text.toString())
+        }
+        assertEquals(selected,DataStore.selectedProxy)
+        assertEquals(state,DataStore.serviceState)
+        val outside=File(context.cacheDir,"update-downloads/unverified.apk").apply { parentFile!!.mkdirs();writeText("fixture") }
+        try {
+            assertTrue(runCatching { androidx.core.content.FileProvider.getUriForFile(context,"${context.packageName}.update-files",outside) }.isFailure)
+        } finally {outside.delete()}
+    }
+
     @Before fun prepare() {
         device.wakeUp()
         device.setOrientationNatural()
@@ -112,6 +142,10 @@ class EmulatorSmokeTest {
         scenario = ActivityScenario.launch<MainActivity>(Intent(context, MainActivity::class.java)
             .putExtra("tv_tools", true).putExtra("tv_destination", R.id.nav_about))
         val scroll = UiScrollable(UiSelector().resourceId(context.packageName + ":id/mal_recyclerview"))
+            .setAsVerticalList().setMaxSearchSwipes(30)
+        // Centered gestures avoid the system bottom edge and card-end touch regions.
+        // Keep all actual reachability/click/focus/license-content assertions below.
+        scroll.setSwipeDeadZonePercentage(0.25)
         assertTrue(scroll.scrollIntoView(UiSelector().text(text(R.string.about_build_details))))
         assertFalse("Global traffic panel must not cover About", device.hasObject(By.res(context.packageName, "stats")))
         assertFalse("Global service button must not cover About", device.hasObject(By.res(context.packageName, "fab")))
@@ -133,6 +167,7 @@ class EmulatorSmokeTest {
         assertTrue(requireNotNull(device.wait(Until.findObject(By.res("android", "message")), timeout)).text.contains("GPL"))
         device.findObject(By.res("android", "button2")).click()
         assertTrue(device.wait(Until.gone(By.res("android", "message")), timeout))
+        device.waitForIdle()
         assertTrue("Full license action must be reachable", scroll.scrollIntoView(UiSelector().text(text(R.string.about_license_full))))
         var license: UiObject2? = visibleText(text(R.string.about_license_full))
         repeat(6) { if (license?.isClickable != true) license = license?.parent }

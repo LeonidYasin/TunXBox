@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical">
+    <include layout="@layout/layout_appbar" android:layout_width="match_parent" android:layout_height="wrap_content" />
+    <ScrollView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="20dp" android:orientation="vertical">
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/update_intro" />
+            <RadioGroup android:id="@+id/update_channels" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+                <RadioButton android:focusable="true" android:focusableInTouchMode="true" android:id="@+id/update_stable" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/update_channel_stable" />
+                <RadioButton android:focusable="true" android:focusableInTouchMode="true" android:id="@+id/update_test" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/update_channel_test" />
+            </RadioGroup>
+            <Button android:focusable="true" android:focusableInTouchMode="true" android:id="@+id/update_check" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/update_check_action" />
+            <TextView android:id="@+id/update_status" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginVertical="12dp" android:textIsSelectable="true" />
+            <ProgressBar android:id="@+id/update_progress" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="wrap_content" />
+            <Button android:focusable="true" android:focusableInTouchMode="true" android:id="@+id/update_download" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/update_download_action" />
+            <Button android:focusable="true" android:focusableInTouchMode="true" android:id="@+id/update_pause" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/update_pause_action" />
+            <Button android:focusable="true" android:focusableInTouchMode="true" android:id="@+id/update_install" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/update_install_action" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

@@ -1,0 +1,21 @@
+<resources>
+    <string name="menu_app_updates">Обновление приложения</string>
+    <string name="update_intro">Выберите стабильный или тестовый канал. APK скачивается и проверяется здесь, без браузера. Разрешение и подтверждение установки Android обязательны. Настройки VPN не меняются.</string>
+    <string name="update_channel_stable">Стабильный (по умолчанию)</string>
+    <string name="update_channel_test">Тестовый / release candidate</string>
+    <string name="update_check_action">Проверить последнюю версию</string>
+    <string name="update_download_action">Скачать / продолжить и проверить APK</string>
+    <string name="update_pause_action">Приостановить загрузку</string>
+    <string name="update_install_action">Установить проверенный APK</string>
+    <string name="update_idle">Проверка и загрузка не запускаются автоматически. Выберите канал и нажмите «Проверить».</string>
+    <string name="update_checking">Проверка выпуска GitHub и сведений об APK…</string>
+    <string name="update_offer">Установлена: %1$s\nДоступна: %2$s / code %3$d\nAPK: %4$s\nБайты: %5$d\nКоммит: %6$s</string>
+    <string name="update_same_version">Эта версия уже установлена. Можно скачать её для явно подтверждённой повторной установки; понижение версии запрещено.</string>
+    <string name="update_progress_text">Скачано %1$d / %2$d байт · %3$d Б/с · попытка %4$d</string>
+    <string name="update_verifying">Проверка SHA-256, пакета и версии APK, совместимости CPU и настоящего сертификата подписи…</string>
+    <string name="update_ready">APK проверен. Нажмите «Установить».\nФайл в приватном кэше: %1$s\nПодпись установленного APK: %2$s\nПодпись скачанного APK: %3$s\nЭто не общая папка Downloads; Android получит временный content URI.</string>
+    <string name="update_paused">Приостановлено. Сохранённые байты можно докачать после повторной проверки того же выпуска.</string>
+    <string name="update_error">Обновление не завершено: %1$s\nНепроверенный APK не устанавливается. Проверьте соединение, включая VPN, и повторите. Не удаляйте приложение для обхода несовпадения подписи.</string>
+    <string name="update_install_permission">Разрешите установку APK из TunXBox в настройках Android и вернитесь. Если установщик не открылся, нажмите «Установить» снова.</string>
+    <string name="update_install_launched">Открыт установщик Android. Подтвердите или отмените установку. Проверенный файл сохранён для повторной попытки.</string>
+</resources>

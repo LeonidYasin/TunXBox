@@ -8,7 +8,7 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **729**.
+Всего tracked файлов: **746**.
 
 | Раздел | Файлов |
 |---|---|
@@ -95,6 +95,7 @@
 | `app/src/main/java/io/nekohasekai/sagernet/ui/AppLifecycleActions.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/AppListActivity.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/AppManagerActivity.kt` | 1 |
+| `app/src/main/java/io/nekohasekai/sagernet/ui/AppUpdateFragment.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/AssetsActivity.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/BackupFragment.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/BlankActivity.kt` | 1 |
@@ -133,6 +134,7 @@
 | `app/src/main/java/io/nekohasekai/sagernet/ui/lan` | 7 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/profile` | 16 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/tv` | 19 |
+| `app/src/main/java/io/nekohasekai/sagernet/ui/update` | 6 |
 | `app/src/main/java/io/nekohasekai/sagernet/utils/Commandline.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/utils/CrashHandler.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/utils/DefaultNetworkListener.kt` | 1 |
@@ -165,7 +167,7 @@
 | `app/src/main/res/drawable` | 125 |
 | `app/src/main/res/drawable-v26` | 3 |
 | `app/src/main/res/font` | 1 |
-| `app/src/main/res/layout` | 48 |
+| `app/src/main/res/layout` | 49 |
 | `app/src/main/res/menu` | 18 |
 | `app/src/main/res/mipmap-anydpi-v26` | 1 |
 | `app/src/main/res/mipmap-hdpi` | 2 |
@@ -176,7 +178,7 @@
 | `app/src/main/res/raw` | 4 |
 | `app/src/main/res/raw-zh-rCN` | 4 |
 | `app/src/main/res/resources.properties` | 1 |
-| `app/src/main/res/values` | 17 |
+| `app/src/main/res/values` | 18 |
 | `app/src/main/res/values-ar` | 1 |
 | `app/src/main/res/values-be` | 1 |
 | `app/src/main/res/values-de` | 1 |
@@ -191,21 +193,21 @@
 | `app/src/main/res/values-night` | 2 |
 | `app/src/main/res/values-nl` | 1 |
 | `app/src/main/res/values-pt-rBR` | 1 |
-| `app/src/main/res/values-ru` | 7 |
+| `app/src/main/res/values-ru` | 8 |
 | `app/src/main/res/values-tr` | 1 |
 | `app/src/main/res/values-uk` | 1 |
 | `app/src/main/res/values-w600dp-h480dp` | 1 |
 | `app/src/main/res/values-zh-rCN` | 1 |
 | `app/src/main/res/values-zh-rHK` | 1 |
 | `app/src/main/res/values-zh-rTW` | 1 |
-| `app/src/main/res/xml` | 24 |
-| `app/src/test` | 18 |
+| `app/src/main/res/xml` | 25 |
+| `app/src/test` | 20 |
 | `buildScript` | 34 |
 | `buildSrc` | 2 |
-| `docs` | 26 |
+| `docs` | 28 |
 | `gradle` | 2 |
 | `libcore` | 42 |
-| `website` | 31 |
+| `website` | 33 |
 | `Корень` | 15 |
 
 ## .github
@@ -596,6 +598,10 @@
 
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/AppManagerActivity.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/AppManagerActivity.kt)
 
+## app/src/main/java/io/nekohasekai/sagernet/ui/AppUpdateFragment.kt
+
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/AppUpdateFragment.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/AppUpdateFragment.kt)
+
 ## app/src/main/java/io/nekohasekai/sagernet/ui/AssetsActivity.kt
 
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/AssetsActivity.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/AssetsActivity.kt)
@@ -786,6 +792,15 @@
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvTransferClient.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvTransferClient.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvTransferServer.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvTransferServer.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvUiPreferences.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvUiPreferences.kt)
+
+## app/src/main/java/io/nekohasekai/sagernet/ui/update
+
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/update/ApkInstallIntents.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/update/ApkInstallIntents.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/update/GitHubUpdater.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/update/GitHubUpdater.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/update/ReleaseCatalog.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/update/ReleaseCatalog.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/update/ResumableDownload.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/update/ResumableDownload.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/update/SignaturePolicy.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/update/SignaturePolicy.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/update/UpdateFileProvider.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/update/UpdateFileProvider.kt)
 
 ## app/src/main/java/io/nekohasekai/sagernet/utils/Commandline.kt
 
@@ -1080,6 +1095,7 @@
 - [`app/src/main/res/layout/layout_add_entity.xml`](../../app/src/main/res/layout/layout_add_entity.xml)
 - [`app/src/main/res/layout/layout_app_list.xml`](../../app/src/main/res/layout/layout_app_list.xml)
 - [`app/src/main/res/layout/layout_app_placeholder.xml`](../../app/src/main/res/layout/layout_app_placeholder.xml)
+- [`app/src/main/res/layout/layout_app_updates.xml`](../../app/src/main/res/layout/layout_app_updates.xml)
 - [`app/src/main/res/layout/layout_appbar.xml`](../../app/src/main/res/layout/layout_appbar.xml)
 - [`app/src/main/res/layout/layout_apps.xml`](../../app/src/main/res/layout/layout_apps.xml)
 - [`app/src/main/res/layout/layout_apps_item.xml`](../../app/src/main/res/layout/layout_apps_item.xml)
@@ -1193,6 +1209,7 @@
 ## app/src/main/res/values
 
 - [`app/src/main/res/values/app_identity_actions.xml`](../../app/src/main/res/values/app_identity_actions.xml)
+- [`app/src/main/res/values/app_updates.xml`](../../app/src/main/res/values/app_updates.xml)
 - [`app/src/main/res/values/arrays.xml`](../../app/src/main/res/values/arrays.xml)
 - [`app/src/main/res/values/attrs.xml`](../../app/src/main/res/values/attrs.xml)
 - [`app/src/main/res/values/branding.xml`](../../app/src/main/res/values/branding.xml)
@@ -1270,6 +1287,7 @@
 ## app/src/main/res/values-ru
 
 - [`app/src/main/res/values-ru/app_identity_actions.xml`](../../app/src/main/res/values-ru/app_identity_actions.xml)
+- [`app/src/main/res/values-ru/app_updates.xml`](../../app/src/main/res/values-ru/app_updates.xml)
 - [`app/src/main/res/values-ru/crash_recovery.xml`](../../app/src/main/res/values-ru/crash_recovery.xml)
 - [`app/src/main/res/values-ru/mode_choice.xml`](../../app/src/main/res/values-ru/mode_choice.xml)
 - [`app/src/main/res/values-ru/remote_actions.xml`](../../app/src/main/res/values-ru/remote_actions.xml)
@@ -1326,6 +1344,7 @@
 - [`app/src/main/res/xml/standard_v2ray_preferences.xml`](../../app/src/main/res/xml/standard_v2ray_preferences.xml)
 - [`app/src/main/res/xml/trojan_go_preferences.xml`](../../app/src/main/res/xml/trojan_go_preferences.xml)
 - [`app/src/main/res/xml/tuic_preferences.xml`](../../app/src/main/res/xml/tuic_preferences.xml)
+- [`app/src/main/res/xml/update_file_paths.xml`](../../app/src/main/res/xml/update_file_paths.xml)
 - [`app/src/main/res/xml/wireguard_preferences.xml`](../../app/src/main/res/xml/wireguard_preferences.xml)
 
 ## app/src/test
@@ -1348,6 +1367,8 @@
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/TransferProtocolTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/TransferProtocolTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/TvInteractionPolicyTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/TvInteractionPolicyTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/TvLayoutPolicyTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/TvLayoutPolicyTest.kt)
+- [`app/src/test/java/io/nekohasekai/sagernet/ui/update/ReleaseCatalogTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/update/ReleaseCatalogTest.kt)
+- [`app/src/test/java/io/nekohasekai/sagernet/ui/update/ResumableDownloadTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/update/ResumableDownloadTest.kt)
 
 ## buildScript
 
@@ -1394,6 +1415,7 @@
 ## docs
 
 - [`docs/README.md`](../../docs/README.md)
+- [`docs/app-updates.md`](../../docs/app-updates.md)
 - [`docs/architecture.md`](../../docs/architecture.md)
 - [`docs/branch-audit.md`](../../docs/branch-audit.md)
 - [`docs/contributing-and-support.md`](../../docs/contributing-and-support.md)
@@ -1415,6 +1437,7 @@
 - [`docs/scenarios.md`](../../docs/scenarios.md)
 - [`docs/security.md`](../../docs/security.md)
 - [`docs/signing-and-updates.md`](../../docs/signing-and-updates.md)
+- [`docs/subscription-passphrase.md`](../../docs/subscription-passphrase.md)
 - [`docs/support-services-proposal.md`](../../docs/support-services-proposal.md)
 - [`docs/tv-readiness-plan.md`](../../docs/tv-readiness-plan.md)
 - [`docs/tv-transfer.md`](../../docs/tv-transfer.md)
@@ -1474,6 +1497,7 @@
 
 - [`website/.nojekyll`](../../website/.nojekyll)
 - [`website/guide/README.html`](../../website/guide/README.html)
+- [`website/guide/app-updates.html`](../../website/guide/app-updates.html)
 - [`website/guide/architecture.html`](../../website/guide/architecture.html)
 - [`website/guide/branch-audit.html`](../../website/guide/branch-audit.html)
 - [`website/guide/contributing-and-support.html`](../../website/guide/contributing-and-support.html)
@@ -1495,6 +1519,7 @@
 - [`website/guide/scenarios.html`](../../website/guide/scenarios.html)
 - [`website/guide/security.html`](../../website/guide/security.html)
 - [`website/guide/signing-and-updates.html`](../../website/guide/signing-and-updates.html)
+- [`website/guide/subscription-passphrase.html`](../../website/guide/subscription-passphrase.html)
 - [`website/guide/support-services-proposal.html`](../../website/guide/support-services-proposal.html)
 - [`website/guide/tv-readiness-plan.html`](../../website/guide/tv-readiness-plan.html)
 - [`website/guide/tv-transfer.html`](../../website/guide/tv-transfer.html)
