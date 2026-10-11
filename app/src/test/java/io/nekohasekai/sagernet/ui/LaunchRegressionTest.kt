@@ -183,6 +183,23 @@ class LaunchRegressionTest {
             activity.findViewById<android.view.View>(R.id.release_back).performClick();assertTrue(activity.isFinishing)
         } finally {controller.pause().stop().destroy()}
     }
+    @Test fun startupErrorShowsFullSafeDiagnosticDialogInsteadOfOnlyToast() {
+        TvUiPreferences.phoneMode=false
+        val before=io.nekohasekai.sagernet.database.DataStore.selectedProxy
+        val controller=Robolectric.buildActivity(MainActivityTv::class.java).setup().visible()
+        try {
+            controller.get().supportFragmentManager.executePendingTransactions();shadowOf(Looper.getMainLooper()).idle()
+            val fragment=controller.get().supportFragmentManager.findFragmentById(R.id.tv_container) as MainBrowseFragment
+            io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticJournal.clear()
+            val method=MainBrowseFragment::class.java.getDeclaredMethod("updateService",io.nekohasekai.sagernet.bg.BaseService.State::class.java,String::class.java,String::class.java).apply {isAccessible=true}
+            method.invoke(fragment,io.nekohasekai.sagernet.bg.BaseService.State.Stopped,"fixture","Unsupported V2Ray transport: XHTTP. secret-url-token")
+            controller.get().supportFragmentManager.executePendingTransactions();shadowOf(Looper.getMainLooper()).idle()
+            val dialog=controller.get().supportFragmentManager.findFragmentByTag("connection_report") as io.nekohasekai.sagernet.ui.diagnostics.DiagnosticDialog
+            val text=dialog.requireDialog().findViewById<android.widget.TextView>(R.id.diagnostic_report_text).text.toString()
+            assertTrue(text.contains("NET_UNSUPPORTED"));assertFalse(text.contains("secret-url-token"))
+            assertEquals(before,io.nekohasekai.sagernet.database.DataStore.selectedProxy)
+        } finally {controller.pause().stop().destroy()}
+    }
     @Test fun pickerBackDoesNotChooseOrLaunch() {
         val controller = Robolectric.buildActivity(ModeSelectionActivity::class.java).setup()
         try {

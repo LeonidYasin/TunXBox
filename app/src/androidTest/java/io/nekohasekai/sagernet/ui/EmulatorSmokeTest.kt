@@ -110,6 +110,74 @@ class EmulatorSmokeTest {
         }
     }
 
+    @Test fun sessionCountersAndUnsupportedReportCanBeDownloadedByQrWithoutVpn() {
+        val oldGroup=DataStore.currentGroupId();val oldProfile=DataStore.selectedProxy;val state=DataStore.serviceState
+        val group=runBlocking {GroupManager.createGroup(io.nekohasekai.sagernet.database.ProxyGroup(name="Diagnostic smoke"))}
+        val bean=io.nekohasekai.sagernet.fmt.v2ray.VMessBean().apply {
+            initializeDefaultValues();isVLESS=true;type="xhttp";security="reality";serverAddress="secret-fixture.invalid"
+            uuid="secret-fixture-uuid";path="/secret-fixture-token";name="Diagnostic XHTTP"
+        }
+        val entity=runBlocking {io.nekohasekai.sagernet.database.ProfileManager.createProfile(group.id,bean)}
+        try {
+            DataStore.selectedGroup=group.id;DataStore.selectedProxy=entity.id
+            io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticJournal.startup(entity,io.nekohasekai.sagernet.group.SubscriptionFailureCategory.UNSUPPORTED)
+            startTv()
+            // Wait for the real binder before delivering this synthetic statistics fixture.
+            var ready=false
+            val bindDeadline=android.os.SystemClock.elapsedRealtime()+timeout
+            while(!ready&&android.os.SystemClock.elapsedRealtime()<bindDeadline) {
+                scenario!!.onActivity {activity ->
+                    val browse=(activity as MainActivityTv).supportFragmentManager.findFragmentById(R.id.tv_container) as io.nekohasekai.sagernet.ui.tv.MainBrowseFragment
+                    ready=browse.javaClass.getDeclaredField("serviceReady").apply {isAccessible=true}.getBoolean(browse)
+                }
+                if(!ready)android.os.SystemClock.sleep(50)
+            }
+            assertTrue("Service binder must be ready",ready)
+            // Synthetic callback verifies totals remain nonzero even when instantaneous rates are zero.
+            scenario!!.onActivity {activity ->
+                val browse=(activity as MainActivityTv).supportFragmentManager.findFragmentById(R.id.tv_container) as io.nekohasekai.sagernet.ui.tv.MainBrowseFragment
+                browse.updateTraffic(io.nekohasekai.sagernet.aidl.SpeedDisplayData(txTotal=1234,rxTotal=7890))
+            }
+            device.pressDPadDown()
+            val sent=requireNotNull(device.wait(Until.findObject(By.res(context.packageName,"connection_summary_sent")),timeout)).text
+            assertFalse(sent.contains("—"));assertFalse(sent.contains("/s"))
+            assertEquals("Diagnostic XHTTP",requireNotNull(device.findObject(By.res(context.packageName,"connection_summary_name"))).text)
+            device.pressDPadRight();device.pressDPadCenter()
+            val report=requireNotNull(device.wait(Until.findObject(By.res(context.packageName,"diagnostic_report_text")),timeout)).text
+            assertTrue(report.contains("NET_UNSUPPORTED"));assertTrue(report.contains("xhttp"));assertTrue(report.contains("STARTUP"))
+            assertTrue(report.contains(io.nekohasekai.sagernet.BuildConfig.VERSION_NAME))
+            for(secret in listOf("secret-fixture.invalid","secret-fixture-uuid","secret-fixture-token"))assertFalse(report.contains(secret))
+            assertNotNull(device.wait(Until.findObject(By.res("android","button1").focused(true)),timeout))
+            requireNotNull(device.findObject(By.res("android","button3"))).click()
+            val deadline=android.os.SystemClock.elapsedRealtime()+timeout
+            var url: String?=null
+            while(url==null&&android.os.SystemClock.elapsedRealtime()<deadline) {
+                if(device.hasObject(By.text(text(R.string.diagnostic_share_network)))) {
+                    device.findObject(By.res("android","text1"))?.takeIf {it.text.matches(Regex("[0-9.]+"))}?.click()
+                }
+                val text=device.findObject(By.res(context.packageName,"diagnostic_share_status"))?.text.orEmpty()
+                url=Regex("http://[^\\s]+").find(text)?.value
+                if(url==null)android.os.SystemClock.sleep(100)
+            }
+            val uri=java.net.URI(requireNotNull(url){"Explicit LAN report link must be available on emulator Wi-Fi"})
+            assertNotNull(device.findObject(By.res(context.packageName,"diagnostic_qr")))
+            val response=java.net.Socket(uri.host,uri.port).use {socket ->
+                socket.soTimeout=3000
+                socket.getOutputStream().write(("GET ${uri.path} HTTP/1.1\r\nHost: ${uri.host}:${uri.port}\r\n\r\n").toByteArray())
+                socket.getInputStream().bufferedReader().readText()
+            }
+            assertTrue(response.startsWith("HTTP/1.1 200"));assertTrue(response.contains("NET_UNSUPPORTED"))
+            assertFalse(response.contains("secret-fixture-uuid"));assertFalse(response.contains("secret-fixture-token"))
+            device.pressBack()
+            assertTrue(device.wait(Until.gone(By.res(context.packageName,"diagnostic_share_status")),timeout))
+            assertTrue(runCatching {java.net.Socket(uri.host,uri.port).use {}}.isFailure)
+            assertEquals(entity.id,DataStore.selectedProxy);assertEquals(state,DataStore.serviceState)
+        } finally {
+            scenario?.close();scenario=null;runBlocking {GroupManager.deleteGroup(group.id)}
+            DataStore.selectedGroup=oldGroup;DataStore.selectedProxy=oldProfile
+        }
+    }
+
     @Before fun prepare() {
         device.wakeUp()
         device.setOrientationNatural()
@@ -266,10 +334,17 @@ class EmulatorSmokeTest {
             io.nekohasekai.sagernet.group.SubscriptionUpdateJournal.write(group.id, record)
             startTv()
             assertNotNull(device.wait(Until.findObject(By.descStartsWith(text(R.string.tv_start)).focused(true)), timeout))
-            // Actions -> connection -> profiles -> tools, using real remote keys only.
-            repeat(3) { device.pressDPadDown(); device.waitForIdle() }
+            // Dynamic group rows precede tools; all direct catalog buttons precede reports.
+            val rowBudget=SagerDatabase.groupDao.allGroups().size+4
+            repeat(rowBudget) {
+                if(!device.hasObject(By.descStartsWith(text(R.string.tv_all_functions)).focused(true))) {
+                    device.pressDPadDown();device.waitForIdle()
+                }
+            }
+            assertNotNull("All capabilities must be reachable",device.findObject(By.descStartsWith(text(R.string.tv_all_functions)).focused(true)))
             val title = text(R.string.subscription_attempt_title)
-            repeat(8) {
+            val buttonBudget=io.nekohasekai.sagernet.ui.tv.TvFunctionCatalog.entries(context,DataStore.enableClashAPI,io.nekohasekai.sagernet.ktx.isPlay).size+9
+            repeat(buttonBudget) {
                 if (!device.hasObject(By.descStartsWith(title).focused(true))) {
                     device.pressDPadRight(); device.waitForIdle()
                 }

@@ -8,7 +8,7 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **771**.
+Всего tracked файлов: **781**.
 
 | Раздел | Файлов |
 |---|---|
@@ -133,9 +133,10 @@
 | `app/src/main/java/io/nekohasekai/sagernet/ui/ToolsFragment.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/VpnRequestActivity.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/WebviewFragment.kt` | 1 |
+| `app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics` | 3 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/lan` | 7 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/profile` | 16 |
-| `app/src/main/java/io/nekohasekai/sagernet/ui/tv` | 22 |
+| `app/src/main/java/io/nekohasekai/sagernet/ui/tv` | 23 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/update` | 9 |
 | `app/src/main/java/io/nekohasekai/sagernet/utils/Commandline.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/utils/CrashHandler.kt` | 1 |
@@ -180,7 +181,7 @@
 | `app/src/main/res/raw` | 4 |
 | `app/src/main/res/raw-zh-rCN` | 4 |
 | `app/src/main/res/resources.properties` | 1 |
-| `app/src/main/res/values` | 21 |
+| `app/src/main/res/values` | 22 |
 | `app/src/main/res/values-ar` | 1 |
 | `app/src/main/res/values-be` | 1 |
 | `app/src/main/res/values-de` | 1 |
@@ -195,7 +196,7 @@
 | `app/src/main/res/values-night` | 2 |
 | `app/src/main/res/values-nl` | 1 |
 | `app/src/main/res/values-pt-rBR` | 1 |
-| `app/src/main/res/values-ru` | 11 |
+| `app/src/main/res/values-ru` | 12 |
 | `app/src/main/res/values-tr` | 1 |
 | `app/src/main/res/values-uk` | 1 |
 | `app/src/main/res/values-w600dp-h480dp` | 1 |
@@ -203,13 +204,13 @@
 | `app/src/main/res/values-zh-rHK` | 1 |
 | `app/src/main/res/values-zh-rTW` | 1 |
 | `app/src/main/res/xml` | 25 |
-| `app/src/test` | 23 |
+| `app/src/test` | 25 |
 | `buildScript` | 35 |
 | `buildSrc` | 2 |
-| `docs` | 32 |
+| `docs` | 33 |
 | `gradle` | 2 |
 | `libcore` | 42 |
-| `website` | 36 |
+| `website` | 37 |
 | `Корень` | 15 |
 
 ## .github
@@ -752,6 +753,12 @@
 
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/WebviewFragment.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/WebviewFragment.kt)
 
+## app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics
+
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/ConnectionDiagnostic.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/ConnectionDiagnostic.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/DiagnosticDialog.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/DiagnosticDialog.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/DiagnosticShareServer.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/DiagnosticShareServer.kt)
+
 ## app/src/main/java/io/nekohasekai/sagernet/ui/lan
 
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/lan/GatewayProfileStore.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/lan/GatewayProfileStore.kt)
@@ -784,6 +791,7 @@
 ## app/src/main/java/io/nekohasekai/sagernet/ui/tv
 
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/ActionPresenter.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/ActionPresenter.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/ConnectionCardPresenter.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/ConnectionCardPresenter.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/GroupAndFunctionPresenters.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/GroupAndFunctionPresenters.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/MainBrowseFragment.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/MainBrowseFragment.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/ProfileCardPresenter.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/ProfileCardPresenter.kt)
@@ -1230,6 +1238,7 @@
 - [`app/src/main/res/values/attrs.xml`](../../app/src/main/res/values/attrs.xml)
 - [`app/src/main/res/values/branding.xml`](../../app/src/main/res/values/branding.xml)
 - [`app/src/main/res/values/colors.xml`](../../app/src/main/res/values/colors.xml)
+- [`app/src/main/res/values/connection_diagnostics.xml`](../../app/src/main/res/values/connection_diagnostics.xml)
 - [`app/src/main/res/values/crash_recovery.xml`](../../app/src/main/res/values/crash_recovery.xml)
 - [`app/src/main/res/values/dimens.xml`](../../app/src/main/res/values/dimens.xml)
 - [`app/src/main/res/values/ic_launcher_background.xml`](../../app/src/main/res/values/ic_launcher_background.xml)
@@ -1307,6 +1316,7 @@
 
 - [`app/src/main/res/values-ru/app_identity_actions.xml`](../../app/src/main/res/values-ru/app_identity_actions.xml)
 - [`app/src/main/res/values-ru/app_updates.xml`](../../app/src/main/res/values-ru/app_updates.xml)
+- [`app/src/main/res/values-ru/connection_diagnostics.xml`](../../app/src/main/res/values-ru/connection_diagnostics.xml)
 - [`app/src/main/res/values-ru/crash_recovery.xml`](../../app/src/main/res/values-ru/crash_recovery.xml)
 - [`app/src/main/res/values-ru/mode_choice.xml`](../../app/src/main/res/values-ru/mode_choice.xml)
 - [`app/src/main/res/values-ru/release_notes.xml`](../../app/src/main/res/values-ru/release_notes.xml)
@@ -1382,6 +1392,8 @@
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/LaunchRegressionTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/LaunchRegressionTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/ReleaseUpdatePolicyTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/ReleaseUpdatePolicyTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/RemoteReadabilityTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/RemoteReadabilityTest.kt)
+- [`app/src/test/java/io/nekohasekai/sagernet/ui/diagnostics/ConnectionDiagnosticTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/diagnostics/ConnectionDiagnosticTest.kt)
+- [`app/src/test/java/io/nekohasekai/sagernet/ui/diagnostics/DiagnosticShareServerTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/diagnostics/DiagnosticShareServerTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/lan/GatewayProfileTargetsTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/lan/GatewayProfileTargetsTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/lan/LanDiscoveryTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/lan/LanDiscoveryTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/RemoteUiTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/RemoteUiTest.kt)
@@ -1444,6 +1456,7 @@
 - [`docs/app-updates.md`](../../docs/app-updates.md)
 - [`docs/architecture.md`](../../docs/architecture.md)
 - [`docs/branch-audit.md`](../../docs/branch-audit.md)
+- [`docs/connection-diagnostics.md`](../../docs/connection-diagnostics.md)
 - [`docs/contributing-and-support.md`](../../docs/contributing-and-support.md)
 - [`docs/decisions.md`](../../docs/decisions.md)
 - [`docs/development.md`](../../docs/development.md)
@@ -1530,6 +1543,7 @@
 - [`website/guide/app-updates.html`](../../website/guide/app-updates.html)
 - [`website/guide/architecture.html`](../../website/guide/architecture.html)
 - [`website/guide/branch-audit.html`](../../website/guide/branch-audit.html)
+- [`website/guide/connection-diagnostics.html`](../../website/guide/connection-diagnostics.html)
 - [`website/guide/contributing-and-support.html`](../../website/guide/contributing-and-support.html)
 - [`website/guide/decisions.html`](../../website/guide/decisions.html)
 - [`website/guide/development.html`](../../website/guide/development.html)

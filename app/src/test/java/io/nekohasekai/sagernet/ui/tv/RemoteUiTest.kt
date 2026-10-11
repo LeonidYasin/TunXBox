@@ -69,6 +69,16 @@ class RemoteUiTest {
             assertTrue(holder.view.isFocusable);assertEquals(entry.title,holder.title.text.toString())
         }
     }
+    @Test fun connectionHasSeparateProfileCountersAndShortResultViews() {
+        val parent=FrameLayout(activity());val presenter=ConnectionCardPresenter()
+        val h=presenter.onCreateViewHolder(parent) as ConnectionCardPresenter.Holder
+        presenter.onBindViewHolder(h,TvConnectionCard(8,"Netherlands Hysteria", "↑ 12 KiB","↓ 3 MiB","OK · 113 ms"))
+        assertEquals("Netherlands Hysteria",h.name.text.toString())
+        assertEquals("↑ 12 KiB",h.sent.text.toString());assertEquals("↓ 3 MiB",h.received.text.toString())
+        assertEquals("OK · 113 ms",h.result.text.toString())
+        assertEquals(1,h.sent.maxLines);assertEquals(1,h.received.maxLines);assertEquals(1,h.result.maxLines)
+        assertTrue(h.view.isFocusable);assertEquals(8L,TvGroupRows.focus(TvConnectionCard(8,"","","","")))
+    }
     @After fun closeActivity() { controller?.pause()?.stop()?.destroy() }
     private fun layout(parent: View) {
         parent.measure(View.MeasureSpec.makeMeasureSpec(1000, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(1400, View.MeasureSpec.AT_MOST))

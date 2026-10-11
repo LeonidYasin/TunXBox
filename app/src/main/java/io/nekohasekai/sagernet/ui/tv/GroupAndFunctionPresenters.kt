@@ -28,6 +28,7 @@ object TvGroupRows {
  const val BASE=1_000_000_000_000L
  fun row(group: Long)=BASE+group
  fun focus(item: Any?)=when(item) {
+  is TvConnectionCard -> item.id
   is TvAction -> item.id
   is TvProfileCard -> item.id
   is TvGroupCard -> -BASE-item.id

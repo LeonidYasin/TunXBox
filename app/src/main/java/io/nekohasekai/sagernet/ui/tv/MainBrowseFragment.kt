@@ -78,6 +78,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
         private const val RESTART_APP = 13L
         private const val CLOSE_APP = 14L
         private const val SUBSCRIPTION_DIAGNOSTICS = 15L
+        private const val DIAGNOSTICS = 16L
         private const val ROW_CONNECTION = 3L
     }
 
@@ -116,7 +117,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
             refreshCards()
         }
         override fun missingPlugin(profileName: String, pluginName: String) {
-            toast(getString(R.string.tv_missing_plugin, profileName, pluginName))
+            showConnectionDiagnostics()
         }
     }
     private fun updateService(state: BaseService.State, name: String? = null, message: String? = null) {
@@ -128,7 +129,14 @@ class MainBrowseFragment : BrowseSupportFragment() {
         if (name != null && phase !in setOf(TvVpnPhase.IDLE, TvVpnPhase.STOPPED)) activeName = name
         refreshCards()
         maybeAutoCheck()
-        if (message != null) toast(message)
+        if (message != null) {
+            val saved=io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticJournal.read(DataStore.selectedProxy)?.takeIf {it.category!=null&&it.stage!=io.nekohasekai.sagernet.ui.diagnostics.DiagnosticStage.URL_TEST}
+            if(saved==null)io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticJournal.write(
+                io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnostic(DataStore.selectedProxy,System.currentTimeMillis(),
+                    io.nekohasekai.sagernet.ui.diagnostics.DiagnosticStage.STARTUP,
+                    io.nekohasekai.sagernet.group.SubscriptionFailureCategory.fromMessage(message)))
+            if(isResumed)showConnectionDiagnostics()
+        }
     }
 
     private val profileListener = object : ProfileManager.Listener {
@@ -181,7 +189,9 @@ class MainBrowseFragment : BrowseSupportFragment() {
         toolsAdapter = ArrayObjectAdapter(ClassPresenterSelector()
             .addClassPresenter(TvAction::class.java,ActionPresenter())
             .addClassPresenter(TvFunctionCard::class.java,FunctionCardPresenter()))
-        connectionAdapter = ArrayObjectAdapter(ActionPresenter())
+        connectionAdapter = ArrayObjectAdapter(ClassPresenterSelector()
+            .addClassPresenter(TvAction::class.java,ActionPresenter())
+            .addClassPresenter(TvConnectionCard::class.java,ConnectionCardPresenter()))
         rowAdapter=ArrayObjectAdapter(StableTvRowPresenter(resources.configuration.screenWidthDp<600))
         adapter=rowAdapter
         onItemViewSelectedListener = OnItemViewSelectedListener { _, item, _, row ->
@@ -189,12 +199,16 @@ class MainBrowseFragment : BrowseSupportFragment() {
         }
         onItemViewClickedListener = OnItemViewClickedListener { _, item, _, _ ->
             when (item) {
+                is TvConnectionCard -> showConnectionDiagnostics()
                 is TvProfileCard -> selectProfile(item.id)
                 is TvGroupCard -> selectGroup(item.id)
                 is TvFunctionCard -> openFullScreen(item.id)
                 is TvEmptyHint -> {if(item.groupId>0)selectGroup(item.groupId);showImportMethods()}
                 is TvAction -> if (item.available) handleAction(item.id) else toast(if (item.id == TOGGLE && DataStore.selectedProxy == 0L || item.id == PROFILE_ACTIONS) R.string.tv_choose_profile else if (item.id == UPDATE && groups.firstOrNull { it.id == DataStore.selectedGroup }?.type != GroupType.SUBSCRIPTION) R.string.tv_not_subscription else R.string.tv_wait)
             }
+        }
+        parentFragmentManager.setFragmentResultListener("diagnostic_repeat",viewLifecycleOwner) {_,_->
+            if(phase==TvVpnPhase.CONNECTED)testActiveConnection()
         }
         restoreAfterLoad = true
         view.post { rowsSupportFragment?.verticalGridView?.setAnimateChildLayout(false) }
@@ -330,22 +344,25 @@ class MainBrowseFragment : BrowseSupportFragment() {
     private fun refreshConnectionCards() {
         if (view == null || !::connectionAdapter.isInitialized) return
         val result=healthResult
-        val label=when {
+        val failed=if(phase in setOf(TvVpnPhase.IDLE,TvVpnPhase.STOPPED))io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticJournal.read(DataStore.selectedProxy)?.takeIf {it.category!=null} else null
+        val short=when {
+            phase!=TvVpnPhase.CONNECTED&&failed!=null -> getString(R.string.diagnostic_failed_short,TvHealthReason.short(requireContext(),failed.category!!))
             phase!=TvVpnPhase.CONNECTED -> phaseLabel()
-            healthJob?.isActive==true&&result==null -> getString(R.string.tv_health_checking)
-            result==null -> getString(R.string.tv_health_unchecked)
-            result.available -> getString(R.string.tv_health_ok,result.elapsedMs)
-            else -> getString(R.string.tv_health_failed,TvHealthReason.text(requireContext(),result.category!!))
+            healthJob?.isActive==true -> getString(R.string.diagnostic_checking_short)
+            result==null -> getString(R.string.diagnostic_unchecked_short)
+            result.available -> getString(R.string.diagnostic_ok_short,result.elapsedMs)
+            else -> getString(R.string.diagnostic_failed_short,TvHealthReason.short(requireContext(),result.category!!))
         }
-        val age=result?.let { getString(R.string.tv_health_age,((System.currentTimeMillis()-it.attemptedAt).coerceAtLeast(0)/1000))+(it.category?.let { category -> " · NET_${category.name}" }?:"") }?:""
-        val info=activeName.ifBlank { getString(R.string.tv_no_selection) }+"\n"+
-            getString(R.string.tv_health_rates,bytes(stats.txRateProxy),bytes(stats.rxRateProxy))+"\n"+age
-        val statusCards = mutableListOf(TvAction(STATUS,label,info,R.drawable.ic_remote_groups))
+        val statusCards=mutableListOf<Any>(TvConnectionCard(STATUS,
+            activeName.ifBlank {selectedName.ifBlank {getString(R.string.tv_no_selection)}},
+            getString(R.string.diagnostic_sent,if(statsAt==0L)"—" else bytes(stats.txTotal)),
+            getString(R.string.diagnostic_received,if(statsAt==0L)"—" else bytes(stats.rxTotal)),short),
+            TvAction(DIAGNOSTICS,getString(R.string.diagnostic_title),getString(R.string.diagnostic_card_hint),R.drawable.ic_remote_groups))
         if (phase == TvVpnPhase.CONNECTED) statusCards.add(TvAction(YOUTUBE, getString(R.string.tv_youtube), getString(R.string.tv_youtube_hint), R.drawable.ic_baseline_more_vert_24))
         connectionAdapter.setItems(statusCards, diff)
     }
     private fun restoreFocus() {
-        if (dialog?.isShowing == true || view == null) return
+        if (dialog?.isShowing == true || parentFragmentManager.findFragmentByTag("connection_report")!=null || parentFragmentManager.findFragmentByTag("diagnostic_share")!=null || view == null) return
         val items=when {focusedRow>=TvGroupRows.BASE -> groupAdapters[focusedRow-TvGroupRows.BASE]?:actionsAdapter;focusedRow==ROW_TOOLS->toolsAdapter;focusedRow==ROW_CONNECTION->connectionAdapter;else->actionsAdapter}
         val ids = (0 until items.size()).map { itemId(items[it]) }
         val index = TvInteractionPolicy.focusIndex(ids, focusedId)
@@ -409,9 +426,18 @@ class MainBrowseFragment : BrowseSupportFragment() {
         YOUTUBE -> openYoutube()
         RESTART_APP -> io.nekohasekai.sagernet.ui.AppLifecycleActions.confirm(requireActivity(), true)
         CLOSE_APP -> io.nekohasekai.sagernet.ui.AppLifecycleActions.confirm(requireActivity(), false)
-        STATUS -> show(AlertDialog.Builder(requireContext()).setTitle(R.string.tv_connection_status).setMessage(getString(R.string.tv_connection_explanation) + "\n\n" + getString(R.string.tv_connection_stats,phaseLabel(),activeName,bytes(stats.txRateProxy),bytes(stats.rxRateProxy),bytes(stats.txTotal),bytes(stats.rxTotal)) + "\n\n" + getString(R.string.tv_stats_age, if (statsAt == 0L) "—" else ((SystemClock.elapsedRealtime() - statsAt) / 1000).toString()) +
-            (io.nekohasekai.sagernet.group.ConnectionTestPresentation.read(activeProfileId())?.let { "\n\n" + io.nekohasekai.sagernet.group.ConnectionTestPresentation.details(requireContext(), it) } ?: "")).setPositiveButton(R.string.tv_test_active) { _, _ -> testActiveConnection() }.setNeutralButton(R.string.tv_tests_title) { _, _ -> showTests() }.setNegativeButton(android.R.string.cancel, null))
+        STATUS -> showConnectionDiagnostics()
+        DIAGNOSTICS -> showConnectionDiagnostics()
     } }
+    private fun showConnectionDiagnostics() {
+        if(!isAdded||view==null)return
+        val profile=if(phase==TvVpnPhase.CONNECTED)activeProfileId() else DataStore.selectedProxy
+        val record=io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticJournal.read(profile)
+        val counters=phase==TvVpnPhase.CONNECTED&&statsAt>0L
+        val report=io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticReport.text(requireContext(),record,
+            if(counters)stats.txTotal else null,if(counters)stats.rxTotal else null)
+        io.nekohasekai.sagernet.ui.diagnostics.DiagnosticDialog.open(parentFragmentManager,report,phase==TvVpnPhase.CONNECTED)
+    }
     fun handlePlayPause() = execute(TvInteractionPolicy.media(phase, DataStore.selectedProxy, serviceReady))
     fun showFocusedActions() {
         if (focusedRow>=TvGroupRows.BASE && focusedId>0) openProfileActions(focusedId)
@@ -654,10 +680,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
                     health=io.nekohasekai.sagernet.group.ConnectionTestPresentation.summary(requireContext(),result)
                     // Automatic checks are inline: never steal focus or require an error OK click.
                     if(!automatic&&!result.available&&isResumed) {
-                        val current=show(AlertDialog.Builder(requireContext()).setTitle(R.string.network_test_title)
-                            .setMessage(io.nekohasekai.sagernet.group.ConnectionTestPresentation.details(requireContext(),result))
-                            .setPositiveButton(android.R.string.ok,null))
-                        io.nekohasekai.sagernet.group.SubscriptionUpdatePresentation.focusClose(current)
+                        showConnectionDiagnostics()
                     }
                 }
             } catch(cancelled: CancellationException) {healthSession.cancel(token);throw cancelled}

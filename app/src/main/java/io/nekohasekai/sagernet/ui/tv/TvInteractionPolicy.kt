@@ -44,3 +44,5 @@ data class TvProfileCard(val id: Long, val name: String, val protocol: String, v
 data class TvEmptyHint(val message: String,val groupId: Long=0)
 data class TvGroupCard(val id: Long,val name: String,val count: Int,val selected: Boolean)
 data class TvFunctionCard(val id: Int,val title: String)
+
+data class TvConnectionCard(val id: Long,val name: String,val sent: String,val received: String,val result: String)

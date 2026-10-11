@@ -23,7 +23,9 @@
     "PERMISSION": "Разрешение источника APK",
     "MODE": "Старт: версия и выбор интерфейса",
     "ABOUT": "О программе / полные сведения сборки",
-    "RELEASE": "Встроенные сведения о выпуске и проверки"
+    "RELEASE": "Встроенные сведения о выпуске и проверки",
+    "DIAGNOSTICS": "Полный отчёт соединения",
+    "REPORT_PHONE": "QR → TXT на смартфон"
   },
   "edges": [
     {
@@ -188,6 +190,24 @@
       "to": "MODE",
       "confirm": 0,
       "label": "Back; фокус на выпуске"
+    },
+    {
+      "from": "TV",
+      "to": "DIAGNOSTICS",
+      "action": "DIAGNOSTICS",
+      "confirm": 1
+    },
+    {
+      "from": "DIAGNOSTICS",
+      "to": "REPORT_PHONE",
+      "confirm": 1,
+      "label": "Явная локальная передача"
+    },
+    {
+      "from": "CONNECT",
+      "to": "DIAGNOSTICS",
+      "confirm": 0,
+      "label": "Отказ запуска: причина и отчёт"
     }
   ],
   "rows": {
@@ -199,6 +219,7 @@
     ],
     "connection": [
       "STATUS",
+      "DIAGNOSTICS",
       "YOUTUBE"
     ],
     "tools": [

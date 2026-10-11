@@ -471,7 +471,14 @@ class MainActivity : ThemedActivity(),
 
         binding.fab.changeState(state, DataStore.serviceState, animate)
         binding.stats.changeState(state)
-        if (msg != null) snackbar(getString(R.string.vpn_error, msg)).show()
+        if(msg!=null&&lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
+            val record=io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticJournal.read(DataStore.selectedProxy)
+                ?:io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnostic(DataStore.selectedProxy,System.currentTimeMillis(),
+                    io.nekohasekai.sagernet.ui.diagnostics.DiagnosticStage.STARTUP,
+                    io.nekohasekai.sagernet.group.SubscriptionFailureCategory.fromMessage(msg))
+            io.nekohasekai.sagernet.ui.diagnostics.DiagnosticDialog.open(supportFragmentManager,
+                io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticReport.text(this,record))
+        }
     }
 
     override fun snackbarInternal(text: CharSequence): Snackbar {
