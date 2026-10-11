@@ -822,6 +822,15 @@ class MainBrowseFragment : BrowseSupportFragment() {
      * A single isolated worker prevents abandoned native calls from spawning more tests.
      * Cancellation prevents the next probe; a blocked native call may finish later.
      */
+    private class GroupQualityFailure(val category: io.nekohasekai.sagernet.group.SubscriptionFailureCategory): Exception()
+    private fun showGroupQualityFailure(category: io.nekohasekai.sagernet.group.SubscriptionFailureCategory) {
+        if(!isAdded||view==null)return
+        // Only canonical codes; never log provider names, endpoints or exception text.
+        android.util.Log.i("TunXBoxGroupQuality","Group stopped: NET_${category.name}; ranking not saved")
+        show(AlertDialog.Builder(requireContext()).setTitle(R.string.tv_tests_title)
+            .setMessage(getString(if(category==io.nekohasekai.sagernet.group.SubscriptionFailureCategory.CHANGED)R.string.tv_quality_changed else R.string.tv_quality_incomplete)+"\nNET_${category.name}")
+            .setPositiveButton(android.R.string.ok,null))
+    }
     private fun runGroupQuality(groupId: Long) {
         if(DataStore.runningTest){toast(R.string.tv_wait);return}
         DataStore.runningTest=true
@@ -831,12 +840,19 @@ class MainBrowseFragment : BrowseSupportFragment() {
         progress.setOnCancelListener {cancelled.set(true);testJob?.cancel()}
         testJob=viewLifecycleOwner.lifecycleScope.launch {
             val started=SystemClock.elapsedRealtime()
-            val network=SagerNet.underlyingNetwork
+            // Initial callback registration is asynchronous; null -> initial physical
+            // network must not be mistaken for a handover after probes have started.
+            var network: android.net.Network?=null
             val results=mutableListOf<TvQualityResult>()
             var ticker: Job?=null
             var step=""
             try {
                 val operationJob=currentCoroutineContext()[Job]!!
+                step="NETWORK_INITIALIZATION"
+                network=withTimeoutOrNull(2000L) {
+                    while(SagerNet.underlyingNetwork==null)delay(25)
+                    SagerNet.underlyingNetwork
+                }?:SagerNet.underlyingNetwork
                 val original=withContext(Dispatchers.IO){SagerDatabase.groupDao.getById(groupId)}?:return@launch
                 val targets=withContext(Dispatchers.IO){SagerDatabase.proxyDao.getByGroup(groupId)}
                 if(targets.isEmpty()){toast(R.string.tv_empty);return@launch}
@@ -852,7 +868,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
                 withTimeout(TvGroupQuality.GROUP_LIMIT_MS) {
                     for(profile in targets) {
                         ensureActive()
-                        if(SagerNet.underlyingNetwork!=network)throw IllegalStateException("network changed")
+                        if(SagerNet.underlyingNetwork!=network)throw GroupQualityFailure(io.nekohasekai.sagernet.group.SubscriptionFailureCategory.CHANGED)
                         var quality: TvQualityResult?=null
                         val outcome=qualityWorker.check(profile.id,TvGroupQuality.PROFILE_LIMIT_MS) {
                             runBlocking {
@@ -878,7 +894,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
                         }
                         ensureActive()
                         // No partial sort when the worker timed out or was still occupied.
-                        if(!outcome.available||quality==null)throw IllegalStateException("incomplete group check")
+                        if(!outcome.available||quality==null)throw GroupQualityFailure(outcome.category?:io.nekohasekai.sagernet.group.SubscriptionFailureCategory.CORE)
                         results.add(quality!!)
                     }
                 }
@@ -903,7 +919,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
                     if(saved)GroupManager.postReload(groupId)
                     saved
                 }
-                if(!committed){toast(R.string.tv_quality_changed);return@launch}
+                if(!committed){showGroupQualityFailure(io.nekohasekai.sagernet.group.SubscriptionFailureCategory.CHANGED);return@launch}
                 qualityByProfile=qualityByProfile.filterKeys {id->targets.none {it.id==id}}+results.associateBy {it.id}
                 progress.dismiss();requestSnapshot()
                 val report=ranked.joinToString("\n\n") {r->
@@ -916,8 +932,8 @@ class MainBrowseFragment : BrowseSupportFragment() {
                 show(AlertDialog.Builder(requireContext()).setTitle(R.string.tv_test_complete)
                     .setMessage(report+"\n\n"+getString(R.string.tv_quality_scope)).setPositiveButton(android.R.string.ok,null))
             } catch(error: CancellationException){
-                if(error is TimeoutCancellationException)toast(R.string.tv_quality_incomplete) else throw error
-            } catch(_: Exception){toast(R.string.tv_quality_incomplete)}
+                if(error is TimeoutCancellationException)showGroupQualityFailure(io.nekohasekai.sagernet.group.SubscriptionFailureCategory.TIMEOUT) else throw error
+            } catch(error: Exception){showGroupQualityFailure(if(error is GroupQualityFailure)error.category else io.nekohasekai.sagernet.group.SubscriptionFailureCategory.fromThrowable(error))}
             finally {cancelled.set(true);ticker?.cancel();DataStore.runningTest=false;if(progress.isShowing)progress.dismiss()}
         }
     }

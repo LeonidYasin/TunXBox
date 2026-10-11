@@ -222,7 +222,16 @@ class EmulatorSmokeTest {
             device.pressDPadDown();device.pressDPadDown()
             assertNotNull(device.wait(Until.findObject(By.descStartsWith("Quality smoke").focused(true)),timeout))
             device.pressDPadCenter()
-            assertNotNull(device.wait(Until.findObject(By.text(text(R.string.tv_test_complete))),timeout))
+            val completed=device.wait(Until.findObject(By.text(text(R.string.tv_test_complete))),timeout)
+            if(completed==null) {
+                // Capture BEFORE finally closes ActivityScenario; a later Home screen
+                // would hide whether this was a real crash or a guarded test failure.
+                device.takeScreenshot(File("/sdcard/Download/TunXBoxSmoke/group_quality_before_cleanup.png"))
+                device.dumpWindowHierarchy(File("/sdcard/Download/TunXBoxSmoke/group_quality_before_cleanup.xml"))
+                val nodes=device.findObjects(By.textContains("NET_"))
+                android.util.Log.i("TunXBoxSmoke","Group result absent; visible canonical codes: "+nodes.map {it.text})
+            }
+            assertNotNull("Completed group ranking must have an explicit result",completed)
             val sorted=runBlocking(kotlinx.coroutines.Dispatchers.IO){SagerDatabase.proxyDao.getByGroup(group.id)}
             assertEquals(listOf(entries[2].id,entries[1].id,entries[0].id),sorted.map {it.id})
             assertEquals(listOf(1,1,2),sorted.map {it.status})
