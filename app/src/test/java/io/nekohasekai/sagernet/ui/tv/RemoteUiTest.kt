@@ -44,6 +44,8 @@ class RemoteUiTest {
         presenter.onBindViewHolder(holder,TvGroupCard(7,"Collection",3,true))
         assertTrue(holder.view.isActivated);assertEquals("Collection",holder.title.text.toString())
         assertTrue(holder.subtitle.text.contains(parent.context.getString(R.string.tv_group_row_selected)))
+        assertTrue(holder.subtitle.text.contains(parent.context.getString(R.string.tv_quality_group_hint)))
+        assertTrue(holder.view.contentDescription.contains(parent.context.getString(R.string.tv_quality_group_hint)))
         presenter.onBindViewHolder(holder,TvGroupCard(8,"Other",0,false))
         assertFalse(holder.view.isActivated);assertTrue(holder.view.isFocusable)
         presenter.onUnbindViewHolder(holder);assertFalse(holder.view.isActivated)
