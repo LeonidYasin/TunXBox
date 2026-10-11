@@ -399,7 +399,7 @@ class MainActivity : ThemedActivity(),
         // BottomAppBar translation is not a reliable hide before its first layout.
         // Tools/About must not have an overlapping panel intercepting scroll gestures.
         // This affects UI visibility only: no VPN disconnect/selection commands are sent.
-        val hideConnectionOverlay = fragment is io.nekohasekai.sagernet.ui.lan.LanDiscoveryFragment || fragment is AboutFragment
+        val hideConnectionOverlay = fragment is io.nekohasekai.sagernet.ui.lan.LanDiscoveryFragment || fragment is AboutFragment || fragment is AppUpdateFragment
         binding.stats.visibility = if (hideConnectionOverlay) View.GONE else View.VISIBLE
         if (fragment is ConfigurationFragment || (DataStore.showBottomBar && !hideConnectionOverlay)) {
             binding.stats.allowShow = true
@@ -413,6 +413,10 @@ class MainActivity : ThemedActivity(),
             .replace(R.id.fragment_holder, fragment)
             .commitAllowingStateLoss()
         binding.drawerLayout.closeDrawers()
+    }
+
+    fun openAppUpdates(testChannel: Boolean) {
+        displayFragment(AppUpdateFragment().apply { arguments = android.os.Bundle().apply { putBoolean("test",testChannel) } })
     }
 
     fun displayFragmentWithId(@IdRes id: Int): Boolean {
@@ -439,6 +443,7 @@ class MainActivity : ThemedActivity(),
                 return false
             }
 
+            R.id.nav_app_updates -> openAppUpdates(false)
             R.id.nav_about -> displayFragment(AboutFragment())
             R.id.nav_tuiguang -> displayFragment(PromotionsFragment())
 

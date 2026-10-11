@@ -45,6 +45,30 @@ class EmulatorSmokeTest {
     private val timeout = 15_000L
     private var scenario: ActivityScenario<out android.app.Activity>? = null
 
+    @Test fun appUpdatesIsOfflineUntilRequestedAndPreservesVpnState() {
+        val selected=DataStore.selectedProxy
+        val state=DataStore.serviceState
+        scenario=ActivityScenario.launch<MainActivity>(Intent(context,MainActivity::class.java)
+            .putExtra("tv_tools",true).putExtra("tv_destination",R.id.nav_app_updates))
+        visibleText(text(R.string.update_check_action))
+        scenario!!.onActivity { activity ->
+            assertTrue(activity.findViewById<android.widget.RadioButton>(R.id.update_stable).isChecked)
+            assertTrue(activity.findViewById<android.view.View>(R.id.update_check).isEnabled)
+            assertFalse(activity.findViewById<android.view.View>(R.id.update_download).isEnabled)
+            assertFalse(activity.findViewById<android.view.View>(R.id.update_install).isEnabled)
+            assertEquals(text(R.string.update_idle),activity.findViewById<android.widget.TextView>(R.id.update_status).text.toString())
+            assertEquals(android.view.View.GONE,activity.findViewById<android.view.View>(R.id.stats).visibility)
+            activity.findViewById<android.view.View>(R.id.update_check).requestFocus()
+            assertTrue(activity.findViewById<android.view.View>(R.id.update_check).hasFocus())
+        }
+        assertEquals(selected,DataStore.selectedProxy)
+        assertEquals(state,DataStore.serviceState)
+        val outside=File(context.cacheDir,"update-downloads/unverified.apk").apply { parentFile!!.mkdirs();writeText("fixture") }
+        try {
+            assertTrue(runCatching { androidx.core.content.FileProvider.getUriForFile(context,"${context.packageName}.update-files",outside) }.isFailure)
+        } finally {outside.delete()}
+    }
+
     @Before fun prepare() {
         device.wakeUp()
         device.setOrientationNatural()

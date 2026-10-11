@@ -5,6 +5,7 @@
   "pages": [
     "guide/readme.html",
     "guide/README.html",
+    "guide/app-updates.html",
     "guide/architecture.html",
     "guide/branch-audit.html",
     "guide/contributing-and-support.html",
@@ -25,6 +26,7 @@
     "guide/scenarios.html",
     "guide/security.html",
     "guide/signing-and-updates.html",
+    "guide/subscription-passphrase.html",
     "guide/support-services-proposal.html",
     "guide/tv-readiness-plan.html",
     "guide/tv-transfer.html",

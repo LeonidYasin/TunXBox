@@ -31,7 +31,7 @@ flowchart TD
 | R6 | Совместимость Happ/Incy | Исследование | Пользовательские обезличенные samples/официальные export formats; не обещать чтение sandbox чужого приложения; использовать общий import где возможно |
 | R8 | Диагностика и совместимость, Happ first | Новый приоритет до R5, [план](protocol-compatibility.md) | Явные ошибки/безопасные отчёты; lossless import; protocol/transport/core matrix; Xray assessment; pinned sing-box updates с CI/приёмкой; не обещать all-protocol parity без evidence |
 | R7 | Расширение тестов | Постоянно | Физические ARM/OEM/пульт/поворот; APK release smoke; real provider только с явной безопасной fixture; emulator smoke не выдавать за throughput/VPN сертификацию |
-| R10 | Обновление приложения без браузера: stable / test | Согласованный план, отдельный PR; не реализовано | Проверка канала, подходящий APK, проверка signer/package/hash/versionCode, скачивание с прогрессом и стандартный установщик Android; TV/Phone и приёмка обновления с сохранением данных |
+| R10 | Обновление приложения без браузера: stable / test | Реализация-кандидат в feature/in-app-updates; CI и device acceptance впереди, [границы](app-updates.md) | Проверка канала, подходящий APK, проверка signer/package/hash/versionCode, скачивание с прогрессом и стандартный установщик Android; TV/Phone и приёмка обновления с сохранением данных |
 
 
 Номера будущих релизов предварительные: исправления — patch (например 1.5.1), существенные новые функции — minor (например 1.6.0). Следующий Android VERSION_CODE base необходимо увеличить после stable, чтобы следующий RC устанавливался поверх stable.
@@ -194,3 +194,7 @@ Rc.128: единственный нативный список присутст�
 ### Rc.129: About прошёл, устарел валидатор количества тестов
 
 195 JVM и все **11 Android 4KB** сценариев прошли без failures/errors/skips. Падение произошло ПОСЛЕ instrumentation: старый shell gate требовал ровно 10 тестов. Исправление: verified Python wrapper сохраняет прежний запуск/expectedPageSize/collect-trap, меняет только устаревший post-check на проверку полного набора @Test методов из Smoke source. Отсутствующие/дублированные/лишние cases, другая class, ошибки/пропуски и неверные XML counters отклоняются. Девять validator tests и actual rc.129 XML проверены локально. Shell/gradlew mode не меняется. Нужны 16KB и все release gates следующего CI.
+
+## R14 — подписка по словарной фразе
+
+[Дизайн и критерии](subscription-passphrase.md): одноразовый случайный код + узкий доверенный HTTPS resolver, либо локальное phone/TV pairing. Сервер/API пока не развёрнут, интерфейс не объявляется готовым. Не открывать административный MCP клиентам.

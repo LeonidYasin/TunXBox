@@ -304,42 +304,7 @@ class AboutFragment : ToolbarFragment(R.layout.layout_about) {
         }
 
         fun checkUpdate(checkPreview: Boolean) {
-            val signer = runCatching { installedSigner() }.getOrNull() ?: run {
-                Toast.makeText(requireContext(), R.string.update_no_compatible_release, Toast.LENGTH_LONG).show()
-                return
-            }
-            runOnIoDispatcher {
-                try {
-                    val client = Libcore.newHttpClient().apply { modernTLS(); trySocks5(DataStore.mixedPort) }
-                    fun fetch(url: String): String = Util.getStringBox(client.newRequest().apply { setURL(url) }.execute().contentString)
-                    val release = JSONObject(fetch(if (checkPreview) ProjectLinks.PREVIEW_API else ProjectLinks.RELEASE_API))
-                    val releaseUrl = release.getString("html_url")
-                    require(releaseUrl.startsWith(ProjectLinks.REPOSITORY + "/releases/tag/"))
-                    val assets = release.getJSONArray("assets")
-                    val asset = (0 until assets.length()).map { assets.getJSONObject(it) }
-                        .firstOrNull { it.optString("name") == "apk-manifest.json" }
-                    if (asset == null) {
-                        runOnMainDispatcher { if (isAdded) Toast.makeText(requireContext(), R.string.update_no_compatible_release, Toast.LENGTH_LONG).show() }
-                        return@runOnIoDispatcher
-                    }
-                    val manifestUrl = asset.getString("browser_download_url")
-                    require(manifestUrl.startsWith(ProjectLinks.REPOSITORY + "/releases/download/"))
-                    val available = ReleaseUpdatePolicy.parse(JSONObject(fetch(manifestUrl)), BuildConfig.APPLICATION_ID, BuildConfig.VERSION_CODE.toLong(), signer)
-                    runOnMainDispatcher {
-                        if (!isAdded || view == null) return@runOnMainDispatcher
-                        if (available.newer) {
-                            val context = requireContext()
-                            MaterialAlertDialogBuilder(context).setTitle(R.string.update_dialog_title)
-                                .setMessage(context.getString(R.string.update_dialog_message, SagerNet.appVersionNameForDisplay, available.versionName))
-                                .setPositiveButton(R.string.yes) { _, _ -> context.launchCustomTab(releaseUrl) }
-                                .setNegativeButton(R.string.no, null).show()
-                        } else Toast.makeText(requireContext(), R.string.check_update_no, Toast.LENGTH_SHORT).show()
-                    }
-                } catch (e: Exception) {
-                    Logs.w(e)
-                    runOnMainDispatcher { if (isAdded) Toast.makeText(requireContext(), R.string.update_check_failed, Toast.LENGTH_LONG).show() }
-                }
-            }
+            (activity as? MainActivity)?.openAppUpdates(checkPreview)
         }
     }
 }
