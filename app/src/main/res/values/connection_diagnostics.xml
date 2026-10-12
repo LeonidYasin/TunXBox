@@ -1,0 +1,40 @@
+<resources>
+    <item type="id" name="diagnostic_check_progress_text"/>
+    <item type="id" name="connection_summary_name"/>
+    <item type="id" name="connection_summary_sent"/>
+    <item type="id" name="connection_summary_received"/>
+    <item type="id" name="connection_summary_result"/>
+
+    <item type="id" name="diagnostic_report_text"/>
+    <item type="id" name="diagnostic_qr"/>
+    <item type="id" name="diagnostic_share_status"/>
+    <string name="diagnostic_title">Connection diagnostics</string>
+    <string name="diagnostic_card_hint">Stages, reasons, last check and report to smartphone</string>
+    <string name="diagnostic_sent">↑ Sent: %1$s</string>
+    <string name="diagnostic_received">↓ Received: %1$s</string>
+    <string name="diagnostic_ok_short">OK · %1$d ms</string>
+    <string name="diagnostic_failed_short">Error · %1$s</string>
+    <string name="diagnostic_checking_short">Internet: checking…</string>
+    <string name="diagnostic_unchecked_short">Internet: not checked</string>
+    <string name="diagnostic_share">Report to smartphone</string>
+    <string name="diagnostic_none">No completed attempt for this profile.</string>
+    <string name="diagnostic_counters_missing">Session counters unavailable; zero is not assumed.</string>
+    <string name="diagnostic_scope">STARTUP/DEPENDENCY/RUNTIME or bounded active URL check. Other DNS/UDP/speed/YouTube probes were not performed by this report. A started service is not proof of Internet access. Session counters exclude bypass traffic.</string>
+    <string name="diagnostic_privacy">No names, server addresses, private URLs, UUIDs, passwords, keys or raw logs. Nothing is uploaded automatically.</string>
+    <string name="diagnostic_share_close">Close sharing</string>
+    <string name="diagnostic_share_preparing">Preparing local sharing…</string>
+    <string name="diagnostic_share_network">Choose trusted Wi-Fi/Ethernet address</string>
+    <string name="diagnostic_share_no_lan">No eligible private Wi-Fi/Ethernet IPv4 address. No listener was opened.</string>
+    <string name="diagnostic_share_expired">Sharing closed: time expired or network changed. Reopen to create a new QR.</string>
+    <string name="diagnostic_share_failed">Could not start local sharing. Close and retry.</string>
+    <string name="diagnostic_share_help">Phone and TV must be on the same trusted LAN. Scan to download TXT. Up to 5 minutes; closing/backgrounding this window closes the link. Local HTTP is not encrypted. Do not forward this port. Wi-Fi isolation or the phone VPN may prevent access.</string>
+    <string name="diagnostic_error_short">error</string>
+    <string name="diagnostic_protocol_short">protocol</string>
+    <string name="diagnostic_timeout_short">timeout</string>
+    <string name="diagnostic_repeat">Repeat active check</string>
+    <string name="diagnostic_unsupported_action">This build cannot start the profile with this transport. No silent TCP fallback is used. Choose a supported profile or wait for a tested compatible core; changing your server blindly is not required.</string>
+    <string name="tv_operations_row">Profile, group and subscription operations</string>
+    <string name="diagnostic_stats_waiting">waiting for statistics</string>
+    <string name="diagnostic_check_progress">Internet check · %1$d / %2$d s</string>
+    <string name="diagnostic_check_cancelled">Check cancelled; VPN unchanged</string>
+</resources>

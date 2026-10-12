@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "nodes": {
     "TV": "Главный экран ТВ",
     "CONNECT": "Запуск выбранного профиля",
@@ -20,7 +20,12 @@
     "CLOSE": "Подтверждение закрытия",
     "UPDATER": "Обновление приложения",
     "INSTALLER": "Установщик Android",
-    "PERMISSION": "Разрешение источника APK"
+    "PERMISSION": "Разрешение источника APK",
+    "MODE": "Старт: версия и выбор интерфейса",
+    "ABOUT": "О программе / полные сведения сборки",
+    "RELEASE": "Встроенные сведения о выпуске и проверки",
+    "DIAGNOSTICS": "Полный отчёт соединения",
+    "REPORT_PHONE": "QR → TXT на смартфон"
   },
   "edges": [
     {
@@ -153,6 +158,62 @@
       "to": "INSTALLER",
       "confirm": 1,
       "label": "Разрешить и вернуться"
+    },
+    {
+      "from": "TV",
+      "to": "UPDATER",
+      "menu": "nav_app_updates",
+      "confirm": 1,
+      "label": "Прямая кнопка обновления"
+    },
+    {
+      "from": "MODE",
+      "to": "RELEASE",
+      "confirm": 1,
+      "label": "TunXBox + версия"
+    },
+    {
+      "from": "RELEASE",
+      "to": "ABOUT",
+      "menu": "nav_about",
+      "confirm": 1,
+      "label": "Полные сведения"
+    },
+    {
+      "from": "ABOUT",
+      "to": "RELEASE",
+      "confirm": 0,
+      "label": "Back; фокус на About"
+    },
+    {
+      "from": "RELEASE",
+      "to": "MODE",
+      "confirm": 0,
+      "label": "Back; фокус на выпуске"
+    },
+    {
+      "from": "TV",
+      "to": "DIAGNOSTICS",
+      "action": "DIAGNOSTICS",
+      "confirm": 1
+    },
+    {
+      "from": "DIAGNOSTICS",
+      "to": "REPORT_PHONE",
+      "confirm": 1,
+      "label": "Явная локальная передача"
+    },
+    {
+      "from": "CONNECT",
+      "to": "DIAGNOSTICS",
+      "confirm": 0,
+      "label": "Отказ запуска: причина и отчёт"
+    },
+    {
+      "from": "TV",
+      "to": "UPDATER",
+      "action": "APP_UPDATE",
+      "confirm": 1
     }
   ],
   "rows": {
@@ -160,22 +221,40 @@
       "TOGGLE",
       "GROUPS",
       "ADD_PROFILE",
+      "APP_UPDATE",
       "PHONE_MODE"
     ],
     "connection": [
       "STATUS",
+      "DIAGNOSTICS",
       "YOUTUBE"
     ],
     "tools": [
+      "FULL_TOOLS"
+    ],
+    "order": [
+      "actions",
+      "connection",
+      "group:selected-first",
+      "operations",
+      "tools"
+    ],
+    "groups": "Selected group first, others retain Room userOrder; selector followed by own profiles or empty hint",
+    "directCapabilities": "TvFunctionCatalog.entries with dashboard/play availability filters",
+    "operations": [
       "PROFILE_ACTIONS",
       "UPDATE",
       "SUBSCRIPTION_DIAGNOSTICS",
       "TESTS",
-      "FULL_TOOLS",
       "HOME",
       "MORE",
       "RESTART_APP",
       "CLOSE_APP"
     ]
-  }
+  },
+  "launcher": [
+    "release",
+    "tv",
+    "phone"
+  ]
 }

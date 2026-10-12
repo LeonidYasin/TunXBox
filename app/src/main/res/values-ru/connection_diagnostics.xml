@@ -1,0 +1,31 @@
+<resources>
+    <string name="diagnostic_title">Диагностика соединения</string>
+    <string name="diagnostic_card_hint">Этапы, причины, время проверки и отчёт на смартфон</string>
+    <string name="diagnostic_sent">↑ Передано: %1$s</string>
+    <string name="diagnostic_received">↓ Получено: %1$s</string>
+    <string name="diagnostic_ok_short">ОК · %1$d мс</string>
+    <string name="diagnostic_failed_short">Ошибка · %1$s</string>
+    <string name="diagnostic_checking_short">Интернет: проверка…</string>
+    <string name="diagnostic_unchecked_short">Интернет: не проверен</string>
+    <string name="diagnostic_share">Отчёт на смартфон</string>
+    <string name="diagnostic_none">Для этого профиля нет завершённой попытки.</string>
+    <string name="diagnostic_counters_missing">Счётчики сессии недоступны; нулевой объём не предполагается.</string>
+    <string name="diagnostic_scope">Зафиксирован этап запуска/зависимостей/работы ядра либо ограниченная URL-проверка активного профиля. Другие DNS/UDP/скоростные/YouTube-тесты этим отчётом не выполнялись. Запущенный сервис не доказывает доступ в Интернет. Счётчики сессии не учитывают bypass-трафик.</string>
+    <string name="diagnostic_privacy">Имена, адреса серверов, приватные URL, UUID, пароли, ключи и сырые логи не включены. Ничего не отправляется автоматически.</string>
+    <string name="diagnostic_share_close">Закрыть передачу</string>
+    <string name="diagnostic_share_preparing">Подготовка локальной передачи…</string>
+    <string name="diagnostic_share_network">Выберите адрес доверенной Wi-Fi/Ethernet сети</string>
+    <string name="diagnostic_share_no_lan">Нет подходящего частного IPv4 в Wi-Fi/Ethernet. Передача не открыта.</string>
+    <string name="diagnostic_share_expired">Передача закрыта: истекло время или изменилась сеть. Откройте снова для нового QR.</string>
+    <string name="diagnostic_share_failed">Не удалось открыть локальную передачу. Закройте окно и повторите.</string>
+    <string name="diagnostic_share_help">Телефон и ТВ должны быть в одной доверенной локальной сети. Сканируйте QR для скачивания TXT. До 5 минут; закрытие окна или уход в фон отключает ссылку. Локальный HTTP не шифруется. Не открывайте этот порт в Интернет. Изоляция Wi-Fi или VPN телефона могут мешать доступу.</string>
+    <string name="diagnostic_error_short">ошибка</string>
+    <string name="diagnostic_protocol_short">протокол</string>
+    <string name="diagnostic_timeout_short">таймаут</string>
+    <string name="diagnostic_repeat">Повторить активную проверку</string>
+    <string name="diagnostic_unsupported_action">Эта сборка не может запустить профиль с данным транспортом. Незаметная подмена на TCP не используется. Выберите поддерживаемый профиль либо дождитесь проверенного совместимого ядра; менять настройки сервера вслепую не требуется.</string>
+    <string name="tv_operations_row">Операции с профилями, группами и подписками</string>
+    <string name="diagnostic_stats_waiting">ожидание статистики</string>
+    <string name="diagnostic_check_progress">Проверка Интернета · %1$d / %2$d с</string>
+    <string name="diagnostic_check_cancelled">Проверка отменена; VPN не изменён</string>
+</resources>

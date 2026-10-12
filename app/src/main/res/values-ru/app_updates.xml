@@ -26,4 +26,6 @@
     <string name="update_paused_bytes">Приостановлено. Сохранено %1$d / %2$d байт. Нажмите «Скачать / продолжить». Выход сохраняет приватный кэш; Android может его очистить.</string>
     <string name="update_installed_title">TunXBox обновлён до %1$s</string>
     <string name="update_open_app">Открыть TunXBox</string>
+    <string name="update_status_title">Статус и сведения об обновлении</string>
+    <string name="update_details_action">Показать сведения целиком</string>
 </resources>

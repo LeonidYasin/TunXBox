@@ -15,6 +15,7 @@ import org.junit.After
 import android.content.ComponentName
 import io.nekohasekai.sagernet.Action
 import io.nekohasekai.sagernet.bg.VpnService
+import io.nekohasekai.sagernet.bg.BaseService
 import androidx.room.MultiInstanceInvalidationService
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.android.controller.ServiceController
@@ -61,6 +62,64 @@ class LaunchRegressionTest {
     }
     @After fun closeServices() { if (::vpn.isInitialized) vpn.destroy(); if (::room.isInitialized) room.destroy() }
 
+    @Test fun trafficCallbackIdentityUsesBinderNotAidlWrapper() {
+        val handle=object: android.os.Binder() {override fun queryLocalInterface(descriptor: String): android.os.IInterface?=null}
+        val first=io.nekohasekai.sagernet.aidl.ISagerNetServiceCallback.Stub.asInterface(handle)
+        val second=io.nekohasekai.sagernet.aidl.ISagerNetServiceCallback.Stub.asInterface(handle)
+        assertNotSame(first,second);assertSame(first.asBinder(),second.asBinder())
+        val server=BaseService.Binder()
+        try {
+            server.registerCallback(first,2);server.registerCallback(second,3)
+            assertEquals(1,server.callbackIdMap.size);assertEquals(3,server.callbackIdMap[handle])
+            assertFalse(server.callbackIdMap.containsValue(2))
+            server.registerCallback(second,2);assertEquals(2,server.callbackIdMap[first.asBinder()])
+            server.unregisterCallback(first);assertTrue(server.callbackIdMap.isEmpty())
+        } finally {server.close()}
+    }
+    @Test fun lateNativeSuccessCannotReplaceNewerTimeout() {
+        val journal=io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticJournal
+        val timeout=io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnostic(77,2000,
+            io.nekohasekai.sagernet.ui.diagnostics.DiagnosticStage.URL_TEST,
+            io.nekohasekai.sagernet.group.SubscriptionFailureCategory.TIMEOUT)
+        try {
+            journal.clear();journal.write(timeout)
+            journal.write(timeout.copy(at=1000,category=null,elapsed=10))
+            assertEquals(timeout,journal.read(77))
+        } finally {journal.clear()}
+    }
+    @Test fun statisticsDefaultMatchesPreferenceAndExplicitOffIsPreserved() {
+        val store=io.nekohasekai.sagernet.database.DataStore.configurationStore
+        val old=store.getString(io.nekohasekai.sagernet.Key.SPEED_INTERVAL)
+        try {
+            store.remove(io.nekohasekai.sagernet.Key.SPEED_INTERVAL)
+            assertEquals(1000,io.nekohasekai.sagernet.database.DataStore.speedInterval)
+            io.nekohasekai.sagernet.database.DataStore.speedInterval=0
+            assertEquals(0,io.nekohasekai.sagernet.database.DataStore.speedInterval)
+        } finally {if(old==null)store.remove(io.nekohasekai.sagernet.Key.SPEED_INTERVAL) else store.putString(io.nekohasekai.sagernet.Key.SPEED_INTERVAL,old)}
+    }
+    @Test fun updaterLogIsMultilineAndNeverTrapsActionFocus() {
+        val app=RuntimeEnvironment.getApplication()
+        val controller=Robolectric.buildActivity(MainActivity::class.java,Intent(app,MainActivity::class.java)
+            .putExtra("tv_tools",true).putExtra("tv_destination",R.id.nav_app_updates)).setup().visible()
+        try {
+            val activity=controller.get();activity.supportFragmentManager.executePendingTransactions()
+            val fragment=activity.supportFragmentManager.findFragmentById(R.id.fragment_holder) as AppUpdateFragment
+            val status=activity.findViewById<android.widget.TextView>(R.id.update_status)
+            assertTrue(status.minLines>=8);assertFalse(status.isFocusable);assertFalse(status.isTextSelectable)
+            assertFalse(activity.findViewById<android.view.View>(R.id.update_log_scroll).isFocusable)
+            val check=activity.findViewById<android.view.View>(R.id.update_check)
+            val download=activity.findViewById<android.view.View>(R.id.update_download)
+            assertEquals(R.id.update_details,check.nextFocusDownId)
+            download.isEnabled=true;fragment.updateFocusOrder()
+            assertEquals(R.id.update_download,check.nextFocusDownId)
+            assertEquals(R.id.update_check,download.nextFocusUpId)
+            assertEquals(R.id.update_details,download.nextFocusDownId)
+            status.text="one\ntwo\nthree\nfour\nfive\nsix\nseven\neight"
+            activity.findViewById<android.view.View>(R.id.update_details).performClick()
+            val dialog=org.robolectric.shadows.ShadowDialog.getLatestDialog()
+            assertEquals(status.text.toString(),dialog.findViewById<android.widget.TextView>(android.R.id.message).text.toString())
+        } finally {controller.pause().stop().destroy()}
+    }
     @Test fun coldTvLaunchCreatesBrowseAndNeverStartsChooser() {
         TvUiPreferences.phoneMode = false
         val controller = Robolectric.buildActivity(MainActivityTv::class.java)
@@ -130,6 +189,76 @@ class LaunchRegressionTest {
             assertFalse(TvUiPreferences.phoneMode)
         } finally { controller.pause().stop().destroy() }
     }
+    @Test fun pickerHasThreeCardsAndReleaseDoesNotChooseModeOrStartVpn() {
+        TvUiPreferences.phoneMode=false
+        val selected=io.nekohasekai.sagernet.database.DataStore.selectedProxy
+        val state=io.nekohasekai.sagernet.database.DataStore.serviceState
+        val controller=Robolectric.buildActivity(ModeSelectionActivity::class.java).setup().visible()
+        try {
+            val activity=controller.get()
+            val version=activity.findViewById<android.widget.TextView>(R.id.mode_build_info).text.toString()
+            assertEquals(activity.getString(R.string.mode_release_title,io.nekohasekai.sagernet.BuildConfig.VERSION_NAME),version)
+            val tv=activity.findViewById<android.view.View>(R.id.mode_choose_tv)
+            val phone=activity.findViewById<android.view.View>(R.id.mode_choose_phone)
+            val release=activity.findViewById<android.view.View>(R.id.mode_release)
+            val column=release.parent as android.view.ViewGroup
+            assertEquals(listOf(release.id,tv.id,phone.id),(0 until column.childCount).map {column.getChildAt(it).id})
+            assertTrue(tv.hasFocus())
+            assertEquals(release.id,tv.nextFocusUpId);assertEquals(tv.id,release.nextFocusDownId)
+            assertEquals(phone.id,tv.nextFocusDownId);assertEquals(tv.id,phone.nextFocusUpId)
+            release.performClick()
+            val target=shadowOf(activity).nextStartedActivity
+            assertEquals(ReleaseNotesActivity::class.java.name,target.component!!.className)
+            assertFalse(activity.isFinishing);assertFalse(TvUiPreferences.phoneMode)
+            assertEquals(selected,io.nekohasekai.sagernet.database.DataStore.selectedProxy)
+            assertEquals(state,io.nekohasekai.sagernet.database.DataStore.serviceState)
+        } finally {controller.pause().stop().destroy()}
+    }
+    @Test fun bundledReleaseNotesShowActualBuildAndOpenFullAboutWithoutSelectingMode() {
+        TvUiPreferences.phoneMode=false
+        val selected=io.nekohasekai.sagernet.database.DataStore.selectedProxy
+        val state=io.nekohasekai.sagernet.database.DataStore.serviceState
+        val controller=Robolectric.buildActivity(ReleaseNotesActivity::class.java).setup().visible()
+        try {
+            val activity=controller.get()
+            val build=activity.findViewById<android.widget.TextView>(R.id.release_build_info).text.toString()
+            assertTrue(build.contains(io.nekohasekai.sagernet.BuildConfig.VERSION_NAME))
+            assertTrue(build.contains(io.nekohasekai.sagernet.BuildConfig.VERSION_CODE.toString()))
+            assertTrue(build.contains(io.nekohasekai.sagernet.BuildConfig.BUILD_COMMIT.take(8)))
+            assertTrue(build.contains(io.nekohasekai.sagernet.BuildConfig.BUILD_RUN_NUMBER))
+            for((id,text) in listOf(R.id.release_changes to R.string.release_changes_body,R.id.release_checks to R.string.release_checks_body,R.id.release_limits to R.string.release_limits_body)) {
+                val section=activity.findViewById<android.widget.TextView>(id)
+                assertTrue(section.isFocusable);assertTrue(section.text.contains(activity.getString(text)))
+            }
+            val details=activity.findViewById<android.view.View>(R.id.release_about)
+            assertEquals(R.id.release_about,activity.findViewById<android.view.View>(R.id.release_back).nextFocusDownId)
+            details.performClick()
+            val target=shadowOf(activity).nextStartedActivity
+            assertEquals(MainActivity::class.java.name,target.component!!.className)
+            assertEquals(R.id.nav_about,target.getIntExtra("tv_destination",0));assertTrue(target.getBooleanExtra("tv_tools",false))
+            assertFalse(TvUiPreferences.phoneMode);assertFalse(activity.isFinishing)
+            assertEquals(selected,io.nekohasekai.sagernet.database.DataStore.selectedProxy)
+            assertEquals(state,io.nekohasekai.sagernet.database.DataStore.serviceState)
+            activity.findViewById<android.view.View>(R.id.release_back).performClick();assertTrue(activity.isFinishing)
+        } finally {controller.pause().stop().destroy()}
+    }
+    @Test fun startupErrorShowsFullSafeDiagnosticDialogInsteadOfOnlyToast() {
+        TvUiPreferences.phoneMode=false
+        val before=io.nekohasekai.sagernet.database.DataStore.selectedProxy
+        val controller=Robolectric.buildActivity(MainActivityTv::class.java).setup().visible()
+        try {
+            controller.get().supportFragmentManager.executePendingTransactions();shadowOf(Looper.getMainLooper()).idle()
+            val fragment=controller.get().supportFragmentManager.findFragmentById(R.id.tv_container) as MainBrowseFragment
+            io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticJournal.clear()
+            val method=MainBrowseFragment::class.java.getDeclaredMethod("updateService",io.nekohasekai.sagernet.bg.BaseService.State::class.java,String::class.java,String::class.java).apply {isAccessible=true}
+            method.invoke(fragment,io.nekohasekai.sagernet.bg.BaseService.State.Stopped,"fixture","Unsupported V2Ray transport: XHTTP. secret-url-token")
+            controller.get().supportFragmentManager.executePendingTransactions();shadowOf(Looper.getMainLooper()).idle()
+            val dialog=controller.get().supportFragmentManager.findFragmentByTag("connection_report") as io.nekohasekai.sagernet.ui.diagnostics.DiagnosticDialog
+            val text=dialog.requireDialog().findViewById<android.widget.TextView>(R.id.diagnostic_report_text).text.toString()
+            assertTrue(text.contains("NET_UNSUPPORTED"));assertFalse(text.contains("secret-url-token"))
+            assertEquals(before,io.nekohasekai.sagernet.database.DataStore.selectedProxy)
+        } finally {controller.pause().stop().destroy()}
+    }
     @Test fun pickerBackDoesNotChooseOrLaunch() {
         val controller = Robolectric.buildActivity(ModeSelectionActivity::class.java).setup()
         try {
@@ -150,7 +279,7 @@ class LaunchRegressionTest {
             val fragment = controller.get().supportFragmentManager.findFragmentById(R.id.tv_container) as MainBrowseFragment
             val row = fragment.adapter[0] as androidx.leanback.widget.ListRow
             val actions = row.adapter
-            assertEquals(listOf(1L, 2L, 3L, 7L), (0 until actions.size()).map { (actions[it] as io.nekohasekai.sagernet.ui.tv.TvAction).id })
+            assertEquals(listOf(1L, 2L, 3L, 17L, 7L), (0 until actions.size()).map { (actions[it] as io.nekohasekai.sagernet.ui.tv.TvAction).id })
             val info = controller.get().packageManager.getActivityInfo(controller.get().componentName, 0)
             assertEquals(android.content.pm.ActivityInfo.SCREEN_ORIENTATION_FULL_USER, info.screenOrientation)
             assertTrue(controller.get().resources.getDimension(R.dimen.tv_browse_rows_margin_start) / controller.get().resources.displayMetrics.density < 40)
@@ -208,11 +337,27 @@ class LaunchRegressionTest {
             controller.get().supportFragmentManager.executePendingTransactions()
             val fragment = controller.get().supportFragmentManager.findFragmentById(R.id.tv_container) as MainBrowseFragment
             fragment.updateTraffic(io.nekohasekai.sagernet.aidl.SpeedDisplayData(txRateProxy = 2048, rxRateProxy = 4096, txTotal = 8192, rxTotal = 16384))
-            val row = fragment.adapter[1] as androidx.leanback.widget.ListRow
-            val status = row.adapter[0] as io.nekohasekai.sagernet.ui.tv.TvAction
-            assertEquals(8L, status.id); assertTrue(status.subtitle.contains("↑")); assertTrue(status.subtitle.contains("↓"))
+            val row = (0 until fragment.adapter.size()).map { fragment.adapter[it] as androidx.leanback.widget.ListRow }.single { it.headerItem.id == 3L }
+            val status = row.adapter[0] as io.nekohasekai.sagernet.ui.tv.TvConnectionCard
+            assertEquals(8L, status.id)
+            val context = controller.get()
+            assertEquals(context.getString(R.string.diagnostic_sent, android.text.format.Formatter.formatFileSize(context, 8192L)), status.sent)
+            assertEquals(context.getString(R.string.diagnostic_received, android.text.format.Formatter.formatFileSize(context, 16384L)), status.received)
+            assertTrue(status.sent.contains("↑")); assertTrue(status.received.contains("↓")); assertTrue(status.result.isNotBlank())
+            val quality=row.adapter[1] as io.nekohasekai.sagernet.ui.tv.TvQualityCard
+            assertEquals(16L,quality.id)
+            assertEquals(context.getString(R.string.tv_quality_rates,android.text.format.Formatter.formatFileSize(context,2048L),android.text.format.Formatter.formatFileSize(context,4096L)),quality.traffic)
+            fragment.updateTraffic(io.nekohasekai.sagernet.aidl.SpeedDisplayData(txRateProxy=6000,rxRateProxy=10000))
+            val changed=row.adapter[1] as io.nekohasekai.sagernet.ui.tv.TvQualityCard
+            assertNotEquals(quality.traffic,changed.traffic)
+            assertTrue(io.nekohasekai.sagernet.ui.tv.TvRowDiff.areItemsTheSame(quality,changed))
+            assertFalse(io.nekohasekai.sagernet.ui.tv.TvRowDiff.areContentsTheSame(quality,changed))
+            val presenter=io.nekohasekai.sagernet.ui.tv.QualityCardPresenter()
+            val holder=presenter.onCreateViewHolder(android.widget.FrameLayout(context)) as io.nekohasekai.sagernet.ui.tv.QualityCardPresenter.Holder
+            presenter.onBindViewHolder(holder,changed)
+            assertEquals(listOf(2,1,1,1),holder.lines.map {it.maxLines})
             val actions = (fragment.adapter[0] as androidx.leanback.widget.ListRow).adapter
-            assertEquals(listOf(1L, 2L, 3L, 7L), (0 until actions.size()).map { (actions[it] as io.nekohasekai.sagernet.ui.tv.TvAction).id })
+            assertEquals(listOf(1L, 2L, 3L, 17L, 7L), (0 until actions.size()).map { (actions[it] as io.nekohasekai.sagernet.ui.tv.TvAction).id })
         } finally { controller.pause().stop().destroy() }
     }
     @Test fun tvHomeActionLeavesAppWithoutSharingOrDisconnectCommand() {
@@ -311,8 +456,15 @@ class LaunchRegressionTest {
             val fragment = controller.get().supportFragmentManager.findFragmentById(R.id.tv_container) as MainBrowseFragment
             val focus = MainBrowseFragment::class.java.getDeclaredField("focusedId").apply { isAccessible = true }
             assertEquals(1L, focus.getLong(fragment))
-            val tools = (fragment.adapter[3] as androidx.leanback.widget.ListRow).adapter
-            assertEquals(listOf(13L,14L), (tools.size()-2 until tools.size()).map { (tools[it] as io.nekohasekai.sagernet.ui.tv.TvAction).id })
+            val toolsRow=(0 until fragment.adapter.size()).map {fragment.adapter[it] as androidx.leanback.widget.ListRow}
+                .single {it.headerItem.id==4L}
+            assertEquals(fragment.adapter.size()-2,(0 until fragment.adapter.size()).indexOfFirst {fragment.adapter[it]===toolsRow})
+            val tools=toolsRow.adapter
+            assertEquals(listOf(4L,5L,15L,9L,11L,6L,13L,14L),(0 until tools.size()).map {(tools[it] as io.nekohasekai.sagernet.ui.tv.TvAction).id})
+            val capabilities=fragment.adapter[fragment.adapter.size()-1] as androidx.leanback.widget.ListRow
+            assertEquals(2L,capabilities.headerItem.id)
+            assertEquals(10L,(capabilities.adapter[0] as io.nekohasekai.sagernet.ui.tv.TvAction).id)
+            assertTrue((1 until capabilities.adapter.size()).all {capabilities.adapter[it] is io.nekohasekai.sagernet.ui.tv.TvFunctionCard})
         } finally { controller.pause().stop().destroy() }
     }
     @Test fun tvTrafficDoesNotNotifyOtherScrollingRows() {
@@ -322,7 +474,7 @@ class LaunchRegressionTest {
             controller.get().supportFragmentManager.executePendingTransactions()
             val fragment = controller.get().supportFragmentManager.findFragmentById(R.id.tv_container) as MainBrowseFragment
             var updates = 0
-            for(index in listOf(0,2,3)) ((fragment.adapter[index] as androidx.leanback.widget.ListRow).adapter).registerObserver(object : androidx.leanback.widget.ObjectAdapter.DataObserver() {
+            for(row in (0 until fragment.adapter.size()).map {fragment.adapter[it] as androidx.leanback.widget.ListRow}.filter {it.headerItem.id!=3L}) row.adapter.registerObserver(object : androidx.leanback.widget.ObjectAdapter.DataObserver() {
                 override fun onChanged() { updates++ }
                 override fun onItemRangeChanged(positionStart: Int, itemCount: Int) { updates++ }
             })

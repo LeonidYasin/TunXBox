@@ -93,11 +93,12 @@ class BaseService {
         AutoCloseable {
         private val callbacks = object : RemoteCallbackList<ISagerNetServiceCallback>() {
             override fun onCallbackDied(callback: ISagerNetServiceCallback?, cookie: Any?) {
+                callback?.asBinder()?.let {callbackIdMap.remove(it)}
                 super.onCallbackDied(callback, cookie)
             }
         }
 
-        val callbackIdMap = mutableMapOf<ISagerNetServiceCallback, Int>()
+        val callbackIdMap = java.util.concurrent.ConcurrentHashMap<IBinder, Int>()
 
         override val coroutineContext = Dispatchers.Main.immediate + Job()
 
@@ -109,10 +110,10 @@ class BaseService {
                 Runtime.getRuntime().exit(0)
                 return
             }
-            if (!callbackIdMap.contains(cb)) {
+            if (!callbackIdMap.containsKey(cb.asBinder())) {
                 callbacks.register(cb)
             }
-            callbackIdMap[cb] = id
+            callbackIdMap[cb.asBinder()] = id
         }
 
         private val broadcastMutex = Mutex()
@@ -135,22 +136,28 @@ class BaseService {
         }
 
         override fun unregisterCallback(cb: ISagerNetServiceCallback) {
-            callbackIdMap.remove(cb)
+            callbackIdMap.remove(cb.asBinder())
             callbacks.unregister(cb)
         }
 
         private val reportBusy = java.util.concurrent.atomic.AtomicBoolean(false)
         override fun testConnectionReport(): String {
             val profile = DataStore.currentProfile.coerceAtLeast(0)
+            val capturedProxy=data?.proxy
             val time = System.currentTimeMillis()
+            fun encoded(result: io.nekohasekai.sagernet.group.ConnectionTestResult): String {
+                if(data?.proxy===capturedProxy&&DataStore.currentProfile==profile)
+                    io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticJournal.url(capturedProxy?.profile,result)
+                return result.encode()
+            }
             fun failed(category: io.nekohasekai.sagernet.group.SubscriptionFailureCategory) =
-                io.nekohasekai.sagernet.group.ConnectionTestResult(profile, time, -1, category).encode()
+                encoded(io.nekohasekai.sagernet.group.ConnectionTestResult(profile,time,-1,category))
             val box = data?.proxy?.box ?: return failed(io.nekohasekai.sagernet.group.SubscriptionFailureCategory.CORE)
             if (!reportBusy.compareAndSet(false, true)) return failed(io.nekohasekai.sagernet.group.SubscriptionFailureCategory.BUSY)
             return try {
                 val elapsed = Libcore.urlTest(box, DataStore.connectionTestURL, 3000)
                 if (elapsed < 0) failed(io.nekohasekai.sagernet.group.SubscriptionFailureCategory.UNKNOWN)
-                else io.nekohasekai.sagernet.group.ConnectionTestResult(profile, time, elapsed).encode()
+                else encoded(io.nekohasekai.sagernet.group.ConnectionTestResult(profile,time,elapsed))
             } catch (error: Exception) {
                 failed(io.nekohasekai.sagernet.group.SubscriptionFailureCategory.fromThrowable(error))
             } finally { reportBusy.set(false) }
@@ -338,6 +345,7 @@ class BaseService {
                 return Service.START_NOT_STICKY
             }
 
+            io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticJournal.clear()
             val proxy = ProxyInstance(profile, this)
             data.proxy = proxy
             BootReceiver.enabled = DataStore.persistAcrossReboot
@@ -382,6 +390,9 @@ class BaseService {
                     DataStore.currentProfile = profile.id
 
                     proxy.processes = GuardedProcessPool {
+                        io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticJournal.startup(profile,
+                            io.nekohasekai.sagernet.group.SubscriptionFailureCategory.fromThrowable(it),
+                            io.nekohasekai.sagernet.ui.diagnostics.DiagnosticStage.RUNTIME)
                         Logs.w(it)
                         stopRunner(false, it.readableMessage)
                     }
@@ -392,13 +403,17 @@ class BaseService {
                     lateInit()
                 } catch (_: CancellationException) { // if the job was cancelled, it is canceller's responsibility to call stopRunner
                 } catch (_: UnknownHostException) {
+                    io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticJournal.startup(profile,io.nekohasekai.sagernet.group.SubscriptionFailureCategory.DNS)
                     stopRunner(false, getString(R.string.invalid_server))
                 } catch (e: PluginManager.PluginNotFoundException) {
+                    io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticJournal.startup(profile,io.nekohasekai.sagernet.group.SubscriptionFailureCategory.CORE,
+                        io.nekohasekai.sagernet.ui.diagnostics.DiagnosticStage.DEPENDENCY)
                     Toast.makeText(this@Interface, e.readableMessage, Toast.LENGTH_SHORT).show()
                     Logs.w(e)
                     data.binder.missingPlugin(e.plugin)
                     stopRunner(false, null)
                 } catch (exc: Throwable) {
+                    io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticJournal.startup(profile,io.nekohasekai.sagernet.group.SubscriptionFailureCategory.fromThrowable(exc))
                     if (exc.javaClass.name.endsWith("proxyerror")) {
                         // error from golang
                         Logs.w(exc.readableMessage)

@@ -351,6 +351,12 @@
             android:theme="@style/Theme.Leanback.TunXBox"
             android:screenOrientation="fullUser" />
 
+        <activity
+            android:name="io.nekohasekai.sagernet.ui.ReleaseNotesActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Leanback.TunXBox"
+            android:screenOrientation="fullUser" />
+
         <!-- A normal launcher entry chooses UI before either main interface is inflated. -->
         <activity
             android:name="io.nekohasekai.sagernet.ui.ModeSelectionActivity"

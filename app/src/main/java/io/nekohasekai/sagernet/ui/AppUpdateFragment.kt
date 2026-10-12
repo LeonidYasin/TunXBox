@@ -30,6 +30,7 @@ class AppUpdateFragment : ToolbarFragment(R.layout.layout_app_updates) {
     private lateinit var install: Button
     private lateinit var pause: Button
     private lateinit var stable: RadioButton
+    private lateinit var details: Button
     private lateinit var test: RadioButton
     override fun onViewCreated(view: View,savedInstanceState: Bundle?) {
         super.onViewCreated(view,savedInstanceState)
@@ -37,9 +38,21 @@ class AppUpdateFragment : ToolbarFragment(R.layout.layout_app_updates) {
         offer=null;ready=null;pendingInstall=false;busy=false
         scope=MainScope();updater=GitHubUpdater(requireContext().applicationContext)
         status=view.findViewById(R.id.update_status);progress=view.findViewById(R.id.update_progress)
+        // ScrollView.initScrollView() enables focus after superclass XML attributes.
+        // Enforce read-only preview after inflation, on every recreated view.
+        view.findViewById<android.widget.ScrollView>(R.id.update_log_scroll).apply {
+            isFocusableInTouchMode=false;isFocusable=false
+            descendantFocusability=android.view.ViewGroup.FOCUS_BLOCK_DESCENDANTS
+        }
+        view.findViewById<android.widget.ScrollView>(R.id.update_page_scroll).apply {
+            isFocusableInTouchMode=false;isFocusable=false
+            descendantFocusability=android.view.ViewGroup.FOCUS_AFTER_DESCENDANTS
+        }
         check=view.findViewById(R.id.update_check);download=view.findViewById(R.id.update_download)
         install=view.findViewById(R.id.update_install);pause=view.findViewById(R.id.update_pause)
         stable=view.findViewById(R.id.update_stable);test=view.findViewById(R.id.update_test)
+        details=view.findViewById(R.id.update_details)
+        details.setOnClickListener {showDetails()}
         view.findViewById<RadioGroup>(R.id.update_channels).check(if(arguments?.getBoolean("test")==true) R.id.update_test else R.id.update_stable)
         view.findViewById<RadioGroup>(R.id.update_channels).setOnCheckedChangeListener { _,_ -> offer=null;ready=null;pendingInstall=false;status.setText(R.string.update_idle);render() }
         status.setText(R.string.update_idle)
@@ -52,6 +65,36 @@ class AppUpdateFragment : ToolbarFragment(R.layout.layout_app_updates) {
         stable.isEnabled=!busy;test.isEnabled=!busy;check.isEnabled=!busy
         download.isEnabled=!busy&&offer!=null;install.isEnabled=!busy&&ready!=null;pause.isEnabled=busy
         progress.visibility=if(busy) View.VISIBLE else View.GONE
+        updateFocusOrder()
+    }
+    /** Enabled actions only. Status text has no keyboard focus or movement-method trap. */
+    internal fun updateFocusOrder() {
+        val controls=listOf(stable,test,check,download,pause,install,details)
+        val enabled=controls.filter {it.isEnabled&&it.visibility==View.VISIBLE}
+        controls.forEach {button ->
+            button.nextFocusUpId=View.NO_ID;button.nextFocusDownId=View.NO_ID
+            button.setOnKeyListener {_,key,event ->
+                if(event.action!=android.view.KeyEvent.ACTION_DOWN||key !in listOf(android.view.KeyEvent.KEYCODE_DPAD_UP,android.view.KeyEvent.KEYCODE_DPAD_DOWN))false
+                else {
+                    val targetId=if(key==android.view.KeyEvent.KEYCODE_DPAD_UP)button.nextFocusUpId else button.nextFocusDownId
+                    val target=view?.findViewById<View>(targetId)
+                    // ScrollView.arrowScroll otherwise spends several Down presses on a tall status pane.
+                    if(target!=null&&target.isEnabled&&target.visibility==View.VISIBLE) {target.requestFocus();true} else false
+                }
+            }
+        }
+        enabled.forEachIndexed {index,button ->
+            button.nextFocusUpId=enabled.getOrNull(index-1)?.id?:View.NO_ID
+            button.nextFocusDownId=enabled.getOrNull(index+1)?.id?:button.id
+        }
+    }
+    private fun showDetails() {
+        val current=androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle(R.string.update_status_title).setMessage(status.text.toString())
+            .setPositiveButton(android.R.string.ok,null).show()
+        // Full reader is explicit; selection/scrolling never intercepts the primary action path.
+        current.findViewById<TextView>(android.R.id.message)?.setTextIsSelectable(true)
+        io.nekohasekai.sagernet.group.SubscriptionUpdatePresentation.focusClose(current)
     }
     private fun work(action: suspend ()->Unit) {
         if(busy)return;busy=true;render()

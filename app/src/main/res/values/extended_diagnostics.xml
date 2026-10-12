@@ -1,0 +1,8 @@
+<resources>
+    <item type="id" name="diagnostic_extended_button"/>
+    <string name="diagnostic_extended">Extended checks · up to 60 s</string>
+    <string name="diagnostic_extended_scope">Explicit DNS/TCP/strict Android TLS probes to the profile endpoint and three URL requests through isolated profile cores. Does not change VPN or weaken TLS. Not an internal core trace. No raw errors or private parameters in export.</string>
+    <string name="diagnostic_extended_progress">%1$s · %2$d / 60 s</string>
+    <string name="diagnostic_timeout_explanation">The bounded connection URL check did not finish in time. This is not a subscription download failure. DNS, routing, blocking, handshake, core or test destination may be responsible; the failed inner stage is not known from this code alone.</string>
+    <string name="diagnostic_tls_explanation">TLS certificate verification failed. Possible chain, hostname/SNI, clock or device/core trust-store mismatch. This report alone does not identify the TLS peer or prove a provider fault. Validation was not bypassed.</string>
+</resources>

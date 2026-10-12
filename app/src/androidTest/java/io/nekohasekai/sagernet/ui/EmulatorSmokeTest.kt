@@ -67,6 +67,50 @@ class EmulatorSmokeTest {
             assertTrue("Remote must reach and select test channel",activity.findViewById<android.widget.RadioButton>(R.id.update_test).isChecked)
             assertEquals(text(R.string.update_idle),activity.findViewById<android.widget.TextView>(R.id.update_status).text.toString())
         }
+        for(landscape in listOf(false,true)) {
+            val expected=if(landscape)android.content.res.Configuration.ORIENTATION_LANDSCAPE else android.content.res.Configuration.ORIENTATION_PORTRAIT
+            scenario!!.onActivity {it.requestedOrientation=if(landscape)android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE else android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT}
+            var orientationReady=false
+            val orientationDeadline=android.os.SystemClock.elapsedRealtime()+timeout
+            while(!orientationReady&&android.os.SystemClock.elapsedRealtime()<orientationDeadline) {
+                instrumentation.runOnMainSync {
+                    orientationReady=ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED).any {
+                        it is MainActivity&&it.resources.configuration.orientation==expected&&it.findViewById<android.view.View>(R.id.update_check)!=null
+                    }
+                }
+                if(!orientationReady)android.os.SystemClock.sleep(100)
+            }
+            assertTrue("Updater must resume in expected orientation",orientationReady)
+            instrumentation.waitForIdleSync()
+            assertNotNull(device.wait(Until.findObject(By.res(context.packageName,"update_check")),timeout))
+            val fixture=(1..12).joinToString("\n") {"Offline metadata line $it"}
+            scenario!!.onActivity {activity ->
+                val status=activity.findViewById<android.widget.TextView>(R.id.update_status)
+                status.text=fixture
+                assertTrue(status.minLines>=8);assertFalse(status.isFocusable);assertFalse(status.isTextSelectable)
+                val preview=activity.findViewById<android.view.View>(R.id.update_log_scroll)
+                assertFalse(preview.isFocusable)
+                assertTrue("Log preview must have a useful multi-line height",preview.layoutParams.height/activity.resources.displayMetrics.density>=190)
+                // Synthetic availability fixture only; never click Download or contact GitHub.
+                activity.findViewById<android.view.View>(R.id.update_download).isEnabled=true
+                val fragment=(activity as MainActivity).supportFragmentManager.findFragmentById(R.id.fragment_holder) as AppUpdateFragment
+                fragment.updateFocusOrder()
+                activity.findViewById<android.view.View>(R.id.update_check).requestFocus()
+            }
+            device.pressDPadDown()
+            assertNotNull("Exactly one Down must reach Download, not the log",
+                device.wait(Until.findObject(By.res(context.packageName,"update_download").focused(true)),timeout))
+            device.pressDPadUp()
+            assertNotNull(device.wait(Until.findObject(By.res(context.packageName,"update_check").focused(true)),timeout))
+            device.pressDPadDown();device.pressDPadDown()
+            assertNotNull("Disabled Pause/Install are skipped; details remain reachable",
+                device.wait(Until.findObject(By.res(context.packageName,"update_details").focused(true)),timeout))
+            device.pressDPadCenter()
+            assertEquals(fixture,requireNotNull(device.wait(Until.findObject(By.res("android","message")),timeout)).text)
+            assertNotNull(device.wait(Until.findObject(By.res("android","button1").focused(true)),timeout))
+            device.pressDPadCenter()
+            assertTrue(device.wait(Until.gone(By.res("android","message")),timeout))
+        }
         assertEquals(selected,DataStore.selectedProxy)
         assertEquals(state,DataStore.serviceState)
         val outside=File(context.cacheDir,"update-downloads/unverified.apk").apply { parentFile!!.mkdirs();writeText("fixture") }
@@ -75,12 +119,286 @@ class EmulatorSmokeTest {
         } finally {outside.delete()}
     }
 
+    @Test fun tvListsEveryGroupAndRemoteSelectionDoesNotStartVpn() {
+        val originalGroup=DataStore.currentGroupId()
+        val selected=DataStore.selectedProxy;val state=DataStore.serviceState
+        val fixture=runBlocking { GroupManager.createGroup(io.nekohasekai.sagernet.database.ProxyGroup(name="Smoke row collection")) }
+        try {
+            startTv()
+            // Real D-pad, not a touch shortcut or fabricated focus selection.
+            val maxRows=runBlocking(kotlinx.coroutines.Dispatchers.IO) {SagerDatabase.groupDao.allGroups().size}+3
+            for(i in 0 until maxRows) {
+                if(device.hasObject(By.descStartsWith("Smoke row collection").focused(true)))break
+                device.pressDPadDown();device.waitForIdle()
+            }
+            assertNotNull(device.wait(Until.findObject(By.descStartsWith("Smoke row collection").focused(true)),timeout))
+            scenario!!.onActivity { activity ->
+                val browse=(activity as MainActivityTv).supportFragmentManager.findFragmentById(R.id.tv_container)
+                    as io.nekohasekai.sagernet.ui.tv.MainBrowseFragment
+                val rows=browse.adapter
+                val groupRows=(0 until rows.size()).map {rows[it] as androidx.leanback.widget.ListRow}
+                    .filter {it.headerItem.id>=io.nekohasekai.sagernet.ui.tv.TvGroupRows.BASE}
+                val ids=runBlocking(kotlinx.coroutines.Dispatchers.IO) {SagerDatabase.groupDao.allGroups().map {it.id}}
+                val expected=ids.filter {it==DataStore.selectedGroup}+ids.filter {it!=DataStore.selectedGroup}
+                assertEquals(expected,groupRows.map {it.headerItem.id-io.nekohasekai.sagernet.ui.tv.TvGroupRows.BASE})
+                assertEquals(text(R.string.tv_all_functions),(rows[rows.size()-1] as androidx.leanback.widget.ListRow).headerItem.name)
+                val operations=rows[rows.size()-2] as androidx.leanback.widget.ListRow
+                assertEquals(4L,operations.headerItem.id)
+                assertEquals(listOf(4L,5L,15L,9L,11L,6L,13L,14L),(0 until operations.adapter.size()).map {(operations.adapter[it] as io.nekohasekai.sagernet.ui.tv.TvAction).id})
+            }
+            device.pressDPadCenter()
+            assertEquals(fixture.id,DataStore.selectedGroup)
+            assertEquals(selected,DataStore.selectedProxy);assertEquals(state,DataStore.serviceState)
+            device.pressDPadRight();device.pressDPadCenter();assertChooser()
+            assertEquals(selected,DataStore.selectedProxy);assertEquals(state,DataStore.serviceState)
+        } finally {
+            scenario?.close();scenario=null
+            runBlocking {GroupManager.deleteGroup(fixture.id)}
+            DataStore.selectedGroup=originalGroup
+        }
+    }
+
+    @Test fun extendedDiagnosisHasRealActionProgressCancelAndDoesNotSwitchVpn() {
+        val oldGroup=DataStore.currentGroupId();val oldProfile=DataStore.selectedProxy;val state=DataStore.serviceState
+        val group=runBlocking {GroupManager.createGroup(io.nekohasekai.sagernet.database.ProxyGroup(name="Extended diagnostic smoke"))}
+        val bean=io.nekohasekai.sagernet.fmt.socks.SOCKSBean().apply {initializeDefaultValues();serverAddress="fixture.invalid";serverPort=10808;name="Extended fixture"}
+        val entity=runBlocking {io.nekohasekai.sagernet.database.ProfileManager.createProfile(group.id,bean)}
+        try {
+            DataStore.selectedGroup=group.id;DataStore.selectedProxy=entity.id;startTv()
+            scenario!!.onActivity {activity->
+                val browse=(activity as MainActivityTv).supportFragmentManager.findFragmentById(R.id.tv_container)
+                    as io.nekohasekai.sagernet.ui.tv.MainBrowseFragment
+                val probe: suspend (android.content.Context,io.nekohasekai.sagernet.database.ProxyEntity,suspend (String)->Unit)->io.nekohasekai.sagernet.ui.diagnostics.ExtendedConnectionDiagnostics.Report = {_,_,progress->
+                    progress("ENDPOINT_DNS_FIXTURE");kotlinx.coroutines.awaitCancellation()
+                }
+                browse.javaClass.getDeclaredField("extendedProbe").apply {isAccessible=true}.set(browse,probe)
+            }
+            device.pressDPadDown();device.pressDPadRight();device.pressDPadCenter()
+            assertNotNull(device.wait(Until.findObject(By.res(context.packageName,"diagnostic_extended_button")),timeout))
+            // The report closes safely by default; move focus to actual full-check button.
+            val action=device.findObject(By.res(context.packageName,"diagnostic_extended_button"))
+            action.click() // explicit action through installed APK; progress/cancel are remote-tested below
+            assertNotNull(device.wait(Until.findObject(By.textContains("ENDPOINT_DNS_FIXTURE")),timeout))
+            assertTrue(DataStore.runningTest)
+            device.pressDPadCenter() // safe Cancel has initial dialog focus
+            val until=android.os.SystemClock.elapsedRealtime()+timeout
+            while(DataStore.runningTest&&android.os.SystemClock.elapsedRealtime()<until)Thread.sleep(100)
+            assertFalse(DataStore.runningTest);assertEquals(entity.id,DataStore.selectedProxy);assertEquals(state,DataStore.serviceState)
+        } finally {
+            scenario?.close();scenario=null
+            runBlocking {GroupManager.deleteGroup(group.id)};DataStore.selectedGroup=oldGroup;DataStore.selectedProxy=oldProfile
+        }
+    }
+
+    @Test fun groupHeaderRanksUrlResultsWithoutSwitchingVpn() {
+        val oldGroup=DataStore.currentGroupId();val selected=DataStore.selectedProxy;val state=DataStore.serviceState
+        val group=runBlocking {GroupManager.createGroup(io.nekohasekai.sagernet.database.ProxyGroup(name="Quality smoke"))}
+        val entries=runBlocking {(1..3).map {i->
+            val bean=io.nekohasekai.sagernet.fmt.socks.SOCKSBean().apply {
+                initializeDefaultValues();serverAddress="fixture.invalid";serverPort=10808;name="Quality $i"
+            }
+            io.nekohasekai.sagernet.database.ProfileManager.createProfile(group.id,bean)
+        }}
+        try {
+            DataStore.selectedGroup=group.id;startTv()
+            scenario!!.onActivity {activity->
+                val browse=(activity as MainActivityTv).supportFragmentManager.findFragmentById(R.id.tv_container)
+                    as io.nekohasekai.sagernet.ui.tv.MainBrowseFragment
+                isolateQualityWorker()
+                installRankingWorker(browse)
+                val attempts=mutableMapOf<Long,Int>()
+                val probe: suspend (io.nekohasekai.sagernet.database.ProxyEntity)->Int = {profile->
+                    val n=attempts.getOrDefault(profile.id,0);attempts[profile.id]=n+1
+                    when(profile.id) {
+                        entries[0].id->throw java.net.SocketTimeoutException("fixture timeout")
+                        entries[1].id->if(n==0)throw java.net.SocketTimeoutException("fixture timeout") else 5
+                        else->100
+                    }
+                }
+                val tcp: suspend (io.nekohasekai.sagernet.database.ProxyEntity)->Int = {0}
+                browse.javaClass.getDeclaredField("qualityUrlProbe").apply {isAccessible=true}.set(browse,probe)
+                browse.javaClass.getDeclaredField("qualityTcpProbe").apply {isAccessible=true}.set(browse,tcp)
+                val actions=(browse.adapter[0] as androidx.leanback.widget.ListRow).adapter
+                assertEquals(listOf(1L,2L,3L,17L,7L),(0 until actions.size()).map {(actions[it] as io.nekohasekai.sagernet.ui.tv.TvAction).id})
+            }
+            device.pressDPadDown();device.pressDPadDown()
+            assertNotNull(device.wait(Until.findObject(By.descStartsWith("Quality smoke").focused(true)),timeout))
+            scenario!!.onActivity {activity->
+                val browse=(activity as MainActivityTv).supportFragmentManager.findFragmentById(R.id.tv_container)
+                    as io.nekohasekai.sagernet.ui.tv.MainBrowseFragment
+                installRankingWorker(browse)
+            }
+            DataStore.runningTest=false
+            device.pressDPadCenter()
+            val completed=device.wait(Until.findObject(By.text(text(R.string.tv_test_complete))),timeout)
+            if(completed==null) {
+                // Capture BEFORE finally closes ActivityScenario; a later Home screen
+                // would hide whether this was a real crash or a guarded test failure.
+                device.takeScreenshot(File("/sdcard/Download/TunXBoxSmoke/group_quality_before_cleanup.png"))
+                device.dumpWindowHierarchy(File("/sdcard/Download/TunXBoxSmoke/group_quality_before_cleanup.xml"))
+                val nodes=device.findObjects(By.textContains("NET_"))
+                android.util.Log.i("TunXBoxSmoke","Group result absent; visible canonical codes: "+nodes.map {it.text})
+            }
+            assertNotNull("Completed group ranking must have an explicit result",completed)
+            val sorted=runBlocking(kotlinx.coroutines.Dispatchers.IO){SagerDatabase.proxyDao.getByGroup(group.id)}
+            assertEquals(listOf(entries[2].id,entries[1].id,entries[0].id),sorted.map {it.id})
+            assertEquals(listOf(1,1,2),sorted.map {it.status})
+            assertEquals(100,sorted[0].ping);assertEquals(5,sorted[1].ping)
+            assertEquals(selected,DataStore.selectedProxy);assertEquals(state,DataStore.serviceState)
+            device.pressBack();device.waitForIdle()
+        } finally {
+            scenario?.close();scenario=null
+            runBlocking {GroupManager.deleteGroup(group.id)};DataStore.selectedGroup=oldGroup
+        }
+    }
+
+    @Test fun sessionCountersAndUnsupportedReportCanBeDownloadedByQrWithoutVpn() {
+        val oldGroup=DataStore.currentGroupId();val oldProfile=DataStore.selectedProxy;val state=DataStore.serviceState
+        val group=runBlocking {GroupManager.createGroup(io.nekohasekai.sagernet.database.ProxyGroup(name="Diagnostic smoke"))}
+        val bean=io.nekohasekai.sagernet.fmt.v2ray.VMessBean().apply {
+            alterId=-1;initializeDefaultValues();type="xhttp";security="reality";serverAddress="secret-fixture.invalid"
+            uuid="secret-fixture-uuid";path="/secret-fixture-token";name="Diagnostic XHTTP"
+        }
+        val entity=runBlocking {io.nekohasekai.sagernet.database.ProfileManager.createProfile(group.id,bean)}
+        try {
+            DataStore.selectedGroup=group.id;DataStore.selectedProxy=entity.id
+            io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticJournal.startup(entity,io.nekohasekai.sagernet.group.SubscriptionFailureCategory.UNSUPPORTED)
+            startTv()
+            // Wait for the real binder before delivering this synthetic statistics fixture.
+            var ready=false
+            val bindDeadline=android.os.SystemClock.elapsedRealtime()+timeout
+            while(!ready&&android.os.SystemClock.elapsedRealtime()<bindDeadline) {
+                scenario!!.onActivity {activity ->
+                    val browse=(activity as MainActivityTv).supportFragmentManager.findFragmentById(R.id.tv_container) as io.nekohasekai.sagernet.ui.tv.MainBrowseFragment
+                    ready=browse.javaClass.getDeclaredField("serviceReady").apply {isAccessible=true}.getBoolean(browse)
+                }
+                if(!ready)android.os.SystemClock.sleep(50)
+            }
+            assertTrue("Service binder must be ready",ready)
+            // Synthetic callback verifies totals remain nonzero even when instantaneous rates are zero.
+            scenario!!.onActivity {activity ->
+                val browse=(activity as MainActivityTv).supportFragmentManager.findFragmentById(R.id.tv_container) as io.nekohasekai.sagernet.ui.tv.MainBrowseFragment
+                browse.updateTraffic(io.nekohasekai.sagernet.aidl.SpeedDisplayData(txTotal=1234,rxTotal=7890))
+            }
+            device.pressDPadDown()
+            val sent=requireNotNull(device.wait(Until.findObject(By.res(context.packageName,"connection_summary_sent")),timeout)).text
+            assertFalse(sent.contains("—"));assertFalse(sent.contains("/s"))
+            assertEquals("Diagnostic XHTTP",requireNotNull(device.findObject(By.res(context.packageName,"connection_summary_name"))).text)
+            device.pressDPadRight();device.pressDPadCenter()
+            val report=requireNotNull(device.wait(Until.findObject(By.res(context.packageName,"diagnostic_report_text")),timeout)).text
+            assertTrue(report.contains("NET_UNSUPPORTED"));assertTrue(report.contains("xhttp"));assertTrue(report.contains("STARTUP"))
+            assertTrue(report.contains(io.nekohasekai.sagernet.BuildConfig.VERSION_NAME))
+            for(secret in listOf("secret-fixture.invalid","secret-fixture-uuid","secret-fixture-token"))assertFalse(report.contains(secret))
+            assertNotNull(device.wait(Until.findObject(By.res("android","button1").focused(true)),timeout))
+            requireNotNull(device.findObject(By.res("android","button3"))).click()
+            val deadline=android.os.SystemClock.elapsedRealtime()+timeout
+            var url: String?=null
+            while(url==null&&android.os.SystemClock.elapsedRealtime()<deadline) {
+                if(device.hasObject(By.text(text(R.string.diagnostic_share_network)))) {
+                    device.findObject(By.res("android","text1"))?.takeIf {it.text.matches(Regex("[0-9.]+"))}?.click()
+                }
+                val text=device.findObject(By.res(context.packageName,"diagnostic_share_status"))?.text.orEmpty()
+                url=Regex("http://[^\\s]+").find(text)?.value
+                if(url==null)android.os.SystemClock.sleep(100)
+            }
+            val uri=java.net.URI(requireNotNull(url){"Explicit LAN report link must be available on emulator Wi-Fi"})
+            assertNotNull(device.findObject(By.res(context.packageName,"diagnostic_qr")))
+            val response=java.net.Socket(uri.host,uri.port).use {socket ->
+                socket.soTimeout=3000
+                socket.getOutputStream().write(("GET ${uri.path} HTTP/1.1\r\nHost: ${uri.host}:${uri.port}\r\n\r\n").toByteArray())
+                socket.getInputStream().bufferedReader().readText()
+            }
+            assertTrue(response.startsWith("HTTP/1.1 200"));assertTrue(response.contains("NET_UNSUPPORTED"))
+            assertFalse(response.contains("secret-fixture-uuid"));assertFalse(response.contains("secret-fixture-token"))
+            device.pressBack()
+            assertTrue(device.wait(Until.gone(By.res(context.packageName,"diagnostic_share_status")),timeout))
+            assertTrue(runCatching {java.net.Socket(uri.host,uri.port).use {}}.isFailure)
+            assertEquals(entity.id,DataStore.selectedProxy);assertEquals(state,DataStore.serviceState)
+        } finally {
+            scenario?.close();scenario=null;runBlocking {GroupManager.deleteGroup(group.id)}
+            DataStore.selectedGroup=oldGroup;DataStore.selectedProxy=oldProfile
+        }
+    }
+
+    @Test fun repeatedCheckShowsProgressAndRemoteCancellationNeverStopsVpn() {
+        val oldCurrent=DataStore.currentProfile;val oldSelected=DataStore.selectedProxy;val oldState=DataStore.serviceState
+        val entered=java.util.concurrent.CountDownLatch(1);val release=java.util.concurrent.CountDownLatch(1)
+        val finished=java.util.concurrent.CountDownLatch(1)
+        var calls=0
+        var actualService: io.nekohasekai.sagernet.aidl.ISagerNetService?=null
+        try {
+            startTv()
+            var ready=false
+            val deadline=android.os.SystemClock.elapsedRealtime()+timeout
+            while(!ready&&android.os.SystemClock.elapsedRealtime()<deadline) {
+                scenario!!.onActivity {activity ->
+                    val browse=(activity as MainActivityTv).supportFragmentManager.findFragmentById(R.id.tv_container) as io.nekohasekai.sagernet.ui.tv.MainBrowseFragment
+                    ready=browse.javaClass.getDeclaredField("serviceReady").apply {isAccessible=true}.getBoolean(browse)
+                }
+                if(!ready)android.os.SystemClock.sleep(50)
+            }
+            assertTrue(ready)
+            // Synthetic Binder stall: installed Android dialog/remote behaviour, NOT a live VPN test.
+            DataStore.currentProfile=77
+            scenario!!.onActivity {activity ->
+                val browse=(activity as MainActivityTv).supportFragmentManager.findFragmentById(R.id.tv_container) as io.nekohasekai.sagernet.ui.tv.MainBrowseFragment
+                browse.javaClass.getDeclaredField("phase").apply {isAccessible=true}.set(browse,io.nekohasekai.sagernet.ui.tv.TvVpnPhase.CONNECTED)
+                val connection=browse.javaClass.getDeclaredField("connection").apply {isAccessible=true}.get(browse) as io.nekohasekai.sagernet.bg.SagerConnection
+                actualService=connection.service
+                connection.service=object: io.nekohasekai.sagernet.aidl.ISagerNetService.Stub() {
+                    override fun getState()=io.nekohasekai.sagernet.bg.BaseService.State.Connected.ordinal
+                    override fun getProfileName()="Synthetic progress"
+                    override fun registerCallback(cb: io.nekohasekai.sagernet.aidl.ISagerNetServiceCallback,id: Int) {}
+                    override fun unregisterCallback(cb: io.nekohasekai.sagernet.aidl.ISagerNetServiceCallback) {}
+                    override fun urlTest()=1
+                    override fun testConnectionReport(): String {
+                        calls++;entered.countDown()
+                        try {release.await(5,java.util.concurrent.TimeUnit.SECONDS)
+                            return io.nekohasekai.sagernet.group.ConnectionTestResult(77,System.currentTimeMillis(),1).encode()
+                        } finally {finished.countDown()}
+                    }
+                }
+                browse.javaClass.getDeclaredMethod("testActiveConnection",Boolean::class.javaPrimitiveType).apply {isAccessible=true}.invoke(browse,false)
+            }
+            assertTrue(entered.await(2,java.util.concurrent.TimeUnit.SECONDS))
+            val progress=requireNotNull(device.wait(Until.findObject(By.res(context.packageName,"diagnostic_check_progress_text")),timeout))
+            assertTrue(progress.text.contains("8"))
+            assertNotNull(device.wait(Until.findObject(By.res("android","button2").focused(true)),timeout))
+            device.pressDPadCenter()
+            assertTrue(device.wait(Until.gone(By.res(context.packageName,"diagnostic_check_progress_text")),2000))
+            assertEquals(1,calls);assertEquals(oldSelected,DataStore.selectedProxy);assertEquals(oldState,DataStore.serviceState)
+        } finally {
+            release.countDown();finished.await(2,java.util.concurrent.TimeUnit.SECONDS)
+            scenario?.onActivity {activity ->
+                val browse=(activity as MainActivityTv).supportFragmentManager.findFragmentById(R.id.tv_container) as? io.nekohasekai.sagernet.ui.tv.MainBrowseFragment
+                if(browse!=null)(browse.javaClass.getDeclaredField("connection").apply {isAccessible=true}.get(browse) as io.nekohasekai.sagernet.bg.SagerConnection).service=actualService
+            }
+            scenario?.close();scenario=null;DataStore.currentProfile=oldCurrent
+        }
+    }
+
     @Before fun prepare() {
         device.wakeUp()
         device.setOrientationNatural()
         device.executeShellCommand("pm grant ${context.packageName} android.permission.POST_NOTIFICATIONS")
         TvUiPreferences.phoneMode = false
+        // Group ranking uses one process-wide worker. A previous screen can cancel its
+        // coroutine while a blocking probe still holds that worker; isolate every test.
+        isolateQualityWorker()
+        DataStore.runningTest = false
         runBlocking { GroupManager.clearGroup(DataStore.currentGroupId()) }
+    }
+    private fun isolateQualityWorker() {
+        val fragment = io.nekohasekai.sagernet.ui.tv.MainBrowseFragment
+        val previous = fragment.qualityWorker
+        fragment.qualityWorker = io.nekohasekai.sagernet.group.BoundedConnectionCheck()
+        if (previous !== fragment.qualityWorker) previous.close()
+    }
+    private fun installRankingWorker(browse: io.nekohasekai.sagernet.ui.tv.MainBrowseFragment) {
+        // Instance override is read by the click that is about to run. Replacing only the
+        // process-wide worker is not enough: a cancelled probe can still occupy it.
+        browse.javaClass.getDeclaredField("qualityWorkerOverride").apply { isAccessible = true }
+            .set(browse, io.nekohasekai.sagernet.group.BoundedConnectionCheck())
     }
     @After fun finish() {
         try {
@@ -231,13 +549,60 @@ class EmulatorSmokeTest {
             io.nekohasekai.sagernet.group.SubscriptionUpdateJournal.write(group.id, record)
             startTv()
             assertNotNull(device.wait(Until.findObject(By.descStartsWith(text(R.string.tv_start)).focused(true)), timeout))
-            // Actions -> connection -> profiles -> tools, using real remote keys only.
-            repeat(3) { device.pressDPadDown(); device.waitForIdle() }
-            val title = text(R.string.subscription_attempt_title)
-            repeat(8) {
-                if (!device.hasObject(By.descStartsWith(title).focused(true))) {
-                    device.pressDPadRight(); device.waitForIdle()
+            // Selected group first, other group rows, then Operations, then Capabilities.
+            val rowBudget=SagerDatabase.groupDao.allGroups().size+5
+            fun operationsSelected(): Boolean {
+                var selected=false
+                scenario!!.onActivity {activity ->
+                    val browse=(activity as MainActivityTv).supportFragmentManager.findFragmentById(R.id.tv_container) as io.nekohasekai.sagernet.ui.tv.MainBrowseFragment
+                    selected=browse.javaClass.getDeclaredField("focusedRow").apply {isAccessible=true}.getLong(browse)==4L
                 }
+                return selected
+            }
+            repeat(rowBudget * 2) {
+                if(!operationsSelected()) {
+                    val previous=device.findObject(By.focused(true))?.contentDescription
+                    android.util.Log.i("TunXBoxSmoke","Operations navigation focused: $previous")
+                    device.pressDPadDown()
+                    if(previous!=null)device.wait(Until.gone(By.desc(previous).focused(true)),1000)
+                    device.waitForIdle()
+                }
+            }
+            // Vertical focus follows spatial column, not necessarily card zero in a row.
+            repeat(16) {
+                if(!device.hasObject(By.descStartsWith(text(R.string.tv_actions)).focused(true))) {
+                    val previous=device.findObject(By.focused(true))?.contentDescription
+                    device.pressDPadLeft()
+                    if(previous!=null)device.wait(Until.gone(By.desc(previous).focused(true)),1000)
+                    device.waitForIdle()
+                }
+            }
+            if(!device.hasObject(By.descStartsWith(text(R.string.tv_actions)).focused(true))) {
+                val hierarchy=File(context.getExternalFilesDir(null),"operations_focus_failure.xml")
+                device.dumpWindowHierarchy(hierarchy)
+                device.executeShellCommand("mkdir -p /sdcard/Download/TunXBoxSmoke")
+                device.executeShellCommand("cp ${hierarchy.absolutePath} /sdcard/Download/TunXBoxSmoke/operations_focus_failure.xml")
+                device.executeShellCommand("screencap -p /sdcard/Download/TunXBoxSmoke/operations_focus_failure.png")
+            }
+            assertNotNull("Operations must be reachable",device.findObject(By.descStartsWith(text(R.string.tv_actions)).focused(true)))
+            val title = text(R.string.subscription_attempt_title)
+            val buttonBudget=8
+            repeat(buttonBudget * 2) {
+                if (!device.hasObject(By.descStartsWith(title).focused(true))) {
+                    val previous=device.findObject(By.focused(true))?.contentDescription
+                    android.util.Log.i("TunXBoxSmoke", "Report navigation focused: $previous")
+                    device.pressDPadRight()
+                    // A long Leanback row can still be scrolling after input delivery.
+                    if(previous!=null)device.wait(Until.gone(By.desc(previous).focused(true)),1000)
+                    device.waitForIdle()
+                }
+            }
+            if(!device.hasObject(By.descStartsWith(title).focused(true))) {
+                device.executeShellCommand("mkdir -p /sdcard/Download/TunXBoxSmoke")
+                val hierarchy=File(context.getExternalFilesDir(null),"saved_report_focus_failure.xml")
+                device.dumpWindowHierarchy(hierarchy)
+                device.executeShellCommand("cp ${hierarchy.absolutePath} /sdcard/Download/TunXBoxSmoke/saved_report_focus_failure.xml")
+                device.executeShellCommand("screencap -p /sdcard/Download/TunXBoxSmoke/saved_report_focus_failure.png")
             }
             assertNotNull("Saved diagnostic card must be reachable by DPAD",
                 device.findObject(By.descStartsWith(title).focused(true)))
@@ -308,6 +673,51 @@ class EmulatorSmokeTest {
         visibleText(text(R.string.tv_start))
         assertFalse(TvUiPreferences.phoneMode)
         assertFalse(device.hasObject(By.pkg("com.android.intentresolver")))
+    }
+    @Test fun launcherReleaseNotesAndAboutWorkOfflineAndRestoreRemoteFocus() {
+        val selected=DataStore.selectedProxy;val state=DataStore.serviceState
+        scenario=ActivityScenario.launch<ModeSelectionActivity>(Intent(context,ModeSelectionActivity::class.java))
+        val version=requireNotNull(device.wait(Until.findObject(By.res(context.packageName,"mode_build_info")),timeout)).text
+        assertEquals(context.getString(R.string.mode_release_title,io.nekohasekai.sagernet.BuildConfig.VERSION_NAME),version)
+        assertNotNull(device.wait(Until.findObject(By.res(context.packageName,"mode_choose_tv").focused(true)),timeout))
+        device.pressDPadUp()
+        assertNotNull(device.wait(Until.findObject(By.res(context.packageName,"mode_release").focused(true)),timeout))
+        device.pressDPadCenter()
+        val build=requireNotNull(device.wait(Until.findObject(By.res(context.packageName,"release_build_info")),timeout)).text
+        assertTrue(build.contains(io.nekohasekai.sagernet.BuildConfig.VERSION_NAME))
+        assertTrue(build.contains(io.nekohasekai.sagernet.BuildConfig.BUILD_COMMIT.take(8)))
+        assertNotNull(device.wait(Until.findObject(By.res(context.packageName,"release_back").focused(true)),timeout))
+        fun reach(id: String,down: Boolean) {
+            // Explicit section routing must reach every control in at most five presses.
+            for(i in 0 until 5) {
+                if(device.hasObject(By.res(context.packageName,id).focused(true)))break
+                if(down)device.pressDPadDown() else device.pressDPadUp()
+                device.waitForIdle()
+            }
+            assertNotNull("Unreachable release section: $id",device.wait(Until.findObject(By.res(context.packageName,id).focused(true)),timeout))
+        }
+        reach("release_about",true)
+        reach("release_changes",true)
+        device.pressDPadRight();device.waitForIdle()
+        assertNotNull("Reading long notes must retain the section focus",device.findObject(By.res(context.packageName,"release_changes").focused(true)))
+        device.pressDPadLeft();device.waitForIdle()
+        assertNotNull(device.findObject(By.res(context.packageName,"release_changes").focused(true)))
+        reach("release_checks",true);reach("release_limits",true)
+        reach("release_about",false)
+        device.pressDPadCenter()
+        assertNotNull(device.wait(Until.findObject(By.res(context.packageName,"mal_recyclerview")),timeout))
+        val scroll=UiScrollable(UiSelector().resourceId(context.packageName+":id/mal_recyclerview")).setAsVerticalList().setMaxSearchSwipes(30)
+        scroll.setSwipeDeadZonePercentage(0.25)
+        assertTrue(scroll.scrollIntoView(UiSelector().text(text(R.string.about_build_details))))
+        visibleText(text(R.string.about_build_details)).click()
+        val message=requireNotNull(device.wait(Until.findObject(By.res("android","message")),timeout)).text
+        assertTrue(message.contains(io.nekohasekai.sagernet.BuildConfig.VERSION_NAME))
+        device.pressBack();device.pressBack()
+        assertNotNull(device.wait(Until.findObject(By.res(context.packageName,"release_about").focused(true)),timeout))
+        device.pressBack()
+        assertNotNull(device.wait(Until.findObject(By.res(context.packageName,"mode_release").focused(true)),timeout))
+        assertEquals(selected,DataStore.selectedProxy);assertEquals(state,DataStore.serviceState)
+        assertFalse(TvUiPreferences.phoneMode)
     }
     @Test fun topAndEmptyProfileCardOfferSameAddMethods() {
         startTv(); openTopAdd()

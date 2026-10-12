@@ -1,0 +1,15 @@
+<resources>
+    <string name="tv_quality_title">Test and rank group</string>
+    <string name="tv_quality_group_hint">OK: test every profile and rank</string>
+    <string name="tv_quality_update_hint">Stable / test channel; verified APK</string>
+    <string name="tv_quality_age">Last URL check: %1$d s ago</string>
+    <string name="tv_quality_rates">Now ↑ %1$s/s · ↓ %2$s/s</string>
+    <string name="tv_quality_profile">URL: %1$d/%2$d passed</string>
+    <string name="tv_quality_sample">URL probe %1$d / %2$d</string>
+    <string name="tv_quality_progress">Profiles: %1$d / %2$d · %3$d s · limit 5 min</string>
+    <string name="tv_quality_tcp">TCP endpoint: %1$s</string>
+    <string name="tv_quality_spread">URL spread: %1$d ms</string>
+    <string name="tv_quality_changed">Group or network changed; ranking was not saved. Repeat the check.</string>
+    <string name="tv_quality_incomplete">Check incomplete, timed out or worker busy. Ranking not saved; VPN unchanged. Retry after the current probe finishes.</string>
+    <string name="tv_quality_scope">One TCP endpoint probe where applicable and three URL requests through each temporary profile core. Ranked by passed URL requests, then median latency and URL latency spread; ties retain order. TCP alone never proves Internet access. Not a speed, YouTube, separate DNS or UDP loss test. No VPN switching. Cancel or a changed group/network prevents saving. Per-profile limit 25 seconds, whole group 5 minutes. Test traffic may not appear in the running VPN session counters.</string>
+</resources>
