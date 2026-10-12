@@ -47,6 +47,8 @@ class MainBrowseFragment : BrowseSupportFragment() {
     private var extendedReport: io.nekohasekai.sagernet.ui.diagnostics.ExtendedConnectionDiagnostics.Report?=null
     private var qualityByProfile=emptyMap<Long,TvQualityResult>()
     private var qualityUrlProbe: suspend (ProxyEntity)->Int = {TvDiagnostics.url(it)}
+    /** Instrumentation supplies a fresh worker so a cancelled probe cannot block fixture ranking. */
+    private var qualityWorkerOverride: io.nekohasekai.sagernet.group.BoundedConnectionCheck? = null
     private var qualityTcpProbe: suspend (ProxyEntity)->Int = {TvDiagnostics.tcp(it)}
     private lateinit var toolsAdapter: ArrayObjectAdapter
     private lateinit var operationsAdapter: ArrayObjectAdapter
@@ -872,7 +874,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
                         ensureActive()
                         if(SagerNet.underlyingNetwork!=network)throw GroupQualityFailure(io.nekohasekai.sagernet.group.SubscriptionFailureCategory.CHANGED)
                         var quality: TvQualityResult?=null
-                        val outcome=qualityWorker.check(profile.id,TvGroupQuality.PROFILE_LIMIT_MS) {
+                        val outcome=(qualityWorkerOverride ?: qualityWorker).check(profile.id,TvGroupQuality.PROFILE_LIMIT_MS) {
                             runBlocking {
                                 var tcp: Int?=null
                                 if(profile.requireBean().canTCPing()&&!cancelled.get()) {

@@ -205,6 +205,7 @@ class EmulatorSmokeTest {
                 val browse=(activity as MainActivityTv).supportFragmentManager.findFragmentById(R.id.tv_container)
                     as io.nekohasekai.sagernet.ui.tv.MainBrowseFragment
                 isolateQualityWorker()
+                installRankingWorker(browse)
                 val attempts=mutableMapOf<Long,Int>()
                 val probe: suspend (io.nekohasekai.sagernet.database.ProxyEntity)->Int = {profile->
                     val n=attempts.getOrDefault(profile.id,0);attempts[profile.id]=n+1
@@ -222,6 +223,12 @@ class EmulatorSmokeTest {
             }
             device.pressDPadDown();device.pressDPadDown()
             assertNotNull(device.wait(Until.findObject(By.descStartsWith("Quality smoke").focused(true)),timeout))
+            scenario!!.onActivity {activity->
+                val browse=(activity as MainActivityTv).supportFragmentManager.findFragmentById(R.id.tv_container)
+                    as io.nekohasekai.sagernet.ui.tv.MainBrowseFragment
+                installRankingWorker(browse)
+            }
+            DataStore.runningTest=false
             device.pressDPadCenter()
             val completed=device.wait(Until.findObject(By.text(text(R.string.tv_test_complete))),timeout)
             if(completed==null) {
@@ -386,6 +393,12 @@ class EmulatorSmokeTest {
         val previous = fragment.qualityWorker
         fragment.qualityWorker = io.nekohasekai.sagernet.group.BoundedConnectionCheck()
         if (previous !== fragment.qualityWorker) previous.close()
+    }
+    private fun installRankingWorker(browse: io.nekohasekai.sagernet.ui.tv.MainBrowseFragment) {
+        // Instance override is read by the click that is about to run. Replacing only the
+        // process-wide worker is not enough: a cancelled probe can still occupy it.
+        browse.javaClass.getDeclaredField("qualityWorkerOverride").apply { isAccessible = true }
+            .set(browse, io.nekohasekai.sagernet.group.BoundedConnectionCheck())
     }
     @After fun finish() {
         try {
