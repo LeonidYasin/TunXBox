@@ -204,6 +204,7 @@ class EmulatorSmokeTest {
             scenario!!.onActivity {activity->
                 val browse=(activity as MainActivityTv).supportFragmentManager.findFragmentById(R.id.tv_container)
                     as io.nekohasekai.sagernet.ui.tv.MainBrowseFragment
+                isolateQualityWorker()
                 val attempts=mutableMapOf<Long,Int>()
                 val probe: suspend (io.nekohasekai.sagernet.database.ProxyEntity)->Int = {profile->
                     val n=attempts.getOrDefault(profile.id,0);attempts[profile.id]=n+1
@@ -374,7 +375,17 @@ class EmulatorSmokeTest {
         device.setOrientationNatural()
         device.executeShellCommand("pm grant ${context.packageName} android.permission.POST_NOTIFICATIONS")
         TvUiPreferences.phoneMode = false
+        // Group ranking uses one process-wide worker. A previous screen can cancel its
+        // coroutine while a blocking probe still holds that worker; isolate every test.
+        isolateQualityWorker()
+        DataStore.runningTest = false
         runBlocking { GroupManager.clearGroup(DataStore.currentGroupId()) }
+    }
+    private fun isolateQualityWorker() {
+        val fragment = io.nekohasekai.sagernet.ui.tv.MainBrowseFragment
+        val previous = fragment.qualityWorker
+        fragment.qualityWorker = io.nekohasekai.sagernet.group.BoundedConnectionCheck()
+        if (previous !== fragment.qualityWorker) previous.close()
     }
     @After fun finish() {
         try {

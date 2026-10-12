@@ -91,7 +91,9 @@ class MainBrowseFragment : BrowseSupportFragment() {
         private const val SUBSCRIPTION_DIAGNOSTICS = 15L
         private const val DIAGNOSTICS = 16L
         private const val APP_UPDATE = 17L
-        private val qualityWorker=io.nekohasekai.sagernet.group.BoundedConnectionCheck()
+        // Replaced by instrumentation before a fixture ranking. A cancelled screen must not
+        // leave its unfinished probe occupying the next explicit test in the same process.
+        internal var qualityWorker=io.nekohasekai.sagernet.group.BoundedConnectionCheck()
         private const val ROW_CONNECTION = 3L
     }
 
