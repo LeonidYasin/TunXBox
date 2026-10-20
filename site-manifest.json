@@ -29,5 +29,14 @@
     "guide/tv-readiness-plan.html",
     "guide/tv-transfer.html",
     "guide/ui-quality-review.html"
-  ]
+  ],
+  "seo": {
+    "canonicalBase": "https://leonidyasin.github.io/TunXBox/",
+    "sitemap": "sitemap.xml",
+    "languages": [
+      "ru",
+      "en"
+    ],
+    "searchConsoleVerified": false
+  }
 }
