@@ -39,7 +39,7 @@ jobs:
       - name: Verify real APK identity and native alignment again (no signing keys)
         run: |
           set -euo pipefail
-          sdkmanager 'build-tools;35.0.1'
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'build-tools;35.0.1'
           python3 buildScript/package_preview_apks.py --apk-dir recovery-apks --output-dir recovery-verified --version 1.6.0 --commit 0bd5770d861d72f2e0523eb1c519f6a7bac1816f --apksigner "$ANDROID_HOME/build-tools/35.0.1/apksigner" --aapt "$ANDROID_HOME/build-tools/35.0.1/aapt" --certificate signing-certificate.sha256 --expected-version-code 48000158
           cmp recovery-apks/apk-manifest.json recovery-verified/apk-manifest.json
           cmp recovery-apks/SHA256SUMS.txt recovery-verified/SHA256SUMS.txt
