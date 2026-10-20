@@ -8,7 +8,7 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **818**.
+Всего tracked файлов: **820**.
 
 | Раздел | Файлов |
 |---|---|
@@ -206,7 +206,7 @@
 | `app/src/main/res/values-zh-rTW` | 1 |
 | `app/src/main/res/xml` | 25 |
 | `app/src/test` | 29 |
-| `buildScript` | 43 |
+| `buildScript` | 45 |
 | `buildSrc` | 2 |
 | `docs` | 34 |
 | `fastlane` | 8 |
@@ -1450,10 +1450,12 @@
 - [`buildScript/lib/dashboard.sh`](../../buildScript/lib/dashboard.sh)
 - [`buildScript/nkmr`](../../buildScript/nkmr)
 - [`buildScript/package_preview_apks.py`](../../buildScript/package_preview_apks.py)
+- [`buildScript/project_site_seo.py`](../../buildScript/project_site_seo.py)
 - [`buildScript/run_emulator_smoke.sh`](../../buildScript/run_emulator_smoke.sh)
 - [`buildScript/run_verified_emulator_smoke.py`](../../buildScript/run_verified_emulator_smoke.py)
 - [`buildScript/setup_signing.py`](../../buildScript/setup_signing.py)
 - [`buildScript/signing_bundle.py`](../../buildScript/signing_bundle.py)
+- [`buildScript/site/english.html`](../../buildScript/site/english.html)
 - [`buildScript/sources/archive.py`](../../buildScript/sources/archive.py)
 - [`buildScript/sources/catalog_icon.py`](../../buildScript/sources/catalog_icon.py)
 - [`buildScript/sources/fetch.py`](../../buildScript/sources/fetch.py)

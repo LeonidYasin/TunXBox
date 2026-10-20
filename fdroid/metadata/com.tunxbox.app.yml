@@ -19,7 +19,7 @@ Builds:
   - versionName: 1.6.0
     versionCode: 48999999
     disable: Untagged preparation branch; replace commit with reviewed release SHA
-    commit: build/fdroid-source-preservation
+    commit: fix/tv-pointer-scroll-1.6
     subdir: app
     gradle:
       - fdroid

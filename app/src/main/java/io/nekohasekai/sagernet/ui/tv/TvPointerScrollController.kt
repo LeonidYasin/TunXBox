@@ -108,7 +108,7 @@ class TvPointerScrollController(context: Context, private val rows: () -> Vertic
         // Resume from a visible row, not the old off-screen selection. Retain an
         // already-visible focused card; the key is then dispatched normally once.
         val focused = grid.findFocus()
-        val visibleFocus = focused != null && android.graphics.Rect().let { rect ->
+        val visibleFocus = focused != null && focused !== grid && android.graphics.Rect().let { rect ->
             focused.getGlobalVisibleRect(rect) && rect.height() > 0
         }
         if (!visibleFocus) {
