@@ -22,10 +22,14 @@ class BoundedConnectionCheck: Closeable {
             withTimeout(limitMs) {
                 suspendCancellableCoroutine {continuation ->
                     try {worker.execute {
-                        try {
-                            val result=try {work()}catch(error: Exception){failed(SubscriptionFailureCategory.fromThrowable(error))}
-                            if(continuation.isActive)continuation.resume(result)
+                        // Publish availability BEFORE resuming the caller. An unconfined
+                        // or fast resumed caller can immediately submit the next profile;
+                        // clearing busy in a later finally spuriously returned NET_BUSY.
+                        // A timeout/cancellation still cannot clear busy while work runs.
+                        val result=try {
+                            try {work()}catch(error: Exception){failed(SubscriptionFailureCategory.fromThrowable(error))}
                         } finally {busy.set(false)}
+                        if(continuation.isActive)continuation.resume(result)
                     }} catch(error: Exception) {busy.set(false);if(continuation.isActive)continuation.resume(failed(SubscriptionFailureCategory.CORE))}
                 }
             }

@@ -10,6 +10,7 @@ Status: **preparation only — not ready to submit**.
 - yacd
 - geoip-generator
 - geosite-generator
+- jetbrains-mono
 
 ## Remaining gates
 

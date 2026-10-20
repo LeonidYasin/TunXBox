@@ -26,6 +26,22 @@ class BoundedConnectionCheckTest {
    } finally {release.countDown()}
   }
  }
+ @Test fun immediateNextCheckAfterCompletionNeverReportsBusy()=runBlocking {
+  val release=CountDownLatch(1)
+  BoundedConnectionCheck().use {runner ->
+   // The first check suspends before work may finish. Unconfined resumes on the
+   // worker's callback stack, deterministically exposing resume-before-release.
+   val result=async(Dispatchers.Unconfined) {
+    val first=runner.check(1,2000) {release.await(2,TimeUnit.SECONDS);ConnectionTestResult(1,System.currentTimeMillis(),2)}
+    val second=runner.check(2,2000) {ConnectionTestResult(2,System.currentTimeMillis(),3)}
+    listOf(first,second)
+   }
+   release.countDown()
+   val completed=withTimeout(5000){result.await()}
+   assertEquals(listOf(1L,2L),completed.map {it.profileId})
+   assertTrue("Completed work must release busy before its consumer resumes",completed.all {it.available})
+  }
+ }
  @Test fun successfulAndFailedResultsRemainTyped()=runBlocking {
   BoundedConnectionCheck().use {runner ->
    val expected=ConnectionTestResult(7,System.currentTimeMillis(),99)

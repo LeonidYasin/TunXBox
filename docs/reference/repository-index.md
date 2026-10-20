@@ -8,14 +8,14 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **820**.
+Всего tracked файлов: **822**.
 
 | Раздел | Файлов |
 |---|---|
 | `.github` | 11 |
 | `app` | 12 |
 | `app/src/androidTest` | 1 |
-| `app/src/main` | 12 |
+| `app/src/main` | 14 |
 | `app/src/main/java/com/github/shadowsocks/plugin` | 2 |
 | `app/src/main/java/io/nekohasekai/sagernet/BootReceiver.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/Constants.kt` | 1 |
@@ -259,6 +259,8 @@
 - [`app/src/main/assets/COPYING`](../../app/src/main/assets/COPYING)
 - [`app/src/main/assets/LICENSE`](../../app/src/main/assets/LICENSE)
 - [`app/src/main/assets/proxy_packagename.txt`](../../app/src/main/assets/proxy_packagename.txt)
+- [`app/src/main/assets/third-party/jetbrains-mono-LICENSE.txt`](../../app/src/main/assets/third-party/jetbrains-mono-LICENSE.txt)
+- [`app/src/main/assets/third-party/jetbrains-mono-NOTICE.txt`](../../app/src/main/assets/third-party/jetbrains-mono-NOTICE.txt)
 - [`app/src/main/assets/tv-transfer.html`](../../app/src/main/assets/tv-transfer.html)
 - [`app/src/main/assets/yacd.version.txt`](../../app/src/main/assets/yacd.version.txt)
 - [`app/src/main/assets/yacd.zip`](../../app/src/main/assets/yacd.zip)

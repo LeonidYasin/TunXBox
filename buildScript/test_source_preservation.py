@@ -7,6 +7,14 @@ fetch=load('source_fetch','buildScript/sources/fetch.py');pack=load('source_pack
 class SourceTest(unittest.TestCase):
  def test_lock_has_immutable_revisions_and_hashes(self):
   for c in fetch.lock()['components'].values():self.assertRegex(c['revision'],r'^[0-9a-f]{40}$');self.assertRegex(c['sha256'],r'^[0-9a-f]{64}$');self.assertIn(c['revision'],c['archive'])
+ def test_bundled_font_matches_historical_source_and_notice(self):
+  c=fetch.lock()['components']['jetbrains-mono']
+  self.assertEqual(c['version'],'1.0.3');self.assertEqual(c['license'],'Apache-2.0')
+  self.assertEqual(fetch.digest(ROOT/c['bundledFile']),c['bundledSha256'])
+  notice=(ROOT/'app/src/main/assets/third-party/jetbrains-mono-NOTICE.txt').read_text()
+  for value in [c['revision'],c['bundledSha256'],'Apache License, Version 2.0','JetBrains s.r.o.','Philipp Nurullin','Konstantin Bulenkov']:self.assertIn(value,notice)
+  license=(ROOT/'app/src/main/assets/third-party/jetbrains-mono-LICENSE.txt').read_text()
+  self.assertIn('Apache License',license);self.assertIn('Version 2.0, January 2004',license)
  def test_offline_cache_verifies_hash(self):
   with tempfile.TemporaryDirectory() as d,patch.dict(os.environ,{'SOURCE_CACHE_DIR':d,'SOURCE_OFFLINE':'1'}):
    a=pathlib.Path(d)/'archives';a.mkdir();(a/'x').write_bytes(b'test');self.assertEqual(fetch.obtain('https://invalid',hashlib.sha256(b'test').hexdigest(),'x'),a/'x')

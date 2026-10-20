@@ -56,11 +56,11 @@ class RealityPatchTest(unittest.TestCase):
         with self.assertRaises(ValueError): module.apply(root, manifest, root / "patch", runner)
         self.assertEqual(len(calls), 1)
 
-if __name__ == "__main__": unittest.main()
-
 class ArchivedRealityPatchTest(unittest.TestCase):
     def test_unmanaged_archive_is_rejected_without_git(self):
         import json
         with tempfile.TemporaryDirectory() as d:
             root=pathlib.Path(d);(root/'.tunxbox-source.json').write_text(json.dumps({'revision':'wrong'}))
             with self.assertRaises(ValueError):module.apply(root,{'sourceCommit':'a'*40,'files':[]},root/'patch')
+
+if __name__ == "__main__": unittest.main()

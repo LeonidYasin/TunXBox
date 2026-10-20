@@ -1,0 +1,15 @@
+JetBrains Mono Regular 1.0.3
+Copyright © 2000–2020 JetBrains s.r.o. Developed with drive and IntelliJ IDEA.
+Designers: Philipp Nurullin, Konstantin Bulenkov.
+
+Licensed under the Apache License, Version 2.0. See jetbrains-mono-LICENSE.txt.
+This bundled historical version is not licensed under the OFL used by later versions.
+
+Source: https://github.com/JetBrains/JetBrainsMono/tree/a17943ec8a1a6f16c4bc55d34a297df91093bc29
+Official font path: ttf/JetBrainsMono-Regular.ttf
+Bundled font path: app/src/main/res/font/jetbrains_mono.ttf
+SHA-256: 3c5fb9d71ef1e2363ba27503f0b80907b34138c31a09c99cb5355171c62bc810
+
+The official font is included unchanged, byte for byte. The verified source archive
+also preserves FontLab outline sources under source/. Font rebuilding has not been
+verified; preservation alone is not a reproducible font-build claim.

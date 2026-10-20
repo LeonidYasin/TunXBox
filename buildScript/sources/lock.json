@@ -36,6 +36,17 @@
       "revision": "dd64ae0ebf2ee69166c0510042b3e96c085f27df",
       "archive": "https://codeload.github.com/SagerNet/sing-geosite/tar.gz/dd64ae0ebf2ee69166c0510042b3e96c085f27df",
       "sha256": "6a8095a43720bea87791810c0cd4eb6d374cb8ad19a960ce50c987e10f2a6c2f"
+    },
+    "jetbrains-mono": {
+      "repository": "https://github.com/JetBrains/JetBrainsMono",
+      "revision": "a17943ec8a1a6f16c4bc55d34a297df91093bc29",
+      "archive": "https://codeload.github.com/JetBrains/JetBrainsMono/tar.gz/a17943ec8a1a6f16c4bc55d34a297df91093bc29",
+      "sha256": "fb3e0bbcf4a041e43dd6426e7859799aa289870161c9d92c91ab76168d8fd00f",
+      "license": "Apache-2.0",
+      "version": "1.0.3",
+      "bundledFile": "app/src/main/res/font/jetbrains_mono.ttf",
+      "bundledSha256": "3c5fb9d71ef1e2363ba27503f0b80907b34138c31a09c99cb5355171c62bc810",
+      "notes": "Historical v1.0.3 is Apache-2.0, not the OFL license used by later releases. Exact TTF match verified. FontLab outline sources are preserved; recompilation is not verified."
     }
   },
   "assets": {

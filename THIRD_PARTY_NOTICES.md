@@ -9,7 +9,7 @@ TunXBox retains the original NekoBox/SagerNet authorship and GPL-3.0-or-later de
 | gomobile fork | buildScript/sources/lock.json | Preserve included LICENSE/AUTHORS/PATENTS and source notices |
 | Yacd-meta dashboard | buildScript/sources/lock.json | package.json declares MIT; standalone license/copyright notices need confirmation |
 | sing-geoip / sing-geosite generators | buildScript/sources/lock.json | GPL declaration applies to generator code, not automatically to every data input |
-| JetBrains Mono | app/src/main/res/font/jetbrains_mono.ttf | Verify font version and required OFL notice before store review |
+| JetBrains Mono Regular 1.0.3 | buildScript/sources/lock.json; exact official TTF SHA-256 match | Historical **Apache-2.0**, not later OFL. Original license and attribution bundled in app/src/main/assets/third-party/. FontLab outline sources preserved; font rebuild not verified |
 | Android libraries | app/build.gradle.kts and resolved Gradle graph | Transitive source/license audit pending |
 | Go libraries | libcore/go.mod/go.sum and pinned tool go.mod files | Module caches may preserve sources; license audit remains required |
 | JS libraries/fonts | pinned Yacd pnpm-lock.yaml | Keep package licenses/notices; source availability of build-tool binaries must be reviewed |

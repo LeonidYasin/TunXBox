@@ -2,7 +2,7 @@
 
 ## Что закреплено
 
-`buildScript/sources/lock.json` фиксирует шесть исходных снимков: sing-box, libneko, gomobile, Yacd-meta, генераторы GeoIP/Geosite; также фиксируются версии и SHA-256 двух готовых routing-баз. Изменяемые ветки и `latest` не участвуют в новой baseline-подготовке. Runtime-обновление routing-баз пользователем сохранено.
+`buildScript/sources/lock.json` фиксирует семь исходных снимков: sing-box, libneko, gomobile, Yacd-meta, генераторы GeoIP/Geosite и JetBrains Mono 1.0.3; также фиксируются версии и SHA-256 двух готовых routing-баз. Изменяемые ветки и `latest` не участвуют в новой baseline-подготовке. Runtime-обновление routing-баз пользователем сохранено.
 
 Снимок сохраняет полное дерево выбранной ревизии, **не всю историю Git**. GitHub fork не является полноценной резервной копией при отказе GitHub. Создание отдельных форков через текущее подключение вернуло 403; не считать эти форки созданными.
 
@@ -42,3 +42,7 @@ bash buildScript/lib/core/get_source.sh
 Существующие stable APK/tag/signing identity не меняются. Не удаляются dashboard, протоколы, QR/LAN-обмен, UI TV/phone или runtime-обновления баз. Новая ветка требует CI, проверки source-built dashboard на старых WebView и существующих ARM/device gates до merge.
 
 Source-readiness workflow проверяет исходники и собирает dashboard/gomobile. Android job отдельно собирает F-Droid APK и запускает существующие 4KB/16KB emulator smoke tests. Успешные Python-тесты сами по себе не означают успешный Android/F-Droid build.
+
+## Источник шрифта
+
+Встроенный `jetbrains_mono.ttf` точно совпадает по SHA-256 с официальным `JetBrainsMono-Regular.ttf` версии **1.0.3**. Эта историческая версия опубликована под **Apache-2.0**, а не OFL более новых версий. Исходный текст лицензии и авторство включены в `app/src/main/assets/third-party/`; архив с FontLab-исходниками зафиксирован в lock-файле. Бинарник шрифта не заменён. Сборка TTF из FontLab-исходников пока не проверена — сохранение исходников не означает воспроизводимую сборку шрифта.
