@@ -1,0 +1,41 @@
+Disabled: Pending license clarification, source scan and clean F-Droid build
+Categories:
+  - Internet
+License: GPL-3.0-or-later
+AuthorName: Leonid Yasin
+WebSite: https://leonidyasin.github.io/TunXBox/
+SourceCode: https://github.com/LeonidYasin/TunXBox
+IssueTracker: https://github.com/LeonidYasin/TunXBox/issues
+AutoName: TunXBox
+Summary: Remote-friendly sing-box proxy client for Android TV and phones
+Description: |-
+    Open-source NekoBox/SagerNet fork with TV remote navigation, a phone
+    interface, profiles and groups, local QR/browser configuration transfer,
+    routing datasets and a bundled dashboard. Bring your own servers or
+    subscription. TunXBox is not a VPN subscription provider.
+RepoType: git
+Repo: https://github.com/LeonidYasin/TunXBox
+Builds:
+  - versionName: 1.6.0
+    versionCode: 48999999
+    disable: Untagged preparation branch; replace commit with reviewed release SHA
+    commit: build/fdroid-source-preservation
+    subdir: app
+    gradle:
+      - fdroid
+    output: build/outputs/apk/fdroid/release/*.apk
+    scandelete:
+      - app/src/main/assets/yacd.zip
+      - release.keystore
+    gradleprops:
+      - tunxbox.fdroidUnsigned=true
+      - tunxbox.universalOnly=true
+    prebuild: cd .. && bash buildScript/fdroid/prebuild.sh
+    ndk: 25.0.8775105
+AutoUpdateMode: None
+UpdateCheckMode: Tags ^v[0-9]+\.[0-9]+\.[0-9]+$
+VercodeOperation:
+  - '%c * 1000000 + 999999'
+UpdateCheckData: nb4a.properties|VERSION_CODE=(\d+)|.|VERSION_NAME=(.*)
+CurrentVersion: 1.6.0
+CurrentVersionCode: 48999999

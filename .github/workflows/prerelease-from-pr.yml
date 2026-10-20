@@ -127,7 +127,7 @@ jobs:
       - name: Build libcore.aar (if cache miss)
         run: |
           if [ ! -f app/libs/libcore.aar ]; then
-            ./run lib core
+            bash run lib core
           else
             echo "libcore.aar restored from 16KB cache"
           fi
@@ -183,7 +183,7 @@ jobs:
           # Step-scoped: this API token is not passed to emulator instrumentation.
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ./run init action gradle
+          bash run init action gradle
           ./gradlew app:assemblePreviewDebug app:assemblePreviewDebugAndroidTest --stacktrace
           ./gradlew --stop
 
@@ -255,7 +255,7 @@ jobs:
         run: |
           # Ignore legacy LOCAL_PROPERTIES signing credentials: the pinned bundle is authoritative.
           unset LOCAL_PROPERTIES
-          ./run init action gradle
+          bash run init action gradle
           ./gradlew app:assemblePreviewRelease --stacktrace
 
       - name: Verify Android update metadata

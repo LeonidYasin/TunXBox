@@ -4,7 +4,7 @@ set -euo pipefail
 pages="${1:?Expected page size required}"
 case "$pages" in 4096|16384) ;; *) echo "Unexpected page size" >&2; exit 2;; esac
 variant="${2:-Preview}"
-case "$variant" in Preview|Oss) ;; *) echo "Unsupported test flavor" >&2; exit 2;; esac
+case "$variant" in Preview|Oss|Fdroid) ;; *) echo "Unsupported test flavor" >&2; exit 2;; esac
 out="build/emulator-results/$pages"
 mkdir -p "$out"
 collect() {

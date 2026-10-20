@@ -3,6 +3,8 @@
 TunXBox is an Android TV / phone client based on the open-source NekoBox project and sing-box. It adds a remote-first TV interface, a phone interface, local QR/browser profile transfer, group tests, and connection traffic/status.
 
 - **TunXBox downloads:** [stable 1.5.0](https://github.com/LeonidYasin/TunXBox/releases/tag/v1.5.0) · [separate RC channel](https://github.com/LeonidYasin/TunXBox/releases/tag/v1.5.0-rc).
+- **Website:** [TunXBox for Android TV and phones](https://leonidyasin.github.io/TunXBox/) · [English](https://leonidyasin.github.io/TunXBox/en/).
+- **Source preservation and store readiness:** [source backups](docs/source-preservation.md) · [F-Droid preparation](fdroid/README.md).
 - **TunXBox issues:** [report a problem](https://github.com/LeonidYasin/TunXBox/issues).
 - **Project documentation and complete mind map:** [docs/README.md](docs/README.md) · [project map](docs/project-map.md).
 - **Roadmap / releases and next PRs:** [docs/roadmap.md](docs/roadmap.md).

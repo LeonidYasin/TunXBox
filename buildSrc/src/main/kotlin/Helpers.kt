@@ -114,6 +114,15 @@ fun Project.setupCommon() {
 fun Project.setupAppCommon() {
     setupCommon()
 
+    val unsignedFdroid = providers.gradleProperty("tunxbox.fdroidUnsigned").orNull == "true"
+    if (unsignedFdroid) {
+        require(gradle.startParameter.taskNames.any { it.contains("fdroid", ignoreCase = true) } &&
+            gradle.startParameter.taskNames.none { task ->
+                listOf("oss", "preview", "play").any { task.contains(it, ignoreCase = true) }
+            }) { "Unsigned mode is only allowed for explicitly requested F-Droid tasks" }
+        android.buildTypes.getByName("release").signingConfig = null
+        return
+    }
     val lp = requireLocalProperties()
     val keystorePwd = lp.getProperty("KEYSTORE_PASS") ?: System.getenv("KEYSTORE_PASS")
     val alias = lp.getProperty("ALIAS_NAME") ?: System.getenv("ALIAS_NAME")
@@ -183,7 +192,7 @@ fun Project.setupApp() {
 
         splits.abi {
             reset()
-            isEnable = true
+            isEnable = providers.gradleProperty("tunxbox.universalOnly").orNull != "true"
             isUniversalApk = true
             include("armeabi-v7a")
             include("arm64-v8a")

@@ -8,14 +8,14 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **665**.
+Всего tracked файлов: **689**.
 
 | Раздел | Файлов |
 |---|---|
-| `.github` | 9 |
+| `.github` | 10 |
 | `app` | 12 |
 | `app/src/androidTest` | 1 |
-| `app/src/main` | 11 |
+| `app/src/main` | 12 |
 | `app/src/main/java/com/github/shadowsocks/plugin` | 2 |
 | `app/src/main/java/io/nekohasekai/sagernet/BootReceiver.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/Constants.kt` | 1 |
@@ -192,12 +192,14 @@
 | `app/src/main/res/values-zh-rTW` | 1 |
 | `app/src/main/res/xml` | 24 |
 | `app/src/test` | 13 |
-| `buildScript` | 24 |
+| `buildScript` | 32 |
 | `buildSrc` | 2 |
-| `docs` | 19 |
+| `docs` | 20 |
+| `fastlane` | 8 |
+| `fdroid` | 3 |
 | `gradle` | 2 |
 | `libcore` | 42 |
-| `Корень` | 15 |
+| `Корень` | 17 |
 
 ## .github
 
@@ -209,6 +211,7 @@
 - [`.github/workflows/preview.yml`](../../.github/workflows/preview.yml)
 - [`.github/workflows/release.yml`](../../.github/workflows/release.yml)
 - [`.github/workflows/signing-backup.yml`](../../.github/workflows/signing-backup.yml)
+- [`.github/workflows/source-readiness.yml`](../../.github/workflows/source-readiness.yml)
 - [`.github/workflows/stable-release.yml`](../../.github/workflows/stable-release.yml)
 
 ## app
@@ -237,6 +240,7 @@
 - [`app/src/main/aidl/io/nekohasekai/sagernet/aidl/ISagerNetServiceCallback.aidl`](../../app/src/main/aidl/io/nekohasekai/sagernet/aidl/ISagerNetServiceCallback.aidl)
 - [`app/src/main/aidl/io/nekohasekai/sagernet/aidl/SpeedDisplayData.aidl`](../../app/src/main/aidl/io/nekohasekai/sagernet/aidl/SpeedDisplayData.aidl)
 - [`app/src/main/aidl/io/nekohasekai/sagernet/aidl/TrafficData.aidl`](../../app/src/main/aidl/io/nekohasekai/sagernet/aidl/TrafficData.aidl)
+- [`app/src/main/assets/COPYING`](../../app/src/main/assets/COPYING)
 - [`app/src/main/assets/LICENSE`](../../app/src/main/assets/LICENSE)
 - [`app/src/main/assets/proxy_packagename.txt`](../../app/src/main/assets/proxy_packagename.txt)
 - [`app/src/main/assets/tv-transfer.html`](../../app/src/main/assets/tv-transfer.html)
@@ -1314,15 +1318,23 @@
 - [`buildScript/lib/core/get_source.sh`](../../buildScript/lib/core/get_source.sh)
 - [`buildScript/lib/core/get_source_env.sh`](../../buildScript/lib/core/get_source_env.sh)
 - [`buildScript/lib/core/init.sh`](../../buildScript/lib/core/init.sh)
+- [`buildScript/lib/dashboard.sh`](../../buildScript/lib/dashboard.sh)
 - [`buildScript/nkmr`](../../buildScript/nkmr)
 - [`buildScript/package_preview_apks.py`](../../buildScript/package_preview_apks.py)
 - [`buildScript/run_emulator_smoke.sh`](../../buildScript/run_emulator_smoke.sh)
 - [`buildScript/setup_signing.py`](../../buildScript/setup_signing.py)
 - [`buildScript/signing_bundle.py`](../../buildScript/signing_bundle.py)
+- [`buildScript/sources/archive.py`](../../buildScript/sources/archive.py)
+- [`buildScript/sources/catalog_icon.py`](../../buildScript/sources/catalog_icon.py)
+- [`buildScript/sources/fetch.py`](../../buildScript/sources/fetch.py)
+- [`buildScript/sources/lock.json`](../../buildScript/sources/lock.json)
+- [`buildScript/sources/package_dashboard.py`](../../buildScript/sources/package_dashboard.py)
+- [`buildScript/sources/readiness.py`](../../buildScript/sources/readiness.py)
 - [`buildScript/test_assets.py`](../../buildScript/test_assets.py)
 - [`buildScript/test_native_alignment.py`](../../buildScript/test_native_alignment.py)
 - [`buildScript/test_package_preview_apks.py`](../../buildScript/test_package_preview_apks.py)
 - [`buildScript/test_signing_bundle.py`](../../buildScript/test_signing_bundle.py)
+- [`buildScript/test_source_preservation.py`](../../buildScript/test_source_preservation.py)
 - [`buildScript/test_tv_transfer_page.cjs`](../../buildScript/test_tv_transfer_page.cjs)
 - [`buildScript/verify_native_alignment.py`](../../buildScript/verify_native_alignment.py)
 - [`buildScript/verify_update.py`](../../buildScript/verify_update.py)
@@ -1350,9 +1362,27 @@
 - [`docs/scenarios.md`](../../docs/scenarios.md)
 - [`docs/security.md`](../../docs/security.md)
 - [`docs/signing-and-updates.md`](../../docs/signing-and-updates.md)
+- [`docs/source-preservation.md`](../../docs/source-preservation.md)
 - [`docs/tv-readiness-plan.md`](../../docs/tv-readiness-plan.md)
 - [`docs/tv-transfer.md`](../../docs/tv-transfer.md)
 - [`docs/ui-quality-review.md`](../../docs/ui-quality-review.md)
+
+## fastlane
+
+- [`fastlane/metadata/android/en-US/full_description.txt`](../../fastlane/metadata/android/en-US/full_description.txt)
+- [`fastlane/metadata/android/en-US/images/README.md`](../../fastlane/metadata/android/en-US/images/README.md)
+- [`fastlane/metadata/android/en-US/short_description.txt`](../../fastlane/metadata/android/en-US/short_description.txt)
+- [`fastlane/metadata/android/en-US/title.txt`](../../fastlane/metadata/android/en-US/title.txt)
+- [`fastlane/metadata/android/ru-RU/full_description.txt`](../../fastlane/metadata/android/ru-RU/full_description.txt)
+- [`fastlane/metadata/android/ru-RU/images/README.md`](../../fastlane/metadata/android/ru-RU/images/README.md)
+- [`fastlane/metadata/android/ru-RU/short_description.txt`](../../fastlane/metadata/android/ru-RU/short_description.txt)
+- [`fastlane/metadata/android/ru-RU/title.txt`](../../fastlane/metadata/android/ru-RU/title.txt)
+
+## fdroid
+
+- [`fdroid/READINESS.md`](../../fdroid/READINESS.md)
+- [`fdroid/README.md`](../../fdroid/README.md)
+- [`fdroid/metadata/com.tunxbox.app.yml`](../../fdroid/metadata/com.tunxbox.app.yml)
 
 ## gradle
 
@@ -1408,8 +1438,10 @@
 
 - [`.gitignore`](../../.gitignore)
 - [`AUTHORS`](../../AUTHORS)
+- [`COPYING`](../../COPYING)
 - [`LICENSE`](../../LICENSE)
 - [`README.md`](../../README.md)
+- [`THIRD_PARTY_NOTICES.md`](../../THIRD_PARTY_NOTICES.md)
 - [`build.gradle.kts`](../../build.gradle.kts)
 - [`gradle.properties`](../../gradle.properties)
 - [`gradlew`](../../gradlew)
