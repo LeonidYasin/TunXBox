@@ -12,7 +12,16 @@ def digest(path):
 
 def apply(source, manifest, patch, runner=subprocess.run):
     source = pathlib.Path(source).resolve()
-    head = runner(["git", "rev-parse", "HEAD"], cwd=source, check=True, capture_output=True, text=True).stdout.strip()
+    marker = source / ".tunxbox-source.json"
+    if marker.is_file() and not (source / ".git").exists():
+        # fetch.py verified the locked archive SHA before extraction. Check provenance
+        # against the app lock as well as per-file before/after hashes below.
+        record = json.loads(marker.read_text())
+        locked = json.loads((HERE.parents[2] / "buildScript/sources/lock.json").read_text())["components"]["sing-box"]
+        if record != locked: raise ValueError("Unexpected source archive provenance")
+        head = record["revision"]
+    else:
+        head = runner(["git", "rev-parse", "HEAD"], cwd=source, check=True, capture_output=True, text=True).stdout.strip()
     if head != manifest["sourceCommit"]: raise ValueError("REALITY patch requires exact pinned core commit")
     states = []
     for record in manifest["files"]:

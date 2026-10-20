@@ -2,6 +2,9 @@
 
 **Ваш VPN-клиент. Ваши серверы. Ваш контроль.** TunXBox — независимый открытый Android-клиент на базе NekoBox/SagerNet и sing-box. Интерфейс для пульта и телефона, профили/группы, локальный обмен QR/браузером и безопасная диагностика. Проект не продаёт VPN-серверы и не гарантирует доступность вашего провайдера.
 
+- [Сайт TunXBox](https://leonidyasin.github.io/TunXBox/) · [English](https://leonidyasin.github.io/TunXBox/en/)
+- [Резервирование исходников](docs/source-preservation.md) · [Подготовка F-Droid](fdroid/README.md)
+
 ## Скачать и проверить
 
 - [Стабильная 1.5.0](https://github.com/LeonidYasin/TunXBox/releases/tag/v1.5.0) — неизменяемый опубликованный выпуск.

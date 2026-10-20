@@ -1,0 +1,10 @@
+TunXBox is an open-source NekoBox/SagerNet fork for Android TV and phones, powered by sing-box.
+
+• Remote-friendly TV interface and phone interface
+• Connection profiles and groups
+• Local configuration exchange with QR codes and a browser
+• Routing datasets and a local dashboard
+
+Bring your own compatible servers or subscription. TunXBox does not provide VPN service or subscription accounts. Feature availability depends on your configuration, device and installed version.
+
+Source code, release notes and known limitations are available on GitHub. Back up your settings before reinstalling or changing signing channels.

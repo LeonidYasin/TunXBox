@@ -1,0 +1,164 @@
+name: Source preservation and F-Droid readiness
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'buildScript/sources/**'
+      - 'buildScript/lib/**'
+      - 'buildScript/fdroid/**'
+      - 'buildScript/test_*.py'
+      - 'libcore/**'
+      - 'app/**'
+      - 'buildSrc/**'
+      - 'nb4a.properties'
+      - 'fdroid/**'
+      - 'fastlane/**'
+      - '.github/workflows/source-readiness.yml'
+concurrency:
+  group: source-readiness-${{ github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  source-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.14.1'
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.8'
+          cache: false
+      - name: Install pinned pnpm
+        run: npm install --global pnpm@8.15.9 --ignore-scripts
+      - name: Unit and browser tests
+        run: |
+          python3 -m unittest discover -s buildScript -p 'test_*.py'
+          node buildScript/test_tv_transfer_page.cjs
+      - name: Prepare pinned sources and first-launch datasets
+        run: |
+          python3 buildScript/sources/fetch.py prefetch
+          bash buildScript/lib/core/get_source.sh
+          bash buildScript/lib/assets.sh
+      - name: Build dashboard from source
+        run: bash buildScript/lib/dashboard.sh
+      - name: Compile pinned gomobile tools from source (no NDK needed)
+        run: |
+          SOURCE=$(python3 buildScript/sources/fetch.py component gomobile)
+          mkdir -p "$RUNNER_TEMP/gomobile-bin"
+          cd "$SOURCE"
+          GOTOOLCHAIN=local GOBIN="$RUNNER_TEMP/gomobile-bin" go install ./cmd/gomobile ./cmd/gobind
+      - name: Generate catalog icon from the existing launcher vector
+        run: python3 buildScript/sources/catalog_icon.py
+      - name: Preserve sources and dependency caches
+        run: |
+          python3 buildScript/sources/archive.py --go-modules --pnpm-store .source-cache/pnpm-store
+          python3 buildScript/sources/readiness.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pinned-sources-and-catalog-review
+          path: |
+            source-backups/*.tar.gz
+            source-backups/*.sha256
+            app/src/main/assets/yacd.zip
+            fastlane/metadata/android/en-US/images/icon.png
+            fdroid/READINESS.md
+          retention-days: 90
+      # Artifacts expire: keep the portable archive outside GitHub as well.
+      # No signing material, publication or changes to immutable APK releases.
+
+  android-fdroid:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.14.1'
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.8'
+          cache: false
+      - name: Setup Android SDK
+        run: |
+          if [ -z "$ANDROID_HOME" ] && [ -z "$ANDROID_SDK_ROOT" ]; then
+            mkdir -p "$HOME/android-sdk/cmdline-tools"
+            cd "$HOME/android-sdk/cmdline-tools"
+            curl -fsSL -o cmdline-tools.zip https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip
+            unzip -q cmdline-tools.zip
+            mv cmdline-tools latest 2>/dev/null || true
+            export ANDROID_HOME="$HOME/android-sdk"
+            echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+          fi
+          if [ -z "$ANDROID_HOME" ]; then
+            export ANDROID_HOME="${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}"
+            echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+          fi
+          echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> $GITHUB_ENV
+          if [ -d "$ANDROID_HOME/cmdline-tools/latest/bin" ]; then
+            echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
+          elif [ -d "$ANDROID_HOME/cmdline-tools/bin" ]; then
+            echo "$ANDROID_HOME/cmdline-tools/bin" >> $GITHUB_PATH
+          fi
+          if [ -d "$ANDROID_HOME/platform-tools" ]; then
+            echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
+          fi
+
+      - name: Prepare pinned Android tools and pnpm
+        run: |
+          npm install --global pnpm@8.15.9 --ignore-scripts
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager 'platforms;android-35' 'build-tools;35.0.1' 'ndk;25.0.8775105'
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/25.0.8775105" >> "$GITHUB_ENV"
+          echo "NDK=$ANDROID_HOME/ndk/25.0.8775105" >> "$GITHUB_ENV"
+      - name: Clean source-based native/assets/dashboard preparation
+        run: |
+          bash buildScript/fdroid/prebuild.sh
+          python3 buildScript/verify_native_alignment.py --require-64bit app/libs/libcore.aar
+      - name: F-Droid release and instrumentation compilation
+        run: |
+          bash gradlew app:assembleFdroidRelease -Ptunxbox.fdroidUnsigned=true -Ptunxbox.universalOnly=true --stacktrace
+          bash gradlew app:testFdroidDebugUnitTest app:assembleFdroidDebug app:assembleFdroidDebugAndroidTest --stacktrace
+          bash gradlew --stop
+      - name: Enable emulator acceleration
+        run: |
+          test -c /dev/kvm
+          sudo chmod a+rw /dev/kvm
+          chmod +x gradlew
+      - name: Existing F-Droid 4KB device gates
+        uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu software -no-snapshot -noaudio -no-boot-anim
+          script: bash buildScript/run_emulator_smoke.sh 4096 Fdroid
+      - name: Existing F-Droid 16KB device gates
+        uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d
+        with:
+          api-level: 35
+          target: google_apis_ps16k
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          emulator-options: -no-window -gpu software -no-snapshot -noaudio -no-boot-anim
+          script: bash buildScript/run_emulator_smoke.sh 16384 Fdroid
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fdroid-apk-and-emulator-evidence
+          path: |
+            app/build/outputs/apk/fdroid/release/*.apk
+            build/emulator-results/
+          retention-days: 30

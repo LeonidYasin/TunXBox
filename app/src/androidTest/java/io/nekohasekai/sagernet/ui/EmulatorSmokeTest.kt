@@ -119,6 +119,82 @@ class EmulatorSmokeTest {
         } finally {outside.delete()}
     }
 
+    @Test fun portraitTvScrollsWithFingerAndMouseThenResumesRemoteWithoutChangingVpn() {
+        val selected = DataStore.selectedProxy
+        val state = DataStore.serviceState
+        val originalGroup = DataStore.currentGroupId()
+        val fixtures = runBlocking {
+            (1..6).map { GroupManager.createGroup(io.nekohasekai.sagernet.database.ProxyGroup(name="Scroll fixture $it")) }
+        }
+        try {
+            startTv()
+            scenario!!.onActivity { it.requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT }
+            var portrait = false
+            val deadline = android.os.SystemClock.elapsedRealtime() + timeout
+            while (!portrait && android.os.SystemClock.elapsedRealtime() < deadline) {
+                scenario!!.onActivity { portrait = it.resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_PORTRAIT }
+                if (!portrait) android.os.SystemClock.sleep(100)
+            }
+            assertTrue("Phone TV fixture must be in portrait", portrait)
+            assertNotNull(device.wait(Until.findObject(By.descStartsWith(text(R.string.tv_start)).focused(true)), timeout))
+            fun grid(activity: android.app.Activity): androidx.leanback.widget.VerticalGridView =
+                requireNotNull(((activity as MainActivityTv).supportFragmentManager.findFragmentById(R.id.tv_container)
+                    as io.nekohasekai.sagernet.ui.tv.MainBrowseFragment).rowsSupportFragment?.verticalGridView)
+            fun position(): Long {
+                var value = 0L
+                scenario!!.onActivity { activity ->
+                    val list = grid(activity)
+                    val first = (0 until list.childCount).map { list.getChildAt(it) }
+                        .filter { it.bottom > list.paddingTop && it.top < list.height - list.paddingBottom }.minByOrNull { it.top }
+                    requireNotNull(first)
+                    value = list.getChildAdapterPosition(first) * 100000L - first.top
+                }
+                return value
+            }
+            val bounds = android.graphics.Rect()
+            scenario!!.onActivity { grid(it).getGlobalVisibleRect(bounds) }
+            val x = bounds.centerX()
+            val top = bounds.top + bounds.height()/5
+            val bottom = bounds.bottom - bounds.height()/5
+            val before = position()
+            assertTrue(device.swipe(x, bottom, x, top, 50))
+            device.waitForIdle(); android.os.SystemClock.sleep(400)
+            val downward = position()
+            assertTrue("Upward finger drag must scroll down across rows", downward > before + 40)
+            android.os.SystemClock.sleep(600)
+            assertTrue("No delayed focus callback may snap back after the gesture", position() >= downward - 8)
+            assertTrue(device.swipe(x, top, x, bottom, 50))
+            device.waitForIdle(); android.os.SystemClock.sleep(400)
+            assertTrue("Downward finger drag must scroll up", position() < downward - 40)
+            val beforeWheel = position()
+            scenario!!.onActivity { activity ->
+                val properties = android.view.MotionEvent.PointerProperties().apply { id=0; toolType=android.view.MotionEvent.TOOL_TYPE_MOUSE }
+                val coordinates = android.view.MotionEvent.PointerCoords().apply {
+                    this.x=x.toFloat();y=bottom.toFloat();setAxisValue(android.view.MotionEvent.AXIS_VSCROLL,-5f)
+                }
+                val now=android.os.SystemClock.uptimeMillis()
+                val event=android.view.MotionEvent.obtain(now,now,android.view.MotionEvent.ACTION_SCROLL,1,
+                    arrayOf(properties),arrayOf(coordinates),0,0,1f,1f,0,0,android.view.InputDevice.SOURCE_MOUSE,0)
+                try {assertTrue("Mouse wheel must be consumed by vertical rows",activity.dispatchGenericMotionEvent(event))} finally {event.recycle()}
+            }
+            device.waitForIdle()
+            assertTrue("Mouse wheel must move the actual rows viewport", position() > beforeWheel + 20)
+            device.pressDPadDown();device.waitForIdle()
+            scenario!!.onActivity { activity ->
+                val list=grid(activity)
+                assertFalse("Remote navigation must be restored",list.isFocusSearchDisabled)
+                val focus=requireNotNull(list.findFocus())
+                assertTrue("Remote focus must be visible, not an off-screen old card",focus.getGlobalVisibleRect(android.graphics.Rect()))
+            }
+            assertEquals(selected,DataStore.selectedProxy)
+            assertEquals(state,DataStore.serviceState)
+        } finally {
+            scenario?.close();scenario=null
+            runBlocking { fixtures.forEach { GroupManager.deleteGroup(it.id) } }
+            DataStore.selectedGroup=originalGroup
+        }
+    }
+
     @Test fun tvListsEveryGroupAndRemoteSelectionDoesNotStartVpn() {
         val originalGroup=DataStore.currentGroupId()
         val selected=DataStore.selectedProxy;val state=DataStore.serviceState

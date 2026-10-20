@@ -35,5 +35,5 @@ class ValidatorTests(unittest.TestCase):
     def test_harness_preserves_run_and_diagnostics(self):
         old=(ROOT/'buildScript/run_emulator_smoke.sh').read_text();new=w.patched_harness(old)
         self.assertIn('trap collect EXIT',new);self.assertIn('expectedPageSize="$pages"',new);self.assertIn('app:connected${variant}DebugAndroidTest',new);self.assertIn('python3 buildScript/verify_emulator_results.py',new)
-        with self.assertRaises(ValueError):w.patched_harness(old.replace("assert totals['tests']==10","assert totals['tests']>0"))
+        with self.assertRaises(ValueError):w.patched_harness(old.replace("python3 buildScript/verify_emulator_results.py","echo bypass"))
 if __name__=='__main__':unittest.main()

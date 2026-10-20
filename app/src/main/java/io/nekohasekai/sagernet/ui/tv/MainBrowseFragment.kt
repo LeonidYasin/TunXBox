@@ -232,7 +232,12 @@ class MainBrowseFragment : BrowseSupportFragment() {
         }
         parentFragmentManager.setFragmentResultListener("diagnostic_extended",viewLifecycleOwner) {_,_->runExtendedDiagnostics()}
         restoreAfterLoad = true
-        view.post { rowsSupportFragment?.verticalGridView?.setAnimateChildLayout(false) }
+        view.post {
+            rowsSupportFragment?.verticalGridView?.apply {
+                setAnimateChildLayout(false)
+                if (resources.configuration.screenWidthDp < 600) setFocusScrollStrategy(BaseGridView.FOCUS_SCROLL_ITEM)
+            }
+        }
         refreshCards(); requestSnapshot()
     }
     override fun onStart() {
@@ -401,6 +406,9 @@ class MainBrowseFragment : BrowseSupportFragment() {
             // embedded Rows fragment instead; no headers animation is needed.
             val rows = rowsSupportFragment
             if (rows?.view != null) {
+                // Pointer mode owns the viewport until a remote/keyboard key arrives.
+                // Delayed DB callbacks must not snap back to the old selected row.
+                if (rows.verticalGridView?.isFocusSearchDisabled == true) return@post
                 val selection = ListRowPresenter.SelectItemViewHolderTask(index).apply {
                     itemTask = object : Presenter.ViewHolderTask() {
                         override fun run(holder: Presenter.ViewHolder) {

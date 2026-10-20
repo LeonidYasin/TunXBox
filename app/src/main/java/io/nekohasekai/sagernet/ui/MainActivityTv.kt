@@ -16,9 +16,24 @@ import io.nekohasekai.sagernet.ui.tv.MainBrowseFragment
  * Phone rotation follows the user's system auto-rotate setting.
  */
 class MainActivityTv : FragmentActivity() {
+    private val pointerScroll by lazy {
+        io.nekohasekai.sagernet.ui.tv.TvPointerScrollController(this) {
+            (supportFragmentManager.findFragmentById(R.id.tv_container) as? MainBrowseFragment)
+                ?.rowsSupportFragment?.verticalGridView
+        }
+    }
+    override fun dispatchTouchEvent(event: android.view.MotionEvent): Boolean =
+        pointerScroll.dispatchTouch(event) { super.dispatchTouchEvent(it) }
+
+    override fun dispatchGenericMotionEvent(event: android.view.MotionEvent): Boolean =
+        pointerScroll.dispatchMotion(event) || super.dispatchGenericMotionEvent(event)
+
+    override fun onDestroy() { pointerScroll.dispose(); super.onDestroy() }
+
     private val notifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        pointerScroll.beforeKey(event)
         val browse = supportFragmentManager.findFragmentById(R.id.tv_container) as? MainBrowseFragment
         if (browse != null && event.keyCode in intArrayOf(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_INFO)) {
             if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {

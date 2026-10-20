@@ -1,31 +1,23 @@
-import os,pathlib,subprocess,tempfile,unittest
-SCRIPT=pathlib.Path(__file__).parent/'lib/assets.sh'
+import hashlib,json,lzma,os,pathlib,shutil,subprocess,tempfile,unittest
+ROOT=pathlib.Path(__file__).resolve().parents[1]
 class AssetsTest(unittest.TestCase):
- def run_script(self,mode,authenticated=False):
+ def run_script(self,mode):
   with tempfile.TemporaryDirectory() as d:
    root=pathlib.Path(d);dest=root/'app/src/main/assets/sing-box';dest.mkdir(parents=True);(dest/'geoip.db.xz').write_bytes(b'old-working-asset')
-   bin=root/'bin';bin.mkdir()
-   curl=bin/'curl';curl.write_text('''#!/bin/bash
-if [[ "$*" == *api.github.com* ]]; then
- if [[ "$MODE" == api_fail ]]; then exit 22; fi
- if [[ "$MODE" == invalid_tag ]]; then echo '{"tag_name":""}'; else echo '{"tag_name":"20261006"}'; fi
-else
- if [[ "$MODE" == download_fail ]]; then exit 22; fi
- while [[ $# -gt 0 ]]; do if [[ "$1" == --output ]]; then printf 'database-content' > "$2"; exit; fi; shift; done
- exit 2
-fi
-''');curl.chmod(0o755)
-   gh=bin/'gh';gh.write_text('#!/bin/bash\n[[ "$MODE" != api_fail ]] || exit 1\nprintf 20261006\n');gh.chmod(0o755)
-   env=dict(os.environ,MODE=mode,PATH=str(bin)+':'+os.environ['PATH']);env.pop('GH_TOKEN',None)
-   if authenticated:env['GH_TOKEN']='synthetic-test-token'
-   r=subprocess.run(['bash',str(SCRIPT.resolve())],cwd=root,env=env,capture_output=True)
-   return r.returncode,(dest/'geoip.db.xz').read_bytes(),(dest/'geosite.db.xz').exists()
- def test_api_failure_preserves_working_assets(self):
-  code,old,other=self.run_script('api_fail');self.assertNotEqual(code,0);self.assertEqual(old,b'old-working-asset');self.assertFalse(other)
- def test_empty_tag_is_not_used_in_download(self):
-  code,old,other=self.run_script('invalid_tag');self.assertNotEqual(code,0);self.assertEqual(old,b'old-working-asset')
- def test_download_failure_preserves_working_assets(self):
-  code,old,other=self.run_script('download_fail');self.assertNotEqual(code,0);self.assertEqual(old,b'old-working-asset')
- def test_authenticated_success_updates_both_assets(self):
-  code,old,other=self.run_script('success',True);self.assertEqual(code,0);self.assertNotEqual(old,b'old-working-asset');self.assertTrue(other)
+   for f in ['buildScript/lib/assets.sh','buildScript/sources/fetch.py','buildScript/sources/lock.json']:
+    target=root/f;target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(ROOT/f,target)
+   backup=root/'backup';backup.mkdir();data=json.loads((root/'buildScript/sources/lock.json').read_text())
+   for name in data['assets']:
+    content=(name+'-database-content').encode();data['assets'][name].update(version='test-1',sha256=hashlib.sha256(content).hexdigest())
+    if not(mode=='missing' and name=='geosite'):(backup/(name+'-test-1.db')).write_bytes(b'corrupt' if mode=='corrupt' and name=='geosite' else content)
+   (root/'buildScript/sources/lock.json').write_text(json.dumps(data))
+   env=dict(os.environ,SOURCE_ARCHIVE_DIR=str(backup),SOURCE_OFFLINE='1',SOURCE_CACHE_DIR=str(root/'cache'))
+   result=subprocess.run(['bash',str(root/'buildScript/lib/assets.sh')],cwd=root,env=env,capture_output=True)
+   return result.returncode,(dest/'geoip.db.xz').read_bytes(),(dest/'geosite.db.xz').exists()
+ def test_missing_offline_asset_preserves_working_assets(self):
+  code,old,other=self.run_script('missing');self.assertNotEqual(code,0);self.assertEqual(old,b'old-working-asset');self.assertFalse(other)
+ def test_corrupt_asset_preserves_working_assets(self):
+  code,old,other=self.run_script('corrupt');self.assertNotEqual(code,0);self.assertEqual(old,b'old-working-asset');self.assertFalse(other)
+ def test_verified_offline_assets_update_both(self):
+  code,new,other=self.run_script('success');self.assertEqual(code,0);self.assertEqual(lzma.decompress(new),b'geoip-database-content');self.assertTrue(other)
 if __name__=='__main__':unittest.main()
