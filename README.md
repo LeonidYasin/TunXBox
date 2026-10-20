@@ -5,9 +5,14 @@
 - [Сайт TunXBox](https://leonidyasin.github.io/TunXBox/) · [English](https://leonidyasin.github.io/TunXBox/en/)
 - [Резервирование исходников](docs/source-preservation.md) · [Подготовка F-Droid](fdroid/README.md)
 
+## Продолжить разработку
+
+[AGENTS.md](AGENTS.md) → [актуальная передача работы](docs/agent-handoff.md) → [triage PR/issues](docs/release-triage.md). Единый draft кандидат 1.6 — PR #12 в master; stable ещё не выпущен. [Стратегия extended/Xray/XHTTP](docs/core-extension-strategy.md) — отдельный проверяемый эксперимент, не функция текущего APK.
+
 ## Скачать и проверить
 
 - [Стабильная 1.5.0](https://github.com/LeonidYasin/TunXBox/releases/tag/v1.5.0) — неизменяемый опубликованный выпуск.
+- [Новый ручной кандидат 1.6.0-rc.158](https://github.com/LeonidYasin/TunXBox/releases/tag/v1.6.0-rc.158) — опубликованные проверенные APK с исправлением портретной TV-прокрутки; реальная приёмка ещё нужна. Это отдельный тег, не автоматическое обновление rolling-канала. [Доказательства](docs/releases/1.6.0-rc.158-evidence.json).
 - [Тестовый канал 1.6.0-rc](https://github.com/LeonidYasin/TunXBox/releases/tag/v1.6.0-rc) — только сборки, прошедшие обязательные CI gates. Новые изменения в ветке не означают, что APK уже опубликован.
 - Последняя принятая владельцем проверочная сборка — rc.130, [CI](https://github.com/LeonidYasin/TunXBox/actions/runs/38090064430). Не выдавать изменения новой ветки за уже опубликованный APK.
 - Каждый APK содержит Phone/TV. ABI, полная версия/code, commit и signer указаны в manifest/сведениях сборки. Проверяйте `SHA256SUMS.txt`; checksum не заменяет сертификат подписи Android.

@@ -41,7 +41,7 @@ permissions:
 
 jobs:
   recover-verified-rc158:
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.recover_rc158 == 'true'
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.recover_rc158 == 'true' && github.event.inputs.check_only != 'true'
     permissions:
       contents: write
       actions: read

@@ -1,0 +1,67 @@
+{
+  "schema": 1,
+  "recordedAt": "2026-10-20",
+  "status": "published-prerelease-not-stable",
+  "tag": "v1.6.0-rc.158",
+  "sourceCommit": "0bd5770d861d72f2e0523eb1c519f6a7bac1816f",
+  "versionName": "1.6.0-rc.158",
+  "versionCode": 48000158,
+  "signingCertificateSha256": "34764328dd73482587e64d56008a9ef7b860069087e279cb984f7b2e5055b5ef",
+  "originalBuildRun": 39505780016,
+  "originalRunConclusion": "failure-at-rolling-tag-publication-only",
+  "recoveryPublishRun": 39511252702,
+  "recoveryRunConclusion": "success",
+  "uiGates": [
+    {
+      "android": 15,
+      "pageSize": 4096,
+      "tests": 19,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "android": 16,
+      "pageSize": 16384,
+      "tests": 19,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "artifactId": 12303514714,
+  "publicDownloadsRechecked": true,
+  "tagTargetRechecked": true,
+  "apks": [
+    {
+      "name": "TunXBox-1.6.0-rc.158-android-tv-phone-arm64-v8a-preview-release-vc48000158-g0bd5770d.apk",
+      "abis": [
+        "arm64-v8a"
+      ],
+      "sha256": "897eca4f6afa8eed83c80dd7801223dfc200523e24cd12e61c2ba04cbe31585a",
+      "size": 15829965
+    },
+    {
+      "name": "TunXBox-1.6.0-rc.158-android-tv-phone-armeabi-v7a-preview-release-vc48000158-g0bd5770d.apk",
+      "abis": [
+        "armeabi-v7a"
+      ],
+      "sha256": "dfd7073542046f5e11dce289438654e83ba2262b5c63c20b8314bd258f0b4a40",
+      "size": 16122621
+    },
+    {
+      "name": "TunXBox-1.6.0-rc.158-android-tv-phone-universal-preview-release-vc48000158-g0bd5770d.apk",
+      "abis": [
+        "arm64-v8a",
+        "armeabi-v7a",
+        "x86",
+        "x86_64"
+      ],
+      "sha256": "3707eb179325771120dface021c151f164e3fa78af5a7a1b63138272ec9c857c",
+      "size": 45003045
+    }
+  ],
+  "physicalDeviceAcceptance": "pending",
+  "fdroidInclusion": "not-approved-recipe-disabled",
+  "rollingTestChannelUpdated": false
+}

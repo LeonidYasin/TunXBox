@@ -8,11 +8,11 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **822**.
+Всего tracked файлов: **831**.
 
 | Раздел | Файлов |
 |---|---|
-| `.github` | 11 |
+| `.github` | 12 |
 | `app` | 12 |
 | `app/src/androidTest` | 1 |
 | `app/src/main` | 14 |
@@ -206,15 +206,15 @@
 | `app/src/main/res/values-zh-rTW` | 1 |
 | `app/src/main/res/xml` | 25 |
 | `app/src/test` | 29 |
-| `buildScript` | 45 |
+| `buildScript` | 47 |
 | `buildSrc` | 2 |
-| `docs` | 34 |
+| `docs` | 38 |
 | `fastlane` | 8 |
 | `fdroid` | 3 |
 | `gradle` | 2 |
 | `libcore` | 42 |
 | `website` | 37 |
-| `Корень` | 17 |
+| `Корень` | 19 |
 
 ## .github
 
@@ -225,6 +225,7 @@
 - [`.github/ISSUE_TEMPLATE/feature_request-zh_cn.md`](../../.github/ISSUE_TEMPLATE/feature_request-zh_cn.md)
 - [`.github/workflows/prerelease-from-pr.yml`](../../.github/workflows/prerelease-from-pr.yml)
 - [`.github/workflows/preview.yml`](../../.github/workflows/preview.yml)
+- [`.github/workflows/publish-verified-rc158.yml`](../../.github/workflows/publish-verified-rc158.yml)
 - [`.github/workflows/release.yml`](../../.github/workflows/release.yml)
 - [`.github/workflows/signing-backup.yml`](../../.github/workflows/signing-backup.yml)
 - [`.github/workflows/source-readiness.yml`](../../.github/workflows/source-readiness.yml)
@@ -1453,6 +1454,7 @@
 - [`buildScript/nkmr`](../../buildScript/nkmr)
 - [`buildScript/package_preview_apks.py`](../../buildScript/package_preview_apks.py)
 - [`buildScript/project_site_seo.py`](../../buildScript/project_site_seo.py)
+- [`buildScript/publish_verified_rc158.py`](../../buildScript/publish_verified_rc158.py)
 - [`buildScript/run_emulator_smoke.sh`](../../buildScript/run_emulator_smoke.sh)
 - [`buildScript/run_verified_emulator_smoke.py`](../../buildScript/run_verified_emulator_smoke.py)
 - [`buildScript/setup_signing.py`](../../buildScript/setup_signing.py)
@@ -1469,6 +1471,7 @@
 - [`buildScript/test_native_alignment.py`](../../buildScript/test_native_alignment.py)
 - [`buildScript/test_package_preview_apks.py`](../../buildScript/test_package_preview_apks.py)
 - [`buildScript/test_project_site.py`](../../buildScript/test_project_site.py)
+- [`buildScript/test_publish_verified_rc158.py`](../../buildScript/test_publish_verified_rc158.py)
 - [`buildScript/test_reality_patch.py`](../../buildScript/test_reality_patch.py)
 - [`buildScript/test_signing_bundle.py`](../../buildScript/test_signing_bundle.py)
 - [`buildScript/test_source_preservation.py`](../../buildScript/test_source_preservation.py)
@@ -1486,11 +1489,13 @@
 ## docs
 
 - [`docs/README.md`](../../docs/README.md)
+- [`docs/agent-handoff.md`](../../docs/agent-handoff.md)
 - [`docs/app-updates.md`](../../docs/app-updates.md)
 - [`docs/architecture.md`](../../docs/architecture.md)
 - [`docs/branch-audit.md`](../../docs/branch-audit.md)
 - [`docs/connection-diagnostics.md`](../../docs/connection-diagnostics.md)
 - [`docs/contributing-and-support.md`](../../docs/contributing-and-support.md)
+- [`docs/core-extension-strategy.md`](../../docs/core-extension-strategy.md)
 - [`docs/decisions.md`](../../docs/decisions.md)
 - [`docs/development.md`](../../docs/development.md)
 - [`docs/diagnostic-support.md`](../../docs/diagnostic-support.md)
@@ -1505,7 +1510,9 @@
 - [`docs/reference/preferences.md`](../../docs/reference/preferences.md)
 - [`docs/reference/repository-index.md`](../../docs/reference/repository-index.md)
 - [`docs/reference/tv-navigation.json`](../../docs/reference/tv-navigation.json)
+- [`docs/release-triage.md`](../../docs/release-triage.md)
 - [`docs/releases/1.5.0.md`](../../docs/releases/1.5.0.md)
+- [`docs/releases/1.6.0-rc.158-evidence.json`](../../docs/releases/1.6.0-rc.158-evidence.json)
 - [`docs/roadmap.md`](../../docs/roadmap.md)
 - [`docs/scenarios.md`](../../docs/scenarios.md)
 - [`docs/security.md`](../../docs/security.md)
@@ -1630,7 +1637,9 @@
 ## Корень
 
 - [`.gitignore`](../../.gitignore)
+- [`AGENTS.md`](../../AGENTS.md)
 - [`AUTHORS`](../../AUTHORS)
+- [`CLAUDE.md`](../../CLAUDE.md)
 - [`COPYING`](../../COPYING)
 - [`LICENSE`](../../LICENSE)
 - [`README.md`](../../README.md)

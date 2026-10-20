@@ -2,6 +2,10 @@
 
 Начните с [полной карты проекта](project-map.md). Документы описывают принятый baseline `master` после PR #1 и принятого PR #4 и явно отмеченные дальнейшие планы, а не обещание, что каждая функция проверена на каждом Android-устройстве.
 
+## Актуальное продолжение разработки
+
+[Передача работы агенту](agent-handoff.md), [порядок PR/issues и release gates](release-triage.md), [аудит extended/Xray/XHTTP](core-extension-strategy.md), [машиночитаемые факты rc.158](releases/1.6.0-rc.158-evidence.json). Этот снимок уточняет исторические статусы ниже; новый commit в ветке не равен новому APK.
+
 ## Контакт и свежие приоритеты
 
 Публичная почта: [leonidyasin@gmail.com](mailto:leonidyasin@gmail.com). [Поддержать проект](contributing-and-support.md), [проект сопровождения](support-services-proposal.md), [сайт / Pages](github-pages.md), [Hysteria2 и health-индикаторы](hysteria-health.md). Новая сборка не готова до успешного CI/publication; готовность проверяется по фактическому manifest, не по ветке.
