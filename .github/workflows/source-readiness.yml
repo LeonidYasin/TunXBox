@@ -1,0 +1,67 @@
+name: Source preservation and F-Droid readiness
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'buildScript/sources/**'
+      - 'buildScript/lib/**'
+      - 'buildScript/fdroid/**'
+      - 'buildScript/test_*.py'
+      - 'libcore/**'
+      - 'fdroid/**'
+      - 'fastlane/**'
+      - '.github/workflows/source-readiness.yml'
+permissions:
+  contents: read
+jobs:
+  source-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.14.1'
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.8'
+          cache: false
+      - name: Install pinned pnpm
+        run: npm install --global pnpm@8.15.9 --ignore-scripts
+      - name: Unit and browser tests
+        run: |
+          python3 -m unittest discover -s buildScript -p 'test_*.py'
+          node buildScript/test_tv_transfer_page.cjs
+      - name: Prepare pinned sources and first-launch datasets
+        run: |
+          python3 buildScript/sources/fetch.py prefetch
+          bash buildScript/lib/core/get_source.sh
+          bash buildScript/lib/assets.sh
+      - name: Build dashboard from source
+        run: bash buildScript/lib/dashboard.sh
+      - name: Compile pinned gomobile tools from source (no NDK needed)
+        run: |
+          SOURCE=$(python3 buildScript/sources/fetch.py component gomobile)
+          mkdir -p "$RUNNER_TEMP/gomobile-bin"
+          cd "$SOURCE"
+          GOTOOLCHAIN=local GOBIN="$RUNNER_TEMP/gomobile-bin" go install ./cmd/gomobile ./cmd/gobind
+      - name: Generate catalog icon from the existing launcher vector
+        run: python3 buildScript/sources/catalog_icon.py
+      - name: Preserve sources and dependency caches
+        run: |
+          python3 buildScript/sources/archive.py --go-modules --pnpm-store .source-cache/pnpm-store
+          python3 buildScript/sources/readiness.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pinned-sources-and-catalog-review
+          path: |
+            source-backups/*.tar.gz
+            source-backups/*.sha256
+            app/src/main/assets/yacd.zip
+            fastlane/metadata/android/en-US/images/icon.png
+            fdroid/READINESS.md
+          retention-days: 90
+      # Artifacts expire: keep the portable archive outside GitHub as well.
+      # No signing material, publication or changes to immutable APK releases.
