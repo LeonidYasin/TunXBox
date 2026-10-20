@@ -14,6 +14,10 @@ on:
     types: [labeled]
   workflow_dispatch:
     inputs:
+      recover_rc158:
+        description: 'Publish original verified rc158 artifacts using pre-created numbered tag; no rebuild'
+        type: boolean
+        default: false
       ref:
         description: 'Branch to build (default: current ref)'
         required: false
@@ -36,9 +40,16 @@ permissions:
   pull-requests: write
 
 jobs:
+  recover-verified-rc158:
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.recover_rc158 == 'true'
+    permissions:
+      contents: write
+      actions: read
+    uses: ./.github/workflows/publish-verified-rc158.yml
+
   build-and-publish-prerelease:
     if: >-
-      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.recover_rc158 != 'true') ||
       (github.event_name == 'pull_request' && github.event.label.name == 'publish-rc')
     runs-on: ubuntu-latest
     steps:
