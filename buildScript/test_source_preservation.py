@@ -15,6 +15,13 @@ class SourceTest(unittest.TestCase):
   for value in [c['revision'],c['bundledSha256'],'Apache License, Version 2.0','JetBrains s.r.o.','Philipp Nurullin','Konstantin Bulenkov']:self.assertIn(value,notice)
   license=(ROOT/'app/src/main/assets/third-party/jetbrains-mono-LICENSE.txt').read_text()
   self.assertIn('Apache License',license);self.assertIn('Version 2.0, January 2004',license)
+ def test_fdroid_compilation_occurs_after_source_scan_without_ignores(self):
+  recipe=(ROOT/'fdroid/metadata/com.tunxbox.app.yml').read_text()
+  self.assertIn('    build: cd .. && bash buildScript/fdroid/prebuild.sh',recipe)
+  self.assertNotIn('    prebuild:',recipe);self.assertNotIn('scanignore:',recipe)
+  self.assertIn('    rm:\n      - release.keystore',recipe)
+  deletion=recipe.split('    scandelete:',1)[1].split('    gradleprops:',1)[0]
+  self.assertIn('app/src/main/assets/yacd.zip',deletion);self.assertNotIn('release.keystore',deletion)
  def test_offline_cache_verifies_hash(self):
   with tempfile.TemporaryDirectory() as d,patch.dict(os.environ,{'SOURCE_CACHE_DIR':d,'SOURCE_OFFLINE':'1'}):
    a=pathlib.Path(d)/'archives';a.mkdir();(a/'x').write_bytes(b'test');self.assertEqual(fetch.obtain('https://invalid',hashlib.sha256(b'test').hexdigest(),'x'),a/'x')

@@ -141,16 +141,20 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: pixel_2
+          ram-size: 3072M
           disable-animations: true
           emulator-options: -no-window -gpu software -no-snapshot -noaudio -no-boot-anim
           script: bash buildScript/run_emulator_smoke.sh 4096 Fdroid
-      - name: Existing F-Droid 16KB device gates
+      - name: Android 16 F-Droid 16KB device gates
         uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d
         with:
-          api-level: 35
+          # API 35 ps16k aborted with a system_server ReferenceQueueDaemon crash.
+          # Match the RC Android 16 environment; retain actual page-size and all UI gates.
+          api-level: 36
           target: google_apis_ps16k
           arch: x86_64
           profile: pixel_2
+          ram-size: 3072M
           disable-animations: true
           emulator-options: -no-window -gpu software -no-snapshot -noaudio -no-boot-anim
           script: bash buildScript/run_emulator_smoke.sh 16384 Fdroid

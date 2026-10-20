@@ -1,13 +1,13 @@
 Disabled: Pending license clarification, source scan and clean F-Droid build
 Categories:
-  - Internet
+  - VPN & Proxy
 License: GPL-3.0-or-later
 AuthorName: Leonid Yasin
 WebSite: https://leonidyasin.github.io/TunXBox/
 SourceCode: https://github.com/LeonidYasin/TunXBox
 IssueTracker: https://github.com/LeonidYasin/TunXBox/issues
 AutoName: TunXBox
-Summary: Remote-friendly sing-box proxy client for Android TV and phones
+Summary: Remote-friendly sing-box proxy client for TVs and phones
 Description: |-
     Open-source NekoBox/SagerNet fork with TV remote navigation, a phone
     interface, profiles and groups, local QR/browser configuration transfer,
@@ -24,13 +24,14 @@ Builds:
     gradle:
       - fdroid
     output: build/outputs/apk/fdroid/release/*.apk
+    rm:
+      - release.keystore
     scandelete:
       - app/src/main/assets/yacd.zip
-      - release.keystore
     gradleprops:
       - tunxbox.fdroidUnsigned=true
       - tunxbox.universalOnly=true
-    prebuild: cd .. && bash buildScript/fdroid/prebuild.sh
+    build: cd .. && bash buildScript/fdroid/prebuild.sh
     ndk: 25.0.8775105
 AutoUpdateMode: None
 UpdateCheckMode: Tags ^v[0-9]+\.[0-9]+\.[0-9]+$
