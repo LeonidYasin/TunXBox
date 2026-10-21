@@ -67,3 +67,7 @@ OpenSSL сам запросит пароль. Восстановленный `si
 Имя новых файлов строится из фактических `versionName` и `versionCode`, прочитанных из подписанного APK, а не только базовой версии/taga. Формат: `TunXBox-{installedVersionName}-android-tv-phone-{ABI}-{flavor}-release-vc{versionCode}-g{shortCommit}.apk`. Например, `TunXBox-1.6.0-rc.120-android-tv-phone-universal-preview-release-vc48000120-gfe912123.apk` — пример формата, не переименование ранее опубликованного файла. Номер RC должен совпадать с build sequence в versionCode; universal означает фактические четыре ABI. `preview-release` — тестовый канал, но подписанная release-сборка, не debug. Stable использует фактическую версию без RC и `oss-release`.
 
 Для rolling RC публикация сверяет имя файла/manifest/SHA256SUMS, Assets label/name, URL и реальный HTTP `Content-Disposition` после redirects. Заголовок release page показывает установленную версию с номером RC. При расхождении проверка падает; стабильные ранее опубликованные Assets не переименовываются. Имена APK не содержат ключей или данных подписки.
+
+## Native updater R10
+
+[Реализация-кандидат, ограничения и приёмка](app-updates.md): выбор stable/test в меню, приватная докачка, реальный signer/ABI/package/version/hash и Android installer. Не обходить несовпадение подписи удалением приложения; личные ключи никогда не передаются updater. Старый stable не понижается поверх более нового test code.

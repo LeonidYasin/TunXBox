@@ -8,14 +8,14 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **665**.
+Всего tracked файлов: **834**.
 
 | Раздел | Файлов |
 |---|---|
-| `.github` | 9 |
+| `.github` | 12 |
 | `app` | 12 |
 | `app/src/androidTest` | 1 |
-| `app/src/main` | 11 |
+| `app/src/main` | 14 |
 | `app/src/main/java/com/github/shadowsocks/plugin` | 2 |
 | `app/src/main/java/io/nekohasekai/sagernet/BootReceiver.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/Constants.kt` | 1 |
@@ -64,12 +64,21 @@
 | `app/src/main/java/io/nekohasekai/sagernet/fmt/trojan` | 2 |
 | `app/src/main/java/io/nekohasekai/sagernet/fmt/trojan_go` | 2 |
 | `app/src/main/java/io/nekohasekai/sagernet/fmt/tuic` | 2 |
-| `app/src/main/java/io/nekohasekai/sagernet/fmt/v2ray` | 3 |
+| `app/src/main/java/io/nekohasekai/sagernet/fmt/v2ray` | 4 |
 | `app/src/main/java/io/nekohasekai/sagernet/fmt/wireguard` | 2 |
+| `app/src/main/java/io/nekohasekai/sagernet/group/BoundedConnectionCheck.kt` | 1 |
+| `app/src/main/java/io/nekohasekai/sagernet/group/ConnectionTestPresentation.kt` | 1 |
+| `app/src/main/java/io/nekohasekai/sagernet/group/ConnectionTestResult.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/group/GroupInterfaceAdapter.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/group/GroupUpdater.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/group/RawUpdater.kt` | 1 |
+| `app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionFailureCategory.kt` | 1 |
+| `app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionFailurePresentation.kt` | 1 |
+| `app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionTitle.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateGuard.kt` | 1 |
+| `app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateJournal.kt` | 1 |
+| `app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdatePresentation.kt` | 1 |
+| `app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateResult.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ktx/Asyncs.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ktx/Browsers.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ktx/Dialogs.kt` | 1 |
@@ -83,10 +92,12 @@
 | `app/src/main/java/io/nekohasekai/sagernet/ktx/TvDeviceUtil.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ktx/Utils.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/plugin/PluginManager.kt` | 1 |
+| `app/src/main/java/io/nekohasekai/sagernet/ui/AboutBuildInfo.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/AboutFragment.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/AppLifecycleActions.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/AppListActivity.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/AppManagerActivity.kt` | 1 |
+| `app/src/main/java/io/nekohasekai/sagernet/ui/AppUpdateFragment.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/AssetsActivity.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/BackupFragment.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/BlankActivity.kt` | 1 |
@@ -105,6 +116,7 @@
 | `app/src/main/java/io/nekohasekai/sagernet/ui/PromotionsFragment.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/QuickDisableShortcut.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/QuickEnableShortcut.kt` | 1 |
+| `app/src/main/java/io/nekohasekai/sagernet/ui/ReleaseNotesActivity.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/ReleaseUpdatePolicy.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/RemoteFocusHighlighter.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/RemoteProfileFocus.kt` | 1 |
@@ -122,9 +134,11 @@
 | `app/src/main/java/io/nekohasekai/sagernet/ui/ToolsFragment.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/VpnRequestActivity.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/WebviewFragment.kt` | 1 |
+| `app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics` | 5 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/lan` | 7 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/profile` | 16 |
-| `app/src/main/java/io/nekohasekai/sagernet/ui/tv` | 19 |
+| `app/src/main/java/io/nekohasekai/sagernet/ui/tv` | 26 |
+| `app/src/main/java/io/nekohasekai/sagernet/ui/update` | 9 |
 | `app/src/main/java/io/nekohasekai/sagernet/utils/Commandline.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/utils/CrashHandler.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/utils/DefaultNetworkListener.kt` | 1 |
@@ -157,7 +171,7 @@
 | `app/src/main/res/drawable` | 125 |
 | `app/src/main/res/drawable-v26` | 3 |
 | `app/src/main/res/font` | 1 |
-| `app/src/main/res/layout` | 48 |
+| `app/src/main/res/layout` | 49 |
 | `app/src/main/res/menu` | 18 |
 | `app/src/main/res/mipmap-anydpi-v26` | 1 |
 | `app/src/main/res/mipmap-hdpi` | 2 |
@@ -168,7 +182,7 @@
 | `app/src/main/res/raw` | 4 |
 | `app/src/main/res/raw-zh-rCN` | 4 |
 | `app/src/main/res/resources.properties` | 1 |
-| `app/src/main/res/values` | 17 |
+| `app/src/main/res/values` | 24 |
 | `app/src/main/res/values-ar` | 1 |
 | `app/src/main/res/values-be` | 1 |
 | `app/src/main/res/values-de` | 1 |
@@ -183,32 +197,38 @@
 | `app/src/main/res/values-night` | 2 |
 | `app/src/main/res/values-nl` | 1 |
 | `app/src/main/res/values-pt-rBR` | 1 |
-| `app/src/main/res/values-ru` | 7 |
+| `app/src/main/res/values-ru` | 14 |
 | `app/src/main/res/values-tr` | 1 |
 | `app/src/main/res/values-uk` | 1 |
 | `app/src/main/res/values-w600dp-h480dp` | 1 |
 | `app/src/main/res/values-zh-rCN` | 1 |
 | `app/src/main/res/values-zh-rHK` | 1 |
 | `app/src/main/res/values-zh-rTW` | 1 |
-| `app/src/main/res/xml` | 24 |
-| `app/src/test` | 13 |
-| `buildScript` | 24 |
+| `app/src/main/res/xml` | 25 |
+| `app/src/test` | 29 |
+| `buildScript` | 47 |
 | `buildSrc` | 2 |
-| `docs` | 19 |
+| `docs` | 41 |
+| `fastlane` | 8 |
+| `fdroid` | 3 |
 | `gradle` | 2 |
 | `libcore` | 42 |
-| `Корень` | 15 |
+| `website` | 37 |
+| `Корень` | 19 |
 
 ## .github
 
 - [`.github/ISSUE_TEMPLATE/bug-report-en.md`](../../.github/ISSUE_TEMPLATE/bug-report-en.md)
+- [`.github/ISSUE_TEMPLATE/bug-report-ru.md`](../../.github/ISSUE_TEMPLATE/bug-report-ru.md)
 - [`.github/ISSUE_TEMPLATE/bug-report-zh_cn.md`](../../.github/ISSUE_TEMPLATE/bug-report-zh_cn.md)
 - [`.github/ISSUE_TEMPLATE/feature_request-en.md`](../../.github/ISSUE_TEMPLATE/feature_request-en.md)
 - [`.github/ISSUE_TEMPLATE/feature_request-zh_cn.md`](../../.github/ISSUE_TEMPLATE/feature_request-zh_cn.md)
 - [`.github/workflows/prerelease-from-pr.yml`](../../.github/workflows/prerelease-from-pr.yml)
 - [`.github/workflows/preview.yml`](../../.github/workflows/preview.yml)
+- [`.github/workflows/publish-verified-rc158.yml`](../../.github/workflows/publish-verified-rc158.yml)
 - [`.github/workflows/release.yml`](../../.github/workflows/release.yml)
 - [`.github/workflows/signing-backup.yml`](../../.github/workflows/signing-backup.yml)
+- [`.github/workflows/source-readiness.yml`](../../.github/workflows/source-readiness.yml)
 - [`.github/workflows/stable-release.yml`](../../.github/workflows/stable-release.yml)
 
 ## app
@@ -237,8 +257,11 @@
 - [`app/src/main/aidl/io/nekohasekai/sagernet/aidl/ISagerNetServiceCallback.aidl`](../../app/src/main/aidl/io/nekohasekai/sagernet/aidl/ISagerNetServiceCallback.aidl)
 - [`app/src/main/aidl/io/nekohasekai/sagernet/aidl/SpeedDisplayData.aidl`](../../app/src/main/aidl/io/nekohasekai/sagernet/aidl/SpeedDisplayData.aidl)
 - [`app/src/main/aidl/io/nekohasekai/sagernet/aidl/TrafficData.aidl`](../../app/src/main/aidl/io/nekohasekai/sagernet/aidl/TrafficData.aidl)
+- [`app/src/main/assets/COPYING`](../../app/src/main/assets/COPYING)
 - [`app/src/main/assets/LICENSE`](../../app/src/main/assets/LICENSE)
 - [`app/src/main/assets/proxy_packagename.txt`](../../app/src/main/assets/proxy_packagename.txt)
+- [`app/src/main/assets/third-party/jetbrains-mono-LICENSE.txt`](../../app/src/main/assets/third-party/jetbrains-mono-LICENSE.txt)
+- [`app/src/main/assets/third-party/jetbrains-mono-NOTICE.txt`](../../app/src/main/assets/third-party/jetbrains-mono-NOTICE.txt)
 - [`app/src/main/assets/tv-transfer.html`](../../app/src/main/assets/tv-transfer.html)
 - [`app/src/main/assets/yacd.version.txt`](../../app/src/main/assets/yacd.version.txt)
 - [`app/src/main/assets/yacd.zip`](../../app/src/main/assets/yacd.zip)
@@ -460,6 +483,7 @@
 ## app/src/main/java/io/nekohasekai/sagernet/fmt/v2ray
 
 - [`app/src/main/java/io/nekohasekai/sagernet/fmt/v2ray/StandardV2RayBean.java`](../../app/src/main/java/io/nekohasekai/sagernet/fmt/v2ray/StandardV2RayBean.java)
+- [`app/src/main/java/io/nekohasekai/sagernet/fmt/v2ray/UnsupportedV2RayTransport.kt`](../../app/src/main/java/io/nekohasekai/sagernet/fmt/v2ray/UnsupportedV2RayTransport.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/fmt/v2ray/V2RayFmt.kt`](../../app/src/main/java/io/nekohasekai/sagernet/fmt/v2ray/V2RayFmt.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/fmt/v2ray/VMessBean.java`](../../app/src/main/java/io/nekohasekai/sagernet/fmt/v2ray/VMessBean.java)
 
@@ -467,6 +491,18 @@
 
 - [`app/src/main/java/io/nekohasekai/sagernet/fmt/wireguard/WireGuardBean.java`](../../app/src/main/java/io/nekohasekai/sagernet/fmt/wireguard/WireGuardBean.java)
 - [`app/src/main/java/io/nekohasekai/sagernet/fmt/wireguard/WireGuardFmt.kt`](../../app/src/main/java/io/nekohasekai/sagernet/fmt/wireguard/WireGuardFmt.kt)
+
+## app/src/main/java/io/nekohasekai/sagernet/group/BoundedConnectionCheck.kt
+
+- [`app/src/main/java/io/nekohasekai/sagernet/group/BoundedConnectionCheck.kt`](../../app/src/main/java/io/nekohasekai/sagernet/group/BoundedConnectionCheck.kt)
+
+## app/src/main/java/io/nekohasekai/sagernet/group/ConnectionTestPresentation.kt
+
+- [`app/src/main/java/io/nekohasekai/sagernet/group/ConnectionTestPresentation.kt`](../../app/src/main/java/io/nekohasekai/sagernet/group/ConnectionTestPresentation.kt)
+
+## app/src/main/java/io/nekohasekai/sagernet/group/ConnectionTestResult.kt
+
+- [`app/src/main/java/io/nekohasekai/sagernet/group/ConnectionTestResult.kt`](../../app/src/main/java/io/nekohasekai/sagernet/group/ConnectionTestResult.kt)
 
 ## app/src/main/java/io/nekohasekai/sagernet/group/GroupInterfaceAdapter.kt
 
@@ -480,9 +516,33 @@
 
 - [`app/src/main/java/io/nekohasekai/sagernet/group/RawUpdater.kt`](../../app/src/main/java/io/nekohasekai/sagernet/group/RawUpdater.kt)
 
+## app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionFailureCategory.kt
+
+- [`app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionFailureCategory.kt`](../../app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionFailureCategory.kt)
+
+## app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionFailurePresentation.kt
+
+- [`app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionFailurePresentation.kt`](../../app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionFailurePresentation.kt)
+
+## app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionTitle.kt
+
+- [`app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionTitle.kt`](../../app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionTitle.kt)
+
 ## app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateGuard.kt
 
 - [`app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateGuard.kt`](../../app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateGuard.kt)
+
+## app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateJournal.kt
+
+- [`app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateJournal.kt`](../../app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateJournal.kt)
+
+## app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdatePresentation.kt
+
+- [`app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdatePresentation.kt`](../../app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdatePresentation.kt)
+
+## app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateResult.kt
+
+- [`app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateResult.kt`](../../app/src/main/java/io/nekohasekai/sagernet/group/SubscriptionUpdateResult.kt)
 
 ## app/src/main/java/io/nekohasekai/sagernet/ktx/Asyncs.kt
 
@@ -536,6 +596,10 @@
 
 - [`app/src/main/java/io/nekohasekai/sagernet/plugin/PluginManager.kt`](../../app/src/main/java/io/nekohasekai/sagernet/plugin/PluginManager.kt)
 
+## app/src/main/java/io/nekohasekai/sagernet/ui/AboutBuildInfo.kt
+
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/AboutBuildInfo.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/AboutBuildInfo.kt)
+
 ## app/src/main/java/io/nekohasekai/sagernet/ui/AboutFragment.kt
 
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/AboutFragment.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/AboutFragment.kt)
@@ -551,6 +615,10 @@
 ## app/src/main/java/io/nekohasekai/sagernet/ui/AppManagerActivity.kt
 
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/AppManagerActivity.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/AppManagerActivity.kt)
+
+## app/src/main/java/io/nekohasekai/sagernet/ui/AppUpdateFragment.kt
+
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/AppUpdateFragment.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/AppUpdateFragment.kt)
 
 ## app/src/main/java/io/nekohasekai/sagernet/ui/AssetsActivity.kt
 
@@ -624,6 +692,10 @@
 
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/QuickEnableShortcut.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/QuickEnableShortcut.kt)
 
+## app/src/main/java/io/nekohasekai/sagernet/ui/ReleaseNotesActivity.kt
+
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/ReleaseNotesActivity.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/ReleaseNotesActivity.kt)
+
 ## app/src/main/java/io/nekohasekai/sagernet/ui/ReleaseUpdatePolicy.kt
 
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/ReleaseUpdatePolicy.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/ReleaseUpdatePolicy.kt)
@@ -692,6 +764,14 @@
 
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/WebviewFragment.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/WebviewFragment.kt)
 
+## app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics
+
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/ConnectionDiagnostic.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/ConnectionDiagnostic.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/DiagnosticDialog.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/DiagnosticDialog.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/DiagnosticShareServer.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/DiagnosticShareServer.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/ExtendedConnectionDiagnostics.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/ExtendedConnectionDiagnostics.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/TlsFailureEvidence.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/TlsFailureEvidence.kt)
+
 ## app/src/main/java/io/nekohasekai/sagernet/ui/lan
 
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/lan/GatewayProfileStore.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/lan/GatewayProfileStore.kt)
@@ -724,17 +804,24 @@
 ## app/src/main/java/io/nekohasekai/sagernet/ui/tv
 
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/ActionPresenter.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/ActionPresenter.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/ConnectionCardPresenter.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/ConnectionCardPresenter.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/GroupAndFunctionPresenters.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/GroupAndFunctionPresenters.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/MainBrowseFragment.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/MainBrowseFragment.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/ProfileCardPresenter.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/ProfileCardPresenter.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/QrCodeTransferFragment.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/QrCodeTransferFragment.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/QualityCardPresenter.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/QualityCardPresenter.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/StableTvRowPresenter.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/StableTvRowPresenter.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TransferImportInput.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TransferImportInput.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TransferProtocol.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TransferProtocol.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvDiagnostics.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvDiagnostics.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvFunctionCatalog.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvFunctionCatalog.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvGroupQuality.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvGroupQuality.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvGroupTransfer.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvGroupTransfer.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvHealthReason.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvHealthReason.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvHealthSession.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvHealthSession.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvInteractionPolicy.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvInteractionPolicy.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvLayoutPolicy.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvLayoutPolicy.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvPointerScrollController.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvPointerScrollController.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvProfileAddCatalog.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvProfileAddCatalog.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvProfileImporter.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvProfileImporter.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvRowDiff.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvRowDiff.kt)
@@ -742,6 +829,18 @@
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvTransferClient.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvTransferClient.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvTransferServer.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvTransferServer.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvUiPreferences.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvUiPreferences.kt)
+
+## app/src/main/java/io/nekohasekai/sagernet/ui/update
+
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/update/ApkInstallIntents.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/update/ApkInstallIntents.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/update/DownloadFeedback.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/update/DownloadFeedback.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/update/GitHubUpdater.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/update/GitHubUpdater.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/update/ReleaseCatalog.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/update/ReleaseCatalog.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/update/ResumableDownload.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/update/ResumableDownload.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/update/SignaturePolicy.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/update/SignaturePolicy.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/update/UpdateFileProvider.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/update/UpdateFileProvider.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/update/UpdateInstalledReceiver.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/update/UpdateInstalledReceiver.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/update/UpdateReceipt.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/update/UpdateReceipt.kt)
 
 ## app/src/main/java/io/nekohasekai/sagernet/utils/Commandline.kt
 
@@ -1036,6 +1135,7 @@
 - [`app/src/main/res/layout/layout_add_entity.xml`](../../app/src/main/res/layout/layout_add_entity.xml)
 - [`app/src/main/res/layout/layout_app_list.xml`](../../app/src/main/res/layout/layout_app_list.xml)
 - [`app/src/main/res/layout/layout_app_placeholder.xml`](../../app/src/main/res/layout/layout_app_placeholder.xml)
+- [`app/src/main/res/layout/layout_app_updates.xml`](../../app/src/main/res/layout/layout_app_updates.xml)
 - [`app/src/main/res/layout/layout_appbar.xml`](../../app/src/main/res/layout/layout_appbar.xml)
 - [`app/src/main/res/layout/layout_apps.xml`](../../app/src/main/res/layout/layout_apps.xml)
 - [`app/src/main/res/layout/layout_apps_item.xml`](../../app/src/main/res/layout/layout_apps_item.xml)
@@ -1149,21 +1249,28 @@
 ## app/src/main/res/values
 
 - [`app/src/main/res/values/app_identity_actions.xml`](../../app/src/main/res/values/app_identity_actions.xml)
+- [`app/src/main/res/values/app_updates.xml`](../../app/src/main/res/values/app_updates.xml)
 - [`app/src/main/res/values/arrays.xml`](../../app/src/main/res/values/arrays.xml)
 - [`app/src/main/res/values/attrs.xml`](../../app/src/main/res/values/attrs.xml)
 - [`app/src/main/res/values/branding.xml`](../../app/src/main/res/values/branding.xml)
 - [`app/src/main/res/values/colors.xml`](../../app/src/main/res/values/colors.xml)
+- [`app/src/main/res/values/connection_diagnostics.xml`](../../app/src/main/res/values/connection_diagnostics.xml)
 - [`app/src/main/res/values/crash_recovery.xml`](../../app/src/main/res/values/crash_recovery.xml)
 - [`app/src/main/res/values/dimens.xml`](../../app/src/main/res/values/dimens.xml)
+- [`app/src/main/res/values/extended_diagnostics.xml`](../../app/src/main/res/values/extended_diagnostics.xml)
 - [`app/src/main/res/values/ic_launcher_background.xml`](../../app/src/main/res/values/ic_launcher_background.xml)
 - [`app/src/main/res/values/mode_choice.xml`](../../app/src/main/res/values/mode_choice.xml)
+- [`app/src/main/res/values/release_notes.xml`](../../app/src/main/res/values/release_notes.xml)
 - [`app/src/main/res/values/remote_actions.xml`](../../app/src/main/res/values/remote_actions.xml)
 - [`app/src/main/res/values/remote_focus.xml`](../../app/src/main/res/values/remote_focus.xml)
 - [`app/src/main/res/values/strings.xml`](../../app/src/main/res/values/strings.xml)
 - [`app/src/main/res/values/themes.xml`](../../app/src/main/res/values/themes.xml)
 - [`app/src/main/res/values/tv_feedback.xml`](../../app/src/main/res/values/tv_feedback.xml)
+- [`app/src/main/res/values/tv_groups.xml`](../../app/src/main/res/values/tv_groups.xml)
+- [`app/src/main/res/values/tv_health.xml`](../../app/src/main/res/values/tv_health.xml)
 - [`app/src/main/res/values/tv_ids.xml`](../../app/src/main/res/values/tv_ids.xml)
 - [`app/src/main/res/values/tv_layout.xml`](../../app/src/main/res/values/tv_layout.xml)
+- [`app/src/main/res/values/tv_quality.xml`](../../app/src/main/res/values/tv_quality.xml)
 - [`app/src/main/res/values/tv_strings.xml`](../../app/src/main/res/values/tv_strings.xml)
 
 ## app/src/main/res/values-ar
@@ -1226,11 +1333,18 @@
 ## app/src/main/res/values-ru
 
 - [`app/src/main/res/values-ru/app_identity_actions.xml`](../../app/src/main/res/values-ru/app_identity_actions.xml)
+- [`app/src/main/res/values-ru/app_updates.xml`](../../app/src/main/res/values-ru/app_updates.xml)
+- [`app/src/main/res/values-ru/connection_diagnostics.xml`](../../app/src/main/res/values-ru/connection_diagnostics.xml)
 - [`app/src/main/res/values-ru/crash_recovery.xml`](../../app/src/main/res/values-ru/crash_recovery.xml)
+- [`app/src/main/res/values-ru/extended_diagnostics.xml`](../../app/src/main/res/values-ru/extended_diagnostics.xml)
 - [`app/src/main/res/values-ru/mode_choice.xml`](../../app/src/main/res/values-ru/mode_choice.xml)
+- [`app/src/main/res/values-ru/release_notes.xml`](../../app/src/main/res/values-ru/release_notes.xml)
 - [`app/src/main/res/values-ru/remote_actions.xml`](../../app/src/main/res/values-ru/remote_actions.xml)
 - [`app/src/main/res/values-ru/strings.xml`](../../app/src/main/res/values-ru/strings.xml)
 - [`app/src/main/res/values-ru/tv_feedback.xml`](../../app/src/main/res/values-ru/tv_feedback.xml)
+- [`app/src/main/res/values-ru/tv_groups.xml`](../../app/src/main/res/values-ru/tv_groups.xml)
+- [`app/src/main/res/values-ru/tv_health.xml`](../../app/src/main/res/values-ru/tv_health.xml)
+- [`app/src/main/res/values-ru/tv_quality.xml`](../../app/src/main/res/values-ru/tv_quality.xml)
 - [`app/src/main/res/values-ru/tv_strings.xml`](../../app/src/main/res/values-ru/tv_strings.xml)
 
 ## app/src/main/res/values-tr
@@ -1282,26 +1396,44 @@
 - [`app/src/main/res/xml/standard_v2ray_preferences.xml`](../../app/src/main/res/xml/standard_v2ray_preferences.xml)
 - [`app/src/main/res/xml/trojan_go_preferences.xml`](../../app/src/main/res/xml/trojan_go_preferences.xml)
 - [`app/src/main/res/xml/tuic_preferences.xml`](../../app/src/main/res/xml/tuic_preferences.xml)
+- [`app/src/main/res/xml/update_file_paths.xml`](../../app/src/main/res/xml/update_file_paths.xml)
 - [`app/src/main/res/xml/wireguard_preferences.xml`](../../app/src/main/res/xml/wireguard_preferences.xml)
 
 ## app/src/test
 
+- [`app/src/test/java/io/nekohasekai/sagernet/fmt/v2ray/UnsupportedV2RayTransportTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/fmt/v2ray/UnsupportedV2RayTransportTest.kt)
+- [`app/src/test/java/io/nekohasekai/sagernet/group/BoundedConnectionCheckTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/group/BoundedConnectionCheckTest.kt)
+- [`app/src/test/java/io/nekohasekai/sagernet/group/FailureAndConnectionTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/group/FailureAndConnectionTest.kt)
+- [`app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionFailureCategoryTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionFailureCategoryTest.kt)
+- [`app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionTitleTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionTitleTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionUpdateGuardTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionUpdateGuardTest.kt)
+- [`app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionUpdateResultTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/group/SubscriptionUpdateResultTest.kt)
+- [`app/src/test/java/io/nekohasekai/sagernet/ui/AboutBuildInfoTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/AboutBuildInfoTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/BrandingRecoveryTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/BrandingRecoveryTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/LaunchRegressionTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/LaunchRegressionTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/ReleaseUpdatePolicyTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/ReleaseUpdatePolicyTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/RemoteReadabilityTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/RemoteReadabilityTest.kt)
+- [`app/src/test/java/io/nekohasekai/sagernet/ui/diagnostics/ConnectionDiagnosticTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/diagnostics/ConnectionDiagnosticTest.kt)
+- [`app/src/test/java/io/nekohasekai/sagernet/ui/diagnostics/DiagnosticShareServerTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/diagnostics/DiagnosticShareServerTest.kt)
+- [`app/src/test/java/io/nekohasekai/sagernet/ui/diagnostics/TlsFailureEvidenceTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/diagnostics/TlsFailureEvidenceTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/lan/GatewayProfileTargetsTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/lan/GatewayProfileTargetsTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/lan/LanDiscoveryTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/lan/LanDiscoveryTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/RemoteUiTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/RemoteUiTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/TransferImportInputTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/TransferImportInputTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/TransferImportServerTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/TransferImportServerTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/TransferProtocolTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/TransferProtocolTest.kt)
+- [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/TvGroupQualityTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/TvGroupQualityTest.kt)
+- [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/TvHealthSessionTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/TvHealthSessionTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/TvInteractionPolicyTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/TvInteractionPolicyTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/TvLayoutPolicyTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/TvLayoutPolicyTest.kt)
+- [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/TvPointerScrollControllerTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/TvPointerScrollControllerTest.kt)
+- [`app/src/test/java/io/nekohasekai/sagernet/ui/update/ReleaseCatalogTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/update/ReleaseCatalogTest.kt)
+- [`app/src/test/java/io/nekohasekai/sagernet/ui/update/ResumableDownloadTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/update/ResumableDownloadTest.kt)
+- [`app/src/test/java/io/nekohasekai/sagernet/ui/update/UpdateFeedbackTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/update/UpdateFeedbackTest.kt)
 
 ## buildScript
 
+- [`buildScript/build_project_site.py`](../../buildScript/build_project_site.py)
 - [`buildScript/check_project_docs.py`](../../buildScript/check_project_docs.py)
 - [`buildScript/copyLocal.sh`](../../buildScript/copyLocal.sh)
 - [`buildScript/fdroid/prebuild.sh`](../../buildScript/fdroid/prebuild.sh)
@@ -1310,20 +1442,42 @@
 - [`buildScript/init/env_ndk.sh`](../../buildScript/init/env_ndk.sh)
 - [`buildScript/lib/assets.sh`](../../buildScript/lib/assets.sh)
 - [`buildScript/lib/core.sh`](../../buildScript/lib/core.sh)
+- [`buildScript/lib/core/apply_reality_hybrid.py`](../../buildScript/lib/core/apply_reality_hybrid.py)
 - [`buildScript/lib/core/build.sh`](../../buildScript/lib/core/build.sh)
+- [`buildScript/lib/core/build_verified.py`](../../buildScript/lib/core/build_verified.py)
 - [`buildScript/lib/core/get_source.sh`](../../buildScript/lib/core/get_source.sh)
 - [`buildScript/lib/core/get_source_env.sh`](../../buildScript/lib/core/get_source_env.sh)
 - [`buildScript/lib/core/init.sh`](../../buildScript/lib/core/init.sh)
+- [`buildScript/lib/core/reality-hybrid.json`](../../buildScript/lib/core/reality-hybrid.json)
+- [`buildScript/lib/core/reality-hybrid.patch`](../../buildScript/lib/core/reality-hybrid.patch)
+- [`buildScript/lib/dashboard.sh`](../../buildScript/lib/dashboard.sh)
 - [`buildScript/nkmr`](../../buildScript/nkmr)
 - [`buildScript/package_preview_apks.py`](../../buildScript/package_preview_apks.py)
+- [`buildScript/project_site_seo.py`](../../buildScript/project_site_seo.py)
+- [`buildScript/publish_verified_rc158.py`](../../buildScript/publish_verified_rc158.py)
 - [`buildScript/run_emulator_smoke.sh`](../../buildScript/run_emulator_smoke.sh)
+- [`buildScript/run_verified_emulator_smoke.py`](../../buildScript/run_verified_emulator_smoke.py)
 - [`buildScript/setup_signing.py`](../../buildScript/setup_signing.py)
 - [`buildScript/signing_bundle.py`](../../buildScript/signing_bundle.py)
+- [`buildScript/site/english.html`](../../buildScript/site/english.html)
+- [`buildScript/sources/archive.py`](../../buildScript/sources/archive.py)
+- [`buildScript/sources/catalog_icon.py`](../../buildScript/sources/catalog_icon.py)
+- [`buildScript/sources/fetch.py`](../../buildScript/sources/fetch.py)
+- [`buildScript/sources/lock.json`](../../buildScript/sources/lock.json)
+- [`buildScript/sources/package_dashboard.py`](../../buildScript/sources/package_dashboard.py)
+- [`buildScript/sources/readiness.py`](../../buildScript/sources/readiness.py)
 - [`buildScript/test_assets.py`](../../buildScript/test_assets.py)
+- [`buildScript/test_emulator_results.py`](../../buildScript/test_emulator_results.py)
 - [`buildScript/test_native_alignment.py`](../../buildScript/test_native_alignment.py)
 - [`buildScript/test_package_preview_apks.py`](../../buildScript/test_package_preview_apks.py)
+- [`buildScript/test_project_site.py`](../../buildScript/test_project_site.py)
+- [`buildScript/test_publish_verified_rc158.py`](../../buildScript/test_publish_verified_rc158.py)
+- [`buildScript/test_reality_patch.py`](../../buildScript/test_reality_patch.py)
 - [`buildScript/test_signing_bundle.py`](../../buildScript/test_signing_bundle.py)
+- [`buildScript/test_source_preservation.py`](../../buildScript/test_source_preservation.py)
+- [`buildScript/test_tv_navigation.py`](../../buildScript/test_tv_navigation.py)
 - [`buildScript/test_tv_transfer_page.cjs`](../../buildScript/test_tv_transfer_page.cjs)
+- [`buildScript/verify_emulator_results.py`](../../buildScript/verify_emulator_results.py)
 - [`buildScript/verify_native_alignment.py`](../../buildScript/verify_native_alignment.py)
 - [`buildScript/verify_update.py`](../../buildScript/verify_update.py)
 
@@ -1335,24 +1489,63 @@
 ## docs
 
 - [`docs/README.md`](../../docs/README.md)
+- [`docs/agent-handoff.md`](../../docs/agent-handoff.md)
+- [`docs/app-updates.md`](../../docs/app-updates.md)
 - [`docs/architecture.md`](../../docs/architecture.md)
 - [`docs/branch-audit.md`](../../docs/branch-audit.md)
+- [`docs/connection-diagnostics.md`](../../docs/connection-diagnostics.md)
+- [`docs/contributing-and-support.md`](../../docs/contributing-and-support.md)
+- [`docs/core-extension-strategy.md`](../../docs/core-extension-strategy.md)
 - [`docs/decisions.md`](../../docs/decisions.md)
 - [`docs/development.md`](../../docs/development.md)
+- [`docs/diagnostic-support.md`](../../docs/diagnostic-support.md)
 - [`docs/emulator-testing.md`](../../docs/emulator-testing.md)
 - [`docs/features.md`](../../docs/features.md)
+- [`docs/github-pages.md`](../../docs/github-pages.md)
+- [`docs/hysteria-health.md`](../../docs/hysteria-health.md)
 - [`docs/lan-discovery.md`](../../docs/lan-discovery.md)
+- [`docs/monetization.md`](../../docs/monetization.md)
 - [`docs/project-map.md`](../../docs/project-map.md)
+- [`docs/protocol-compatibility.md`](../../docs/protocol-compatibility.md)
 - [`docs/reference/preferences.md`](../../docs/reference/preferences.md)
 - [`docs/reference/repository-index.md`](../../docs/reference/repository-index.md)
+- [`docs/reference/tv-navigation.json`](../../docs/reference/tv-navigation.json)
+- [`docs/release-triage.md`](../../docs/release-triage.md)
 - [`docs/releases/1.5.0.md`](../../docs/releases/1.5.0.md)
+- [`docs/releases/1.6.0-rc.158-evidence.json`](../../docs/releases/1.6.0-rc.158-evidence.json)
+- [`docs/releases/fdroid-e7e2d0a-evidence.json`](../../docs/releases/fdroid-e7e2d0a-evidence.json)
+- [`docs/releases/rc158-device-acceptance.json`](../../docs/releases/rc158-device-acceptance.json)
+- [`docs/releases/validation-4adc13e.json`](../../docs/releases/validation-4adc13e.json)
 - [`docs/roadmap.md`](../../docs/roadmap.md)
 - [`docs/scenarios.md`](../../docs/scenarios.md)
 - [`docs/security.md`](../../docs/security.md)
 - [`docs/signing-and-updates.md`](../../docs/signing-and-updates.md)
+- [`docs/source-preservation.md`](../../docs/source-preservation.md)
+- [`docs/subscription-passphrase.md`](../../docs/subscription-passphrase.md)
+- [`docs/support-services-proposal.md`](../../docs/support-services-proposal.md)
+- [`docs/tv-connection-health.md`](../../docs/tv-connection-health.md)
+- [`docs/tv-groups-subscriptions.md`](../../docs/tv-groups-subscriptions.md)
+- [`docs/tv-navigation.md`](../../docs/tv-navigation.md)
 - [`docs/tv-readiness-plan.md`](../../docs/tv-readiness-plan.md)
 - [`docs/tv-transfer.md`](../../docs/tv-transfer.md)
 - [`docs/ui-quality-review.md`](../../docs/ui-quality-review.md)
+
+## fastlane
+
+- [`fastlane/metadata/android/en-US/full_description.txt`](../../fastlane/metadata/android/en-US/full_description.txt)
+- [`fastlane/metadata/android/en-US/images/README.md`](../../fastlane/metadata/android/en-US/images/README.md)
+- [`fastlane/metadata/android/en-US/short_description.txt`](../../fastlane/metadata/android/en-US/short_description.txt)
+- [`fastlane/metadata/android/en-US/title.txt`](../../fastlane/metadata/android/en-US/title.txt)
+- [`fastlane/metadata/android/ru-RU/full_description.txt`](../../fastlane/metadata/android/ru-RU/full_description.txt)
+- [`fastlane/metadata/android/ru-RU/images/README.md`](../../fastlane/metadata/android/ru-RU/images/README.md)
+- [`fastlane/metadata/android/ru-RU/short_description.txt`](../../fastlane/metadata/android/ru-RU/short_description.txt)
+- [`fastlane/metadata/android/ru-RU/title.txt`](../../fastlane/metadata/android/ru-RU/title.txt)
+
+## fdroid
+
+- [`fdroid/READINESS.md`](../../fdroid/READINESS.md)
+- [`fdroid/README.md`](../../fdroid/README.md)
+- [`fdroid/metadata/com.tunxbox.app.yml`](../../fdroid/metadata/com.tunxbox.app.yml)
 
 ## gradle
 
@@ -1404,12 +1597,56 @@
 - [`libcore/stun/tests.go`](../../libcore/stun/tests.go)
 - [`libcore/stun/utils.go`](../../libcore/stun/utils.go)
 
+## website
+
+- [`website/.nojekyll`](../../website/.nojekyll)
+- [`website/guide/README.html`](../../website/guide/README.html)
+- [`website/guide/app-updates.html`](../../website/guide/app-updates.html)
+- [`website/guide/architecture.html`](../../website/guide/architecture.html)
+- [`website/guide/branch-audit.html`](../../website/guide/branch-audit.html)
+- [`website/guide/connection-diagnostics.html`](../../website/guide/connection-diagnostics.html)
+- [`website/guide/contributing-and-support.html`](../../website/guide/contributing-and-support.html)
+- [`website/guide/decisions.html`](../../website/guide/decisions.html)
+- [`website/guide/development.html`](../../website/guide/development.html)
+- [`website/guide/diagnostic-support.html`](../../website/guide/diagnostic-support.html)
+- [`website/guide/emulator-testing.html`](../../website/guide/emulator-testing.html)
+- [`website/guide/features.html`](../../website/guide/features.html)
+- [`website/guide/github-pages.html`](../../website/guide/github-pages.html)
+- [`website/guide/hysteria-health.html`](../../website/guide/hysteria-health.html)
+- [`website/guide/lan-discovery.html`](../../website/guide/lan-discovery.html)
+- [`website/guide/monetization.html`](../../website/guide/monetization.html)
+- [`website/guide/project-map.html`](../../website/guide/project-map.html)
+- [`website/guide/protocol-compatibility.html`](../../website/guide/protocol-compatibility.html)
+- [`website/guide/readme.html`](../../website/guide/readme.html)
+- [`website/guide/reference/preferences.html`](../../website/guide/reference/preferences.html)
+- [`website/guide/releases/1.5.0.html`](../../website/guide/releases/1.5.0.html)
+- [`website/guide/roadmap.html`](../../website/guide/roadmap.html)
+- [`website/guide/scenarios.html`](../../website/guide/scenarios.html)
+- [`website/guide/security.html`](../../website/guide/security.html)
+- [`website/guide/signing-and-updates.html`](../../website/guide/signing-and-updates.html)
+- [`website/guide/subscription-passphrase.html`](../../website/guide/subscription-passphrase.html)
+- [`website/guide/support-services-proposal.html`](../../website/guide/support-services-proposal.html)
+- [`website/guide/tv-connection-health.html`](../../website/guide/tv-connection-health.html)
+- [`website/guide/tv-groups-subscriptions.html`](../../website/guide/tv-groups-subscriptions.html)
+- [`website/guide/tv-navigation.html`](../../website/guide/tv-navigation.html)
+- [`website/guide/tv-readiness-plan.html`](../../website/guide/tv-readiness-plan.html)
+- [`website/guide/tv-transfer.html`](../../website/guide/tv-transfer.html)
+- [`website/guide/ui-quality-review.html`](../../website/guide/ui-quality-review.html)
+- [`website/index.html`](../../website/index.html)
+- [`website/project-map.svg`](../../website/project-map.svg)
+- [`website/site-manifest.json`](../../website/site-manifest.json)
+- [`website/site.css`](../../website/site.css)
+
 ## Корень
 
 - [`.gitignore`](../../.gitignore)
+- [`AGENTS.md`](../../AGENTS.md)
 - [`AUTHORS`](../../AUTHORS)
+- [`CLAUDE.md`](../../CLAUDE.md)
+- [`COPYING`](../../COPYING)
 - [`LICENSE`](../../LICENSE)
 - [`README.md`](../../README.md)
+- [`THIRD_PARTY_NOTICES.md`](../../THIRD_PARTY_NOTICES.md)
 - [`build.gradle.kts`](../../build.gradle.kts)
 - [`gradle.properties`](../../gradle.properties)
 - [`gradlew`](../../gradlew)
