@@ -61,7 +61,8 @@
       "size": 45003045
     }
   ],
-  "physicalDeviceAcceptance": "pending",
+  "physicalDeviceAcceptance": "partial-owner-report-smartphone-update-success-portrait-scroll-preliminary-positive",
   "fdroidInclusion": "not-approved-recipe-disabled",
-  "rollingTestChannelUpdated": false
+  "rollingTestChannelUpdated": false,
+  "physicalDeviceAcceptanceRecord": "rc158-device-acceptance.json"
 }

@@ -1,0 +1,70 @@
+{
+  "sourceCommit": "4adc13eca33087fff813226d6fc8b2de0579e4d9",
+  "sourceReadinessRun": 39522276619,
+  "sourceReadinessConclusion": "success",
+  "stableCheckOnlyRun": 39522282529,
+  "stableCheckOnlyConclusion": "success",
+  "stablePublished": false,
+  "artifactEvidence": [
+    {
+      "flavor": "fdroid",
+      "artifactId": 12313185095,
+      "zipSha256": "fd0e801a54a0385afd186c8c42c6d1257bb5a8a2fd9047070fd38b86d5b049ac",
+      "suites": [
+        {
+          "path": "build/emulator-results/16384/results/debug/flavors/fdroid/TEST-emulator-5554 - 16-_app-fdroid.xml",
+          "name": "io.nekohasekai.sagernet.ui.EmulatorSmokeTest",
+          "tests": "19",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0",
+          "time": "210.898",
+          "timestamp": "2026-10-21T01:02:45",
+          "hostname": "localhost"
+        },
+        {
+          "path": "build/emulator-results/4096/results/debug/flavors/fdroid/TEST-emulator-5554 - 15-_app-fdroid.xml",
+          "name": "io.nekohasekai.sagernet.ui.EmulatorSmokeTest",
+          "tests": "19",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0",
+          "time": "214.232",
+          "timestamp": "2026-10-21T00:55:20",
+          "hostname": "localhost"
+        }
+      ]
+    },
+    {
+      "flavor": "oss",
+      "artifactId": 12313486172,
+      "zipSha256": "389dd66e2db4246145e10a7e2aa92c025672e1a15aec8b23c30d96d2ab37cf01",
+      "suites": [
+        {
+          "path": "build/emulator-results/16384/results/debug/flavors/oss/TEST-emulator-5554 - 16-_app-oss.xml",
+          "name": "io.nekohasekai.sagernet.ui.EmulatorSmokeTest",
+          "tests": "19",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0",
+          "time": "175.394",
+          "timestamp": "2026-10-21T01:10:04",
+          "hostname": "localhost"
+        },
+        {
+          "path": "build/emulator-results/4096/results/debug/flavors/oss/TEST-emulator-5554 - 15-_app-oss.xml",
+          "name": "io.nekohasekai.sagernet.ui.EmulatorSmokeTest",
+          "tests": "19",
+          "failures": "0",
+          "errors": "0",
+          "skipped": "0",
+          "time": "193.213",
+          "timestamp": "2026-10-21T01:03:56",
+          "hostname": "localhost"
+        }
+      ]
+    }
+  ],
+  "officialFdroidAcceptance": false,
+  "laterIntegrationTreeTested": false
+}

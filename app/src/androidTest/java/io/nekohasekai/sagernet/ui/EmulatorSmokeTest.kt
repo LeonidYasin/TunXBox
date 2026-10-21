@@ -607,6 +607,11 @@ class EmulatorSmokeTest {
         assertEquals(io.nekohasekai.sagernet.group.SubscriptionFailureCategory.CORE,
             io.nekohasekai.sagernet.group.ConnectionTestResult.decode(binder.testConnectionReport())!!.category)
         binder.close()
+        // Return to the TV fixture explicitly after testing the phone gateway screen.
+        scenario?.close()
+        scenario = null
+        TvUiPreferences.phoneMode = false
+        startTv()
     }
     /** Synthetic saved failure only: no provider request, VPN consent or automatic upload. */
     private fun verifySavedDiagnosticsInBothModes() {

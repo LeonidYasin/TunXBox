@@ -17,7 +17,7 @@ Stable означает принятый определённый набор ф�
 | [PR #8](https://github.com/LeonidYasin/TunXBox/pull/8) | TV health/navigation/updater UX; head336eb58 ancestor | Review slice2/3; TV/Phone acceptance и честные test states, не Hysteria throughput proof |
 | [PR #9](https://github.com/LeonidYasin/TunXBox/pull/9) | Group rows/subscription metadata; head6801803 ancestor | Review slice3/3; группы/фокус/крупный шрифт/metadata import на реальном устройстве |
 | [PR #11](https://github.com/LeonidYasin/TunXBox/pull/11) | Старый master-based source/F-Droid prep | **CLOSED, superseded by12**, не merged. Ветка/исходное описание сохранены. Открытые license/provisioning gates не закрыты |
-| [PR #12](https://github.com/LeonidYasin/TunXBox/pull/12) | Полный актуальный integration candidate; rc158 tested source0bd5770 | OPEN draft → master. Physical portrait scroll + TV/updater + final exact-head CI + fix/defer issues6/10; затем owner review/merge/stable |
+| [PR #12](https://github.com/LeonidYasin/TunXBox/pull/12) | Полный актуальный integration candidate; rc158 tested source0bd5770 | OPEN draft → master. Smartphone rc158 update/portrait scroll: partial positive owner acceptance; exact4adc CI PASS. Ещё sync master ancestry/TV/updater/full acceptance + fix/defer issues6/10; затем owner review/merge/stable |
 | [Issue #6](https://github.com/LeonidYasin/TunXBox/issues/6) | Hysteria2 intermittent/no traffic/low speed, причина неизвестна | OPEN. Реальное сравнение одинакового профиля/сети/устройства; отдельно от сертификата подписки и от XHTTP. Не закрывать health UI или smoke |
 | [Issue #10](https://github.com/LeonidYasin/TunXBox/issues/10) | Auto/Sweden TLS/timeout vs Happ | OPEN. Диагностика и worker race исправлены, исходная совместимость не подтверждена. Сравнивать тот же конкретный outbound и strict certificates; Auto aggregate не доказательство |
 | [PR #14](https://github.com/LeonidYasin/TunXBox/pull/14) | Docs-only AGENTS/CLAUDE entrypoint для защищённого master | OPEN ready; отдельный review/merge, без runtime и разрешения stable. Не обязательный runtime gate; активная ветка уже содержит handoff |
@@ -31,3 +31,7 @@ Stable означает принятый определённый набор ф�
 - Main F-Droid inclusion: отдельные юридические/build-server/distribution gates; GitHub stable не доказывает их прохождение. Recipe остаётся disabled, а release notes не заявляют F-Droid availability.
 
 Описания существующих PR/issues обновлены с текущим triage и исходной историей. Ветки не удалялись; feature PR не merged и не закрывались как «исправлены» без приёмки.
+
+## Новое подтверждение владельца и CI
+
+Смартфон обновился до rc.158 без проблем; портретная прокрутка предварительно работает нормально. Это не подтверждение мыши/D-pad/TV/всех данных. [Запись приёмки](releases/rc158-device-acceptance.json). На `4adc13e` source/F-Droid и OSS stable check-only прошли; actual XML: 4 × 19 без ошибок/пропусков. [Доказательства](releases/validation-4adc13e.json). Подготовка отдельного master-history sync PR описана в [handoff](agent-handoff.md); не подменять им stable merge.
