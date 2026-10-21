@@ -1,6 +1,6 @@
 # PR / issues: порядок к стабильной 1.6
 
-Снимок 2026-10-20. Все шесть открытых PR и оба открытых issue рассмотрены; #11 закрыт как superseded, создано отдельное исследование #13. Проверено по API и **полной** Git истории (shallow clone ошибочно показывал unrelated heads).
+Снимок 2026-10-21. Все шесть открытых PR и оба открытых issue рассмотрены; #11 закрыт как superseded, создано отдельное исследование #13. Проверено по API и **полной** Git истории (shallow clone ошибочно показывал unrelated heads).
 
 ## Не нужно закрывать весь backlog
 
@@ -8,7 +8,7 @@ Stable означает принятый определённый набор ф�
 
 ## Канонический путь
 
-[PR #12](https://github.com/LeonidYasin/TunXBox/pull/12) теперь направлен в master и является единым **draft integration candidate**. База runtime сохранена: `6801803` → scroll/NET_BUSY/source prep. После review, final CI и приёмки интегрировать его один раз; отдельный stable выпуск потом. Ретаргет не мержит master и не принимает runtime автоматически.
+[PR #12](https://github.com/LeonidYasin/TunXBox/pull/12) теперь направлен в master и является единым **draft integration candidate**. База runtime сохранена: `6801803` → scroll/NET_BUSY/source prep. После review, final CI и приёмки интегрировать его один раз; отдельный stable выпуск потом. Ретаргет не мержит master и не принимает runtime автоматически. После ретаргета GitHub показывает `mergeable=false`: 15 конфликтующих файлов с master. Их список и безопасный порядок интеграции сохранены в [handoff](agent-handoff.md); branch-only green CI не проверяет итоговый merge tree.
 
 | Объект | Что установлено | Решение / критерий закрытия |
 |---|---|---|
@@ -20,6 +20,7 @@ Stable означает принятый определённый набор ф�
 | [PR #12](https://github.com/LeonidYasin/TunXBox/pull/12) | Полный актуальный integration candidate; rc158 tested source0bd5770 | OPEN draft → master. Physical portrait scroll + TV/updater + final exact-head CI + fix/defer issues6/10; затем owner review/merge/stable |
 | [Issue #6](https://github.com/LeonidYasin/TunXBox/issues/6) | Hysteria2 intermittent/no traffic/low speed, причина неизвестна | OPEN. Реальное сравнение одинакового профиля/сети/устройства; отдельно от сертификата подписки и от XHTTP. Не закрывать health UI или smoke |
 | [Issue #10](https://github.com/LeonidYasin/TunXBox/issues/10) | Auto/Sweden TLS/timeout vs Happ | OPEN. Диагностика и worker race исправлены, исходная совместимость не подтверждена. Сравнивать тот же конкретный outbound и strict certificates; Auto aggregate не доказательство |
+| [PR #14](https://github.com/LeonidYasin/TunXBox/pull/14) | Docs-only AGENTS/CLAUDE entrypoint для защищённого master | OPEN ready; отдельный review/merge, без runtime и разрешения stable. Не обязательный runtime gate; активная ветка уже содержит handoff |
 | [Issue #13](https://github.com/LeonidYasin/TunXBox/issues/13) | Extended/Xray/XHTTP migration experiment | OPEN post-1.6; не обещание функции текущего stable. Source/adapter/license/fixture gates в [стратегии](core-extension-strategy.md) |
 
 ## Release gates

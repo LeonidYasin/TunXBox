@@ -1,6 +1,6 @@
 # Передача разработки: TunXBox 1.6
 
-Обновлено: 2026-10-20 UTC. Это проверенный снимок состояния, не обещание фоновой работы. Сначала перепроверьте GitHub refs, PR, runs и release assets: более поздние изменения имеют приоритет над этим текстом.
+Обновлено: 2026-10-21 UTC. Это проверенный снимок состояния, не обещание фоновой работы. Сначала перепроверьте GitHub refs, PR, runs и release assets: более поздние изменения имеют приоритет над этим текстом.
 
 ## 1. Где продолжать
 
@@ -61,7 +61,7 @@ rc.158 содержит ARM64, ARM32 и universal (ARM32/ARM64/x86/x86_64) APK, 
 | F-Droid clean source native/assets/dashboard + release/JVM compile | PASS в [39505477151](https://github.com/LeonidYasin/TunXBox/actions/runs/39505477151) |
 | F-Droid Android15 / 4KB | 19/19 в том же run |
 | F-Droid API35 ps16k | **FAIL**, system_server ReferenceQueueDaemon crash, suite aborted; НЕ считать pass |
-| Latest full F-Droid API36 ps16k | Перезапускается по commits PR; найти последний run для актуального HEAD, не считать cancelled run результатом |
+| F-Droid API36 ps16k, source e7e2d0a | **19/19 PASS**, actual XML inspected, run [39511234808](https://github.com/LeonidYasin/TunXBox/actions/runs/39511234808); это не CI более позднего HEAD |
 
 Снимок до recovery: 79 Python + 15 browser-transfer tests прошли. После добавления recovery regression tests и handoff: **84 Python tests PASS**, **15 browser-transfer tests PASS**, docs inventory **831 files / 224 XML preference entries / 1140 local links** и workflow YAML parse PASS. Это локальные проверки текущего continuation tree, не пересборка опубликованного APK. Успешные debug/emulator tests не являются физической приёмкой подписанного release APK.
 
@@ -69,11 +69,40 @@ rc.158 содержит ARM64, ARM32 и universal (ARM32/ARM64/x86/x86_64) APK, 
 
 1. Владелец ставит rc.158 вручную (backup конфигурации), проверяет **портретный TV на реальном смартфоне**: swipe/fling вверх/вниз, отпускание без snap-back, wheel/drag мыши, затем D-pad; обычные горизонтальные ряды, tap/long press и VPN/выбранный профиль не меняются сами. Приложить модель/Android/ABI/точную версию и наблюдение, без приватной конфигурации.
 2. На TV: 720p/1080p, крупный шрифт, 1/3/10 групп, длинные имена, rename/update/delete/Back, импорт названий, возврат фокуса. Updater: реальная загрузка/докачка/installer permission/data preservation. Эмулятор не заменяет OEM installer.
-3. Посмотреть [все PR checks](https://github.com/LeonidYasin/TunXBox/pull/12/checks) и последние [Source readiness runs](https://github.com/LeonidYasin/TunXBox/actions/workflows/source-readiness.yml). Последний commit обязан иметь свои conclusions; предыдущий passed source job или cancelled run не равен full green.
+3. Разрешить 15 конфликтующих файлов с `master` отдельным проверяемым integration commit, не через blanket ours/theirs. `git merge-tree --write-tree --name-only HEAD origin/master` показал конфликты в release workflows, MainActivity/strings, regression/instrumentation tests и docs. PR #12 сейчас `mergeable=false`; даже зелёный branch CI не делает конфликтующий PR готовым к merge. Сохранить оба набора сценариев и полные test-name gates, регенерировать docs inventory и заново собрать/протестировать итоговый merge tree. Затем посмотреть [все PR checks](https://github.com/LeonidYasin/TunXBox/pull/12/checks) и последние [Source readiness runs](https://github.com/LeonidYasin/TunXBox/actions/workflows/source-readiness.yml). Последний commit обязан иметь свои conclusions; предыдущий passed source job или cancelled run не равен full green.
 4. Для #6/#10 выполнить безопасную одинаковую-профиль/сеть/устройство проверку и принять явное fix/defer решение. Не закрывать исходный report только за добавление диагностики.
 5. После приёмки и final CI — review/integration PR #12 → master, затем отдельный stable release от **точного нового master SHA** с неизменной подписью/возрастающим versionCode. Numbered rc.158 не является разрешением слить/выпустить stable. Проверить contract `stable-release.yml`, включая source tag и текущий RC manifest; не обходить mismatch.
 6. PR #7/#8/#9 закрывать как covered by integration только после фактического включения и принятия, не мержить повторно. PR #5 unique diff/remaining scope сопоставить с #6/#10/#13; его conflicting whole branch не вливать. См. [triage](release-triage.md).
 7. [Эксперимент extended/Xray](core-extension-strategy.md) вести отдельно после фиксации stable scope. Поддержка XHTTP в 1.6 не заявляется.
+
+## 4а. Последняя проверка и точка входа master
+
+- Source/F-Droid run [39511234808](https://github.com/LeonidYasin/TunXBox/actions/runs/39511234808), exact source `e7e2d0a866053fcbd85758f62abe7829a6860d40`: **оба jobs SUCCESS**, native/assets/dashboard from source, release/instrumentation compilation, source preservation. Actual XML из artifact `12306771922` повторно прочитан: Android15/4096 **19/19**, Android16/16384 **19/19**, ноль failures/errors/skips; именованный portrait scroll test прошёл в обоих. Машинная запись: [F-Droid CI evidence](releases/fdroid-e7e2d0a-evidence.json). Это не официальный F-Droid buildserver и не store acceptance.
+- Stable-check run [39511234765](https://github.com/LeonidYasin/TunXBox/actions/runs/39511234765) на том же старом source завершился failure на `Check project documentation`: `File inventory is stale`. На continuation commit `7deb10a` реестр уже исправлен; fresh checkout локально проходит `831 / 224 / 1140`. Не удалять проверку и не объявлять старый красный run успешным. Новый exact-head check-only run нужно проверить отдельно.
+- На `7deb10a` API не показывал check runs; PR #12 конфликтует с master. Проверка ветки через workflow_dispatch не проверяет ещё не собранный merge result.
+- Защищённый master отклонил прямой docs push (`Changes must be made through a pull request`); никаких изменений в master не внесено. Создан отдельный ready [PR #14](https://github.com/LeonidYasin/TunXBox/pull/14), ветка `docs/agent-entrypoint`, commit `9cfdb66460e50083cd65b6a3acfae1d73fb199dd`: только AGENTS.md, CLAUDE.md и inventory. После review/merge новый агент с master увидит ссылки на текущую ветку. До merge не утверждать, что master уже содержит эту точку входа. Не auto-merge.
+- Root entry files активной ветки синхронизированы с PR #14, чтобы не создавать будущий add/add content conflict. Сгенерированный inventory при интеграции нужно обновить, а не выбирать старую сторону.
+- Рабочее окружение может быть заменено: предыдущие `/data` clones/архивы в новой сессии фактически отсутствовали. Актуальная ветка заново клонирована и проверена. Repo handoff — постоянный источник, sandbox paths/старые archive session links не считать гарантированно доступным backup.
+
+Конфликтующие файлы (master `99a8b6` против continuation `7deb10a`):
+
+```text
+.github/workflows/prerelease-from-pr.yml
+.github/workflows/stable-release.yml
+app/src/androidTest/java/io/nekohasekai/sagernet/ui/EmulatorSmokeTest.kt
+app/src/main/java/io/nekohasekai/sagernet/ui/MainActivity.kt
+app/src/main/res/values-ru/strings.xml
+app/src/main/res/values/strings.xml
+app/src/test/java/io/nekohasekai/sagernet/ui/LaunchRegressionTest.kt
+buildScript/run_emulator_smoke.sh
+docs/development.md
+docs/emulator-testing.md
+docs/lan-discovery.md
+docs/project-map.md
+docs/reference/repository-index.md
+docs/roadmap.md
+docs/signing-and-updates.md
+```
 
 ## 5. F-Droid, источники, сайт — ограничения
 

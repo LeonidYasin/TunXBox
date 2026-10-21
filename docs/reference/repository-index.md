@@ -8,7 +8,7 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **831**.
+Всего tracked файлов: **832**.
 
 | Раздел | Файлов |
 |---|---|
@@ -208,7 +208,7 @@
 | `app/src/test` | 29 |
 | `buildScript` | 47 |
 | `buildSrc` | 2 |
-| `docs` | 38 |
+| `docs` | 39 |
 | `fastlane` | 8 |
 | `fdroid` | 3 |
 | `gradle` | 2 |
@@ -1513,6 +1513,7 @@
 - [`docs/release-triage.md`](../../docs/release-triage.md)
 - [`docs/releases/1.5.0.md`](../../docs/releases/1.5.0.md)
 - [`docs/releases/1.6.0-rc.158-evidence.json`](../../docs/releases/1.6.0-rc.158-evidence.json)
+- [`docs/releases/fdroid-e7e2d0a-evidence.json`](../../docs/releases/fdroid-e7e2d0a-evidence.json)
 - [`docs/roadmap.md`](../../docs/roadmap.md)
 - [`docs/scenarios.md`](../../docs/scenarios.md)
 - [`docs/security.md`](../../docs/security.md)
