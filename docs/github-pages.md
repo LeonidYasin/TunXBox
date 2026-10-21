@@ -19,3 +19,7 @@
 ## Обновление
 
 Сначала изменить Markdown, затем сгенерировать/проверить сайт и атомарно обновить статические файлы gh-pages. Обновление сайта — отдельная публикация от релиза APK. Не помещать private fixtures, ключи, подписки или build/signing workspace в site payload. Подробный branch/root/commit deployment proof сохранять после проверки.
+
+## Номерной RC и rolling-канал
+
+Основная тестовая кнопка RU/EN должна вести на опубликованный `v1.6.0-rc.158`, а не на старый rolling rc.150. Это отдельная ручная загрузка: текущий встроенный updater номерной recovery-выпуск не обнаруживает. Источники — `buildScript/build_project_site.py` и `buildScript/site/english.html`; regression test проверяет обе ссылки и сохраняет stable 1.5.0. Stable-версия JSON-LD меняется только после реальной публикации нового stable. Изменение генератора ещё не означает обновление live Pages: отдельно подтвердить deploy и HTTP обеих страниц.
