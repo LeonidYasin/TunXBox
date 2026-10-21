@@ -14,5 +14,27 @@ These entry files can also be installed on the default branch without integratin
 - Do not add automated git commit/push mode-repair steps. Prefer explicit `bash` for scripts; preserve existing modes when using Git. User has not approved broadening the legacy repair step.
 - Load live content before edits; preserve unrelated changes. Verify full Git ancestry, not a shallow-clone approximation. Keep native REALITY patch guards/tests on every build path.
 
+## Build delivery and publication — mandatory decision procedure
+
+Never use the word “build” as permission to choose an arbitrary delivery path. Establish the intended destination before dispatching a workflow. If the owner asks to build for normal device testing, continue testing, test via the app, use auto-update/autopublication, or asks whether the build is ready, the default delivery path is the **published rolling test channel**, not an Actions artifact.
+
+| Owner intent | Required workflow/result | How the owner receives it |
+|---|---|---|
+| Validate code/CI only; explicitly no installable build | `check_only=true` | No APK is published or presented as installable |
+| Explicit private/manual device candidate with no public tag or Release change | `artifact_only=true`, `check_only=false` | Manually download the Actions artifact; state clearly that in-app update cannot see it |
+| Normal phone/TV acceptance, in-app update, auto-update or autopublication | rolling prerelease publication with `artifact_only=false`, `check_only=false` | TunXBox → **Обновление приложения** → channel **test** → **Проверить** → **Скачать** |
+| Stable release | Only after explicit owner approval, accepted exact source, final CI and stable gates | Stable channel; never infer approval from green CI or a successful RC |
+
+Additional rules:
+
+1. `artifact_only` is an exception, not the default. Do not tell the owner to download an artifact when their established workflow is the in-app test updater. An artifact-only run may be a preflight, but it does not complete delivery to devices.
+2. The in-app test updater reads the published rolling prerelease `v1.6.0-rc` and its `apk-manifest.json`. A numbered recovery release such as `v1.6.0-rc.158`, a workflow artifact, a successful job, or an uploaded but draft asset is not automatically discoverable by the app.
+3. Do not say “you can test now” until live state proves all of the following: the publishing run succeeded; the rolling Release is non-draft/prerelease; its tag points to the intended source; manifest and APK assets are present; the published installed version/versionCode are the new ones; and the assets are downloadable. Cite the run and Release.
+4. A new publishing run has a new build sequence and therefore may produce a later RC number than a successful artifact-only preflight from the same source. Report the actual published version, never reuse the preflight RC number.
+5. If publication fails after compilation/tests (for example tag push or Release permissions), the build is **not available through auto-update**. Keep the failure visible; repair or use an explicitly authorized publication path, then re-verify the live Release. Do not silently fall back to manual APK delivery.
+6. Before instructing device testing, re-read `docs/app-updates.md`, `docs/signing-and-updates.md`, the active workflow, and live Releases. The expected physical-device path is: open updater, select `test`, check, download, verify, install through Android, then confirm data/profile preservation. Do not uninstall on a signing conflict.
+7. Stable and test publication are different. “Do not publish stable” does not mean “use artifact-only” when the owner expects the rolling test channel. Publishing a verified prerelease is allowed only when it matches the owner's stated testing intent; stable still requires separate explicit approval.
+8. When handing off, record separately: source SHA, validation run, publication run, actual rolling tag/version, live manifest/assets, device acceptance, and whether stable was untouched.
+
 ## Minimum completion record
 Update handoff/evidence after meaningful work: exact source SHA, commands/tests actually run, CI run URLs/conclusions, published assets/manifest, remaining gates and the next executable step. Distinguish implemented, compiled, emulator-tested, physical-device accepted, published and store-approved. Keep failures/cancellations visible. Update the tracked-file inventory with `python3 buildScript/check_project_docs.py --update-index` and validate docs/tests.
