@@ -31,4 +31,6 @@
     <string name="diagnostic_offline_button">Short QR without Wi-Fi</string>
     <string name="diagnostic_offline_help">No network is needed for this QR: it contains a short text summary, not a link or the full TXT. Scan with the phone camera or a QR reader, copy the text and send it manually. Local sharing is now closed. For the full report, reopen sharing on the same trusted network.</string>
     <string name="diagnostic_share_live">Link active: %1$d s left. Report responses sent: %2$d. Check the saved file on the phone.</string>
+    <string name="diagnostic_dns_explanation">The server address could not be resolved. Check the device network and DNS. This alone does not prove that the profile credentials are wrong.</string>
+    <string name="diagnostic_changed_explanation">The profile or physical network changed during the check. The old result does not describe the current connection; repeat the check.</string>
 </resources>

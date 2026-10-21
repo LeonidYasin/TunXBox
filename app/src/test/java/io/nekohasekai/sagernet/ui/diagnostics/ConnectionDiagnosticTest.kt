@@ -78,6 +78,16 @@ class ConnectionDiagnosticTest {
   assertFalse(r.encode().contains("private-fixture-key"));assertFalse(r.encode().contains("private-id"))
  }
 
+ @Test fun dnsAndChangedExplanationsNeverReuseSubscriptionUpdateInstructions() {
+  val context=org.robolectric.RuntimeEnvironment.getApplication()
+  for(category in listOf(C.DNS,C.CHANGED)) {
+   val text=ConnectionDiagnosticReport.reason(context,category)
+   assertFalse(text.contains(io.nekohasekai.sagernet.group.SubscriptionFailurePresentation.reason(context,category)))
+  }
+  assertEquals(context.getString(io.nekohasekai.sagernet.R.string.diagnostic_dns_explanation),ConnectionDiagnosticReport.reason(context,C.DNS))
+  assertEquals(context.getString(io.nekohasekai.sagernet.R.string.diagnostic_changed_explanation),ConnectionDiagnosticReport.reason(context,C.CHANGED))
+ }
+
  @Test fun timeoutExplanationIsAboutConnectionNotSubscription() {
   val context=org.robolectric.RuntimeEnvironment.getApplication()
   val result=ConnectionDiagnosticReport.reason(context,C.TIMEOUT)

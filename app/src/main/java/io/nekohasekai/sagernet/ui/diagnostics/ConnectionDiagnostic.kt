@@ -72,6 +72,8 @@ object ConnectionDiagnosticReport {
         SubscriptionFailureCategory.TIMEOUT->context.getString(R.string.diagnostic_timeout_explanation)
         SubscriptionFailureCategory.TLS_TRUST->context.getString(R.string.diagnostic_tls_explanation)
         SubscriptionFailureCategory.TLS_TIME->context.getString(R.string.diagnostic_tls_time_explanation)
+        SubscriptionFailureCategory.DNS->context.getString(R.string.diagnostic_dns_explanation)
+        SubscriptionFailureCategory.CHANGED->context.getString(R.string.diagnostic_changed_explanation)
         SubscriptionFailureCategory.HTTP, SubscriptionFailureCategory.EMPTY, SubscriptionFailureCategory.LOCAL_SAVE, SubscriptionFailureCategory.UNKNOWN->context.getString(R.string.diagnostic_unknown_explanation)
         else->SubscriptionFailurePresentation.reason(context,category)
     }
