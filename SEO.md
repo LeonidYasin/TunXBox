@@ -1,7 +1,1 @@
-# Search visibility
-
-The existing gh-pages website is preserved. Every HTML page has canonical, description, Open Graph and Twitter metadata. Home pages have reciprocal ru/en hreflang and SoftwareApplication JSON-LD (no invented ratings or offers). sitemap.xml lists canonical HTML routes.
-
-Google Search Console and Yandex Webmaster: verify ownership using an account-controlled method, then submit https://leonidyasin.github.io/TunXBox/sitemap.xml. No verification token has been invented and no submission is claimed. Project-level robots.txt is not the origin-root /robots.txt and cannot override it. Indexing/ranking is not guaranteed.
-
-When regenerating the site, retain these metadata and the English landing page. SEO updates must not turn preview or roadmap functions into stable-release claims.
+Every HTML route has canonical/description/social metadata; RU/EN homes have reciprocal hreflang and SoftwareApplication JSON-LD. No invented ratings, offers or verification tokens. Submit sitemap.xml only after account-owner verification in Google Search Console/Yandex Webmaster. Project-path robots.txt is not origin-root robots.txt. Indexing/ranking is not guaranteed. Stable-version metadata changes only after actual publication. Regenerate with buildScript/build_project_site.py; SEO is applied automatically.
