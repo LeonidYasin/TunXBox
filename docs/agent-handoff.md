@@ -2,6 +2,16 @@
 
 Обновлено: 2026-10-21 UTC. Это проверенный снимок состояния, не обещание фоновой работы. Сначала перепроверьте GitHub refs, PR, runs и release assets: более поздние изменения имеют приоритет над этим текстом.
 
+## Подготовка после смартфонной приёмки (отдельная ветка)
+
+Ветка `prep/stable-release-inputs` основана на candidate `2d5b5554`. Это последующая подготовка, пока не интегрированная в основной candidate и не новый APK:
+
+- Найден реальный будущий отказ stable: workflow читает `docs/releases/1.6.0.md`, которого не было. Добавлены содержательные notes без утверждения о состоявшемся выпуске и ранний `validate_stable_inputs.py`: canonical stable version/package/versionCode, доступный файл заметок с верным заголовком/телом, формат публичного signer SHA256. Проверка идёт до установки SDK; не создаёт тег/релиз и не читает private keys.
+- Девять regression tests для preflight; ещё один site regression. Локально **94 Python PASS / 15 browser-transfer PASS**, docs **837 files / 224 prefs / 1155 links**. Это не Android CI нового commit.
+- Live RU/EN пока предлагали старый rolling `v1.6.0-rc` (rc.150). Генератор/English source исправлены на опубликованный номерной rc.158; объяснена ручная загрузка и отсутствие его в нынешнем in-app test updater. JSON-LD stable остаётся 1.5.0. До отдельного Pages deploy/HTTP проверки не объявлять эти изменения live.
+- Проверены реальные старые emulator screenshots: файл с именем portrait-scroll scenario фактически показывает Android launcher после завершения теста. Нельзя автоматически превращать все named test screenshots в Fastlane gallery или выдавать их за экран TunXBox. Принятые store screenshots остаются отдельным gate; mock/сайт не подставлять.
+- На момент подготовки PR15 merge-result CI ещё шёл; base candidate не менялся, чтобы не сбить эти проверки. Следующие действия: закончить review/merge PR15 только после полного CI и проверки exact unchanged tree; применить эту ветку отдельным reviewed change поверх синхронизированного candidate; проверить актуальные workflows и отдельно опубликовать сайт. PR12→master/stable/F-Droid inclusion этим не разрешены.
+
 ## 1. Где продолжать
 
 - Репозиторий: https://github.com/LeonidYasin/TunXBox . Рабочая ветка `fix/tv-pointer-scroll-1.6`, единый draft [PR #12 → master](https://github.com/LeonidYasin/TunXBox/pull/12). Не продолжать 1.6 от старого `master` или superseded PR #11.

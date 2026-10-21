@@ -8,7 +8,7 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **834**.
+Всего tracked файлов: **837**.
 
 | Раздел | Файлов |
 |---|---|
@@ -206,9 +206,9 @@
 | `app/src/main/res/values-zh-rTW` | 1 |
 | `app/src/main/res/xml` | 25 |
 | `app/src/test` | 29 |
-| `buildScript` | 47 |
+| `buildScript` | 49 |
 | `buildSrc` | 2 |
-| `docs` | 41 |
+| `docs` | 42 |
 | `fastlane` | 8 |
 | `fdroid` | 3 |
 | `gradle` | 2 |
@@ -1475,8 +1475,10 @@
 - [`buildScript/test_reality_patch.py`](../../buildScript/test_reality_patch.py)
 - [`buildScript/test_signing_bundle.py`](../../buildScript/test_signing_bundle.py)
 - [`buildScript/test_source_preservation.py`](../../buildScript/test_source_preservation.py)
+- [`buildScript/test_stable_inputs.py`](../../buildScript/test_stable_inputs.py)
 - [`buildScript/test_tv_navigation.py`](../../buildScript/test_tv_navigation.py)
 - [`buildScript/test_tv_transfer_page.cjs`](../../buildScript/test_tv_transfer_page.cjs)
+- [`buildScript/validate_stable_inputs.py`](../../buildScript/validate_stable_inputs.py)
 - [`buildScript/verify_emulator_results.py`](../../buildScript/verify_emulator_results.py)
 - [`buildScript/verify_native_alignment.py`](../../buildScript/verify_native_alignment.py)
 - [`buildScript/verify_update.py`](../../buildScript/verify_update.py)
@@ -1513,6 +1515,7 @@
 - [`docs/release-triage.md`](../../docs/release-triage.md)
 - [`docs/releases/1.5.0.md`](../../docs/releases/1.5.0.md)
 - [`docs/releases/1.6.0-rc.158-evidence.json`](../../docs/releases/1.6.0-rc.158-evidence.json)
+- [`docs/releases/1.6.0.md`](../../docs/releases/1.6.0.md)
 - [`docs/releases/fdroid-e7e2d0a-evidence.json`](../../docs/releases/fdroid-e7e2d0a-evidence.json)
 - [`docs/releases/rc158-device-acceptance.json`](../../docs/releases/rc158-device-acceptance.json)
 - [`docs/releases/validation-4adc13e.json`](../../docs/releases/validation-4adc13e.json)
