@@ -1,0 +1,11 @@
+{
+  "xml_files": 86,
+  "xml_nodes": 740,
+  "programmatic_construction_sites": 187,
+  "specified_navigation_edges": 41,
+  "candidate_source_and_xml_edges": 101,
+  "flagged_xml_nodes": 46,
+  "visual_acceptance": "NOT_PERFORMED",
+  "runtime_completeness": "NOT_CLAIMED",
+  "source_digest": "828149ae7fa41db106b0fc249840e4a5fc248edb51c69e34b1c2a97b0d33988e"
+}

@@ -8,7 +8,7 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **845**.
+Всего tracked файлов: **853**.
 
 | Раздел | Файлов |
 |---|---|
@@ -206,9 +206,9 @@
 | `app/src/main/res/values-zh-rTW` | 1 |
 | `app/src/main/res/xml` | 25 |
 | `app/src/test` | 29 |
-| `buildScript` | 49 |
+| `buildScript` | 51 |
 | `buildSrc` | 2 |
-| `docs` | 46 |
+| `docs` | 52 |
 | `fastlane` | 8 |
 | `fdroid` | 3 |
 | `gradle` | 2 |
@@ -1438,6 +1438,7 @@
 ## buildScript
 
 - [`buildScript/build_project_site.py`](../../buildScript/build_project_site.py)
+- [`buildScript/build_ui_atlas.py`](../../buildScript/build_ui_atlas.py)
 - [`buildScript/check_project_docs.py`](../../buildScript/check_project_docs.py)
 - [`buildScript/copyLocal.sh`](../../buildScript/copyLocal.sh)
 - [`buildScript/fdroid/prebuild.sh`](../../buildScript/fdroid/prebuild.sh)
@@ -1482,6 +1483,7 @@
 - [`buildScript/test_stable_inputs.py`](../../buildScript/test_stable_inputs.py)
 - [`buildScript/test_tv_navigation.py`](../../buildScript/test_tv_navigation.py)
 - [`buildScript/test_tv_transfer_page.cjs`](../../buildScript/test_tv_transfer_page.cjs)
+- [`buildScript/test_ui_atlas.py`](../../buildScript/test_ui_atlas.py)
 - [`buildScript/validate_stable_inputs.py`](../../buildScript/validate_stable_inputs.py)
 - [`buildScript/verify_emulator_results.py`](../../buildScript/verify_emulator_results.py)
 - [`buildScript/verify_native_alignment.py`](../../buildScript/verify_native_alignment.py)
@@ -1511,6 +1513,7 @@
 - [`docs/features.md`](../../docs/features.md)
 - [`docs/github-pages.md`](../../docs/github-pages.md)
 - [`docs/hysteria-health.md`](../../docs/hysteria-health.md)
+- [`docs/interface-atlas-audit.md`](../../docs/interface-atlas-audit.md)
 - [`docs/lan-discovery.md`](../../docs/lan-discovery.md)
 - [`docs/monetization.md`](../../docs/monetization.md)
 - [`docs/project-map.md`](../../docs/project-map.md)
@@ -1518,6 +1521,11 @@
 - [`docs/reference/preferences.md`](../../docs/reference/preferences.md)
 - [`docs/reference/repository-index.md`](../../docs/reference/repository-index.md)
 - [`docs/reference/tv-navigation.json`](../../docs/reference/tv-navigation.json)
+- [`docs/reference/ui/coverage.json`](../../docs/reference/ui/coverage.json)
+- [`docs/reference/ui/elements.json`](../../docs/reference/ui/elements.json)
+- [`docs/reference/ui/elements.md`](../../docs/reference/ui/elements.md)
+- [`docs/reference/ui/navigation.dot`](../../docs/reference/ui/navigation.dot)
+- [`docs/reference/ui/transitions.json`](../../docs/reference/ui/transitions.json)
 - [`docs/release-triage.md`](../../docs/release-triage.md)
 - [`docs/releases/1.5.0.md`](../../docs/releases/1.5.0.md)
 - [`docs/releases/1.6.0-rc.158-evidence.json`](../../docs/releases/1.6.0-rc.158-evidence.json)
