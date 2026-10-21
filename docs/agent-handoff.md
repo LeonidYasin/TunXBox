@@ -2,6 +2,14 @@
 
 Обновлено: 2026-10-21 UTC. Это проверенный снимок состояния, не обещание фоновой работы. Сначала перепроверьте GitHub refs, PR, runs и release assets: более поздние изменения имеют приоритет над этим текстом.
 
+## Подготовка подписанного кандидата для устройств — 2026-10-21
+
+Восстановление прошлого чата и проверка PR17 сохранены в [контрольной точке PR18](https://github.com/LeonidYasin/TunXBox/pull/18#issuecomment-6318370505): actual XML76/76, четыре EN portraitQR PNG отдельно просмотрены, head/merge tree equality подтверждена. Это не физическая TV/camera/RU/large-font приёмка. PR12 ba614dde всё ещё имеет красный Android15 run; не подменять его conclusion зелёным PR17. Пользователь разрешил продолжать подготовку; stable не публиковать автоматически.
+
+Отдельная ветка `build/diagnostics-device-candidate` от bfde4b48 содержит workflow-only режим `artifact_only` плюс tests/docs, без runtime изменений. [Как запустить и принять](signing-and-updates.md): artifact_only=true/check_only=false/recover_rc158=false/allow_legacy_signer_migration=false/ref пуст. Полные Preview JVM/эмуляторы перед pinned signing, затем verify actual metadata/signature/alignment и upgrade manifest от rc158. Только Actions artifact; публичные релизы/теги не меняются. Локально100 Python и15 browser-transfer PASS, включая6 новых guards, workflow YAML parse PASS; это не Android CI нового commit и не готовый APK. Статус run/artifacts проверять live, не обещать готовность заранее.
+
+Устройства приёмки — смартфон и ТВ/приставка владельца; точные модели неизвестны. Если ТВ недоступен, выполнить phone acceptance и явно оставить TV/camera pending. Следующее действие — запустить artifact-only workflow на сохранённой ветке, проверить каждый gate и реальный manifest, передать владельцу подходящий APK без требования удалить приложение. Master/stable/PR12/PR17 автоматически не мержить.
+
 ## Новое решение владельца: диагностика и наблюдение
 
 Владелец не видит явных проблем Hysteria2/TLS сейчас; возможное исправление не доказано. [Точное наблюдение](releases/connection-observation-2026-10-21.json). Согласованный путь — доработать понятность/UX/передачу отчёта TV→phone и ждать новых reports, а не требовать немедленного воспроизведения исчезнувшего симптома.

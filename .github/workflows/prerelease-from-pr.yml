@@ -14,6 +14,10 @@ on:
     types: [labeled]
   workflow_dispatch:
     inputs:
+      artifact_only:
+        description: 'Build pinned signed device-test APKs as Actions artifacts only; no tags or Releases changed'
+        type: boolean
+        default: false
       recover_rc158:
         description: 'Publish original verified rc158 artifacts using pre-created numbered tag; no rebuild'
         type: boolean
@@ -41,7 +45,7 @@ permissions:
 
 jobs:
   recover-verified-rc158:
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.recover_rc158 == 'true' && github.event.inputs.check_only != 'true'
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.recover_rc158 == 'true' && github.event.inputs.check_only != 'true' && github.event.inputs.artifact_only != 'true'
     permissions:
       contents: write
       actions: read
@@ -59,6 +63,24 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event.inputs.ref || github.event.pull_request.head.ref || github.ref }}
           submodules: recursive
+      - name: Validate artifact-only mode
+        env:
+          ARTIFACT_ONLY: ${{ github.event.inputs.artifact_only }}
+          CHECK_ONLY: ${{ github.event.inputs.check_only }}
+          RECOVER: ${{ github.event.inputs.recover_rc158 }}
+          LEGACY: ${{ github.event.inputs.allow_legacy_signer_migration }}
+          SOURCE_REF: ${{ github.event.inputs.ref }}
+        run: |
+          set -euo pipefail
+          if [ "$ARTIFACT_ONLY" = "true" ]; then
+            test "$GITHUB_EVENT_NAME" = "workflow_dispatch"
+            test "$CHECK_ONLY" != "true"
+            test "$RECOVER" != "true"
+            test "$LEGACY" != "true"
+            # Artifact mode tests the dispatched branch, not another checkout.
+            test -z "$SOURCE_REF"
+          fi
+
       - name: Restore native shell executable modes
         env:
           REPAIR_BRANCH: feature/tv-remote-support
@@ -171,6 +193,7 @@ jobs:
           python3 buildScript/test_project_site.py
           python3 buildScript/test_emulator_results.py
           python3 buildScript/test_tv_navigation.py
+          python3 buildScript/test_artifact_only_workflow.py
 
       - name: Test browser transfer page
         run: node buildScript/test_tv_transfer_page.cjs
@@ -340,6 +363,18 @@ jobs:
             --certificate signing-certificate.sha256 \
             --expected-version-code "$(( $(grep '^VERSION_CODE=' nb4a.properties | cut -d= -f2) * 1000000 + ${{ github.run_number }} ))"
 
+      - name: Verify artifact-only upgrade from rc158
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.artifact_only == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          # Existing user baseline; fail closed on missing manifest, no legacy bypass.
+          mkdir -p previous-device-candidate
+          gh release download v1.6.0-rc.158 --pattern apk-manifest.json --dir previous-device-candidate
+          python3 buildScript/verify_update.py previous-device-candidate/apk-manifest.json dist/apk-manifest.json
+          echo "Signed device-test artifacts only; no release or tag publication."
+
       - name: Upload APKs (artifact)
         if: github.event.inputs.check_only != 'true'
         uses: actions/upload-artifact@v4
@@ -360,7 +395,7 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
       - name: Publish rolling pre-release to GitHub Releases
-        if: github.event.inputs.check_only != 'true'
+        if: github.event.inputs.check_only != 'true' && github.event.inputs.artifact_only != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ steps.version.outputs.rc_tag }}
@@ -477,7 +512,7 @@ jobs:
           echo "Release tagName: $(gh release view "$TAG" --json tagName -q .tagName)"
 
       - name: Comment on PR with RC link
-        if: github.event_name == 'pull_request' && github.event.inputs.check_only != 'true'
+        if: github.event_name == 'pull_request' && github.event.inputs.check_only != 'true' && github.event.inputs.artifact_only != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ steps.version.outputs.rc_tag }}

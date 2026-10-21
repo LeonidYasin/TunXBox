@@ -71,3 +71,14 @@ OpenSSL сам запросит пароль. Восстановленный `si
 ## Native updater R10
 
 [Реализация-кандидат, ограничения и приёмка](app-updates.md): выбор stable/test в меню, приватная докачка, реальный signer/ABI/package/version/hash и Android installer. Не обходить несовпадение подписи удалением приложения; личные ключи никогда не передаются updater. Старый stable не понижается поверх более нового test code.
+
+
+## Подписанный кандидат только для проверки на устройстве
+
+`prerelease-from-pr.yml`: ручной запуск на ветке с нужным кодом, `artifact_only=true`, `check_only=false`, `recover_rc158=false`, `allow_legacy_signer_migration=false`, `ref` оставить пустым. Новый режим не переносить на старый workflow без этого input. Он выполняет полный Preview compilation/JVM/два named19 emulator gates, затем загружает существующий pinned bundle, проверяет реальные APK signer/package/version/ABI/16KB alignment и обновление относительно manifest опубликованного rc.158. Никакие signing secrets в artifacts не включаются.
+
+Результат — Actions artifact `TunXBox-android-preview-release-{actualSHA}`: три подписанных APK, manifest и SHA256SUMS, retention30дней. Это не GitHub Release, не stable, не автоматическая установка и не подтверждение реальной приёмки. Public/rolling tags и assets не изменяются; recovery job и release/PR-publication steps исключают artifact-only. `check_only=true` по-прежнему не использует private signer и не выдаёт installable signed release. Ошибка обязательного gate блокирует artifact upload; режим не обходит failed emulator tests.
+
+Первый baseline — установленный владельцем rc.158; если на устройстве другая/новее сборка, дополнительно сверить фактические versionCode и signer перед установкой. Не удалять приложение при конфликте подписи: сначала разобраться. Изменения приложения в тестовом кандидате остаются PR17, runtime данным workflow не меняется. Версия RC получается из фактического run sequence; её нельзя заранее объявить собранной/прошедшей проверки.
+
+Приёмка: смартфон владельца — штатное обновление и сохранность профилей/настроек, portrait scroll, VPN/selected profile не меняются сами, full TXT действительно сохранён. ТВ/приставка владельца — RU/EN, 720p/1080p где доступны, normal/large font, D-pad/Back/Close и полный текст; камерой телефона считать short QR с экрана ТВ и получить текст. Если ТВ недоступен, отметить TV/camera acceptance PENDING, не засчитывать эмулятор вместо устройства. Модели/Android/текущую версию выяснить у владельца, не угадывать.

@@ -8,7 +8,7 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **845**.
+Всего tracked файлов: **846**.
 
 | Раздел | Файлов |
 |---|---|
@@ -206,7 +206,7 @@
 | `app/src/main/res/values-zh-rTW` | 1 |
 | `app/src/main/res/xml` | 25 |
 | `app/src/test` | 29 |
-| `buildScript` | 49 |
+| `buildScript` | 50 |
 | `buildSrc` | 2 |
 | `docs` | 46 |
 | `fastlane` | 8 |
@@ -1470,6 +1470,7 @@
 - [`buildScript/sources/lock.json`](../../buildScript/sources/lock.json)
 - [`buildScript/sources/package_dashboard.py`](../../buildScript/sources/package_dashboard.py)
 - [`buildScript/sources/readiness.py`](../../buildScript/sources/readiness.py)
+- [`buildScript/test_artifact_only_workflow.py`](../../buildScript/test_artifact_only_workflow.py)
 - [`buildScript/test_assets.py`](../../buildScript/test_assets.py)
 - [`buildScript/test_emulator_results.py`](../../buildScript/test_emulator_results.py)
 - [`buildScript/test_native_alignment.py`](../../buildScript/test_native_alignment.py)
