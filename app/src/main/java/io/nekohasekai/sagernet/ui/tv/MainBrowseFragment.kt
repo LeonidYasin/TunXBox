@@ -141,7 +141,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
         DataStore.serviceState = state
         val previousPhase = phase
         phase = TvVpnPhase.fromServiceName(state.name)
-        if (phase != previousPhase || name != null && name != activeName) { serviceEpoch++;healthJob?.cancel();health="";healthResult=null }
+        if (phase != previousPhase || name != null && name != activeName) { serviceEpoch++;healthJob?.cancel();extendedJob?.cancel();extendedReport=null;health="";healthResult=null }
         if (phase in setOf(TvVpnPhase.IDLE, TvVpnPhase.STOPPED)) { stats = io.nekohasekai.sagernet.aidl.SpeedDisplayData(); statsAt = 0L; activeName = ""; health = "" }
         if (name != null && phase !in setOf(TvVpnPhase.IDLE, TvVpnPhase.STOPPED)) activeName = name
         refreshCards()
@@ -472,7 +472,8 @@ class MainBrowseFragment : BrowseSupportFragment() {
         val counters=phase==TvVpnPhase.CONNECTED&&statsAt>0L
         val report=io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticReport.text(requireContext(),record,
             if(counters)stats.txTotal else null,if(counters)stats.rxTotal else null)
-        io.nekohasekai.sagernet.ui.diagnostics.DiagnosticDialog.open(parentFragmentManager,report+(extendedReport?.takeIf {it.profile==profile}?.let {"\n\n"+it.text()}?:""),phase==TvVpnPhase.CONNECTED,profile>0)
+        io.nekohasekai.sagernet.ui.diagnostics.DiagnosticDialog.open(parentFragmentManager,report+(extendedReport?.takeIf {it.profile==profile}?.let {"\n\n"+it.text(requireContext())}?:""),phase==TvVpnPhase.CONNECTED,profile>0,
+            io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticReport.offlineText(record,extendedReport?.takeIf {it.profile==profile}))
     }
     fun handlePlayPause() = execute(TvInteractionPolicy.media(phase, DataStore.selectedProxy, serviceReady))
     fun showFocusedActions() {
@@ -684,7 +685,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
     private fun syncHealthSession() {
         val changed=healthSession.sync(serviceReady&&phase==TvVpnPhase.CONNECTED,activeProfileId(),
             "$serviceEpoch:${SagerNet.underlyingNetwork}")
-        if(changed){healthJob?.cancel();health="";healthResult=null;refreshConnectionCards()}
+        if(changed){healthJob?.cancel();extendedJob?.cancel();extendedReport=null;health="";healthResult=null;refreshConnectionCards()}
     }
     private fun maybeAutoCheck() {
         if(view==null||!isResumed)return
@@ -702,7 +703,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
         progress.getButton(AlertDialog.BUTTON_NEGATIVE)?.apply {isFocusableInTouchMode=true;requestFocus()}
         extendedJob=viewLifecycleOwner.lifecycleScope.launch {
             val start=SystemClock.elapsedRealtime();var stage="CONFIG_COMPATIBILITY"
-            val ticker=launch {while(isActive){progress.setMessage(getString(R.string.diagnostic_extended_progress,stage,(SystemClock.elapsedRealtime()-start)/1000)+"\n\n"+getString(R.string.diagnostic_extended_scope));delay(250)}}
+            val ticker=launch {while(isActive){progress.setMessage(getString(R.string.diagnostic_extended_progress,io.nekohasekai.sagernet.ui.diagnostics.DiagnosticPresentation.stage(requireContext(),stage),(SystemClock.elapsedRealtime()-start)/1000)+"\n\n"+getString(R.string.diagnostic_extended_scope));delay(250)}}
             try {
                 val entity=withContext(Dispatchers.IO){ProfileManager.getProfile(id)}?:return@launch
                 val fingerprint=io.nekohasekai.sagernet.fmt.KryoConverters.serialize(entity.requireBean())
@@ -771,7 +772,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
                 if(phase==TvVpnPhase.CONNECTED&&activeProfileId()==testedProfile&&healthSession.finish(token)) {
                     val result=io.nekohasekai.sagernet.group.ConnectionTestResult(testedProfile,System.currentTimeMillis(),-1,
                         io.nekohasekai.sagernet.group.SubscriptionFailureCategory.fromThrowable(error))
-                    healthResult=result;io.nekohasekai.sagernet.group.ConnectionTestPresentation.save(result)
+                    healthResult=result;saveCheckResult(result);io.nekohasekai.sagernet.group.ConnectionTestPresentation.save(result)
                     health=io.nekohasekai.sagernet.group.ConnectionTestPresentation.summary(requireContext(),result)
                 }
             } finally {

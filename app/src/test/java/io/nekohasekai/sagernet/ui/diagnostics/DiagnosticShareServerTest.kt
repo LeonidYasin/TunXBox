@@ -24,6 +24,14 @@ class DiagnosticShareServerTest {
    assertTrue(r.startsWith("HTTP/1.1 404"));assertFalse(r.contains("private report"))
   }
  }}
+ @Test fun onlyAuthorizedCompletedTransfersAreCountedAndExpiryIsVisible() {
+  DiagnosticShareServer(local,"safe diagnostic",lifetimeMs=5000).use {s ->
+   assertEquals(0,s.completedTransfers);assertTrue(s.remainingSeconds in 1..5)
+   request(s.url,"/wrong/diagnostics.txt");assertEquals(0,s.completedTransfers)
+   request(s.url);assertEquals(1,s.completedTransfers)
+   s.close();assertEquals(0,s.remainingSeconds)
+  }
+ }
  @Test fun closeAndExpiryDisableListener() {
   val s=DiagnosticShareServer(local,"report",lifetimeMs=30);Thread.sleep(150);assertFalse(s.isOpen);s.close()
   val t=DiagnosticShareServer(local,"report");t.close();assertFalse(t.isOpen);assertTrue(runCatching {request(t.url)}.isFailure)

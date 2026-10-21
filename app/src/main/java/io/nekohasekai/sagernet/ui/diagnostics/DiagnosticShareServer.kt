@@ -22,6 +22,9 @@ class DiagnosticShareServer(address: Inet4Address, report: String, private val l
     private val timer = java.util.Timer("diagnostic-share-expiry", true)
     private val expires = System.nanoTime() + lifetimeMs * 1_000_000
     @Volatile private var client: Socket? = null
+    private val transfers = java.util.concurrent.atomic.AtomicInteger(0)
+    val completedTransfers: Int get() = transfers.get()
+    val remainingSeconds: Int get() = if(isOpen) ((expires-System.nanoTime()+999_999_999L)/1_000_000_000L).coerceAtLeast(0).toInt() else 0
     val url = "http://${address.hostAddress}:${listener.localPort}$path"
     val isOpen: Boolean get() = !closed.get() && System.nanoTime() < expires
     init {
@@ -60,6 +63,7 @@ class DiagnosticShareServer(address: Inet4Address, report: String, private val l
         val status = if (authorized) "200 OK" else "404 Not Found"
         val response = "HTTP/1.1 $status\r\nContent-Type: text/plain; charset=utf-8\r\nContent-Length: ${body.size}\r\nContent-Disposition: attachment; filename=$downloadName\r\nCache-Control: no-store\r\nX-Content-Type-Options: nosniff\r\nConnection: close\r\n\r\n"
         socket.getOutputStream().apply { write(response.toByteArray(Charsets.US_ASCII)); write(body); flush() }
+        if(authorized)transfers.incrementAndGet()
     }
     override fun close() {
         closed.set(true); timer.cancel()

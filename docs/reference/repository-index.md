@@ -8,7 +8,7 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **839**.
+Всего tracked файлов: **845**.
 
 | Раздел | Файлов |
 |---|---|
@@ -134,7 +134,7 @@
 | `app/src/main/java/io/nekohasekai/sagernet/ui/ToolsFragment.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/VpnRequestActivity.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/WebviewFragment.kt` | 1 |
-| `app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics` | 5 |
+| `app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics` | 7 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/lan` | 7 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/profile` | 16 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/tv` | 26 |
@@ -182,7 +182,7 @@
 | `app/src/main/res/raw` | 4 |
 | `app/src/main/res/raw-zh-rCN` | 4 |
 | `app/src/main/res/resources.properties` | 1 |
-| `app/src/main/res/values` | 24 |
+| `app/src/main/res/values` | 25 |
 | `app/src/main/res/values-ar` | 1 |
 | `app/src/main/res/values-be` | 1 |
 | `app/src/main/res/values-de` | 1 |
@@ -197,7 +197,7 @@
 | `app/src/main/res/values-night` | 2 |
 | `app/src/main/res/values-nl` | 1 |
 | `app/src/main/res/values-pt-rBR` | 1 |
-| `app/src/main/res/values-ru` | 14 |
+| `app/src/main/res/values-ru` | 15 |
 | `app/src/main/res/values-tr` | 1 |
 | `app/src/main/res/values-uk` | 1 |
 | `app/src/main/res/values-w600dp-h480dp` | 1 |
@@ -208,7 +208,7 @@
 | `app/src/test` | 29 |
 | `buildScript` | 49 |
 | `buildSrc` | 2 |
-| `docs` | 44 |
+| `docs` | 46 |
 | `fastlane` | 8 |
 | `fdroid` | 3 |
 | `gradle` | 2 |
@@ -767,7 +767,9 @@
 ## app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics
 
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/ConnectionDiagnostic.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/ConnectionDiagnostic.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/DiagnosticDeadline.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/DiagnosticDeadline.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/DiagnosticDialog.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/DiagnosticDialog.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/DiagnosticPresentation.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/DiagnosticPresentation.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/DiagnosticShareServer.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/DiagnosticShareServer.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/ExtendedConnectionDiagnostics.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/ExtendedConnectionDiagnostics.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/TlsFailureEvidence.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics/TlsFailureEvidence.kt)
@@ -1256,6 +1258,7 @@
 - [`app/src/main/res/values/colors.xml`](../../app/src/main/res/values/colors.xml)
 - [`app/src/main/res/values/connection_diagnostics.xml`](../../app/src/main/res/values/connection_diagnostics.xml)
 - [`app/src/main/res/values/crash_recovery.xml`](../../app/src/main/res/values/crash_recovery.xml)
+- [`app/src/main/res/values/diagnostic_experience.xml`](../../app/src/main/res/values/diagnostic_experience.xml)
 - [`app/src/main/res/values/dimens.xml`](../../app/src/main/res/values/dimens.xml)
 - [`app/src/main/res/values/extended_diagnostics.xml`](../../app/src/main/res/values/extended_diagnostics.xml)
 - [`app/src/main/res/values/ic_launcher_background.xml`](../../app/src/main/res/values/ic_launcher_background.xml)
@@ -1336,6 +1339,7 @@
 - [`app/src/main/res/values-ru/app_updates.xml`](../../app/src/main/res/values-ru/app_updates.xml)
 - [`app/src/main/res/values-ru/connection_diagnostics.xml`](../../app/src/main/res/values-ru/connection_diagnostics.xml)
 - [`app/src/main/res/values-ru/crash_recovery.xml`](../../app/src/main/res/values-ru/crash_recovery.xml)
+- [`app/src/main/res/values-ru/diagnostic_experience.xml`](../../app/src/main/res/values-ru/diagnostic_experience.xml)
 - [`app/src/main/res/values-ru/extended_diagnostics.xml`](../../app/src/main/res/values-ru/extended_diagnostics.xml)
 - [`app/src/main/res/values-ru/mode_choice.xml`](../../app/src/main/res/values-ru/mode_choice.xml)
 - [`app/src/main/res/values-ru/release_notes.xml`](../../app/src/main/res/values-ru/release_notes.xml)
@@ -1502,6 +1506,7 @@
 - [`docs/decisions.md`](../../docs/decisions.md)
 - [`docs/development.md`](../../docs/development.md)
 - [`docs/diagnostic-support.md`](../../docs/diagnostic-support.md)
+- [`docs/diagnostics-ux-review.md`](../../docs/diagnostics-ux-review.md)
 - [`docs/emulator-testing.md`](../../docs/emulator-testing.md)
 - [`docs/features.md`](../../docs/features.md)
 - [`docs/github-pages.md`](../../docs/github-pages.md)
@@ -1517,6 +1522,7 @@
 - [`docs/releases/1.5.0.md`](../../docs/releases/1.5.0.md)
 - [`docs/releases/1.6.0-rc.158-evidence.json`](../../docs/releases/1.6.0-rc.158-evidence.json)
 - [`docs/releases/1.6.0.md`](../../docs/releases/1.6.0.md)
+- [`docs/releases/connection-observation-2026-10-21.json`](../../docs/releases/connection-observation-2026-10-21.json)
 - [`docs/releases/fdroid-e7e2d0a-evidence.json`](../../docs/releases/fdroid-e7e2d0a-evidence.json)
 - [`docs/releases/rc158-device-acceptance.json`](../../docs/releases/rc158-device-acceptance.json)
 - [`docs/releases/validation-4adc13e.json`](../../docs/releases/validation-4adc13e.json)

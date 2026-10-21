@@ -3,7 +3,7 @@
     <string name="diagnostic_card_hint">Этапы, причины, время проверки и отчёт на смартфон</string>
     <string name="diagnostic_sent">↑ Передано: %1$s</string>
     <string name="diagnostic_received">↓ Получено: %1$s</string>
-    <string name="diagnostic_ok_short">ОК · %1$d мс</string>
+    <string name="diagnostic_ok_short">URL проверен · %1$d мс</string>
     <string name="diagnostic_failed_short">Ошибка · %1$s</string>
     <string name="diagnostic_checking_short">Интернет: проверка…</string>
     <string name="diagnostic_unchecked_short">Интернет: не проверен</string>
@@ -18,7 +18,7 @@
     <string name="diagnostic_share_no_lan">Нет подходящего частного IPv4 в Wi-Fi/Ethernet. Передача не открыта.</string>
     <string name="diagnostic_share_expired">Передача закрыта: истекло время или изменилась сеть. Откройте снова для нового QR.</string>
     <string name="diagnostic_share_failed">Не удалось открыть локальную передачу. Закройте окно и повторите.</string>
-    <string name="diagnostic_share_help">Телефон и ТВ должны быть в одной доверенной локальной сети. Сканируйте QR для скачивания TXT. До 5 минут; закрытие окна или уход в фон отключает ссылку. Локальный HTTP не шифруется. Не открывайте этот порт в Интернет. Изоляция Wi-Fi или VPN телефона могут мешать доступу.</string>
+    <string name="diagnostic_share_help">Телефон и ТВ должны быть в одной доверенной локальной сети. Сканируйте QR для скачивания TXT. До 5 минут; закрытие окна или уход в фон отключает ссылку. Локальный HTTP не шифруется. Не открывайте этот порт в Интернет. Изоляция Wi-Fi или VPN телефона могут мешать доступу. Если ссылка не открывается, выберите «Короткий QR без Wi-Fi».</string>
     <string name="diagnostic_error_short">ошибка</string>
     <string name="diagnostic_protocol_short">протокол</string>
     <string name="diagnostic_timeout_short">таймаут</string>

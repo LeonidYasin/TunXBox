@@ -2,6 +2,12 @@
 
 Обновлено: 2026-10-21 UTC. Это проверенный снимок состояния, не обещание фоновой работы. Сначала перепроверьте GitHub refs, PR, runs и release assets: более поздние изменения имеют приоритет над этим текстом.
 
+## Новое решение владельца: диагностика и наблюдение
+
+Владелец не видит явных проблем Hysteria2/TLS сейчас; возможное исправление не доказано. [Точное наблюдение](releases/connection-observation-2026-10-21.json). Согласованный путь — доработать понятность/UX/передачу отчёта TV→phone и ждать новых reports, а не требовать немедленного воспроизведения исчезнувшего симптома.
+
+Работа ведётся отдельно в `fix/diagnostics-user-journey` от candidate `ba614dde`, не в master. [Аудит и acceptance](diagnostics-ux-review.md): localized summary/stages, partial60s report, Hy2 metadata, short offline text QR, LAN TTL/counter. Все изменения требуют собственных compilation/JVM/Android gates; нельзя приписывать им CI PR16. Новый APK/stable не опубликован. Физический QR scan/D-pad/font-scale acceptance остаётся после получения тестового APK. Issues6/10 оставить OPEN monitoring; новая воспроизводимая регрессия снова требует fix/scope decision.
+
 ## Актуальное состояние после PR15/PR16 — 2026-10-21
 
 Этот раздел имеет приоритет над историческими снимками ниже. Проверенный candidate merge — `231cdfae7145f39d49c7613c7f93df5b841ef5ba`, tree `e566f7d59a0e5efa52314e5e7a7e46402a8ce884`; последующий docs-only handoff commit не является новым APK.
@@ -12,7 +18,7 @@
 - Переносимый архив ~180MB из artifact12315040710/run39528903583 передан владельцу в предыдущем чате вместе с SHA256. SHA256 архива `cc8478275426a9d1c4a862c2103a194428edcce7c0452cdb8efc6ce71e50e5c7`; snapshot application `16c2b823...`; все 29640 file hashes проверены. [Доказательства и границы](https://github.com/LeonidYasin/TunXBox/pull/16#issuecomment-6306013373). `allTransitiveSourcesArchived=false`, полный Git history/Maven/toolchains не включены, внешнее сохранение владельцем не подтверждено. Старые sandbox/session-file пути нельзя считать доступными новому агенту.
 - Исходные #6/#10 остаются OPEN: это прежние physical reports, не свежая воспроизведённая регрессия rc158. Диагностика не равна исправлению. [Минимальная проверка и безопасная форма](connection-acceptance.md) разделяет сертификат подписки, прокси TLS/QUIC и URL-пробу.
 
-Следующий шаг: проверить новые live refs/checks PR12; попросить владельца повторить один конкретный проблемный узел на rc158 и Happ на том же устройстве/сети, без публикации конфигурации. Нужны safe report и поведение обычного трафика, затем целевой regression fixture/fix либо согласованный documented deferral. Не закрывать #6/#10 по CI. Не сливать PR12/master и не выпускать stable автоматически. PR14 entrypoint остаётся отдельным review; после будущей интеграции проверить superseded status.
+Исторический следующий шаг до нового наблюдения владельца: проверить live refs/checks PR12; повторить конкретный проблемный узел при возвращении симптома, без публикации конфигурации. Нужны safe report и поведение обычного трафика, затем целевой regression fixture/fix либо согласованный documented deferral. Не закрывать #6/#10 по CI. Не сливать PR12/master и не выпускать stable автоматически. PR14 entrypoint остаётся отдельным review; после будущей интеграции проверить superseded status.
 
 ## Историческая подготовка до интеграции PR16
 

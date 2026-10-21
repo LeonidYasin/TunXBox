@@ -7,6 +7,7 @@ import io.nekohasekai.sagernet.R
 import io.nekohasekai.sagernet.database.DataStore
 import io.nekohasekai.sagernet.database.ProxyEntity
 import io.nekohasekai.sagernet.fmt.v2ray.StandardV2RayBean
+import io.nekohasekai.sagernet.fmt.hysteria.HysteriaBean
 import io.nekohasekai.sagernet.group.ConnectionTestResult
 import io.nekohasekai.sagernet.group.SubscriptionFailureCategory
 import io.nekohasekai.sagernet.group.SubscriptionFailurePresentation
@@ -37,11 +38,13 @@ data class ConnectionDiagnostic(val profile: Long,val at: Long,val stage: Diagno
         }.getOrNull()
         fun capture(entity: ProxyEntity?,profile: Long,stage: DiagnosticStage,category: SubscriptionFailureCategory?,at: Long=System.currentTimeMillis(),elapsed: Int=-1): ConnectionDiagnostic {
             val source=entity?.takeIf {it.id==profile}
-            val bean=runCatching {source?.requireBean()}.getOrNull() as? StandardV2RayBean
+            val sourceBean=runCatching {source?.requireBean()}.getOrNull()
+            val bean=sourceBean as? StandardV2RayBean
+            val hysteria=sourceBean as? HysteriaBean
             val protocol=runCatching {source?.displayType()}.getOrNull()?.takeIf {it in protocols}?:"unknown"
             return ConnectionDiagnostic(profile,at,stage,category,protocol,
-                bean?.type?.lowercase(java.util.Locale.ROOT)?.takeIf {it in transports}?:"unknown",
-                (if(!bean?.realityPubKey.isNullOrBlank())"reality" else bean?.security?.lowercase(java.util.Locale.ROOT))?.takeIf {it in securities}?:"unknown",elapsed)
+                (if(hysteria!=null&&hysteria.protocol==HysteriaBean.PROTOCOL_UDP)"quic" else bean?.type?.lowercase(java.util.Locale.ROOT))?.takeIf {it in transports}?:"unknown",
+                (if(hysteria!=null)"tls" else if(!bean?.realityPubKey.isNullOrBlank())"reality" else bean?.security?.lowercase(java.util.Locale.ROOT))?.takeIf {it in securities}?:"unknown",elapsed)
         }
     }
 }
@@ -68,10 +71,33 @@ object ConnectionDiagnosticReport {
     fun reason(context: Context,category: SubscriptionFailureCategory)=when(category) {
         SubscriptionFailureCategory.TIMEOUT->context.getString(R.string.diagnostic_timeout_explanation)
         SubscriptionFailureCategory.TLS_TRUST->context.getString(R.string.diagnostic_tls_explanation)
+        SubscriptionFailureCategory.TLS_TIME->context.getString(R.string.diagnostic_tls_time_explanation)
+        SubscriptionFailureCategory.HTTP, SubscriptionFailureCategory.EMPTY, SubscriptionFailureCategory.LOCAL_SAVE, SubscriptionFailureCategory.UNKNOWN->context.getString(R.string.diagnostic_unknown_explanation)
         else->SubscriptionFailurePresentation.reason(context,category)
     }
 
+    fun offlineText(record: ConnectionDiagnostic?, extended: ExtendedConnectionDiagnostics.Report?=null): String = buildString {
+        appendLine("TunXBox short diagnostic (not full report)")
+        appendLine("APK ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
+        appendLine("Commit ${BuildConfig.BUILD_COMMIT.take(12)}; Android ${Build.VERSION.SDK_INT}")
+        val safe=record?.takeIf {ConnectionDiagnostic.decode(it.encode())!=null}
+        if(safe==null) appendLine("No completed active-core attempt") else {
+            appendLine("Attempt ${safe.at}; ${safe.stage}; NET_${safe.category?.name?:"OK"}")
+            appendLine("${safe.protocol}/${safe.transport}/${safe.security}; URL RTT ${safe.elapsed} ms")
+        }
+        extended?.let {report ->
+            appendLine("Extended attempt ${report.at}")
+            (report.steps.filter {it.outcome=="FAIL"||it.outcome=="TIMEOUT"}+report.steps.filter {it.outcome!="FAIL"&&it.outcome!="TIMEOUT"}).take(6)
+        }?.forEach {step ->
+            val stage=DiagnosticVocabulary.stage(step.stage)
+            val outcome=DiagnosticVocabulary.outcome(step.outcome).let {if(it.startsWith("SKIPPED_"))"SKIPPED" else it}
+            appendLine("$stage $outcome${step.category?.let {" NET_${it.name}"}?:""}${step.evidence?.let {" TLS_${it.name}"}?:""}")
+        }
+        appendLine("Snapshot only; VPN started != Internet verified. No endpoints/keys/logs.")
+    }.also { require(it.toByteArray(Charsets.UTF_8).size<=1400) }
+
     fun text(context: Context,record: ConnectionDiagnostic?,sent: Long?=null,received: Long?=null): String = buildString {
+        appendLine(DiagnosticPresentation.summary(context,record))
         appendLine("TunXBox connection diagnostic · schema 1")
         appendLine("APK: ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
         appendLine("Commit: ${BuildConfig.BUILD_COMMIT}")
