@@ -1,0 +1,55 @@
+{
+  "testedMergeCommit": "16c2b8237f4058bdace8a9e15c1c312b60c5ddf1",
+  "testedTree": "e566f7d59a0e5efa52314e5e7a7e46402a8ce884",
+  "sourceRun": 39528903583,
+  "stableCheckRun": 39528903613,
+  "suites": [
+    {
+      "flavor": "fdroid",
+      "pageSize": 4096,
+      "artifactId": 12315033868,
+      "zipSha256": "96556e58a272ba65dade75aeaf40b9c5cad25f2309189a05d1d3938c27dca7f4",
+      "tests": 19,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "flavor": "fdroid",
+      "pageSize": 16384,
+      "artifactId": 12315033868,
+      "zipSha256": "96556e58a272ba65dade75aeaf40b9c5cad25f2309189a05d1d3938c27dca7f4",
+      "tests": 19,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "flavor": "oss",
+      "pageSize": 4096,
+      "artifactId": 12314474684,
+      "zipSha256": "7c1b0be4c3e5456640f706726f510859a79eadf375f4bc72c4d3a7de3280f375",
+      "tests": 19,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    {
+      "flavor": "oss",
+      "pageSize": 16384,
+      "artifactId": 12314474684,
+      "zipSha256": "7c1b0be4c3e5456640f706726f510859a79eadf375f4bc72c4d3a7de3280f375",
+      "tests": 19,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "actualCandidateMergeCommit": "231cdfae7145f39d49c7613c7f93df5b841ef5ba",
+  "actualCandidateMergeTree": "e566f7d59a0e5efa52314e5e7a7e46402a8ce884",
+  "treeEqualityVerified": true,
+  "newApkPublished": false,
+  "stablePublished": false,
+  "physicalIssues6And10Accepted": false,
+  "scope": "PR16 source/workflow/docs; results do not prove live proxy compatibility or later exact-head CI"
+}

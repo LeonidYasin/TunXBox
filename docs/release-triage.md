@@ -8,7 +8,7 @@ Stable означает принятый определённый набор ф�
 
 ## Канонический путь
 
-[PR #12](https://github.com/LeonidYasin/TunXBox/pull/12) теперь направлен в master и является единым **draft integration candidate**. База runtime сохранена: `6801803` → scroll/NET_BUSY/source prep. После review, final CI и приёмки интегрировать его один раз; отдельный stable выпуск потом. Ретаргет не мержит master и не принимает runtime автоматически. После ретаргета GitHub показывает `mergeable=false`: 15 конфликтующих файлов с master. Их список и безопасный порядок интеграции сохранены в [handoff](agent-handoff.md); branch-only green CI не проверяет итоговый merge tree.
+[PR #12](https://github.com/LeonidYasin/TunXBox/pull/12) теперь направлен в master и является единым **draft integration candidate**. База runtime сохранена: `6801803` → scroll/NET_BUSY/source prep. После review, final CI и приёмки интегрировать его один раз; отдельный stable выпуск потом. Ретаргет не мержит master и не принимает runtime автоматически. PR15 и PR16 уже merged только в candidate. Master остаётся `99a8b6f2`; candidate integration snapshot `231cdfae` с master ancestry и проверенным tree `e566f7d5`. Исторические 15 конфликтов устранены; не повторять sync. Обе проверки PR16 SUCCESS; 76/76 emulator scenarios проверены по XML. [Доказательства](releases/validation-pr16.json). Для будущего exact-head CI сверять live refs; не переносить conclusion на неизвестный новый tree. PR12 остаётся draft и не является разрешением stable.
 
 | Объект | Что установлено | Решение / критерий закрытия |
 |---|---|---|
@@ -17,9 +17,11 @@ Stable означает принятый определённый набор ф�
 | [PR #8](https://github.com/LeonidYasin/TunXBox/pull/8) | TV health/navigation/updater UX; head336eb58 ancestor | Review slice2/3; TV/Phone acceptance и честные test states, не Hysteria throughput proof |
 | [PR #9](https://github.com/LeonidYasin/TunXBox/pull/9) | Group rows/subscription metadata; head6801803 ancestor | Review slice3/3; группы/фокус/крупный шрифт/metadata import на реальном устройстве |
 | [PR #11](https://github.com/LeonidYasin/TunXBox/pull/11) | Старый master-based source/F-Droid prep | **CLOSED, superseded by12**, не merged. Ветка/исходное описание сохранены. Открытые license/provisioning gates не закрыты |
-| [PR #12](https://github.com/LeonidYasin/TunXBox/pull/12) | Полный актуальный integration candidate; rc158 tested source0bd5770 | OPEN draft → master. Smartphone rc158 update/portrait scroll: partial positive owner acceptance; exact4adc CI PASS. Ещё sync master ancestry/TV/updater/full acceptance + fix/defer issues6/10; затем owner review/merge/stable |
+| [PR #12](https://github.com/LeonidYasin/TunXBox/pull/12) | Полный актуальный integration candidate; rc158 tested source0bd5770 | OPEN draft → master. Smartphone rc158 update/portrait scroll: partial positive owner acceptance; exact4adc CI PASS. Master ancestry sync завершён PR15; ещё TV/updater/full acceptance + fix/defer issues6/10; затем owner review/merge/stable |
 | [Issue #6](https://github.com/LeonidYasin/TunXBox/issues/6) | Hysteria2 intermittent/no traffic/low speed, причина неизвестна | OPEN. Реальное сравнение одинакового профиля/сети/устройства; отдельно от сертификата подписки и от XHTTP. Не закрывать health UI или smoke |
 | [Issue #10](https://github.com/LeonidYasin/TunXBox/issues/10) | Auto/Sweden TLS/timeout vs Happ | OPEN. Диагностика и worker race исправлены, исходная совместимость не подтверждена. Сравнивать тот же конкретный outbound и strict certificates; Auto aggregate не доказательство |
+| [PR #15](https://github.com/LeonidYasin/TunXBox/pull/15) | Master history sync; candidate tree без runtime изменений | MERGED в candidate, не master; конфликты устранены |
+| [PR #16](https://github.com/LeonidYasin/TunXBox/pull/16) | Stable-input preflight/release notes и rc158 site source; 76 emulator tests PASS | MERGED в candidate; нет нового APK/stable |
 | [PR #14](https://github.com/LeonidYasin/TunXBox/pull/14) | Docs-only AGENTS/CLAUDE entrypoint для защищённого master | OPEN ready; отдельный review/merge, без runtime и разрешения stable. Не обязательный runtime gate; активная ветка уже содержит handoff |
 | [Issue #13](https://github.com/LeonidYasin/TunXBox/issues/13) | Extended/Xray/XHTTP migration experiment | OPEN post-1.6; не обещание функции текущего stable. Source/adapter/license/fixture gates в [стратегии](core-extension-strategy.md) |
 
@@ -35,3 +37,7 @@ Stable означает принятый определённый набор ф�
 ## Новое подтверждение владельца и CI
 
 Смартфон обновился до rc.158 без проблем; портретная прокрутка предварительно работает нормально. Это не подтверждение мыши/D-pad/TV/всех данных. [Запись приёмки](releases/rc158-device-acceptance.json). На `4adc13e` source/F-Droid и OSS stable check-only прошли; actual XML: 4 × 19 без ошибок/пропусков. [Доказательства](releases/validation-4adc13e.json). Подготовка отдельного master-history sync PR описана в [handoff](agent-handoff.md); не подменять им stable merge.
+
+## Минимальная следующая приёмка #6/#10
+
+[Форма безопасного сравнения rc158/Happ](connection-acceptance.md). Первоначальные симптомы относятся к прежним reports; текущее воспроизведение rc158 не подтверждено. Истёкший сертификат подписки, Hysteria2 instability и TLS категории URL-теста не объединять в одну установленную причину. Не просить частные конфигурации или сырые логи в публичном issue.
