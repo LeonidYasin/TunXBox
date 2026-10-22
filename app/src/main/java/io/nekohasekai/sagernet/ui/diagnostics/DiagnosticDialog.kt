@@ -19,10 +19,10 @@ import java.net.Inet4Address
 /** Fixed action bar, independently scrollable report, safe-close initial focus. */
 class DiagnosticDialog: DialogFragment() {
     companion object {
-        fun open(manager: FragmentManager,report: String,repeat: Boolean=false,extended: Boolean=false) {
+        fun open(manager: FragmentManager,report: String,repeat: Boolean=false,extended: Boolean=false,offlineReport: String?=null) {
             if(manager.isStateSaved||manager.findFragmentByTag("connection_report")!=null)return
             require(report.toByteArray().size<=32*1024)
-            DiagnosticDialog().apply {arguments=Bundle().apply {putString("report",report);putBoolean("repeat",repeat);putBoolean("extended",extended)}}.show(manager,"connection_report")
+            DiagnosticDialog().apply {arguments=Bundle().apply {putString("report",report);putBoolean("repeat",repeat);putBoolean("extended",extended);putString("offline",offlineReport)}}.show(manager,"connection_report")
         }
     }
     override fun onCreateDialog(savedInstanceState: Bundle?): android.app.Dialog {
@@ -39,7 +39,7 @@ class DiagnosticDialog: DialogFragment() {
             })
         }
         builder.setTitle(R.string.diagnostic_title).setView(body)
-            .setNeutralButton(R.string.diagnostic_share) {_,_-> DiagnosticShareDialog.open(parentFragmentManager,arguments?.getString("report").orEmpty())}
+            .setNeutralButton(R.string.diagnostic_share) {_,_-> DiagnosticShareDialog.open(parentFragmentManager,arguments?.getString("report").orEmpty(),arguments?.getString("offline"))}
             .setPositiveButton(android.R.string.ok,null)
         if(arguments?.getBoolean("repeat")==true)builder.setNegativeButton(R.string.diagnostic_repeat) {_,_->parentFragmentManager.setFragmentResult("diagnostic_repeat",Bundle())}
         return builder.create()
@@ -49,19 +49,21 @@ class DiagnosticDialog: DialogFragment() {
 /** Explicit LAN export only. Back/onStop/expiry/network changes close the listener. */
 class DiagnosticShareDialog: DialogFragment() {
     private var started=false
+    private var offline=false
     private var server: DiagnosticShareServer?=null
     private var job: Job?=null
     private lateinit var status: TextView
     private lateinit var image: ImageView
     companion object {
-        fun open(manager: FragmentManager,report: String) {
+        fun open(manager: FragmentManager,report: String,offlineReport: String?=null) {
             if(manager.isStateSaved||manager.findFragmentByTag("diagnostic_share")!=null)return
             require(report.toByteArray().size<=32*1024)
-            DiagnosticShareDialog().apply {arguments=Bundle().apply {putString("report",report)}}.show(manager,"diagnostic_share")
+            DiagnosticShareDialog().apply {arguments=Bundle().apply {putString("report",report);putString("offline",offlineReport)}}.show(manager,"diagnostic_share")
         }
     }
     override fun onCreateDialog(savedInstanceState: Bundle?): android.app.Dialog {
         started=savedInstanceState?.getBoolean("started",false)?:false
+        offline=savedInstanceState?.getBoolean("offline",false)?:false
         val builder=android.app.AlertDialog.Builder(requireContext())
         val context=builder.context;fun dp(n: Int)=(n*resources.displayMetrics.density).toInt()
         val height=(resources.configuration.screenHeightDp-180).coerceAtLeast(120)
@@ -76,10 +78,16 @@ class DiagnosticShareDialog: DialogFragment() {
             addView(scroll,if(wide)LinearLayout.LayoutParams(0,-1,1f) else LinearLayout.LayoutParams(-1,0,1f))
         }
         val frame=LinearLayout(context).apply {orientation=LinearLayout.VERTICAL;addView(body)}
-        return builder.setTitle(R.string.diagnostic_share).setView(frame).setPositiveButton(R.string.diagnostic_share_close,null).create()
+        builder.setTitle(R.string.diagnostic_share).setView(frame).setPositiveButton(R.string.diagnostic_share_close,null)
+        if(!arguments?.getString("offline").isNullOrBlank()) builder.setNeutralButton(R.string.diagnostic_offline_button,null)
+        return builder.create()
     }
     override fun onStart() {
         super.onStart();dialog?.let { io.nekohasekai.sagernet.group.SubscriptionUpdatePresentation.focusClose(it) }
+        (dialog as? android.app.AlertDialog)?.getButton(android.app.AlertDialog.BUTTON_NEUTRAL)?.apply {
+            id=R.id.diagnostic_offline_button;setOnClickListener {showOffline()}
+        }
+        if(offline){showOffline();return}
         if(started){status.setText(R.string.diagnostic_share_expired);return}
         started=true
         job=lifecycleScope.launch {
@@ -107,13 +115,40 @@ class DiagnosticShareDialog: DialogFragment() {
                     }
                 }
                 image.setImageBitmap(bitmap);status.text=getString(R.string.diagnostic_share_help)+"\n\n"+sharing.url
-                while(sharing.isOpen&&environment.current(selected.first))delay(500)
+                var lastState=""
+                while(sharing.isOpen&&environment.current(selected.first)) {
+                    val state="${sharing.remainingSeconds}/${sharing.completedTransfers}"
+                    if(state!=lastState) {
+                        status.text=getString(R.string.diagnostic_share_help)+"\n\n"+
+                            getString(R.string.diagnostic_share_live,sharing.remainingSeconds,sharing.completedTransfers)+"\n\n"+sharing.url
+                        lastState=state
+                    }
+                    delay(500)
+                }
                 image.setImageDrawable(null);status.setText(R.string.diagnostic_share_expired)
             } catch(cancelled: CancellationException){throw cancelled}
             catch(_: Exception){image.setImageDrawable(null);status.setText(R.string.diagnostic_share_failed)}
             finally {local?.close();server=null}
         }
     }
-    override fun onSaveInstanceState(outState: Bundle){outState.putBoolean("started",started);super.onSaveInstanceState(outState)}
+    private fun showOffline() {
+        val report=arguments?.getString("offline")?:return
+        if(report.toByteArray(Charsets.UTF_8).size>1400)return
+        offline=true;job?.cancel();server?.close();server=null
+        // Post after the cancelled LAN coroutine has run its finally block.
+        image.post {
+            if(!isAdded||!offline||dialog?.isShowing!=true)return@post
+            try {
+                val qr=QRCodeWriter().encode(report,BarcodeFormat.QR_CODE,512,512,
+                    mapOf(com.google.zxing.EncodeHintType.CHARACTER_SET to "UTF-8"))
+                val bitmap=android.graphics.Bitmap.createBitmap(512,512,android.graphics.Bitmap.Config.ARGB_8888).apply {
+                    setPixels(IntArray(512*512){i->if(qr[i%512,i/512])android.graphics.Color.BLACK else android.graphics.Color.WHITE},0,512,0,0,512,512)
+                }
+                image.setImageBitmap(bitmap);image.contentDescription=getString(R.string.diagnostic_offline_button)
+                status.text=getString(R.string.diagnostic_offline_help)+"\n\n"+report
+            } catch(_: Exception){image.setImageDrawable(null);status.setText(R.string.diagnostic_share_failed)}
+        }
+    }
+    override fun onSaveInstanceState(outState: Bundle){outState.putBoolean("started",started);outState.putBoolean("offline",offline);super.onSaveInstanceState(outState)}
     override fun onStop(){job?.cancel();server?.close();image.setImageDrawable(null);super.onStop()}
 }

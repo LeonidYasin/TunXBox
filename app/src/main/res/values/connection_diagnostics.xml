@@ -12,7 +12,7 @@
     <string name="diagnostic_card_hint">Stages, reasons, last check and report to smartphone</string>
     <string name="diagnostic_sent">↑ Sent: %1$s</string>
     <string name="diagnostic_received">↓ Received: %1$s</string>
-    <string name="diagnostic_ok_short">OK · %1$d ms</string>
+    <string name="diagnostic_ok_short">URL checked · %1$d ms</string>
     <string name="diagnostic_failed_short">Error · %1$s</string>
     <string name="diagnostic_checking_short">Internet: checking…</string>
     <string name="diagnostic_unchecked_short">Internet: not checked</string>
@@ -27,7 +27,7 @@
     <string name="diagnostic_share_no_lan">No eligible private Wi-Fi/Ethernet IPv4 address. No listener was opened.</string>
     <string name="diagnostic_share_expired">Sharing closed: time expired or network changed. Reopen to create a new QR.</string>
     <string name="diagnostic_share_failed">Could not start local sharing. Close and retry.</string>
-    <string name="diagnostic_share_help">Phone and TV must be on the same trusted LAN. Scan to download TXT. Up to 5 minutes; closing/backgrounding this window closes the link. Local HTTP is not encrypted. Do not forward this port. Wi-Fi isolation or the phone VPN may prevent access.</string>
+    <string name="diagnostic_share_help">Phone and TV must be on the same trusted LAN. Scan to download TXT. Up to 5 minutes; closing/backgrounding this window closes the link. Local HTTP is not encrypted. Do not forward this port. Wi-Fi isolation or the phone VPN may prevent access. If the link does not open, use Short QR without Wi-Fi.</string>
     <string name="diagnostic_error_short">error</string>
     <string name="diagnostic_protocol_short">protocol</string>
     <string name="diagnostic_timeout_short">timeout</string>

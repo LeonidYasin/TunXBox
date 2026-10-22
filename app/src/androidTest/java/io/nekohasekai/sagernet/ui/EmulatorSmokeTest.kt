@@ -245,7 +245,7 @@ class EmulatorSmokeTest {
                 val browse=(activity as MainActivityTv).supportFragmentManager.findFragmentById(R.id.tv_container)
                     as io.nekohasekai.sagernet.ui.tv.MainBrowseFragment
                 val probe: suspend (android.content.Context,io.nekohasekai.sagernet.database.ProxyEntity,suspend (String)->Unit)->io.nekohasekai.sagernet.ui.diagnostics.ExtendedConnectionDiagnostics.Report = {_,_,progress->
-                    progress("ENDPOINT_DNS_FIXTURE");kotlinx.coroutines.awaitCancellation()
+                    progress("ENDPOINT_DNS");kotlinx.coroutines.awaitCancellation()
                 }
                 browse.javaClass.getDeclaredField("extendedProbe").apply {isAccessible=true}.set(browse,probe)
             }
@@ -254,7 +254,7 @@ class EmulatorSmokeTest {
             // The report closes safely by default; move focus to actual full-check button.
             val action=device.findObject(By.res(context.packageName,"diagnostic_extended_button"))
             action.click() // explicit action through installed APK; progress/cancel are remote-tested below
-            assertNotNull(device.wait(Until.findObject(By.textContains("ENDPOINT_DNS_FIXTURE")),timeout))
+            assertNotNull(device.wait(Until.findObject(By.textContains(text(R.string.diagnostic_stage_dns))),timeout))
             assertTrue(DataStore.runningTest)
             device.pressDPadCenter() // safe Cancel has initial dialog focus
             val until=android.os.SystemClock.elapsedRealtime()+timeout
@@ -386,6 +386,30 @@ class EmulatorSmokeTest {
             }
             assertTrue(response.startsWith("HTTP/1.1 200"));assertTrue(response.contains("NET_UNSUPPORTED"))
             assertFalse(response.contains("secret-fixture-uuid"));assertFalse(response.contains("secret-fixture-token"))
+            assertNotNull(device.wait(Until.findObject(By.res(context.packageName,"diagnostic_offline_button")),timeout))
+            device.findObject(By.res(context.packageName,"diagnostic_offline_button")).click()
+            assertNotNull(device.wait(Until.findObject(By.textContains("TunXBox short diagnostic")),timeout))
+            val offlineText=device.findObject(By.res(context.packageName,"diagnostic_share_status")).text
+            assertTrue(offlineText.contains("NET_UNSUPPORTED"));assertFalse(offlineText.contains("http://"))
+            assertFalse(offlineText.contains("secret-fixture"))
+            val listenerDeadline=android.os.SystemClock.elapsedRealtime()+timeout
+            while(android.os.SystemClock.elapsedRealtime()<listenerDeadline&&runCatching {java.net.Socket(uri.host,uri.port).use {}}.isSuccess)Thread.sleep(50)
+            assertTrue(runCatching {java.net.Socket(uri.host,uri.port).use {}}.isFailure)
+            // Decode the actual displayed bitmap: text QR must work without any LAN listener.
+            scenario!!.onActivity {activity ->
+                val share=(activity as MainActivityTv).supportFragmentManager.findFragmentByTag("diagnostic_share")
+                    as io.nekohasekai.sagernet.ui.diagnostics.DiagnosticShareDialog
+                val image=share.requireDialog().findViewById<android.widget.ImageView>(R.id.diagnostic_qr)
+                val bitmap=(image.drawable as android.graphics.drawable.BitmapDrawable).bitmap
+                val pixels=IntArray(bitmap.width*bitmap.height);bitmap.getPixels(pixels,0,bitmap.width,0,0,bitmap.width,bitmap.height)
+                val source=com.google.zxing.RGBLuminanceSource(bitmap.width,bitmap.height,pixels)
+                val decoded=com.google.zxing.MultiFormatReader().decode(com.google.zxing.BinaryBitmap(com.google.zxing.common.HybridBinarizer(source))).text
+                assertTrue(decoded.contains("TunXBox short diagnostic"));assertTrue(decoded.contains("NET_UNSUPPORTED"))
+                assertFalse(decoded.contains("secret-fixture"));assertFalse(decoded.contains("http://"))
+            }
+            device.executeShellCommand("mkdir -p /sdcard/Download/TunXBoxSmoke")
+            device.takeScreenshot(File("/sdcard/Download/TunXBoxSmoke/connection_offline_qr_open.png"))
+            device.dumpWindowHierarchy(File("/sdcard/Download/TunXBoxSmoke/connection_offline_qr_open.xml"))
             device.pressBack()
             assertTrue(device.wait(Until.gone(By.res(context.packageName,"diagnostic_share_status")),timeout))
             assertTrue(runCatching {java.net.Socket(uri.host,uri.port).use {}}.isFailure)

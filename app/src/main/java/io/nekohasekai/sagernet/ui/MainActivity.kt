@@ -477,7 +477,8 @@ class MainActivity : ThemedActivity(),
                     io.nekohasekai.sagernet.ui.diagnostics.DiagnosticStage.STARTUP,
                     io.nekohasekai.sagernet.group.SubscriptionFailureCategory.fromMessage(msg))
             io.nekohasekai.sagernet.ui.diagnostics.DiagnosticDialog.open(supportFragmentManager,
-                io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticReport.text(this,record))
+                io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticReport.text(this,record),
+                offlineReport=io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticReport.offlineText(record))
         }
     }
 

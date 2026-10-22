@@ -1,0 +1,35 @@
+<resources>
+    <string name="diagnostic_plain_title">Что показывает этот отчёт</string>
+    <string name="diagnostic_plain_pass">Последняя URL-проверка прошла. Это не непрерывный мониторинг.</string>
+    <string name="diagnostic_plain_failure">Последняя попытка не прошла. Код описывает наблюдение, а не доказанную причину.</string>
+    <string name="diagnostic_attempt_time">Время проверки: %1$s</string>
+    <string name="diagnostic_snapshot_scope">Это снимок состояния. Запущенный VPN и нулевые счётчики в простое сами по себе не доказывают ни доступ в Интернет, ни сбой. Если проблема повторится, передайте отчёт.</string>
+    <string name="diagnostic_next_pass">Если сайты всё же не открываются, отметьте симптом и передайте отчёт: один успешный тест не проверяет все адреса.</string>
+    <string name="diagnostic_next_clock">Сначала проверьте дату, время и часовой пояс на ТВ. Не отключайте проверку сертификатов; повторите тест и передайте отчёт, если ошибка сохранится.</string>
+    <string name="diagnostic_next_tls">Не отключайте проверку сертификатов и не меняйте сервер вслепую. Запустите расширенную проверку и передайте отчёт. По одному коду ещё неизвестно, на каком TLS-узле произошёл отказ.</string>
+    <string name="diagnostic_next_network">Проверьте подключение ТВ к сети. Сравните обычное открытие сайтов, затем запустите расширенную проверку. Не публикуйте адреса сети и конфигурацию.</string>
+    <string name="diagnostic_next_busy">Предыдущая проверка ещё завершается. Подождите перед повтором; это не означает неисправность самого VPN.</string>
+    <string name="diagnostic_next_config">Профиль или транспорт может не поддерживаться этой сборкой. Передайте отчёт; незаметная подмена протокола не выполняется.</string>
+    <string name="diagnostic_next_changed">Профиль или соединение изменилось во время проверки. Повторите тест для текущего профиля.</string>
+    <string name="diagnostic_next_unknown">Если удобно, повторите один раз. При повторном сбое запустите расширенную проверку и нажмите «Отчёт на смартфон». Эти действия не переключают VPN.</string>
+    <string name="diagnostic_tls_time_explanation">Проверка срока сертификата TLS не прошла. Проверьте часы устройства; сертификат также может быть просрочен или ещё не действовать. По одному коду точный TLS-узел не установлен.</string>
+    <string name="diagnostic_unknown_explanation">Проверка соединения не завершилась успешно. Причина не установлена. Это отчёт о соединении, а не доказательство ошибки скачивания подписки.</string>
+    <string name="diagnostic_stage_config">Проверяем совместимость профиля</string>
+    <string name="diagnostic_stage_network">Проверяем физическую сеть</string>
+    <string name="diagnostic_stage_dns">Определяем адрес сервера (DNS)</string>
+    <string name="diagnostic_stage_tcp">Проверяем доступность TCP</string>
+    <string name="diagnostic_stage_tls">Проверяем сертификат средствами Android TLS</string>
+    <string name="diagnostic_stage_url">Проверяем URL через профиль</string>
+    <string name="diagnostic_stage_other">Этап диагностики</string>
+    <string name="diagnostic_extended_results">Расширенная проверка: результаты</string>
+    <string name="diagnostic_outcome_pass">пройдено</string>
+    <string name="diagnostic_outcome_fail">не пройдено</string>
+    <string name="diagnostic_outcome_timeout">достигнут лимит времени; готовые результаты сохранены</string>
+    <string name="diagnostic_outcome_skipped">не проверено / неприменимо (это не доказательство сбоя)</string>
+    <string name="diagnostic_extended_limitations">Эти проверки используют сеть Android и отдельные тестовые ядра, а не трассировку всех этапов действующего VPN. Пропуск TCP/TLS может быть нормальным для QUIC/REALITY. Ниже — технические сведения.</string>
+    <string name="diagnostic_offline_button">Короткий QR без Wi-Fi</string>
+    <string name="diagnostic_offline_help">Для этого QR сеть не нужна: внутри короткая текстовая сводка, не ссылка и не полный TXT. Сканируйте камерой телефона или QR-сканером, скопируйте текст и отправьте вручную. Локальная передача закрыта. Для полного отчёта откройте передачу заново в одной доверенной сети.</string>
+    <string name="diagnostic_share_live">Ссылка действует ещё %1$d с. Ответов с отчётом передано: %2$d. Проверьте сохранение файла на телефоне.</string>
+    <string name="diagnostic_dns_explanation">Не удалось определить адрес сервера. Проверьте сеть устройства и DNS. Это само по себе не доказывает ошибку учётных данных профиля.</string>
+    <string name="diagnostic_changed_explanation">Во время проверки изменился профиль или физическая сеть. Старый результат не описывает текущее соединение; повторите проверку.</string>
+</resources>
