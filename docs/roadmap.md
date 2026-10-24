@@ -79,8 +79,8 @@ Acceptance: actual Android screenshots + D-pad/device smoke; холодный с
 
 - Стабильный tag immutable: не force-update и не подменять APK ранее опубликованной версии.
 - Pre-release tag остаётся отдельным; не снимать pre-release badge с APK, внутри которого versionName rc.
-- Stable **ossRelease** использует те же TV/Phone источники, но не preview suffix. VersionCode = VERSION_CODE base × 1 000 000 + 999 999; для текущего base 47 это 47 999 999, выше rc.106 (47 000 106).
-- После stable base 47 следующие RC должны иметь base минимум 48; plain name 1.5.1 сам по себе не гарантирует upgrade ordering.
+- Stable **ossRelease** использует те же TV/Phone источники, но не preview suffix. VersionCode = VERSION_CODE base × 1 000 000 + 999 999; для опубликованного 1.6.0 это 48 999 999, для следующего 1.7.0 (base 49) — 49 999 999, выше stable 1.6.0.
+- После stable 1.6.0 (base 48) следующие RC должны иметь base минимум 49; plain name 1.7.0 сам по себе не гарантирует upgrade ordering.
 - Pipeline [stable-release.yml](../.github/workflows/stable-release.yml) сначала проверяется в release PR без публикации. Публикация разрешена только из master, с заранее созданным immutable tag на точный SHA и pinned signer; private signing bundle только после device checks.
 - Подробности: [разработка](development.md), [подпись](signing-and-updates.md), [функции](features.md), [приёмка](tv-readiness-plan.md).
 
@@ -103,6 +103,10 @@ Acceptance: actual Android screenshots + D-pad/device smoke; холодный с
 Опубликована из immutable source `7e230f24`; versionName **1.5.0**, versionCode **47 999 999**. Сертификат и package совпадают с rc.106. Финальный полный CI: 125 JVM, 15 browser, 31 Python (без повторного подсчёта packaging), 8/8 OSS Android 4KB и 8/8 OSS Android 16KB. Все три публичных APK независимо скачаны и проверены по SHA256/size/ABI/Content-Disposition. Первый publication attempt блокировал системный ANR Pixel Launcher; повтор на чистом runner прошёл без изменения source или отключения checks. Это не сертификат каждого физического OEM/provider. Stable APK ещё требует обычной пользовательской эксплуатации; ручная приёмка rc.106 не выдаётся за отдельное физическое тестирование stable flavor.
 
 Результаты статического аудита не разрешают автоматически переносить/мержить старые ветки. Discovery implementation и failover остаются планами.
+
+## Факт выпуска 1.6.0
+
+Опубликована из immutable source `5a7a2d1` (tag `v1.6.0`, publication run [40101906755](https://github.com/LeonidYasin/TunXBox/actions/runs/40101906755)) после влития PR #12 (кандидат 1.6), #17 (диагностика) и #19 (workflow artifact-only). versionName **1.6.0**, versionCode **48 999 999**, flavour `oss`, channel `stable`, package `com.tunxbox.app`, подписыватель `34764328…` (постоянный, `signing-certificate.sha256`). Три APK (arm64-v8a / armeabi-v7a / universal) независимо скачаны и проверены ALL_MATCH по SHA256/size из `SHA256SUMS.txt` и `apk-manifest.json`. Rolling `v1.6.0-rc` указывал на rc.162 (`60fcc08`). #6/#10 остаются открытыми мониторинговыми reports; физическая TV/пульт приёмка и F-Droid gates — отдельные незавершённые направления. Это запись факта выпуска, не обещание поведения новых функций 1.7.0.
 
 ## Обновление плана
 
