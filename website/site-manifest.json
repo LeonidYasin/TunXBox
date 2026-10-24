@@ -5,14 +5,18 @@
   "pages": [
     "guide/readme.html",
     "guide/README.html",
+    "guide/agent-handoff.html",
     "guide/app-updates.html",
     "guide/architecture.html",
     "guide/branch-audit.html",
+    "guide/connection-acceptance.html",
     "guide/connection-diagnostics.html",
     "guide/contributing-and-support.html",
+    "guide/core-extension-strategy.html",
     "guide/decisions.html",
     "guide/development.html",
     "guide/diagnostic-support.html",
+    "guide/diagnostics-ux-review.html",
     "guide/emulator-testing.html",
     "guide/features.html",
     "guide/github-pages.html",
@@ -22,11 +26,15 @@
     "guide/project-map.html",
     "guide/protocol-compatibility.html",
     "guide/reference/preferences.html",
+    "guide/release-triage.html",
     "guide/releases/1.5.0.html",
+    "guide/releases/1.6.0.html",
+    "guide/releases/1.7.0.html",
     "guide/roadmap.html",
     "guide/scenarios.html",
     "guide/security.html",
     "guide/signing-and-updates.html",
+    "guide/source-preservation.html",
     "guide/subscription-passphrase.html",
     "guide/support-services-proposal.html",
     "guide/tv-connection-health.html",
@@ -35,5 +43,14 @@
     "guide/tv-readiness-plan.html",
     "guide/tv-transfer.html",
     "guide/ui-quality-review.html"
-  ]
+  ],
+  "seo": {
+    "canonicalBase": "https://leonidyasin.github.io/TunXBox/",
+    "sitemap": "sitemap.xml",
+    "languages": [
+      "ru",
+      "en"
+    ],
+    "searchConsoleVerified": false
+  }
 }
