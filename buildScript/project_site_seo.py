@@ -3,7 +3,7 @@ import html,json,pathlib,re,xml.etree.ElementTree as ET
 BASE='https://leonidyasin.github.io/TunXBox/'
 REPO='https://github.com/LeonidYasin/TunXBox'
 # Change only after the immutable stable release has actually been published.
-STABLE='1.5.0'
+STABLE='1.6.0'
 HERE=pathlib.Path(__file__).resolve().parent
 
 def apply(out):

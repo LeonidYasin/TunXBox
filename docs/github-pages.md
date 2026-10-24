@@ -22,4 +22,4 @@
 
 ## Номерной RC и rolling-канал
 
-Основная тестовая кнопка RU/EN должна вести на опубликованный `v1.6.0-rc.158`, а не на старый rolling rc.150. Это отдельная ручная загрузка: текущий встроенный updater номерной recovery-выпуск не обнаруживает. Источники — `buildScript/build_project_site.py` и `buildScript/site/english.html`; regression test проверяет обе ссылки и сохраняет stable 1.5.0. Stable-версия JSON-LD меняется только после реальной публикации нового stable. Изменение генератора ещё не означает обновление live Pages: отдельно подтвердить deploy и HTTP обеих страниц.
+Кнопка каналов RU/EN ведёт на опубликованный stable `v1.6.0` и на rolling тестовый канал `v1.6.0-rc` (сейчас rc.162). Источники — `buildScript/build_project_site.py` и `buildScript/site/english.html`; regression test `buildScript/test_project_site.py` проверяет обе ссылки и сохраняет ссылку на предыдущую stable 1.5.0. Stable-версия JSON-LD и `STABLE` в `buildScript/project_site_seo.py` меняются только после реальной публикации нового stable. Изменение генератора ещё не означает обновление live Pages: отдельно подтвердить deploy и HTTP обеих страниц.
