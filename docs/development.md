@@ -89,7 +89,7 @@ Rolling tag `vVERSION-rc` не заменяет Android versionCode. VersionCode
 
 ## Новый LAN scope
 
-[Ручной поиск](lan-discovery.md) живёт в отдельной feature-ветке. App/buildSrc/Gradle/metadata изменения запускают полный PR gate; не только docs/workflow paths. Новый цикл 1.6.0 имеет VERSION_CODE base 48, следующий RC обязан проходить verify_update относительно существующего RC либо latest stable manifest, если RC-серия новая. Это не меняет immutable stable 1.5.0.
+[Ручной поиск](lan-discovery.md) живёт в отдельной feature-ветке. App/buildSrc/Gradle/metadata изменения запускают полный PR gate; не только docs/workflow paths. Цикл 1.6.0 имел VERSION_CODE base 48, новый цикл 1.7.0 использует base 49; каждый RC обязан проходить verify_update относительно существующего RC либо latest stable manifest, если RC-серия новая. Это не меняет immutable stable 1.5.0 и 1.6.0.
 
 ## Воспроизводимая сборка ядра с REALITY compatibility patch
 

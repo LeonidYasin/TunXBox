@@ -9,6 +9,10 @@
 - Published: [v1.6.0](https://github.com/LeonidYasin/TunXBox/releases/tag/v1.6.0), not draft/prerelease, from `5a7a2d1`; publication run [40101906755](https://github.com/LeonidYasin/TunXBox/actions/runs/40101906755) SUCCESS. Installed versionName **1.6.0**, versionCode **48 999 999**, flavour `oss`, channel `stable`, package `com.tunxbox.app`, signer `34764328dd73482587e64d56008a9ef7b860069087e279cb984f7b2e5055b5ef`, `upgradeCompatibleWithPrevious=true`. Три APK (arm64-v8a, armeabi-v7a, universal) независимо скачаны и проверены по SHA256/size из `SHA256SUMS.txt` и `apk-manifest.json` — ALL_MATCH. Stable 1.5.0 не изменён.
 - Следующие шаги: bump `VERSION_CODE` base 49 для следующих RC; продолжение фич отдельными PR; F-Droid остаётся закрытым до разрешения лицензионных gate (см. `fdroid/README.md`). Открытые #6/#10 — мониторинг, не закрыты.
 
+## Начало цикла 1.7.0 — 2026-10-24
+
+После публикации stable 1.6.0 начат следующий minor-цикл на ветке `release/1.7.0-cycle` (от master `5ac4636`): `nb4a.properties` → `VERSION_NAME=1.7.0`, `PRE_VERSION_NAME=pre-1.7.0-lan-rc`, `VERSION_CODE` base **48 → 49**. Добавлен материал `docs/releases/1.7.0.md` (ожидаемый stable versionCode **49 999 999**), чтобы `validate_stable_inputs` проходил, пока 1.7.0 ещё не выпущен. Entry points `AGENTS.md`, `roadmap.md` (факт выпуска 1.6.0, base-правила), `development.md` обновлены для цикла 1.7. Реальное содержимое фич 1.7.0 определяется последующими PR; green CI ≠ публикация. Открытый вопрос — merge-метод PR: squash запрещён владельцем, использовать `merge`/`rebase`.
+
 ## Подготовка подписанного кандидата для устройств — 2026-10-21
 
 Восстановление прошлого чата и проверка PR17 сохранены в [контрольной точке PR18](https://github.com/LeonidYasin/TunXBox/pull/18#issuecomment-6318370505): actual XML76/76, четыре EN portraitQR PNG отдельно просмотрены, head/merge tree equality подтверждена. Это не физическая TV/camera/RU/large-font приёмка. PR12 ba614dde всё ещё имеет красный Android15 run; не подменять его conclusion зелёным PR17. Пользователь разрешил продолжать подготовку; stable не публиковать автоматически.
