@@ -98,6 +98,20 @@ class TransferImportServerTest {
         } finally { connection.disconnect() }
         assertEquals(403,post(JSONObject().put("profiles","profile")).first)
     }
+    @Test fun exportServerProvidesSubscriptionUrlWithoutSnapshot() {
+        server=TvTransferServer(bindAddress="127.0.0.1",allowExport=true,
+            exportProvider={TransferExport("",3,"https://subscriptions.example.invalid/opaque-test-token")})
+        val connection=URL("http://127.0.0.1:${TvTransferServer.PORT}/export").openConnection() as HttpURLConnection
+        try {
+            connection.setRequestProperty("X-Session-Token",server!!.getSessionToken())
+            assertEquals(200,connection.responseCode)
+            val result=JSONObject(connection.inputStream.bufferedReader().use { it.readText() })
+            assertEquals(3,result.getInt("count"))
+            assertEquals("https://subscriptions.example.invalid/opaque-test-token",result.getString("subscription_url"))
+            assertFalse(result.has("profiles"))
+        } finally { connection.disconnect() }
+        assertEquals(403,post(JSONObject().put("subscription_url","https://example.invalid/sub")).first)
+    }
     @Test fun explicitQrDirectionsOverrideDeviceSpecificLegacyDefaults() {
         val base="tunxbox://transfer?ip=192.168.1.2&port=8765&session="+"a".repeat(64)
         for(legacy in listOf(false,true)) {

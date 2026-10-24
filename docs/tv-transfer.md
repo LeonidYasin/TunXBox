@@ -14,7 +14,7 @@ A plain HTTP(S) subscription URL with a non-root path can be pasted into the mai
 
 The local page also has a small SOCKS5/HTTP profile builder. Complex protocols can be imported via their standard share links or edited using the full upstream profile editors under **Manual**.
 
-To send a group from the TunXBox phone app, switch the TV QR to **TunXBox app** and scan it inside the phone application's scanner. To pull a phone group onto TV, open **Send to TV** on the phone and scan its QR using the TV camera/image importer. QR sessions from older builds should be recreated after updating both devices.
+To send a group from the TunXBox phone app, switch the TV QR to **TunXBox app** and scan it inside the phone application's scanner. To pull a phone group onto TV, open **Send to TV** on the phone and scan its QR using the TV camera/image importer. Sending the current group while it is a subscription transfers the subscription URL so the receiver keeps an updatable subscription; an active VPN on the phone no longer blocks the LAN request (the client binds to the physical Wi-Fi/Ethernet network). QR sessions from older builds should be recreated after updating both devices.
 
 ## Remote navigation
 
@@ -26,8 +26,8 @@ The QR screen keeps the code beside its controls. New pairing session invalidate
 
 - The pairing token is random (256 bits), comes only from the QR, and expires after 10 minutes.
 - `/status` does not disclose a token or profile data. Receiving TVs disable export. Phone export is enabled only through the explicit sharing dialog.
-- Servers bind to a private LAN IPv4 interface, not every interface; closing/backgrounding the sharing screen stops listening. No fallback/fabricated IP is used.
-- HTTP is **not encrypted**. A trusted LAN is required; don't expose/port-forward port 8765. QR holders can import, or export when explicitly enabled. Protect the displayed QR.
+- Servers bind to a private LAN IPv4 interface, not every interface; closing/backgrounding the sharing screen stops listening. No fallback/fabricated IP is used. The scanner client binds its request to the physical Wi-Fi/Ethernet network, so an active VPN on the sender does not swallow the LAN request; the payload is still plain HTTP.
+- HTTP is **not encrypted**. A trusted LAN is required; don't expose/port-forward port 8765. QR holders can import, or export when explicitly enabled. Protect the displayed QR. A transferred subscription URL is a credential: it is sent in cleartext like the browser flow.
 - Browser tokens use a URL fragment and request header, not a query sent to the server. Wildcard CORS is disabled; Host/Origin checks prevent browser cross-origin access and DNS rebinding.
 - Payloads are limited to 2 MiB; requests require JSON and Content-Length. Partial body reads are completed, truncated bodies rejected, and secrets are not written by the transfer server to logs.
 - Imported configuration files use the upstream parser: profiles/outbounds are imported, not every routing rule or global app preference. Subscription URLs create persistent subscription groups with the upstream updater.
@@ -67,7 +67,7 @@ The Add profile menu includes **Receive profile / group — show QR**, **Send pr
 
 - Receive shows a QR on the receiving TV; the phone browser can upload text/file/subscription, or a TunXBox scanner sends its current group.
 - Send offers a standard QR for the selected profile or a temporary LAN QR serving the entire current group. The receiver runs TunXBox Scan QR (camera or image); the explicit URI direction makes it pull instead of mistakenly push. Phone + also exposes the whole-group sender.
-- Update both devices for new group snapshots. The received group is a new basic copy of profile beans/order/internal chains and group selector/front/landing references, not global settings or subscription update credentials. IDs are remapped in a single transaction. External dependencies, cyclic chains, invalid types, empty/oversized groups fail as a whole; no silently skipped profiles. Use full backup for wider migrations.
+- Update both devices for new group snapshots. A non-subscription group arrives as a new basic copy of profile beans/order/internal chains and group selector/front/landing references; a **subscription group arrives as its updatable HTTP(S) URL** and is recreated on the receiver as a persistent subscription it can update, consistent with the browser flow. Global settings are never copied. IDs are remapped in a single transaction. External dependencies, cyclic chains, invalid types, empty/oversized groups fail as a whole; no silently skipped profiles. Use full backup for wider migrations.
 - A sender reporting data provided for import is not claiming the remote import completed. Verify the receiving count. Sending sessions reject imports; receiving sessions reject exports.
 
 [Project mind map](project-map.md) · [Scenarios](scenarios.md) · [Architecture](architecture.md) · [Security](security.md)
