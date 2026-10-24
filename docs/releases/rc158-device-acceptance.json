@@ -1,0 +1,19 @@
+{
+  "release": "v1.6.0-rc.158",
+  "versionCode": 48000158,
+  "sourceCommit": "0bd5770d861d72f2e0523eb1c519f6a7bac1816f",
+  "reportedAt": "2026-10-21",
+  "evidenceType": "owner report in development chat",
+  "statement": "158 на смартфоне обновился без проблем и прокрутка теперь вроде работает нормально в портретном режиме.",
+  "smartphoneUpdate": "reported successful",
+  "portraitTvTouchScroll": "preliminary positive owner report",
+  "deviceModel": null,
+  "androidVersion": null,
+  "abi": null,
+  "previousInstalledVersion": null,
+  "configurationPreservationExplicitlyChecked": false,
+  "mouseExplicitlyChecked": false,
+  "dpadExplicitlyChecked": false,
+  "physicalTvAccepted": false,
+  "completeReleaseAcceptance": false
+}

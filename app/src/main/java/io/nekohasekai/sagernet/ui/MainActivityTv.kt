@@ -16,9 +16,24 @@ import io.nekohasekai.sagernet.ui.tv.MainBrowseFragment
  * Phone rotation follows the user's system auto-rotate setting.
  */
 class MainActivityTv : FragmentActivity() {
+    private val pointerScroll by lazy {
+        io.nekohasekai.sagernet.ui.tv.TvPointerScrollController(this) {
+            (supportFragmentManager.findFragmentById(R.id.tv_container) as? MainBrowseFragment)
+                ?.rowsSupportFragment?.verticalGridView
+        }
+    }
+    override fun dispatchTouchEvent(event: android.view.MotionEvent): Boolean =
+        pointerScroll.dispatchTouch(event) { super.dispatchTouchEvent(it) }
+
+    override fun dispatchGenericMotionEvent(event: android.view.MotionEvent): Boolean =
+        pointerScroll.dispatchMotion(event) || super.dispatchGenericMotionEvent(event)
+
+    override fun onDestroy() { pointerScroll.dispose(); super.onDestroy() }
+
     private val notifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        pointerScroll.beforeKey(event)
         val browse = supportFragmentManager.findFragmentById(R.id.tv_container) as? MainBrowseFragment
         if (browse != null && event.keyCode in intArrayOf(KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE, KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_INFO)) {
             if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
@@ -31,6 +46,10 @@ class MainActivityTv : FragmentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if(io.nekohasekai.sagernet.ui.update.UpdateReceipt.consume(this)) {
+            android.widget.Toast.makeText(this,getString(R.string.update_installed_title,io.nekohasekai.sagernet.BuildConfig.VERSION_NAME),android.widget.Toast.LENGTH_LONG).show()
+            (getSystemService(android.content.Context.NOTIFICATION_SERVICE) as android.app.NotificationManager).cancel(1331)
+        }
         if (io.nekohasekai.sagernet.ui.tv.TvUiPreferences.phoneMode) {
             startActivity(android.content.Intent(this, MainActivity::class.java).apply {
                 putExtra("force_phone_mode", true)

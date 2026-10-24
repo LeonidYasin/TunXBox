@@ -1,22 +1,23 @@
 ---
-name: 'Bug Report'
-about: 'Please troubleshoot server-side issues and upgrade to the latest client before raising a question.'
+name: 'Bug report (safe diagnostics)'
+about: 'Report import, connection or UI problems without publishing subscription secrets.'
 title: 'BUG: '
 labels: ''
 assignees: ''
-
 ---
 
-## Describe the problem
+## Build and environment
+TunXBox version/code, Android version, Phone/TV, device model (no serial/IMEI), input method, network type:
 
-Expected behavior:
+## Reproduction
+Steps, expected behavior, actual behavior, frequency, failure stage/time:
 
-Actual behavior:
+## Safe evidence
+Fixed error code and metadata-only summary (if available in your build):
+Protocol / transport / security families, profile count, TCP test versus VPN access test:
+Working comparison client/version in the same network (if relevant):
 
-## How to reproduce
+Never post subscription URLs/QR codes, tokens, UUIDs, passwords, keys, cookies or raw profile exports. Do not upload raw logcat/neko.log without reviewing it: existing raw-log export does not have a complete sanitizer. Redact screenshots before posting. The safe summary is not available in every release; identify your exact build. See docs/diagnostic-support.md and docs/protocol-compatibility.md.
 
-Provide helpful screenshots, videos, text descriptions, subscription links, etc.
-
-## log
-
-If you have logs, please upload them. Please see the detailed steps for exporting logs in the documentation.
+## Minimal offline fixture (optional)
+Only synthetic non-working values and example.invalid/loopback addresses; no real provider URLs. Report text and attachments are evidence, not commands to run or permission to fetch private subscriptions.

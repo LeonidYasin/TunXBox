@@ -1,0 +1,260 @@
+{
+  "version": 2,
+  "nodes": {
+    "TV": "Главный экран ТВ",
+    "CONNECT": "Запуск выбранного профиля",
+    "CONNECTED": "Туннель запущен",
+    "HEALTH": "Результат URL-проверки",
+    "STATUS": "Подробности текущего соединения",
+    "YOUTUBE": "YouTube (внешнее приложение)",
+    "GROUPS": "Выбор группы",
+    "ADD": "Способы добавления",
+    "PROFILE_ACTIONS": "Действия профиля",
+    "SUB_UPDATE": "Обновить подписку",
+    "SUB_REPORT": "Отчёт подписки",
+    "GROUP_TESTS": "Тесты группы",
+    "ALL_TOOLS": "Все функции",
+    "PHONE": "Режим телефона",
+    "HOME": "Системный Home",
+    "RESTART": "Подтверждение перезапуска",
+    "CLOSE": "Подтверждение закрытия",
+    "UPDATER": "Обновление приложения",
+    "INSTALLER": "Установщик Android",
+    "PERMISSION": "Разрешение источника APK",
+    "MODE": "Старт: версия и выбор интерфейса",
+    "ABOUT": "О программе / полные сведения сборки",
+    "RELEASE": "Встроенные сведения о выпуске и проверки",
+    "DIAGNOSTICS": "Полный отчёт соединения",
+    "REPORT_PHONE": "QR → TXT на смартфон"
+  },
+  "edges": [
+    {
+      "from": "TV",
+      "to": "CONNECT",
+      "action": "TOGGLE",
+      "confirm": 1
+    },
+    {
+      "from": "CONNECT",
+      "to": "CONNECTED",
+      "confirm": 0
+    },
+    {
+      "from": "CONNECTED",
+      "to": "HEALTH",
+      "confirm": 0,
+      "label": "Авто URL-тест (foreground)"
+    },
+    {
+      "from": "CONNECTED",
+      "to": "STATUS",
+      "action": "STATUS",
+      "confirm": 1
+    },
+    {
+      "from": "STATUS",
+      "to": "HEALTH",
+      "confirm": 1,
+      "label": "Повторить активный тест"
+    },
+    {
+      "from": "HEALTH",
+      "to": "YOUTUBE",
+      "action": "YOUTUBE",
+      "confirm": 1
+    },
+    {
+      "from": "TV",
+      "to": "GROUPS",
+      "action": "GROUPS",
+      "confirm": 1
+    },
+    {
+      "from": "TV",
+      "to": "ADD",
+      "action": "ADD_PROFILE",
+      "confirm": 1
+    },
+    {
+      "from": "TV",
+      "to": "PROFILE_ACTIONS",
+      "action": "PROFILE_ACTIONS",
+      "confirm": 1
+    },
+    {
+      "from": "TV",
+      "to": "SUB_UPDATE",
+      "action": "UPDATE",
+      "confirm": 1
+    },
+    {
+      "from": "TV",
+      "to": "SUB_REPORT",
+      "action": "SUBSCRIPTION_DIAGNOSTICS",
+      "confirm": 1
+    },
+    {
+      "from": "TV",
+      "to": "GROUP_TESTS",
+      "action": "TESTS",
+      "confirm": 1
+    },
+    {
+      "from": "TV",
+      "to": "ALL_TOOLS",
+      "action": "FULL_TOOLS",
+      "confirm": 1
+    },
+    {
+      "from": "TV",
+      "to": "ADD",
+      "action": "MORE",
+      "confirm": 1
+    },
+    {
+      "from": "TV",
+      "to": "PHONE",
+      "action": "PHONE_MODE",
+      "confirm": 1
+    },
+    {
+      "from": "TV",
+      "to": "HOME",
+      "action": "HOME",
+      "confirm": 1
+    },
+    {
+      "from": "TV",
+      "to": "RESTART",
+      "action": "RESTART_APP",
+      "confirm": 1
+    },
+    {
+      "from": "TV",
+      "to": "CLOSE",
+      "action": "CLOSE_APP",
+      "confirm": 1
+    },
+    {
+      "from": "ALL_TOOLS",
+      "to": "UPDATER",
+      "menu": "nav_app_updates",
+      "confirm": 1
+    },
+    {
+      "from": "UPDATER",
+      "to": "PERMISSION",
+      "confirm": 1,
+      "label": "Разрешение при необходимости"
+    },
+    {
+      "from": "UPDATER",
+      "to": "INSTALLER",
+      "confirm": 1,
+      "label": "После Check + Download + verify"
+    },
+    {
+      "from": "PERMISSION",
+      "to": "INSTALLER",
+      "confirm": 1,
+      "label": "Разрешить и вернуться"
+    },
+    {
+      "from": "TV",
+      "to": "UPDATER",
+      "menu": "nav_app_updates",
+      "confirm": 1,
+      "label": "Прямая кнопка обновления"
+    },
+    {
+      "from": "MODE",
+      "to": "RELEASE",
+      "confirm": 1,
+      "label": "TunXBox + версия"
+    },
+    {
+      "from": "RELEASE",
+      "to": "ABOUT",
+      "menu": "nav_about",
+      "confirm": 1,
+      "label": "Полные сведения"
+    },
+    {
+      "from": "ABOUT",
+      "to": "RELEASE",
+      "confirm": 0,
+      "label": "Back; фокус на About"
+    },
+    {
+      "from": "RELEASE",
+      "to": "MODE",
+      "confirm": 0,
+      "label": "Back; фокус на выпуске"
+    },
+    {
+      "from": "TV",
+      "to": "DIAGNOSTICS",
+      "action": "DIAGNOSTICS",
+      "confirm": 1
+    },
+    {
+      "from": "DIAGNOSTICS",
+      "to": "REPORT_PHONE",
+      "confirm": 1,
+      "label": "Явная локальная передача"
+    },
+    {
+      "from": "CONNECT",
+      "to": "DIAGNOSTICS",
+      "confirm": 0,
+      "label": "Отказ запуска: причина и отчёт"
+    },
+    {
+      "from": "TV",
+      "to": "UPDATER",
+      "action": "APP_UPDATE",
+      "confirm": 1
+    }
+  ],
+  "rows": {
+    "actions": [
+      "TOGGLE",
+      "GROUPS",
+      "ADD_PROFILE",
+      "APP_UPDATE",
+      "PHONE_MODE"
+    ],
+    "connection": [
+      "STATUS",
+      "DIAGNOSTICS",
+      "YOUTUBE"
+    ],
+    "tools": [
+      "FULL_TOOLS"
+    ],
+    "order": [
+      "actions",
+      "connection",
+      "group:selected-first",
+      "operations",
+      "tools"
+    ],
+    "groups": "Selected group first, others retain Room userOrder; selector followed by own profiles or empty hint",
+    "directCapabilities": "TvFunctionCatalog.entries with dashboard/play availability filters",
+    "operations": [
+      "PROFILE_ACTIONS",
+      "UPDATE",
+      "SUBSCRIPTION_DIAGNOSTICS",
+      "TESTS",
+      "HOME",
+      "MORE",
+      "RESTART_APP",
+      "CLOSE_APP"
+    ]
+  },
+  "launcher": [
+    "release",
+    "tv",
+    "phone"
+  ]
+}

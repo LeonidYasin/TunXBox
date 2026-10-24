@@ -81,10 +81,11 @@ class TrafficLooper
     }
 
     private suspend fun loop() {
-        val delayMs = DataStore.speedInterval.toLong()
+        val configuredInterval = DataStore.speedInterval
+        val delayMs = configuredInterval.takeIf {it>0}?.toLong() ?: 1000L
         val showDirectSpeed = DataStore.showDirectSpeed
         val profileTrafficStatistics = DataStore.profileTrafficStatistics
-        if (delayMs == 0L) return
+        // Disabling speed notifications does not disable current-session byte totals.
 
         var trafficUpdater: TrafficUpdater? = null
         var proxy: ProxyInstance?
@@ -100,8 +101,8 @@ class TrafficLooper
             }
 
             if (trafficUpdater == null) {
-                if (!proxy.isInitialized()) continue
-                idMap.clear()
+                if (!proxy.isInitialized()) {delay(delayMs);continue}
+                idMap.clear();tagMap.clear()
                 idMap[-1] = itemBypass
                 //
                 val tags = hashSetOf(TAG_PROXY, TAG_BYPASS)
@@ -163,7 +164,7 @@ class TrafficLooper
                 && data.binder.callbackIdMap.containsValue(SagerConnection.CONNECTION_ID_MAIN_ACTIVITY_FOREGROUND)
             ) {
                 data.binder.broadcast { b ->
-                    if (data.binder.callbackIdMap[b] == SagerConnection.CONNECTION_ID_MAIN_ACTIVITY_FOREGROUND) {
+                    if (data.binder.callbackIdMap[b.asBinder()] == SagerConnection.CONNECTION_ID_MAIN_ACTIVITY_FOREGROUND) {
                         b.cbSpeedUpdate(speed)
                         if (profileTrafficStatistics) {
                             idMap.forEach { (id, item) ->
@@ -178,7 +179,7 @@ class TrafficLooper
 
             // ServiceNotification
             data.notification?.apply {
-                if (listenPostSpeed) postNotificationSpeedUpdate(speed)
+                if (configuredInterval>0 && listenPostSpeed) postNotificationSpeedUpdate(speed)
             }
 
             delay(delayMs)

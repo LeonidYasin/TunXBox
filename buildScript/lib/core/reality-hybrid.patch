@@ -1,0 +1,190 @@
+--- a/common/tls/reality_client.go
++++ b/common/tls/reality_client.go
+@@ -29,7 +29,6 @@
+ 
+ 	"github.com/sagernet/sing-box/adapter"
+ 	"github.com/sagernet/sing-box/option"
+-	"github.com/sagernet/sing/common"
+ 	"github.com/sagernet/sing/common/debug"
+ 	E "github.com/sagernet/sing/common/exceptions"
+ 	"github.com/sagernet/sing/common/ntp"
+@@ -109,28 +108,26 @@
+ 	uConfig.InsecureSkipVerify = true
+ 	uConfig.SessionTicketsDisabled = true
+ 	uConfig.VerifyPeerCertificate = verifier.VerifyPeerCertificate
+-	uConn := utls.UClient(conn, uConfig, e.uClient.id)
++	// Legacy browser presets may omit MLKEM even after removing the old filter.
++	// Build a fresh per-connection spec before generating private key material.
++	spec, err := utls.UTLSIdToSpec(e.uClient.id)
++	if err != nil {
++		return nil, E.Cause(err, "build reality TLS preset")
++	}
++	if err = realityClientHybridSpec(&spec); err != nil {
++		return nil, err
++	}
++	uConn := utls.UClient(conn, uConfig, utls.HelloCustom)
+ 	verifier.UConn = uConn
+-	err := uConn.BuildHandshakeState()
+-	if err != nil {
+-		return nil, err
+-	}
+-	for _, extension := range uConn.Extensions {
+-		if ce, ok := extension.(*utls.SupportedCurvesExtension); ok {
+-			ce.Curves = common.Filter(ce.Curves, func(curveID utls.CurveID) bool {
+-				return curveID != utls.X25519MLKEM768
+-			})
+-		}
+-		if ks, ok := extension.(*utls.KeyShareExtension); ok {
+-			ks.KeyShares = common.Filter(ks.KeyShares, func(share utls.KeyShare) bool {
+-				return share.Group != utls.X25519MLKEM768
+-			})
+-		}
++	if err = uConn.ApplyPreset(&spec); err != nil {
++		return nil, E.Cause(err, "apply reality TLS preset")
+ 	}
+ 	err = uConn.BuildHandshakeState()
+ 	if err != nil {
+ 		return nil, err
+ 	}
++	// Preserve hybrid X25519MLKEM768 shares required by current REALITY servers.
++	// Authentication still uses the corresponding X25519 private key below.
+ 
+ 	if len(uConfig.NextProtos) > 0 {
+ 		for _, extension := range uConn.Extensions {
+@@ -169,7 +166,7 @@
+ 	if keyShareKeys == nil {
+ 		return nil, E.New("nil KeyShareKeys")
+ 	}
+-	ecdheKey := keyShareKeys.Ecdhe
++	ecdheKey := realityClientECDHEKey(keyShareKeys.Ecdhe, keyShareKeys.MlkemEcdhe)
+ 	if ecdheKey == nil {
+ 		return nil, E.New("nil ecdheKey")
+ 	}
+@@ -315,3 +312,45 @@
+ func (c *realityClientConnWrapper) WriterReplaceable() bool {
+ 	return true
+ }
++
++// Prefer the ordinary X25519 share when present; otherwise use the X25519
++// component of the hybrid share. Never skip REALITY certificate authentication.
++func realityClientECDHEKey(primary, hybrid *ecdh.PrivateKey) *ecdh.PrivateKey {
++	if primary != nil {
++		return primary
++	}
++	return hybrid
++}
++
++// Only REALITY uses this compatibility extension. Other TLS profiles are unchanged.
++// Authentication/certificate validation remains mandatory. Each caller owns its spec.
++func realityClientHybridSpec(spec *utls.ClientHelloSpec) error {
++	var curves *utls.SupportedCurvesExtension
++	var shares *utls.KeyShareExtension
++	for _, extension := range spec.Extensions {
++		switch typed := extension.(type) {
++		case *utls.SupportedCurvesExtension:
++			curves = typed
++		case *utls.KeyShareExtension:
++			shares = typed
++		}
++	}
++	if curves == nil || shares == nil {
++		return E.New("reality TLS preset requires supported groups and key shares")
++	}
++	groups := []utls.CurveID{utls.X25519MLKEM768}
++	for _, group := range curves.Curves {
++		if group != utls.X25519MLKEM768 {
++			groups = append(groups, group)
++		}
++	}
++	curves.Curves = groups
++	keys := []utls.KeyShare{{Group: utls.X25519MLKEM768}}
++	for _, share := range shares.KeyShares {
++		if share.Group != utls.X25519MLKEM768 {
++			keys = append(keys, share)
++		}
++	}
++	shares.KeyShares = keys
++	return nil
++}
+--- /dev/null
++++ b/common/tls/reality_hybrid_test.go
+@@ -0,0 +1,79 @@
++//go:build with_utls
++
++package tls
++
++import (
++	"crypto/ecdh"
++	"crypto/rand"
++	utls "github.com/metacubex/utls"
++	"reflect"
++	"testing"
++)
++
++func TestRealityClientECDHEKeySelection(t *testing.T) {
++	primary, err := ecdh.X25519().GenerateKey(rand.Reader)
++	if err != nil {
++		t.Fatal(err)
++	}
++	hybrid, err := ecdh.X25519().GenerateKey(rand.Reader)
++	if err != nil {
++		t.Fatal(err)
++	}
++	for _, tc := range []struct {
++		name                  string
++		primary, hybrid, want *ecdh.PrivateKey
++	}{
++		{"both-prefer-primary", primary, hybrid, primary},
++		{"primary-only", primary, nil, primary},
++		{"hybrid-only", nil, hybrid, hybrid},
++		{"neither-fails-closed", nil, nil, nil},
++	} {
++		t.Run(tc.name, func(t *testing.T) {
++			if got := realityClientECDHEKey(tc.primary, tc.hybrid); got != tc.want {
++				t.Fatal("wrong key selected")
++			}
++		})
++	}
++}
++
++func TestRealityHybridBrowserPresets(t *testing.T) {
++	for _, id := range []utls.ClientHelloID{utls.HelloFirefox_Auto, utls.HelloChrome_Auto, utls.HelloEdge_Auto, utls.HelloSafari_Auto} {
++		t.Run(id.Str(), func(t *testing.T) {
++			spec, err := utls.UTLSIdToSpec(id)
++			if err != nil {
++				t.Fatal(err)
++			}
++			ciphers := append([]uint16(nil), spec.CipherSuites...)
++			if err = realityClientHybridSpec(&spec); err != nil {
++				t.Fatal(err)
++			}
++			if !reflect.DeepEqual(ciphers, spec.CipherSuites) {
++				t.Fatal("cipher suites changed")
++			}
++			if err = realityClientHybridSpec(&spec); err != nil {
++				t.Fatal(err)
++			}
++			for _, ext := range spec.Extensions {
++				if keys, ok := ext.(*utls.KeyShareExtension); ok {
++					count := 0
++					for _, key := range keys.KeyShares {
++						if key.Group == utls.X25519MLKEM768 {
++							count++
++						}
++					}
++					if count != 1 || keys.KeyShares[0].Group != utls.X25519MLKEM768 {
++						t.Fatal("hybrid share missing, duplicated or unordered")
++					}
++				}
++			}
++		})
++	}
++}
++
++func TestRealityHybridRejectsIncompletePreset(t *testing.T) {
++	for _, spec := range []utls.ClientHelloSpec{{}, {Extensions: []utls.TLSExtension{&utls.SupportedCurvesExtension{}}}, {Extensions: []utls.TLSExtension{&utls.KeyShareExtension{}}}} {
++		if realityClientHybridSpec(&spec) == nil {
++			t.Fatal("incomplete TLS preset accepted")
++		}
++	}
++}

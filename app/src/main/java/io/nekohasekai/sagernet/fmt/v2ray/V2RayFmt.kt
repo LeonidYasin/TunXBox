@@ -586,7 +586,9 @@ fun buildSingBoxOutboundStreamSettings(bean: StandardV2RayBean): V2RayTransportO
         }
     }
 
-    return null
+    // Never treat an unknown transport as plain TCP. URI import alone is not
+    // evidence that the selected core implements that transport.
+    UnsupportedV2RayTransport.reject(bean.type)
 }
 
 fun buildSingBoxOutboundTLS(bean: StandardV2RayBean): OutboundTLSOptions? {

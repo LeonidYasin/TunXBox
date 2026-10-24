@@ -1,0 +1,31 @@
+<resources>
+    <string name="menu_app_updates">Update application</string>
+    <string name="update_intro">Choose stable or test. Download and verify the APK here, without a browser. Android permission and installation confirmation remain mandatory. No VPN settings are changed.</string>
+    <string name="update_channel_stable">Stable (default)</string>
+    <string name="update_channel_test">Test / release candidate</string>
+    <string name="update_check_action">Check latest version</string>
+    <string name="update_download_action">Download / resume and verify APK</string>
+    <string name="update_pause_action">Pause download</string>
+    <string name="update_install_action">Install verified APK</string>
+    <string name="update_idle">No check or download starts automatically. Select a channel and press Check.</string>
+    <string name="update_checking">Checking GitHub release and APK metadata…</string>
+    <string name="update_offer">Installed: %1$s\nTarget: %2$s / code %3$d\nAPK: %4$s\nBytes: %5$d\nCommit: %6$s</string>
+    <string name="update_same_version">This version is already installed. Download is optional for an explicitly confirmed reinstall; older versions are never installed.</string>
+    <string name="update_progress_text">Downloaded %1$d / %2$d bytes · %3$d B/s · attempt %4$d</string>
+    <string name="update_verifying">Verifying SHA-256, APK package/version, CPU compatibility and real signing certificate…</string>
+    <string name="update_ready">APK verified. Press Install.\nPrivate cached file: %1$s\nInstalled signer: %2$s\nDownloaded signer: %3$s\nThe raw path is not a public Downloads file; Android receives a temporary content URI.</string>
+    <string name="update_paused">Paused. Saved partial bytes can be resumed after checking the same release again.</string>
+    <string name="update_error">Update could not complete: %1$s\nNo unsafe APK is installed. Check the connection (including VPN), then retry. Do not uninstall your current app to bypass a signature mismatch.</string>
+    <string name="update_install_permission">Allow APK installation from TunXBox in the Android settings, then return. If the installer does not open, press Install again.</string>
+    <string name="update_install_launched">Android installer opened. Android may close TunXBox while replacing its APK; that alone is not a crash. After installation use the notification (if allowed) or launcher icon. Verified bytes remain available for another attempt.</string>
+    <string name="update_resuming">Resuming: already saved %1$d / %2$d bytes.</string>
+    <string name="update_range_restart">The server ignored Range. Restarting from zero; unsafe concatenation is not allowed.</string>
+    <string name="update_retrying">Connection interrupted. Saved %1$d / %2$d bytes; retry after attempt %3$d.</string>
+    <string name="update_resume_progress">Resuming (saved prefix %5$d): %1$d / %2$d bytes · %3$d B/s · attempt %4$d</string>
+    <string name="update_saved_bytes">Cached bytes found: %1$d / %2$d. Download resumes and verifies them; cache size is not a successful verification.</string>
+    <string name="update_paused_bytes">Paused. Saved %1$d / %2$d bytes. Press Download / resume. Leaving the screen retains private cache; Android may clear it.</string>
+    <string name="update_installed_title">TunXBox updated to %1$s</string>
+    <string name="update_open_app">Open TunXBox</string>
+    <string name="update_status_title">Update status and details</string>
+    <string name="update_details_action">Show full details</string>
+</resources>

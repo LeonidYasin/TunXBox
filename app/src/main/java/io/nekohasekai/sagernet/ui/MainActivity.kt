@@ -71,6 +71,10 @@ class MainActivity : ThemedActivity(),
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if(io.nekohasekai.sagernet.ui.update.UpdateReceipt.consume(this)) {
+            android.widget.Toast.makeText(this,getString(R.string.update_installed_title,io.nekohasekai.sagernet.BuildConfig.VERSION_NAME),android.widget.Toast.LENGTH_LONG).show()
+            (getSystemService(android.content.Context.NOTIFICATION_SERVICE) as android.app.NotificationManager).cancel(1331)
+        }
         
         // TV Mode is DEFAULT for all devices
         // Only use Phone Mode if user explicitly requested it
@@ -199,6 +203,15 @@ class MainActivity : ThemedActivity(),
                 importProfile(uri)
             }
         }
+    }
+
+    fun connectionTestReport(): io.nekohasekai.sagernet.group.ConnectionTestResult {
+        val service = connection.service
+        if (!DataStore.serviceState.connected || service == null) return io.nekohasekai.sagernet.group.ConnectionTestResult(
+            DataStore.currentProfile.coerceAtLeast(0), System.currentTimeMillis(), -1, io.nekohasekai.sagernet.group.SubscriptionFailureCategory.CORE)
+        return io.nekohasekai.sagernet.group.ConnectionTestResult.decode(service.testConnectionReport())
+            ?: io.nekohasekai.sagernet.group.ConnectionTestResult(DataStore.currentProfile.coerceAtLeast(0), System.currentTimeMillis(), -1,
+                io.nekohasekai.sagernet.group.SubscriptionFailureCategory.UNKNOWN)
     }
 
     fun urlTest(): Int {
@@ -388,9 +401,11 @@ class MainActivity : ThemedActivity(),
     @SuppressLint("CommitTransaction")
     fun displayFragment(fragment: ToolbarFragment) {
         // BottomAppBar translation is not a reliable hide before its first layout.
-        // This creation tool must not have an overlapping global VPN control panel.
-        binding.stats.visibility = if (fragment is io.nekohasekai.sagernet.ui.lan.LanDiscoveryFragment) View.GONE else View.VISIBLE
-        if (fragment is ConfigurationFragment || (DataStore.showBottomBar && fragment !is io.nekohasekai.sagernet.ui.lan.LanDiscoveryFragment)) {
+        // Tools/About must not have an overlapping panel intercepting scroll gestures.
+        // This affects UI visibility only: no VPN disconnect/selection commands are sent.
+        val hideConnectionOverlay = fragment is io.nekohasekai.sagernet.ui.lan.LanDiscoveryFragment || fragment is AboutFragment || fragment is AppUpdateFragment
+        binding.stats.visibility = if (hideConnectionOverlay) View.GONE else View.VISIBLE
+        if (fragment is ConfigurationFragment || (DataStore.showBottomBar && !hideConnectionOverlay)) {
             binding.stats.allowShow = true
             binding.fab.show()
         } else {
@@ -402,6 +417,10 @@ class MainActivity : ThemedActivity(),
             .replace(R.id.fragment_holder, fragment)
             .commitAllowingStateLoss()
         binding.drawerLayout.closeDrawers()
+    }
+
+    fun openAppUpdates(testChannel: Boolean) {
+        displayFragment(AppUpdateFragment().apply { arguments = android.os.Bundle().apply { putBoolean("test",testChannel) } })
     }
 
     fun displayFragmentWithId(@IdRes id: Int): Boolean {
@@ -428,6 +447,7 @@ class MainActivity : ThemedActivity(),
                 return false
             }
 
+            R.id.nav_app_updates -> openAppUpdates(false)
             R.id.nav_about -> displayFragment(AboutFragment())
             R.id.nav_tuiguang -> displayFragment(PromotionsFragment())
 
@@ -451,7 +471,15 @@ class MainActivity : ThemedActivity(),
 
         binding.fab.changeState(state, DataStore.serviceState, animate)
         binding.stats.changeState(state)
-        if (msg != null) snackbar(getString(R.string.vpn_error, msg)).show()
+        if(msg!=null&&lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) {
+            val record=io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticJournal.read(DataStore.selectedProxy)
+                ?:io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnostic(DataStore.selectedProxy,System.currentTimeMillis(),
+                    io.nekohasekai.sagernet.ui.diagnostics.DiagnosticStage.STARTUP,
+                    io.nekohasekai.sagernet.group.SubscriptionFailureCategory.fromMessage(msg))
+            io.nekohasekai.sagernet.ui.diagnostics.DiagnosticDialog.open(supportFragmentManager,
+                io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticReport.text(this,record),
+                offlineReport=io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticReport.offlineText(record))
+        }
     }
 
     override fun snackbarInternal(text: CharSequence): Snackbar {

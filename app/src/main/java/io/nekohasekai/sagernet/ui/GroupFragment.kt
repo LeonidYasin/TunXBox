@@ -336,6 +336,17 @@ class GroupFragment : ToolbarFragment(R.layout.layout_group),
             }
 
             when (item.itemId) {
+                R.id.action_subscription_diagnostics -> {
+                    val record = io.nekohasekai.sagernet.group.SubscriptionUpdateJournal.read(targetGroup.id)
+                    val builder = MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.subscription_attempt_title)
+                        .setMessage(io.nekohasekai.sagernet.group.SubscriptionUpdatePresentation.run { record?.let { report(requireContext(), it) } ?: details(requireContext(), null) })
+                        .setPositiveButton(android.R.string.ok, null)
+                    if (record != null) builder.setNeutralButton(R.string.subscription_attempt_share) { _, _ ->
+                        io.nekohasekai.sagernet.group.SubscriptionUpdatePresentation.share(requireContext(), record)
+                    }
+                    val dialog = builder.show()
+                    io.nekohasekai.sagernet.group.SubscriptionUpdatePresentation.focusClose(dialog)
+                }
                 R.id.action_universal_qr -> {
                     QRCodeDialog(
                         proxyGroup.toUniversalLink(), proxyGroup.displayName()
@@ -412,6 +423,7 @@ class GroupFragment : ToolbarFragment(R.layout.layout_group),
                 popup.menuInflater.inflate(R.menu.group_action_menu, popup.menu)
 
                 if (proxyGroup.type != GroupType.SUBSCRIPTION) {
+                    popup.menu.removeItem(R.id.action_subscription_diagnostics)
                     popup.menu.removeItem(R.id.action_share_subscription)
                 }
                 if (!proxyGroup.ungrouped && proxyGroup.id !in GroupUpdater.updating) {
@@ -529,6 +541,7 @@ class GroupFragment : ToolbarFragment(R.layout.layout_group),
             runOnDefaultDispatcher {
                 val size = SagerDatabase.proxyDao.countByGroup(group.id)
                 onMainDispatcher {
+                    if (!isAdded || proxyGroup.id != group.id) return@onMainDispatcher
                     @Suppress("DEPRECATION") when (group.type) {
                         GroupType.BASIC -> {
                             if (size == 0L) {
@@ -539,6 +552,7 @@ class GroupFragment : ToolbarFragment(R.layout.layout_group),
                         }
 
                         GroupType.SUBSCRIPTION -> {
+                            val record = io.nekohasekai.sagernet.group.SubscriptionUpdateJournal.read(group.id)
                             groupStatus.text = if (size == 0L) {
                                 getString(R.string.group_status_empty_subscription)
                             } else {
@@ -549,6 +563,7 @@ class GroupFragment : ToolbarFragment(R.layout.layout_group),
                                     "${date.month + 1} - ${date.date}"
                                 )
                             }
+                            record?.let { groupStatus.append("\n" + io.nekohasekai.sagernet.group.SubscriptionUpdatePresentation.summary(requireContext(), it)) }
 
                         }
                     }

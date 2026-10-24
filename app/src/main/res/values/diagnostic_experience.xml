@@ -1,0 +1,36 @@
+<resources>
+    <item type="id" name="diagnostic_offline_button"/>
+    <string name="diagnostic_plain_title">What this report means</string>
+    <string name="diagnostic_plain_pass">The last URL check passed. This is not continuous monitoring.</string>
+    <string name="diagnostic_plain_failure">The last attempt did not pass. The code describes an observation, not a proven cause.</string>
+    <string name="diagnostic_attempt_time">Check time: %1$s</string>
+    <string name="diagnostic_snapshot_scope">This is a snapshot. A running VPN and idle zero counters do not prove either Internet access or a fault. Send the report if a problem recurs.</string>
+    <string name="diagnostic_next_pass">If sites still fail, note what does not open and send the report; one successful test does not check every destination.</string>
+    <string name="diagnostic_next_clock">First check the date, time and time zone on the TV. Keep certificate validation enabled; repeat the check and send the report if it fails again.</string>
+    <string name="diagnostic_next_tls">Do not disable certificate verification or change server settings blindly. Run extended checks, then send the report. This code alone does not identify the failing TLS peer.</string>
+    <string name="diagnostic_next_network">Check that the TV has a network connection. Compare ordinary browsing, then run extended checks. Do not publish your network addresses or configuration.</string>
+    <string name="diagnostic_next_busy">A previous check is still finishing. Wait before retrying; this does not mean that the VPN itself is broken.</string>
+    <string name="diagnostic_next_config">This profile or transport may not be supported by this build. Send the report; no silent protocol replacement is performed.</string>
+    <string name="diagnostic_next_changed">The profile or connection changed during the check. Run it again for the current profile.</string>
+    <string name="diagnostic_next_unknown">Repeat once if convenient. If the issue persists, run extended checks and use Report to smartphone. The VPN will not be switched by these actions.</string>
+    <string name="diagnostic_tls_time_explanation">A TLS certificate time check failed. Check the device clock; the certificate may also be expired or not yet valid. The exact TLS peer is not established by this code alone.</string>
+    <string name="diagnostic_unknown_explanation">The connection check did not complete successfully. The cause is not established. This is a connection report, not proof of a subscription download failure.</string>
+    <string name="diagnostic_stage_config">Checking profile compatibility</string>
+    <string name="diagnostic_stage_network">Checking the physical network</string>
+    <string name="diagnostic_stage_dns">Resolving the server address (DNS)</string>
+    <string name="diagnostic_stage_tcp">Checking TCP reachability</string>
+    <string name="diagnostic_stage_tls">Checking the certificate with Android TLS</string>
+    <string name="diagnostic_stage_url">Checking a URL through the profile</string>
+    <string name="diagnostic_stage_other">Diagnostic stage</string>
+    <string name="diagnostic_extended_results">Extended checks: results</string>
+    <string name="diagnostic_outcome_pass">passed</string>
+    <string name="diagnostic_outcome_fail">did not pass</string>
+    <string name="diagnostic_outcome_timeout">time limit reached; completed results retained</string>
+    <string name="diagnostic_outcome_skipped">not checked / not applicable (not proof of a fault)</string>
+    <string name="diagnostic_extended_limitations">These checks use Android networking and separate test cores, not a trace of every stage inside the running VPN. A skipped TCP/TLS stage can be normal for QUIC/REALITY. Technical evidence follows.</string>
+    <string name="diagnostic_offline_button">Short QR without Wi-Fi</string>
+    <string name="diagnostic_offline_help">No network is needed for this QR: it contains a short text summary, not a link or the full TXT. Scan with the phone camera or a QR reader, copy the text and send it manually. Local sharing is now closed. For the full report, reopen sharing on the same trusted network.</string>
+    <string name="diagnostic_share_live">Link active: %1$d s left. Report responses sent: %2$d. Check the saved file on the phone.</string>
+    <string name="diagnostic_dns_explanation">The server address could not be resolved. Check the device network and DNS. This alone does not prove that the profile credentials are wrong.</string>
+    <string name="diagnostic_changed_explanation">The profile or physical network changed during the check. The old result does not describe the current connection; repeat the check.</string>
+</resources>

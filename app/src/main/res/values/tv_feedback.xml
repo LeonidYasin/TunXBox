@@ -5,7 +5,7 @@
     <string name="tv_connection_row">Connection</string>
     <string name="tv_connection_status">VPN status and traffic</string>
     <string name="tv_connection_stats">%1$s\nProfile: %2$s\n↑ %3$s  ↓ %4$s\nSession: ↑ %5$s  ↓ %6$s</string>
-    <string name="tv_connection_explanation">Status comes from the VPN service. Rates show proxy traffic; session totals include measured traffic. Zero traffic while idle is normal and does not prove a failure. A running VPN is not proof of Internet access. URL tests check a profile through a separate temporary core, not the active tunnel.</string>
+    <string name="tv_connection_explanation">Automatic check uses the already-running selected tunnel and the configured test URL (3 seconds). It exercises URL traffic, including required DNS/transport/authentication, but does not separately certify UDP, every route, speed or YouTube. Tap for details or repeat. Group URL tests use a separate temporary core. Zero traffic while idle is normal.</string>
     <string name="tv_stats_age">Last traffic update: %1$s seconds ago</string>
     <string name="tv_tests_title">Test profiles</string>
     <string name="tv_tests_hint">TCP latency, URL availability, results and sorting</string>

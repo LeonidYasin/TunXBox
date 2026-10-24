@@ -1,0 +1,15 @@
+<resources>
+    <string name="tv_quality_title">Проверить и отсортировать группу</string>
+    <string name="tv_quality_group_hint">OK: тест всех профилей и сортировка</string>
+    <string name="tv_quality_update_hint">Релиз / тест; проверенный APK</string>
+    <string name="tv_quality_age">URL-проверка: %1$d с назад</string>
+    <string name="tv_quality_rates">Сейчас ↑ %1$s/с · ↓ %2$s/с</string>
+    <string name="tv_quality_profile">URL: успешно %1$d/%2$d</string>
+    <string name="tv_quality_sample">URL-проверка %1$d / %2$d</string>
+    <string name="tv_quality_progress">Профили: %1$d / %2$d · %3$d с · предел 5 мин</string>
+    <string name="tv_quality_tcp">TCP-порт: %1$s</string>
+    <string name="tv_quality_spread">Разброс URL: %1$d мс</string>
+    <string name="tv_quality_changed">Группа или сеть изменились; сортировка не сохранена. Повторите проверку.</string>
+    <string name="tv_quality_incomplete">Проверка неполная, истёк срок или занят тестовый поток. Сортировка не сохранена; VPN не изменён. Повторите после завершения текущего теста.</string>
+    <string name="tv_quality_scope">Один тест TCP-порта, где применим, и три URL-запроса через отдельное тестовое ядро каждого профиля. Сначала доля успешных URL, затем медиана задержки и разброс задержек URL; равные сохраняют порядок. TCP сам по себе не доказывает Интернет. Это не тест скорости, YouTube, отдельный DNS-тест или потери UDP. VPN не переключается. Отмена или изменение группы/сети запрещают сохранение. Предел: 25 с на профиль, 5 мин на группу. Трафик тестовых ядер может не входить в счётчики текущей VPN-сессии.</string>
+</resources>

@@ -1,0 +1,15 @@
+{
+  "reportedOn": "2026-10-21",
+  "source": "owner chat statement",
+  "ownerStatement": "пока проблемы Hysteria2 и TLS в явном виде не выявились. возможно проблема устранена.",
+  "interpretation": "No explicit current failure observed; root cause and complete fix are not established. Harden diagnostics and monitor new reports.",
+  "preciseDeviceAndroidAbiNotProvided": true,
+  "controlledSameNodeComparisonPerformed": false,
+  "issues": [
+    6,
+    10
+  ],
+  "issuesClosed": false,
+  "nextAction": "Diagnostics UX hardening; collect safe reports if symptoms recur, not repeated forced reproduction now.",
+  "doesNotAuthorizeStablePublication": true
+}

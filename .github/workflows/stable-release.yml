@@ -44,6 +44,11 @@ jobs:
         run: |
           echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
 
+      - name: Validate stable publication inputs early
+        run: |
+          python3 buildScript/test_stable_inputs.py
+          python3 buildScript/validate_stable_inputs.py
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -99,7 +104,7 @@ jobs:
       - name: Build libcore.aar (if cache miss)
         run: |
           if [ ! -f app/libs/libcore.aar ]; then
-            ./run lib core
+            python3 buildScript/lib/core/build_verified.py
           else
             echo "libcore.aar restored from 16KB cache"
           fi
@@ -126,7 +131,12 @@ jobs:
         run: chmod +x gradlew
 
       - name: Check project documentation
-        run: python3 buildScript/check_project_docs.py
+        run: |
+          python3 buildScript/check_project_docs.py
+          python3 buildScript/test_reality_patch.py
+          python3 buildScript/test_project_site.py
+          python3 buildScript/test_emulator_results.py
+          python3 buildScript/test_tv_navigation.py
 
       - name: Test browser transfer page
         run: node buildScript/test_tv_transfer_page.cjs
@@ -155,8 +165,23 @@ jobs:
           # Step-scoped: this API token is not passed to emulator instrumentation.
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          ./run init action gradle
+          bash run init action gradle
           ./gradlew app:assembleOssDebug app:assembleOssDebugAndroidTest --stacktrace
+          ./gradlew --stop
+
+      - name: Test protocol and remote UI
+        run: |
+          ./gradlew app:testOssDebugUnitTest --stacktrace
+          python3 - <<'PY'
+          import glob, xml.etree.ElementTree as ET
+          totals = dict(tests=0, failures=0, errors=0, skipped=0)
+          for path in glob.glob("app/build/test-results/testOssDebugUnitTest/TEST-*.xml"):
+              suite = ET.parse(path).getroot()
+              for key in totals:
+                  totals[key] += int(suite.get(key, "0"))
+          print("JUnit summary: " + ", ".join(f"{key}={value}" for key, value in totals.items()))
+          assert totals["tests"] > 0 and totals["failures"] == 0 and totals["errors"] == 0
+          PY
           ./gradlew --stop
 
       - name: Enable hardware-accelerated emulator
@@ -177,22 +202,22 @@ jobs:
           emulator-boot-timeout: 300
           emulator-options: -no-window -gpu software -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
-          script: bash buildScript/run_emulator_smoke.sh 4096 Oss
+          script: python3 buildScript/run_verified_emulator_smoke.py 4096 Oss
 
-      - name: Android 15 emulator smoke (16KB)
+      - name: Android 16 emulator smoke (16KB)
         timeout-minutes: 20
         uses: ReactiveCircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # pinned v2
         with:
-          api-level: 35
+          api-level: 36
           target: google_apis_ps16k
           arch: x86_64
           profile: pixel_2
-          avd-name: tunxbox-smoke-16k
+          avd-name: tunxbox-smoke-16k-api36
           ram-size: 3072M
           emulator-boot-timeout: 300
           emulator-options: -no-window -gpu software -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
-          script: bash buildScript/run_emulator_smoke.sh 16384 Oss
+          script: python3 buildScript/run_verified_emulator_smoke.py 16384 Oss
 
       - name: Upload emulator diagnostics
         if: always()
@@ -227,7 +252,7 @@ jobs:
         run: |
           # Ignore legacy LOCAL_PROPERTIES signing credentials: the pinned bundle is authoritative.
           unset LOCAL_PROPERTIES
-          ./run init action gradle
+          bash run init action gradle
           ./gradlew app:assembleOssRelease --stacktrace
 
       - name: Verify Android update metadata
@@ -252,20 +277,6 @@ jobs:
 
       - name: Verify native 16KB page alignment
         run: python3 buildScript/verify_native_alignment.py app/build/outputs/apk/oss/release/*.apk
-
-      - name: Test protocol and remote UI
-        run: |
-          ./gradlew app:testOssDebugUnitTest --stacktrace
-          python3 - <<'PY'
-          import glob, xml.etree.ElementTree as ET
-          totals = dict(tests=0, failures=0, errors=0, skipped=0)
-          for path in glob.glob("app/build/test-results/testOssDebugUnitTest/TEST-*.xml"):
-              suite = ET.parse(path).getroot()
-              for key in totals:
-                  totals[key] += int(suite.get(key, "0"))
-          print("JUnit summary: " + ", ".join(f"{key}={value}" for key, value in totals.items()))
-          assert totals["tests"] > 0 and totals["failures"] == 0 and totals["errors"] == 0
-          PY
 
       - name: Upload unit-test reports
         if: always()

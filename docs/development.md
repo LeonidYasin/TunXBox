@@ -90,3 +90,7 @@ Rolling tag `vVERSION-rc` не заменяет Android versionCode. VersionCode
 ## Новый LAN scope
 
 [Ручной поиск](lan-discovery.md) живёт в отдельной feature-ветке. App/buildSrc/Gradle/metadata изменения запускают полный PR gate; не только docs/workflow paths. Новый цикл 1.6.0 имеет VERSION_CODE base 48, следующий RC обязан проходить verify_update относительно существующего RC либо latest stable manifest, если RC-серия новая. Это не меняет immutable stable 1.5.0.
+
+## Воспроизводимая сборка ядра с REALITY compatibility patch
+
+Использовать `python3 buildScript/lib/core/build_verified.py` вместо прямого `./run lib core`, когда нужна актуальная поддержка REALITY. Entry сохраняет исходный pinned commit, применяет `buildScript/lib/core/reality-hybrid.patch` только при совпадении commit и SHA-256 исходных файлов, проверяет Go TLS tests, затем собирает Android AAR. Повторное применение идемпотентно; неизвестные/частично изменённые исходники не сбрасываются, сборка останавливается. Изменение tracked patch/manifest входит в существующий hashFiles cache key, поэтому старый AAR не должен подменять патч. Python guard tests: `python3 buildScript/test_reality_patch.py`. Частные provider fixtures нельзя добавлять в repository/CI.

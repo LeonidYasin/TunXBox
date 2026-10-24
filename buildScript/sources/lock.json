@@ -1,0 +1,83 @@
+{
+  "schema": 1,
+  "components": {
+    "sing-box": {
+      "repository": "https://github.com/MatsuriDayo/sing-box",
+      "revision": "aed32ee3066cdbc7d471e3e0415c5134088962df",
+      "archive": "https://codeload.github.com/MatsuriDayo/sing-box/tar.gz/aed32ee3066cdbc7d471e3e0415c5134088962df",
+      "sha256": "402e02917da475e48062dbaef76265045fcb80831a84158c8b7fd566c32567b5"
+    },
+    "libneko": {
+      "repository": "https://github.com/MatsuriDayo/libneko",
+      "revision": "1c47a3af71990a7b2192e03292b4d246c308ef0b",
+      "archive": "https://codeload.github.com/MatsuriDayo/libneko/tar.gz/1c47a3af71990a7b2192e03292b4d246c308ef0b",
+      "sha256": "91b0fcc44bb71b0b61d9c50411ae244550dd66084daaddb550fed9c6280847f7"
+    },
+    "gomobile": {
+      "repository": "https://github.com/MatsuriDayo/gomobile",
+      "revision": "17d6af34f6bd6d7e1e428e0c652c8b54a46bda4f",
+      "archive": "https://codeload.github.com/MatsuriDayo/gomobile/tar.gz/17d6af34f6bd6d7e1e428e0c652c8b54a46bda4f",
+      "sha256": "492d77638c5481e61115bd72c73e63b1fe465d674619a420d51bfcaaacdf53ac"
+    },
+    "yacd": {
+      "repository": "https://github.com/MetaCubeX/Yacd-meta",
+      "revision": "e3bba3b401383a207da875b279d2e713048782ab",
+      "archive": "https://codeload.github.com/MetaCubeX/Yacd-meta/tar.gz/e3bba3b401383a207da875b279d2e713048782ab",
+      "sha256": "97fbe3ec4732eb60b7d92fbb9e8022ebc98680063dfd96e2a70b89533fa5e7cc"
+    },
+    "geoip-generator": {
+      "repository": "https://github.com/SagerNet/sing-geoip",
+      "revision": "ecd02c178af5efbac38d427a8d178f940327de1f",
+      "archive": "https://codeload.github.com/SagerNet/sing-geoip/tar.gz/ecd02c178af5efbac38d427a8d178f940327de1f",
+      "sha256": "4da5600e19c872f539853261c84936b9e08344cadf85561cf599ac3f8a58925b"
+    },
+    "geosite-generator": {
+      "repository": "https://github.com/SagerNet/sing-geosite",
+      "revision": "dd64ae0ebf2ee69166c0510042b3e96c085f27df",
+      "archive": "https://codeload.github.com/SagerNet/sing-geosite/tar.gz/dd64ae0ebf2ee69166c0510042b3e96c085f27df",
+      "sha256": "6a8095a43720bea87791810c0cd4eb6d374cb8ad19a960ce50c987e10f2a6c2f"
+    },
+    "jetbrains-mono": {
+      "repository": "https://github.com/JetBrains/JetBrainsMono",
+      "revision": "a17943ec8a1a6f16c4bc55d34a297df91093bc29",
+      "archive": "https://codeload.github.com/JetBrains/JetBrainsMono/tar.gz/a17943ec8a1a6f16c4bc55d34a297df91093bc29",
+      "sha256": "fb3e0bbcf4a041e43dd6426e7859799aa289870161c9d92c91ab76168d8fd00f",
+      "license": "Apache-2.0",
+      "version": "1.0.3",
+      "bundledFile": "app/src/main/res/font/jetbrains_mono.ttf",
+      "bundledSha256": "3c5fb9d71ef1e2363ba27503f0b80907b34138c31a09c99cb5355171c62bc810",
+      "notes": "Historical v1.0.3 is Apache-2.0, not the OFL license used by later releases. Exact TTF match verified. FontLab outline sources are preserved; recompilation is not verified."
+    }
+  },
+  "assets": {
+    "geoip": {
+      "repository": "https://github.com/SagerNet/sing-geoip",
+      "version": "20261012",
+      "url": "https://github.com/SagerNet/sing-geoip/releases/download/20261012/geoip.db",
+      "sha256": "f24050f4ce11783cd632fe3982f24895d959fa01afc8fab6ca8a6a3615b5de56"
+    },
+    "geosite": {
+      "repository": "https://github.com/SagerNet/sing-geosite",
+      "version": "20261020022354",
+      "url": "https://github.com/SagerNet/sing-geosite/releases/download/20261020022354/geosite.db",
+      "sha256": "45defe31866460a8362b575fd4649f37fab2e3cfc14324adfe8e0fcc1bfd8e6c"
+    }
+  },
+  "dashboard": {
+    "node": "24.14.1",
+    "pnpm": "8.15.9",
+    "sourceDateEpoch": 1686759420
+  },
+  "notes": [
+    "Source snapshots preserve pinned revisions, not full Git history.",
+    "Dataset generator snapshots do not preserve all external dataset inputs.",
+    "libneko license needs upstream clarification; Yacd package.json declares MIT but this snapshot has no standalone LICENSE."
+  ],
+  "toolchains": {
+    "go": "go1.26.8",
+    "jdk": "17",
+    "androidNdk": "25.0.8775105",
+    "androidBuildTools": "35.0.1",
+    "androidCompileSdk": 35
+  }
+}

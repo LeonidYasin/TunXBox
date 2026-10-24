@@ -8,7 +8,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
-import android.text.util.Linkify
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.component1
@@ -22,7 +21,6 @@ import com.danielstone.materialaboutlibrary.model.MaterialAboutCard
 import com.danielstone.materialaboutlibrary.model.MaterialAboutList
 import io.nekohasekai.sagernet.BuildConfig
 import io.nekohasekai.sagernet.R
-import io.nekohasekai.sagernet.databinding.LayoutAboutBinding
 import io.nekohasekai.sagernet.ktx.*
 import io.nekohasekai.sagernet.plugin.PluginManager.loadString
 import io.nekohasekai.sagernet.utils.PackageCache
@@ -41,8 +39,6 @@ class AboutFragment : ToolbarFragment(R.layout.layout_about) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val binding = LayoutAboutBinding.bind(view)
-
         ViewCompat.setOnApplyWindowInsetsListener(view, ListListener)
         toolbar.setTitle(R.string.menu_about)
 
@@ -50,13 +46,6 @@ class AboutFragment : ToolbarFragment(R.layout.layout_about) {
             .replace(R.id.about_fragment_holder, AboutContent())
             .commitAllowingStateLoss()
 
-        runOnDefaultDispatcher {
-            val license = view.context.assets.open("LICENSE").bufferedReader().readText()
-            onMainDispatcher {
-                binding.license.text = license
-                Linkify.addLinks(binding.license, Linkify.EMAIL_ADDRESSES or Linkify.WEB_URLS)
-            }
-        }
     }
 
     class AboutContent : MaterialAboutFragment() {
@@ -73,6 +62,10 @@ class AboutFragment : ToolbarFragment(R.layout.layout_about) {
 
         override fun getMaterialAboutList(activityContext: Context): MaterialAboutList {
             return MaterialAboutList.Builder()
+                .addCard(MaterialAboutCard.Builder().outline(false)
+                    .title(R.string.app_name_long)
+                    .addItem(MaterialAboutActionItem.Builder().text(R.string.app_desc).build())
+                    .build())
                 .addCard(
                     MaterialAboutCard.Builder()
                         .outline(false)
@@ -91,7 +84,12 @@ class AboutFragment : ToolbarFragment(R.layout.layout_about) {
                             MaterialAboutActionItem.Builder()
                                 .text(R.string.app_build_identity)
                                 .subText(getString(R.string.app_build_identity_value, BuildConfig.APPLICATION_ID, BuildConfig.VERSION_CODE))
+                                .setOnClickAction { showBuildInfo() }
                                 .build())
+                        .addItem(MaterialAboutActionItem.Builder()
+                            .text(R.string.about_build_details)
+                            .subText("${BuildConfig.VERSION_NAME} · #${BuildConfig.BUILD_RUN_NUMBER} · ${BuildConfig.BUILD_COMMIT.take(8)}")
+                            .setOnClickAction { showBuildInfo() }.build())
                         .addItem(
                             MaterialAboutActionItem.Builder()
                                 .text(R.string.check_update_release)
@@ -187,22 +185,38 @@ class AboutFragment : ToolbarFragment(R.layout.layout_about) {
                                 .icon(R.drawable.ic_baseline_bug_report_24)
                                 .text(R.string.project_report_issue)
                                 .setOnClickAction {
-                                    requireContext().launchCustomTab(
-                                        ProjectLinks.ISSUES
-                                    )
+                                    requireContext().launchCustomTab(ProjectLinks.ISSUES)
                                 }
                                 .build())
+                        .addItem(MaterialAboutActionItem.Builder()
+                            .text(R.string.project_contact_tunxbox).subText(ProjectLinks.SUPPORT_EMAIL)
+                            .setOnClickAction { contactSupport() }.build())
+                        .addItem(MaterialAboutActionItem.Builder()
+                            .text(R.string.project_telegram_tunxbox).subText("@LEONI_YA")
+                            .setOnClickAction { requireContext().launchCustomTab(ProjectLinks.SUPPORT_TELEGRAM) }.build())
+                        .addItem(MaterialAboutActionItem.Builder()
+                            .icon(R.drawable.ic_baseline_card_giftcard_24)
+                            .text(R.string.project_upstream_support).subText(R.string.project_upstream_support_hint)
+                            .setOnClickAction {
+                                MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.project_upstream_support)
+                                    .setMessage(R.string.about_support_terms)
+                                    .setPositiveButton(R.string.project_contact_tunxbox) { _, _ -> contactSupport() }
+                                    .setNegativeButton(android.R.string.cancel, null).show()
+                            }.build())
                         .build())
                 .addCard(
                     MaterialAboutCard.Builder().outline(false).title(R.string.project_upstream)
                         .addItem(MaterialAboutActionItem.Builder()
                             .text(R.string.project_upstream_neko).subText(R.string.project_upstream_hint)
                             .setOnClickAction { requireContext().launchCustomTab(ProjectLinks.UPSTREAM) }.build())
-                        .addItem(MaterialAboutActionItem.Builder()
-                            .icon(R.drawable.ic_baseline_card_giftcard_24)
-                            .text(R.string.project_upstream_support).subText(R.string.project_upstream_support_hint)
-                            .setOnClickAction { requireContext().launchCustomTab(ProjectLinks.UPSTREAM_DONATE) }.build())
                         .build())
+                .addCard(MaterialAboutCard.Builder().outline(false).title(R.string.license)
+                    // Put the actionable row before the potentially multi-line legal summary.
+                    // On small/large-font screens the complete GPL must not sit below clipped text.
+                    .addItem(MaterialAboutActionItem.Builder().text(R.string.about_license_full)
+                        .setOnClickAction { showFullLicense() }.build())
+                    .addItem(MaterialAboutActionItem.Builder().text(R.string.about_license_short).build())
+                    .build())
                 .build()
 
         }
@@ -210,9 +224,71 @@ class AboutFragment : ToolbarFragment(R.layout.layout_about) {
         override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
             super.onViewCreated(view, savedInstanceState)
 
+            // A single native list owns all scrolling, including intro, support and license.
             view.findViewById<RecyclerView>(R.id.mal_recyclerview).apply {
                 overScrollMode = RecyclerView.OVER_SCROLL_NEVER
             }
+        }
+
+        private fun showFullLicense() {
+            val assets = requireContext().assets
+            runOnIoDispatcher {
+                val notice = assets.open("LICENSE").bufferedReader().use { it.readText() }
+                val terms = assets.open("COPYING").bufferedReader().use { it.readText() }
+                runOnMainDispatcher {
+                    if (!isAdded) return@runOnMainDispatcher
+                    MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.license)
+                        .setMessage(notice + "\n\n" + terms)
+                        .setPositiveButton(android.R.string.ok, null).show().also { dialog ->
+                            dialog.findViewById<android.widget.TextView>(android.R.id.message)?.setTextIsSelectable(true)
+                            dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).requestFocus()
+                        }
+                }
+            }
+        }
+
+        private fun contactSupport() {
+            // Explicit user action only; no diagnostics, profile or credentials are attached.
+            val uri = Uri.parse("mailto:${ProjectLinks.SUPPORT_EMAIL}").buildUpon()
+                .appendQueryParameter("subject", "TunXBox support").build()
+            try {
+                startActivity(Intent(Intent.ACTION_SENDTO, uri))
+            } catch (_: android.content.ActivityNotFoundException) {
+                val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                clipboard.setPrimaryClip(android.content.ClipData.newPlainText("TunXBox support", ProjectLinks.SUPPORT_EMAIL))
+                Toast.makeText(requireContext(), R.string.project_contact_copied, Toast.LENGTH_LONG).show()
+            }
+        }
+
+        private fun showBuildInfo() {
+            val facts = listOf(
+                "App" to "TunXBox ${BuildConfig.VERSION_NAME}",
+                "Android versionCode" to BuildConfig.VERSION_CODE.toString(),
+                "Package" to BuildConfig.APPLICATION_ID,
+                "Variant" to "${BuildConfig.FLAVOR}/${BuildConfig.BUILD_TYPE}",
+                "Source commit" to BuildConfig.BUILD_COMMIT,
+                "Checkout ref" to BuildConfig.BUILD_SOURCE_REF,
+                "CI build number / run ID" to "${BuildConfig.BUILD_RUN_NUMBER} / ${BuildConfig.BUILD_RUN_ID}",
+                "CI URL" to if (BuildConfig.BUILD_RUN_ID == "local") "local build" else "${ProjectLinks.REPOSITORY}/actions/runs/${BuildConfig.BUILD_RUN_ID}",
+                "Build time (UTC)" to BuildConfig.BUILD_TIME_UTC,
+                "sing-box runtime" to runCatching { Libcore.versionBox() }.getOrDefault("unavailable"),
+                "sing-box source" to BuildConfig.CORE_SOURCE_COMMIT,
+                "libneko source" to BuildConfig.LIBNEKO_SOURCE_COMMIT,
+                "REALITY patch SHA-256" to BuildConfig.CORE_PATCH_SHA256,
+                "Installed signing certificate SHA-256" to runCatching { installedSigner() }.getOrDefault("unavailable"),
+                "Android / API" to "${Build.VERSION.RELEASE} / ${Build.VERSION.SDK_INT}",
+                "Device supported ABIs (not APK contents)" to Build.SUPPORTED_ABIS.joinToString(", ")
+            )
+            val summary = AboutBuildInfo.format(facts)
+            MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.about_build_details)
+                .setMessage(summary)
+                .setNeutralButton(R.string.about_copy_build_info) { _, _ ->
+                    val clipboard = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                    clipboard.setPrimaryClip(android.content.ClipData.newPlainText("TunXBox build", summary))
+                }.setPositiveButton(android.R.string.ok, null).show().also { dialog ->
+                    dialog.findViewById<android.widget.TextView>(android.R.id.message)?.setTextIsSelectable(true)
+                    dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).requestFocus()
+                }
         }
 
         private fun installedSigner(): String {
@@ -230,42 +306,7 @@ class AboutFragment : ToolbarFragment(R.layout.layout_about) {
         }
 
         fun checkUpdate(checkPreview: Boolean) {
-            val signer = runCatching { installedSigner() }.getOrNull() ?: run {
-                Toast.makeText(requireContext(), R.string.update_no_compatible_release, Toast.LENGTH_LONG).show()
-                return
-            }
-            runOnIoDispatcher {
-                try {
-                    val client = Libcore.newHttpClient().apply { modernTLS(); trySocks5(DataStore.mixedPort) }
-                    fun fetch(url: String): String = Util.getStringBox(client.newRequest().apply { setURL(url) }.execute().contentString)
-                    val release = JSONObject(fetch(if (checkPreview) ProjectLinks.PREVIEW_API else ProjectLinks.RELEASE_API))
-                    val releaseUrl = release.getString("html_url")
-                    require(releaseUrl.startsWith(ProjectLinks.REPOSITORY + "/releases/tag/"))
-                    val assets = release.getJSONArray("assets")
-                    val asset = (0 until assets.length()).map { assets.getJSONObject(it) }
-                        .firstOrNull { it.optString("name") == "apk-manifest.json" }
-                    if (asset == null) {
-                        runOnMainDispatcher { if (isAdded) Toast.makeText(requireContext(), R.string.update_no_compatible_release, Toast.LENGTH_LONG).show() }
-                        return@runOnIoDispatcher
-                    }
-                    val manifestUrl = asset.getString("browser_download_url")
-                    require(manifestUrl.startsWith(ProjectLinks.REPOSITORY + "/releases/download/"))
-                    val available = ReleaseUpdatePolicy.parse(JSONObject(fetch(manifestUrl)), BuildConfig.APPLICATION_ID, BuildConfig.VERSION_CODE.toLong(), signer)
-                    runOnMainDispatcher {
-                        if (!isAdded || view == null) return@runOnMainDispatcher
-                        if (available.newer) {
-                            val context = requireContext()
-                            MaterialAlertDialogBuilder(context).setTitle(R.string.update_dialog_title)
-                                .setMessage(context.getString(R.string.update_dialog_message, SagerNet.appVersionNameForDisplay, available.versionName))
-                                .setPositiveButton(R.string.yes) { _, _ -> context.launchCustomTab(releaseUrl) }
-                                .setNegativeButton(R.string.no, null).show()
-                        } else Toast.makeText(requireContext(), R.string.check_update_no, Toast.LENGTH_SHORT).show()
-                    }
-                } catch (e: Exception) {
-                    Logs.w(e)
-                    runOnMainDispatcher { if (isAdded) Toast.makeText(requireContext(), R.string.update_check_failed, Toast.LENGTH_LONG).show() }
-                }
-            }
+            (activity as? MainActivity)?.openAppUpdates(checkPreview)
         }
     }
 }

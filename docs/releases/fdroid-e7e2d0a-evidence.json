@@ -1,0 +1,42 @@
+{
+  "sourceSha": "e7e2d0a866053fcbd85758f62abe7829a6860d40",
+  "workflowRunId": 39511234808,
+  "workflowRunUrl": "https://github.com/LeonidYasin/TunXBox/actions/runs/39511234808",
+  "conclusion": "success",
+  "jobs": {
+    "source-checks": "success",
+    "android-fdroid": "success"
+  },
+  "artifactId": 12306771922,
+  "artifactZipSha256": "553d0c12d3935debca6c262a051398d4a28024b96f6bc72bb2d373ab5b7c1848",
+  "suites": [
+    {
+      "path": "build/emulator-results/16384/results/debug/flavors/fdroid/TEST-emulator-5554 - 16-_app-fdroid.xml",
+      "name": "io.nekohasekai.sagernet.ui.EmulatorSmokeTest",
+      "tests": "19",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "230.093",
+      "timestamp": "2026-10-20T23:22:23",
+      "hostname": "localhost",
+      "portraitScrollPassed": true
+    },
+    {
+      "path": "build/emulator-results/4096/results/debug/flavors/fdroid/TEST-emulator-5554 - 15-_app-fdroid.xml",
+      "name": "io.nekohasekai.sagernet.ui.EmulatorSmokeTest",
+      "tests": "19",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "205.11",
+      "timestamp": "2026-10-20T23:14:42",
+      "hostname": "localhost",
+      "portraitScrollPassed": true
+    }
+  ],
+  "officialFdroidBuildserver": false,
+  "storeAccepted": false,
+  "laterHeadTested": false,
+  "physicalDeviceAccepted": false
+}

@@ -25,3 +25,9 @@ jniLibs/
 *.jks
 /signing-bundle.json
 **/__pycache__/
+
+# Verified source cache, isolated build tools, dependency backups
+/.source-cache/
+/.tools/
+/source-backups/
+/libcore/.gomobile-env

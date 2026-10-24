@@ -1,2 +1,4 @@
-export COMMIT_SING_BOX="aed32ee3066cdbc7d471e3e0415c5134088962df"
-export COMMIT_LIBNEKO="1c47a3af71990a7b2192e03292b4d246c308ef0b"
+#!/usr/bin/env bash
+# Compatibility exports for tooling that reads the historical environment file.
+export COMMIT_SING_BOX=$(python3 -c 'import json;print(json.load(open("buildScript/sources/lock.json"))["components"]["sing-box"]["revision"])')
+export COMMIT_LIBNEKO=$(python3 -c 'import json;print(json.load(open("buildScript/sources/lock.json"))["components"]["libneko"]["revision"])')
