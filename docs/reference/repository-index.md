@@ -8,7 +8,7 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **850**.
+Всего tracked файлов: **863**.
 
 | Раздел | Файлов |
 |---|---|
@@ -213,7 +213,7 @@
 | `fdroid` | 3 |
 | `gradle` | 2 |
 | `libcore` | 42 |
-| `website` | 37 |
+| `website` | 50 |
 | `Корень` | 19 |
 
 ## .github
@@ -1616,15 +1616,22 @@
 ## website
 
 - [`website/.nojekyll`](../../website/.nojekyll)
+- [`website/SEO.md`](../../website/SEO.md)
+- [`website/en/index.html`](../../website/en/index.html)
+- [`website/favicon.svg`](../../website/favicon.svg)
 - [`website/guide/README.html`](../../website/guide/README.html)
+- [`website/guide/agent-handoff.html`](../../website/guide/agent-handoff.html)
 - [`website/guide/app-updates.html`](../../website/guide/app-updates.html)
 - [`website/guide/architecture.html`](../../website/guide/architecture.html)
 - [`website/guide/branch-audit.html`](../../website/guide/branch-audit.html)
+- [`website/guide/connection-acceptance.html`](../../website/guide/connection-acceptance.html)
 - [`website/guide/connection-diagnostics.html`](../../website/guide/connection-diagnostics.html)
 - [`website/guide/contributing-and-support.html`](../../website/guide/contributing-and-support.html)
+- [`website/guide/core-extension-strategy.html`](../../website/guide/core-extension-strategy.html)
 - [`website/guide/decisions.html`](../../website/guide/decisions.html)
 - [`website/guide/development.html`](../../website/guide/development.html)
 - [`website/guide/diagnostic-support.html`](../../website/guide/diagnostic-support.html)
+- [`website/guide/diagnostics-ux-review.html`](../../website/guide/diagnostics-ux-review.html)
 - [`website/guide/emulator-testing.html`](../../website/guide/emulator-testing.html)
 - [`website/guide/features.html`](../../website/guide/features.html)
 - [`website/guide/github-pages.html`](../../website/guide/github-pages.html)
@@ -1635,11 +1642,15 @@
 - [`website/guide/protocol-compatibility.html`](../../website/guide/protocol-compatibility.html)
 - [`website/guide/readme.html`](../../website/guide/readme.html)
 - [`website/guide/reference/preferences.html`](../../website/guide/reference/preferences.html)
+- [`website/guide/release-triage.html`](../../website/guide/release-triage.html)
 - [`website/guide/releases/1.5.0.html`](../../website/guide/releases/1.5.0.html)
+- [`website/guide/releases/1.6.0.html`](../../website/guide/releases/1.6.0.html)
+- [`website/guide/releases/1.7.0.html`](../../website/guide/releases/1.7.0.html)
 - [`website/guide/roadmap.html`](../../website/guide/roadmap.html)
 - [`website/guide/scenarios.html`](../../website/guide/scenarios.html)
 - [`website/guide/security.html`](../../website/guide/security.html)
 - [`website/guide/signing-and-updates.html`](../../website/guide/signing-and-updates.html)
+- [`website/guide/source-preservation.html`](../../website/guide/source-preservation.html)
 - [`website/guide/subscription-passphrase.html`](../../website/guide/subscription-passphrase.html)
 - [`website/guide/support-services-proposal.html`](../../website/guide/support-services-proposal.html)
 - [`website/guide/tv-connection-health.html`](../../website/guide/tv-connection-health.html)
@@ -1650,8 +1661,10 @@
 - [`website/guide/ui-quality-review.html`](../../website/guide/ui-quality-review.html)
 - [`website/index.html`](../../website/index.html)
 - [`website/project-map.svg`](../../website/project-map.svg)
+- [`website/robots.txt`](../../website/robots.txt)
 - [`website/site-manifest.json`](../../website/site-manifest.json)
 - [`website/site.css`](../../website/site.css)
+- [`website/sitemap.xml`](../../website/sitemap.xml)
 
 ## Корень
 

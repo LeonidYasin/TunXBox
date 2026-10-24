@@ -7,23 +7,21 @@
 
 ## Продолжить разработку
 
-[AGENTS.md](AGENTS.md) → [актуальная передача работы](docs/agent-handoff.md) → [triage PR/issues](docs/release-triage.md). Единый draft кандидат 1.6 — PR #12 в master; stable ещё не выпущен. [Стратегия extended/Xray/XHTTP](docs/core-extension-strategy.md) — отдельный проверяемый эксперимент, не функция текущего APK.
+[AGENTS.md](AGENTS.md) → [актуальная передача работы](docs/agent-handoff.md) → [triage PR/issues](docs/release-triage.md). Стабильная **1.6.0** опубликована из master `5a7a2d1`; идёт цикл **1.7.0** (VERSION_CODE base 49, без автоматической стабильной публикации). [Стратегия extended/Xray/XHTTP](docs/core-extension-strategy.md) — отдельный проверяемый эксперимент, не функция текущего APK.
 
 ## Скачать и проверить
 
-- [Стабильная 1.5.0](https://github.com/LeonidYasin/TunXBox/releases/tag/v1.5.0) — неизменяемый опубликованный выпуск.
-- [Новый ручной кандидат 1.6.0-rc.158](https://github.com/LeonidYasin/TunXBox/releases/tag/v1.6.0-rc.158) — опубликованные проверенные APK с исправлением портретной TV-прокрутки; реальная приёмка ещё нужна. Это отдельный тег, не автоматическое обновление rolling-канала. [Доказательства](docs/releases/1.6.0-rc.158-evidence.json).
-- [Тестовый канал 1.6.0-rc](https://github.com/LeonidYasin/TunXBox/releases/tag/v1.6.0-rc) — только сборки, прошедшие обязательные CI gates. Новые изменения в ветке не означают, что APK уже опубликован.
-- Последняя принятая владельцем проверочная сборка — rc.130, [CI](https://github.com/LeonidYasin/TunXBox/actions/runs/38090064430). Не выдавать изменения новой ветки за уже опубликованный APK.
+- [Стабильная 1.6.0](https://github.com/LeonidYasin/TunXBox/releases/tag/v1.6.0) — последний неизменяемый опубликованный выпуск (versionCode 48 999 999). [Предыдущая 1.5.0](https://github.com/LeonidYasin/TunXBox/releases/tag/v1.5.0) остаётся доступной.
+- [Тестовый канал 1.6.0-rc](https://github.com/LeonidYasin/TunXBox/releases/tag/v1.6.0-rc) — rolling-пререлиз (сейчас rc.162), который читает встроенный тестовый updater приложения. Ветка или PR сами по себе не означают опубликованный APK: в канале только сборки, прошедшие обязательные CI gates. [Доказательства rc.158](docs/releases/1.6.0-rc.158-evidence.json).
 - Каждый APK содержит Phone/TV. ABI, полная версия/code, commit и signer указаны в manifest/сведениях сборки. Проверяйте `SHA256SUMS.txt`; checksum не заменяет сертификат подписи Android.
-- [Подпись и обновления](docs/signing-and-updates.md), [проверка устройства](docs/emulator-testing.md). [Обновление через меню](docs/app-updates.md) — кандидат отдельной feature-ветки, ещё требует CI/приёмки. [Подписка по словарной фразе](docs/subscription-passphrase.md) — дизайн R14.
+- [Подпись и обновления](docs/signing-and-updates.md), [проверка устройства](docs/emulator-testing.md). [Обновление через меню](docs/app-updates.md) — stable/test каналы вошли в 1.6.0. [Подписка по словарной фразе](docs/subscription-passphrase.md) — дизайн R14.
 
 ## Честный статус
 
 | Направление | Состояние |
 |---|---|
 | TV/Phone, QR и локальный обмен | Базовые функции опубликованы; проверяйте сценарии своего устройства |
-| LAN-поиск и явный профиль gateway:10808 | PR #4 принят владельцем и merged в master (`99a8b6f2`); не включён задним числом в stable 1.5.0 |
+| LAN-поиск и явный профиль gateway:10808 | PR #4 принят владельцем и merged в master (`99a8b6f2`); не включён задним числом в immutable stable 1.5.0 |
 | Подписки, сохранённые результаты и безопасные отчёты | Доработки PR #5 / проверочная интеграция; PR #5 ещё не merged |
 | TCP VLESS REALITY на новых Xray | Патч прошёл CI rc.130; владелец сообщил, что работает более-менее; матрица реальных устройств остаётся открытой |
 | XHTTP | Полная работоспособность не заявляется; отдельное направление |
@@ -57,13 +55,10 @@ GNU GPL v3 или более поздняя версия; исходное ав�
 
 [NekoBox for Android](https://github.com/MatsuriDayo/NekoBoxForAndroid), [SagerNet](https://github.com/SagerNet/SagerNet), [sing-box](https://github.com/SagerNet/sing-box), [shadowsocks-android](https://github.com/shadowsocks/shadowsocks-android), [Yacd-meta](https://github.com/MetaCubeX/Yacd-meta). TunXBox не является официальной сборкой этих проектов; их лицензии и вклад сохраняются. Ссылки на сторонние кошельки/донаты не используются для поддержки TunXBox.
 
-## Следующий UI-кандидат
+## Выпущено в 1.6.0
 
-[Граф ТВ-навигации](docs/tv-navigation.md), [автопроверка активного туннеля перед YouTube](docs/tv-connection-health.md) и явная обратная связь докачки/установки включены в опубликованную rc.135 ([CI](https://github.com/LeonidYasin/TunXBox/actions/runs/38142308237)); нужна ручная проверка. [Названия подписок и отдельные строки каждой группы](docs/tv-groups-subscriptions.md) — следующий отдельный кандидат R16, **не в rc.135**.
+Список изменений 1.6.0 относительно 1.5.0 — в [release notes](docs/releases/1.6.0.md): граф ТВ-навигации и строки всех групп, названия подписок, портретная прокрутка, [автопроверка активного туннеля перед YouTube](docs/tv-connection-health.md), встроенное обновление приложения (stable/test) и [расширенная диагностика](docs/connection-diagnostics.md). Кандидаты R16/R17 и правки rc.135/rc.143 больше не публикуются отдельно — их scope вошёл в 1.6.0.
 
-Кандидат R16 также включает [три стартовые карточки и offline сведения о выпуске](docs/tv-groups-subscriptions.md): установленная версия видна сразу, изменения и проверки открываются сверху; полный About — внутри. Режимы TV/Phone сохраняют начальный фокус; это не входит в rc.135.
+## Следующий цикл 1.7.0
 
-По отзыву о rc.135 подготовлен [кандидат R17](docs/connection-diagnostics.md): трафик за сессию вместо rate, отдельная диагностика перед YouTube, полный отчёт отказа запуска и временная QR/TXT-передача на смартфон. До собственного CI/owner acceptance не считать готовым выпуском; XHTTP это не добавляет.
-
-
-Коррекция по rc.143: выбранная группа первой, отдельный ряд операций перед последним рядом возможностей; реальные session totals независимо от notification interval; ограниченная повторная проверка с прогрессом. [Scope и приёмка](docs/connection-diagnostics.md). Новый кандидат требует CI и проверки владельцем.
+Текущий цикл — **1.7.0** (VERSION_CODE base 49, чтобы RC ставился поверх 1.6.0). В master влит кандидат [#23](https://github.com/LeonidYasin/TunXBox/pull/23): перенос группы-подписки app→app (телефон→ТВ) как обновляемой ссылки и обход VPN при LAN-передаче на смартфоне. Это ещё не опубликованный APK: нужны публикация тестового канала и физическая приёмка двух устройств.

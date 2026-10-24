@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /TunXBox/
+Sitemap: https://leonidyasin.github.io/TunXBox/sitemap.xml

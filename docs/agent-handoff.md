@@ -13,6 +13,18 @@
 
 После публикации stable 1.6.0 начат следующий minor-цикл на ветке `release/1.7.0-cycle` (от master `5ac4636`): `nb4a.properties` → `VERSION_NAME=1.7.0`, `PRE_VERSION_NAME=pre-1.7.0-lan-rc`, `VERSION_CODE` base **48 → 49**. Добавлен материал `docs/releases/1.7.0.md` (ожидаемый stable versionCode **49 999 999**), чтобы `validate_stable_inputs` проходил, пока 1.7.0 ещё не выпущен. Entry points `AGENTS.md`, `roadmap.md` (факт выпуска 1.6.0, base-правила), `development.md` обновлены для цикла 1.7. Реальное содержимое фич 1.7.0 определяется последующими PR; green CI ≠ публикация. Открытый вопрос — merge-метод PR: squash запрещён владельцем, использовать `merge`/`rebase`.
 
+## Публичная витрина: stable 1.6.0 на README и сайте — 2026-10-24
+
+Найдено расхождение: после публикации stable 1.6.0 README и сайт всё ещё указывали stable 1.5.0 и номерной кандидат rc.158. Причина — при публикации обновлялись только agent-facing docs (PR #21 → `agent-handoff.md`; PR #22 → `AGENTS.md`/`roadmap.md`/`development.md`/`releases/1.7.0.md`), а `README.md` не трогался с PR #12. Публичная витрина дополнительно «законсервирована» regression-тестом: `project_site_seo.py` `STABLE='1.5.0'`, карточки каналов в `build_project_site.py`/`site/english.html`, проверки в `test_project_site.py`.
+
+Ветка `fix/public-stable-1.6.0` от master (`24ac095`, уже с мержем #23):
+
+- `README.md`: stable **1.6.0** (link `v1.6.0`), предыдущая 1.5.0 сохранена; тестовый канал `v1.6.0-rc` (rolling, rc.162); раздел «Следующий цикл 1.7.0» с кандидатом #23; строка «Продолжить разработку» и статус-таблица обновлены.
+- `buildScript/build_project_site.py`, `buildScript/site/english.html`: карточки канала stable 1.6.0 / rolling 1.6.0-rc; `buildScript/project_site_seo.py` `STABLE='1.6.0'`; `buildScript/test_project_site.py` обновлён (`assert` `v1.6.0`/`v1.6.0-rc`/`v1.5.0`, `softwareVersion` `1.6.0`).
+- `docs/github-pages.md`: описание ожидаемых ссылок обновлено.
+- `website/` перегенерирован (`build_project_site.py --output website`) — прежде это был неполный устаревший снимок (37 файлов, без `en/`, `sitemap.xml`, `robots.txt`, `SEO.md` и без `releases/1.6.0.html`).
+- Локально: `check_project_docs.py` → 863 files / 1193 links; `test_project_site.py` → 7 tests OK. Это правка публичной витрины, не новый APK и не релиз; live Pages обновляется отдельным deploy в `gh-pages`.
+
 ## Перенос подписки app→app и обход VPN — 2026-10-24
 
 Ветка `feature/tv-transfer-subscription-vpn` (PR **#23**, base — **master**, после мержа #22). Code-коммит **`9f0b4c7`** (tree `2c0b6fc9…`), docs-evidence `0e731b5`; ветка реbase-нута на master `06b1659` (tree master == base `e91c237`, поэтому rebase без конфликтов и tree сохранён). Локально нет Java/Android SDK — Kotlin-компиляция и JVM/эмуляторные тесты выполнены в CI; это не собранный APK и не опубликованный RC.
