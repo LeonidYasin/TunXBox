@@ -8,7 +8,7 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **846**.
+Всего tracked файлов: **847**.
 
 | Раздел | Файлов |
 |---|---|
@@ -208,7 +208,7 @@
 | `app/src/test` | 29 |
 | `buildScript` | 50 |
 | `buildSrc` | 2 |
-| `docs` | 46 |
+| `docs` | 47 |
 | `fastlane` | 8 |
 | `fdroid` | 3 |
 | `gradle` | 2 |
@@ -1523,6 +1523,7 @@
 - [`docs/releases/1.5.0.md`](../../docs/releases/1.5.0.md)
 - [`docs/releases/1.6.0-rc.158-evidence.json`](../../docs/releases/1.6.0-rc.158-evidence.json)
 - [`docs/releases/1.6.0.md`](../../docs/releases/1.6.0.md)
+- [`docs/releases/1.7.0.md`](../../docs/releases/1.7.0.md)
 - [`docs/releases/connection-observation-2026-10-21.json`](../../docs/releases/connection-observation-2026-10-21.json)
 - [`docs/releases/fdroid-e7e2d0a-evidence.json`](../../docs/releases/fdroid-e7e2d0a-evidence.json)
 - [`docs/releases/rc158-device-acceptance.json`](../../docs/releases/rc158-device-acceptance.json)
