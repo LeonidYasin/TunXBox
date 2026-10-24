@@ -1,12 +1,13 @@
 # Передача разработки: TunXBox 1.6
 
-Обновлено: 2026-10-22 UTC. Это проверенный снимок состояния, не обещание фоновой работы. Сначала перепроверьте GitHub refs, PR, runs и release assets: более поздние изменения имеют приоритет над этим текстом.
+Обновлено: 2026-10-24 UTC. Это проверенный снимок состояния, не обещание фоновой работы. Сначала перепроверьте GitHub refs, PR, runs и release assets: более поздние изменения имеют приоритет над этим текстом.
 
-## Интеграция 1.6 candidate — 2026-10-22
+## Интеграция и стабильный 1.6.0 — 2026-10-24
 
-- PR #17 (diagnostics) merged в `fix/tv-pointer-scroll-1.6` как `da2a67e`; PR #19 (artifact-only workflow) — как `e2ac19f`.
-- Итоговый runtime-кандидат соответствует rc.162 (`60fcc08`); stable versionCode 48 999 999.
-- Release notes обновлены под rc.162; stable ещё не опубликован. Следующий gate — финальный CI PR #12 на итоговом head, затем явное решение владельца о merge в master и публикации.
+- PR #17 (diagnostics) merged в `fix/tv-pointer-scroll-1.6` как `da2a67e`; PR #19 (artifact-only workflow) — как `e2ac19f`. Release notes обновлены под rc.162 (`911fbbf`); финальный CI PR #12 зелёный (android-fdroid/source-checks/validate-and-release, run 39844942254 и 39844942232).
+- PR #12 squash-merged в master как публикационный SHA **`5a7a2d1`** (репозиторий запрещает merge commits). Итоговый tree совпадает с проверенным кандидатом.
+- Published: [v1.6.0](https://github.com/LeonidYasin/TunXBox/releases/tag/v1.6.0), not draft/prerelease, from `5a7a2d1`; publication run [40101906755](https://github.com/LeonidYasin/TunXBox/actions/runs/40101906755) SUCCESS. Installed versionName **1.6.0**, versionCode **48 999 999**, flavour `oss`, channel `stable`, package `com.tunxbox.app`, signer `34764328dd73482587e64d56008a9ef7b860069087e279cb984f7b2e5055b5ef`, `upgradeCompatibleWithPrevious=true`. Три APK (arm64-v8a, armeabi-v7a, universal) независимо скачаны и проверены по SHA256/size из `SHA256SUMS.txt` и `apk-manifest.json` — ALL_MATCH. Stable 1.5.0 не изменён.
+- Следующие шаги: bump `VERSION_CODE` base 49 для следующих RC; продолжение фич отдельными PR; F-Droid остаётся закрытым до разрешения лицензионных gate (см. `fdroid/README.md`). Открытые #6/#10 — мониторинг, не закрыты.
 
 ## Подготовка подписанного кандидата для устройств — 2026-10-21
 
