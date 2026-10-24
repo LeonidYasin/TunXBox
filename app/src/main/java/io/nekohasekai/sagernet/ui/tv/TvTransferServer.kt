@@ -89,8 +89,10 @@ class TvTransferServer(
 
     private fun handleExport(): Response = try {
         val payload = runBlocking { exportProvider() }
-        require(payload.count > 0 && payload.profiles.isNotBlank())
-        val json = JSONObject().put("status", "ok").put("profiles", payload.profiles).put("count", payload.count)
+        val subscription = payload.subscriptionUrl?.takeIf { it.isNotBlank() }
+        if (subscription == null) require(payload.count > 0 && payload.profiles.isNotBlank())
+        val json = JSONObject().put("status", "ok").put("count", payload.count)
+        if (subscription != null) json.put("subscription_url", subscription) else json.put("profiles", payload.profiles)
         if (json.toString().toByteArray(Charsets.UTF_8).size > TransferProtocol.MAX_BODY_BYTES) {
             error(Response.Status.PAYLOAD_TOO_LARGE, "Profiles exceed 2 MiB. Transfer a smaller group.")
         } else {

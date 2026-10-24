@@ -10,9 +10,11 @@ import moe.matsuri.nb4a.utils.Util
 import org.json.JSONArray
 import org.json.JSONObject
 
-data class TransferExport(val profiles: String, val count: Int)
+/** Either a frozen group snapshot ([profiles]) or an updatable subscription [subscriptionUrl]. */
+data class TransferExport(val profiles: String, val count: Int, val subscriptionUrl: String? = null)
 
-/** Profile-group snapshot, not global VPN/settings/subscription credentials.
+/** Whole-group transfer, not global VPN/settings. A non-subscription group becomes a frozen
+ * profile snapshot; a subscription group transfers as its updatable HTTP(S) URL.
  * IDs are local to a device: validate all dependencies first, then remap atomically.
  */
 object TvGroupTransfer {
@@ -30,10 +32,14 @@ object TvGroupTransfer {
     fun isGroup(text: String) = text.trimStart().startsWith("{") && runCatching {
         JSONObject(text).has("tunxbox_group")
     }.getOrDefault(false)
+
     suspend fun exportGroup(groupId: Long): TransferExport {
         val group = requireNotNull(SagerDatabase.groupDao.getById(groupId))
         val profiles = SagerDatabase.proxyDao.getByGroup(groupId)
         require(profiles.isNotEmpty() && profiles.size <= 4096)
+        TransferSelection.subscriptionUrl(group.type, group.subscription?.link)?.let { url ->
+            return TransferExport(profiles = "", count = profiles.size, subscriptionUrl = url)
+        }
         val ids = profiles.map { it.id }.toSet()
         fun local(id: Long) = id <= 0 || id in ids
         require(local(group.frontProxy) && local(group.landingProxy))

@@ -8,7 +8,7 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **847**.
+Всего tracked файлов: **850**.
 
 | Раздел | Файлов |
 |---|---|
@@ -137,7 +137,7 @@
 | `app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics` | 7 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/lan` | 7 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/profile` | 16 |
-| `app/src/main/java/io/nekohasekai/sagernet/ui/tv` | 26 |
+| `app/src/main/java/io/nekohasekai/sagernet/ui/tv` | 28 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/update` | 9 |
 | `app/src/main/java/io/nekohasekai/sagernet/utils/Commandline.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/utils/CrashHandler.kt` | 1 |
@@ -205,7 +205,7 @@
 | `app/src/main/res/values-zh-rHK` | 1 |
 | `app/src/main/res/values-zh-rTW` | 1 |
 | `app/src/main/res/xml` | 25 |
-| `app/src/test` | 29 |
+| `app/src/test` | 30 |
 | `buildScript` | 50 |
 | `buildSrc` | 2 |
 | `docs` | 47 |
@@ -808,6 +808,7 @@
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/ActionPresenter.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/ActionPresenter.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/ConnectionCardPresenter.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/ConnectionCardPresenter.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/GroupAndFunctionPresenters.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/GroupAndFunctionPresenters.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/LanTransferConnection.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/LanTransferConnection.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/MainBrowseFragment.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/MainBrowseFragment.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/ProfileCardPresenter.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/ProfileCardPresenter.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/QrCodeTransferFragment.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/QrCodeTransferFragment.kt)
@@ -815,6 +816,7 @@
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/StableTvRowPresenter.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/StableTvRowPresenter.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TransferImportInput.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TransferImportInput.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TransferProtocol.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TransferProtocol.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TransferSelection.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TransferSelection.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvDiagnostics.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvDiagnostics.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvFunctionCatalog.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvFunctionCatalog.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvGroupQuality.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvGroupQuality.kt)
@@ -1426,6 +1428,7 @@
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/TransferImportInputTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/TransferImportInputTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/TransferImportServerTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/TransferImportServerTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/TransferProtocolTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/TransferProtocolTest.kt)
+- [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/TransferSubscriptionTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/TransferSubscriptionTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/TvGroupQualityTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/TvGroupQualityTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/TvHealthSessionTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/TvHealthSessionTest.kt)
 - [`app/src/test/java/io/nekohasekai/sagernet/ui/tv/TvInteractionPolicyTest.kt`](../../app/src/test/java/io/nekohasekai/sagernet/ui/tv/TvInteractionPolicyTest.kt)

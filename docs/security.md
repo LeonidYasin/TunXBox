@@ -11,6 +11,8 @@ Proxy credentials/private keys, subscription URLs (opaque path/query может 
 - Host/Origin checks, no wildcard CORS; browser CSP/Referrer/cache controls; /status не выдаёт credentials.
 - Receiver запрещает GET export; sender запрещает POST import. Показ QR — явное предоставление ограниченного доступа его обладателю.
 - HTTP не шифрует данные. Не использовать guest/public/untrusted LAN и port forwarding; VPN на телефоне не превращает LAN HTTP в защищённый протокол.
+- Клиент-сканер привязывает исходящий запрос к физической Wi-Fi/Ethernet-сети, поэтому активный VPN на отправителе не поглощает LAN-запрос; payload при этом остаётся открытым HTTP.
+- Группа-подписка переносится как обновляемая HTTP(S)-ссылка (как в браузерном флоу); URL подписки — это credential, передаётся в открытом виде по доверенной LAN.
 - Payload/decompressed group bytes ограничены 2 MiB; group record count и known types/dependencies проверяются; group import выполняется в transaction.
 - Closing/backgrounding QR/phone export UI останавливает server. Sender status “provided for import” не выдаётся за подтверждение remote success.
 
