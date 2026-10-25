@@ -33,3 +33,7 @@
 ## Следующий шаг
 
 Концепт фиксируется; реализация (state machine + UI + CI) — следующая фаза цикла 1.7.0 после накопления пользовательского опыта по уже опубликованному RC.
+
+## Реализация (начата)
+
+Реализован pure-решение принятия решений: [TvAutoFailoverPolicy](../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvAutoFailoverPolicy.kt) (enabled / fallbackOrder / currentHealthy / cooldown / per-session cap) и [тесты](../app/src/test/java/io/nekohasekai/sagernet/ui/tv/TvAutoFailoverPolicyTest.kt). State machine и UI-окно со списком профилей — следующий шаг реализации.
