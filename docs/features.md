@@ -90,7 +90,7 @@ mindmap
 
 ## Не считать реализованным
 
-- Новый непрерывный UI health monitor и автоматический переход на живой профиль — отдельный будущий объём. Native selector/custom core config не равны проверенному end-to-end failover сценариям TunXBox.
+- Новый непрерывный UI health monitor и автоматический переход на живой профиль — отдельный будущий объём. Концепт: [tv-auto-failover.md](tv-auto-failover.md). Native selector/custom core config не равны проверенному end-to-end failover сценариям TunXBox.
 - Специальная миграция Happ/Incy — не заявлена. Стандартный экспорт может подойти общему parser, но это нужно проверять на образцах.
 - Облачная синхронизация, учётная запись TunXBox, выдача VPN-подписок — не входят в приложение.
 - Физическая плавность анимации, каждый OEM/пульт/ABI/Android API, реальные VPN-провайдеры и throughput не сертифицированы набором smoke tests.
