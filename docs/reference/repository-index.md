@@ -8,7 +8,7 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **863**.
+Всего tracked файлов: **864**.
 
 | Раздел | Файлов |
 |---|---|
@@ -208,7 +208,7 @@
 | `app/src/test` | 30 |
 | `buildScript` | 50 |
 | `buildSrc` | 2 |
-| `docs` | 47 |
+| `docs` | 48 |
 | `fastlane` | 8 |
 | `fdroid` | 3 |
 | `gradle` | 2 |
@@ -1539,6 +1539,7 @@
 - [`docs/source-preservation.md`](../../docs/source-preservation.md)
 - [`docs/subscription-passphrase.md`](../../docs/subscription-passphrase.md)
 - [`docs/support-services-proposal.md`](../../docs/support-services-proposal.md)
+- [`docs/tv-auto-failover.md`](../../docs/tv-auto-failover.md)
 - [`docs/tv-connection-health.md`](../../docs/tv-connection-health.md)
 - [`docs/tv-groups-subscriptions.md`](../../docs/tv-groups-subscriptions.md)
 - [`docs/tv-navigation.md`](../../docs/tv-navigation.md)
