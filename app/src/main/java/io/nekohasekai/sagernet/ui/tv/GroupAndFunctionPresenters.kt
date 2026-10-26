@@ -31,6 +31,7 @@ object TvGroupRows {
  fun row(group: Long)=BASE+group
  fun focus(item: Any?)=when(item) {
   is TvQualityCard -> item.id;is TvConnectionCard -> item.id
+  is TvLanProxyCard -> item.id
   is TvAction -> item.id
   is TvProfileCard -> item.id
   is TvGroupCard -> -BASE-item.id

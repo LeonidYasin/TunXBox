@@ -1,0 +1,5 @@
+<resources>
+    <string name="tv_lan_proxy_label">Прокси в локальной сети</string>
+    <string name="tv_lan_proxy_hint">HTTP и SOCKS5 · все адреса этого устройства</string>
+    <string name="tv_lan_proxy_details">Клиенты в этой сети вводят один из адресов:\n%1$s\n\nHTTP и SOCKS5. Отключается в настройках → «Разрешить подключения из локальной сети».</string>
+</resources>

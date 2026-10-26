@@ -1,0 +1,5 @@
+<resources>
+    <string name="tv_lan_proxy_label">LAN proxy</string>
+    <string name="tv_lan_proxy_hint">HTTP and SOCKS5 · every address of this device</string>
+    <string name="tv_lan_proxy_details">Clients on this network enter one of these addresses:\n%1$s\n\nHTTP and SOCKS5. Turn it off in Settings → Allow connections from the LAN.</string>
+</resources>

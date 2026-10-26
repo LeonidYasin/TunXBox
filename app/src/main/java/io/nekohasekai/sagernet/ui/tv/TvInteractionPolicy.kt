@@ -1,5 +1,7 @@
 package io.nekohasekai.sagernet.ui.tv
 
+import io.nekohasekai.sagernet.ui.LanProxyAddress
+
 /** Pure policy: focus/selection never silently changes an already running connection. */
 enum class TvVpnPhase { IDLE, CONNECTING, CONNECTED, STOPPING, STOPPED;
     companion object {
@@ -48,3 +50,6 @@ data class TvFunctionCard(val id: Int,val title: String)
 data class TvQualityCard(val id: Long,val title: String,val result: String,val age: String,val traffic: String)
 
 data class TvConnectionCard(val id: Long,val name: String,val sent: String,val received: String,val result: String)
+
+/** Read-only card listing every non-loopback address; one full `host:port` per line. */
+data class TvLanProxyCard(val id: Long,val entries: List<LanProxyAddress.Entry>,val port: Int)
