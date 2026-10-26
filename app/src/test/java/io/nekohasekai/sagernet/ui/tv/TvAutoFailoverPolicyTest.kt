@@ -1,0 +1,64 @@
+package io.nekohasekai.sagernet.ui.tv
+
+import org.junit.Assert.*
+import org.junit.Test
+
+class TvAutoFailoverPolicyTest {
+    private val now: Long = 1_700_000_000_000L
+
+    @Test fun disabledModeNeverSwitches() {
+        val state = TvFailoverState(enabled = false, fallbackOrder = listOf(2L, 3L))
+        assertEquals(TvFailoverAction.NONE, TvAutoFailoverPolicy.decide(currentHealthy = false, state = state, candidateId = 2L, nowMs = now).action)
+    }
+
+    @Test fun healthyCurrentConnectionNeverSwitches() {
+        val state = TvFailoverState(enabled = true, fallbackOrder = listOf(2L, 3L))
+        assertEquals(TvFailoverAction.NONE, TvAutoFailoverPolicy.decide(currentHealthy = true, state = state, candidateId = 2L, nowMs = now).action)
+    }
+
+    @Test fun noFallbackConfiguredNeverSwitches() {
+        val state = TvFailoverState(enabled = true, fallbackOrder = emptyList())
+        assertEquals(TvFailoverAction.NONE, TvAutoFailoverPolicy.decide(currentHealthy = false, state = state, candidateId = 0L, nowMs = now).action)
+    }
+
+    @Test fun candidateOutsideUserEnabledFallbackListIsIgnored() {
+        val state = TvFailoverState(enabled = true, fallbackOrder = listOf(2L, 3L))
+        assertEquals(TvFailoverAction.NONE, TvAutoFailoverPolicy.decide(currentHealthy = false, state = state, candidateId = 99L, nowMs = now).action)
+    }
+
+    @Test fun failedCurrentConnectionSwitchesToBestEnabledFallback() {
+        val state = TvFailoverState(enabled = true, fallbackOrder = listOf(2L, 3L))
+        val decision = TvAutoFailoverPolicy.decide(currentHealthy = false, state = state, candidateId = 3L, nowMs = now)
+        assertEquals(TvFailoverAction.SWITCH_TO, decision.action)
+        assertEquals(3L, decision.candidateId)
+        assertEquals("connection-lost", decision.reason)
+    }
+
+    @Test fun switchAppliesCooldownAndCountsSessionSwitch() {
+        val state = TvFailoverState(enabled = true, fallbackOrder = listOf(2L, 3L), maxSwitchesPerSession = 2)
+        val next = TvAutoFailoverPolicy.applySwitch(state = state, candidateId = 3L, nowMs = now, cooldownMs = TvAutoFailoverPolicy.DEFAULT_COOLDOWN_MS)
+        assertEquals(1, next.switchesThisSession)
+        assertEquals(now + TvAutoFailoverPolicy.DEFAULT_COOLDOWN_MS, next.cooldownUntilMs)
+        assertEquals(now, next.lastSwitchAtMs)
+    }
+
+    @Test fun switchBeyondSessionCapIsRefused() {
+        var state = TvFailoverState(enabled = true, fallbackOrder = listOf(2L, 3L), maxSwitchesPerSession = 1, switchesThisSession = 1)
+        val decision = TvAutoFailoverPolicy.decide(currentHealthy = false, state = state, candidateId = 3L, nowMs = now)
+        assertEquals(TvFailoverAction.NONE, decision.action)
+        state = TvAutoFailoverPolicy.applySwitch(state = state, candidateId = 3L, nowMs = now, cooldownMs = TvAutoFailoverPolicy.DEFAULT_COOLDOWN_MS)
+        assertEquals(2, state.switchesThisSession)
+    }
+
+    @Test fun cooldownBlocksSwitchUntilElapsed() {
+        var state = TvFailoverState(enabled = true, fallbackOrder = listOf(2L, 3L), cooldownUntilMs = now + 1_000L, switchesThisSession = 1)
+        assertEquals(TvFailoverAction.NONE, TvAutoFailoverPolicy.decide(currentHealthy = false, state = state, candidateId = 2L, nowMs = now).action)
+        assertEquals(TvFailoverAction.SWITCH_TO, TvAutoFailoverPolicy.decide(currentHealthy = false, state = state, candidateId = 2L, nowMs = now + 2_000L).action)
+    }
+
+    @Test fun bestFallbackIsFirstHealthyInUserOrderedList() {
+        assertEquals(3L, TvAutoFailoverPolicy.selectFallback(fallbackOrder = listOf(3L, 2L), healthyIds = setOf(2L, 3L)))
+        assertEquals(2L, TvAutoFailoverPolicy.selectFallback(fallbackOrder = listOf(3L, 2L), healthyIds = setOf(2L)))
+        assertEquals(null, TvAutoFailoverPolicy.selectFallback(fallbackOrder = listOf(3L, 2L), healthyIds = emptySet()))
+    }
+}
