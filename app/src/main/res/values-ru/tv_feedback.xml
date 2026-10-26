@@ -34,7 +34,6 @@
     <string name="tv_auto_failover_hint_empty">Выберите профили, которые можно включать автоматически при сбое текущего подключения</string>
     <string name="tv_auto_failover_hint_count">Профилей в автопереключении: %1$d</string>
     <string name="tv_auto_failover_title">Автопереключение при сбое</string>
-    <string name="tv_auto_failover_message">Отмеченные профили могут выбираться автоматически, лучший по пингу первым, если текущее подключение сломалось. Ручной выбор всегда важнее; переключения ограничены паузой и лимитом за сессию.</string>
     <string name="tv_auto_failover_save">Сохранить</string>
     <string name="tv_auto_failover_disable">Выключить</string>
     <string name="tv_auto_failover_no_profiles">Профилей пока нет: сначала добавьте профиль</string>
