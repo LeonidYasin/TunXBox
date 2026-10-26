@@ -26,7 +26,10 @@
     "RELEASE": "Встроенные сведения о выпуске и проверки",
     "DIAGNOSTICS": "Полный отчёт соединения",
     "REPORT_PHONE": "QR → TXT на смартфон",
-    "AUTO_FAILOVER": "Автопереключение при сбое (список профилей)"
+    "AUTO_FAILOVER": "Автопереключение при сбое (список профилей)",
+    "GROUP_ACTIONS": "Меню действий группы",
+    "GROUP_SORT": "Сортировка профилей группы",
+    "GROUP_DELETE": "Подтверждение удаления группы"
   },
   "edges": [
     {
@@ -221,6 +224,36 @@
       "to": "AUTO_FAILOVER",
       "action": "AUTO_FAILOVER",
       "confirm": 1
+    },
+    {
+      "from": "TV",
+      "to": "GROUP_ACTIONS",
+      "confirm": 1,
+      "label": "OK на плитке группы"
+    },
+    {
+      "from": "GROUP_ACTIONS",
+      "to": "GROUP_SORT",
+      "confirm": 1,
+      "label": "Сортировка профилей"
+    },
+    {
+      "from": "GROUP_ACTIONS",
+      "to": "GROUP_DELETE",
+      "confirm": 1,
+      "label": "Удалить группу"
+    },
+    {
+      "from": "GROUP_DELETE",
+      "to": "TV",
+      "confirm": 1,
+      "label": "Группа удалена; экран обновлён"
+    },
+    {
+      "from": "GROUP_SORT",
+      "to": "TV",
+      "confirm": 0,
+      "label": "Back; порядок сохранён"
     }
   ],
   "rows": {
@@ -247,7 +280,7 @@
       "operations",
       "tools"
     ],
-    "groups": "Selected group first, others retain Room userOrder; selector followed by own profiles or empty hint",
+    "groups": "Selected group first, others retain Room userOrder; the first tile opens the group menu (select/check/update/sort/collapse/rename/delete); a collapsed group keeps only its tile and the per-group state persists",
     "directCapabilities": "TvFunctionCatalog.entries with dashboard/play availability filters",
     "operations": [
       "PROFILE_ACTIONS",

@@ -1,6 +1,29 @@
 <resources>
     <string name="tv_group_row_count">Profiles: %1$d</string>
-    <string name="tv_group_row_selected">Selected group · OK to keep browsing</string>
-    <string name="tv_group_row_choose">OK — select this group (VPN unchanged)</string>
+    <string name="tv_group_row_count_collapsed">Profiles: %1$d · collapsed</string>
+    <string name="tv_group_row_selected">Selected group · OK — actions</string>
+    <string name="tv_group_row_choose">OK — group actions (VPN unchanged)</string>
+    <string name="tv_group_actions_title">Group: %1$s</string>
+    <string name="tv_group_action_select">Select group</string>
+    <string name="tv_group_action_check">Check group (ping)</string>
+    <string name="tv_group_action_update">Update subscription</string>
+    <string name="tv_group_action_sort">Sort profiles</string>
+    <string name="tv_group_action_collapse">Collapse profiles</string>
+    <string name="tv_group_action_expand">Expand profiles</string>
+    <string name="tv_group_action_rename">Rename group</string>
+    <string name="tv_group_action_delete">Delete group</string>
+    <string name="tv_group_sort_title">Sort profiles: %1$s</string>
+    <string name="tv_group_sort_origin">Subscription order</string>
+    <string name="tv_group_sort_name">By name</string>
+    <string name="tv_group_sort_delay">By ping</string>
+    <string name="tv_group_sort_applied">Sorted: %1$s</string>
+    <string name="tv_group_header_collapsed">%1$s · collapsed</string>
+    <string name="tv_group_rename_title">Rename group</string>
+    <string name="tv_group_rename_hint">Group name</string>
+    <string name="tv_group_rename_empty">The name must not be empty</string>
+    <string name="tv_group_delete_title">Delete group?</string>
+    <string name="tv_group_delete_message">Group “%1$s” and its profiles (%2$d) will be deleted. This cannot be undone.</string>
+    <string name="tv_group_delete_active">Disconnect the VPN before deleting a group with the active profile</string>
+    <string name="tv_group_delete_done">Group deleted</string>
     <string name="tv_function_direct">Open this section directly</string>
 </resources>

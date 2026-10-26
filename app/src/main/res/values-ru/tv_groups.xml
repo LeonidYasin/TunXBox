@@ -1,6 +1,29 @@
 <resources>
     <string name="tv_group_row_count">Профилей: %1$d</string>
-    <string name="tv_group_row_selected">Выбранная группа · VPN не переключается</string>
-    <string name="tv_group_row_choose">OK — выбрать группу (VPN не меняется)</string>
+    <string name="tv_group_row_count_collapsed">Профилей: %1$d · свернуто</string>
+    <string name="tv_group_row_selected">Выбранная группа · OK — действия</string>
+    <string name="tv_group_row_choose">OK — действия с группой (VPN не меняется)</string>
+    <string name="tv_group_actions_title">Группа: %1$s</string>
+    <string name="tv_group_action_select">Выбрать группу</string>
+    <string name="tv_group_action_check">Проверить группу (пинг)</string>
+    <string name="tv_group_action_update">Обновить подписку</string>
+    <string name="tv_group_action_sort">Сортировка профилей</string>
+    <string name="tv_group_action_collapse">Свернуть профили</string>
+    <string name="tv_group_action_expand">Развернуть профили</string>
+    <string name="tv_group_action_rename">Переименовать группу</string>
+    <string name="tv_group_action_delete">Удалить группу</string>
+    <string name="tv_group_sort_title">Сортировка: %1$s</string>
+    <string name="tv_group_sort_origin">Порядок из подписки</string>
+    <string name="tv_group_sort_name">По имени</string>
+    <string name="tv_group_sort_delay">По задержке</string>
+    <string name="tv_group_sort_applied">Сортировка: %1$s</string>
+    <string name="tv_group_header_collapsed">%1$s · свернуто</string>
+    <string name="tv_group_rename_title">Переименовать группу</string>
+    <string name="tv_group_rename_hint">Название группы</string>
+    <string name="tv_group_rename_empty">Название не может быть пустым</string>
+    <string name="tv_group_delete_title">Удалить группу?</string>
+    <string name="tv_group_delete_message">Группа «%1$s» и её профили (%2$d) будут удалены. Отменить это нельзя.</string>
+    <string name="tv_group_delete_active">Отключите VPN, чтобы удалить группу с активным профилем</string>
+    <string name="tv_group_delete_done">Группа удалена</string>
     <string name="tv_function_direct">Открыть раздел напрямую</string>
 </resources>

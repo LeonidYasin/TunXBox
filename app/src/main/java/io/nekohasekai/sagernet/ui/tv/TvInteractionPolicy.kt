@@ -42,7 +42,7 @@ data class TvAction(val id: Long, val title: String, val subtitle: String, val i
 data class TvProfileCard(val id: Long, val name: String, val protocol: String, val address: String,
                          val selected: Boolean, val activePhase: TvVpnPhase?,val groupId: Long=0)
 data class TvEmptyHint(val message: String,val groupId: Long=0)
-data class TvGroupCard(val id: Long,val name: String,val count: Int,val selected: Boolean)
+data class TvGroupCard(val id: Long,val name: String,val count: Int,val selected: Boolean,val collapsed: Boolean=false)
 data class TvFunctionCard(val id: Int,val title: String)
 
 data class TvQualityCard(val id: Long,val title: String,val result: String,val age: String,val traffic: String)
