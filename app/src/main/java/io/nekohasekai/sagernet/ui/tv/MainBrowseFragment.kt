@@ -833,7 +833,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
      */
     private fun maybeAutoFailover(failed: io.nekohasekai.sagernet.group.ConnectionTestResult) {
         if(failed.available||!TvAutoFailoverPreferences.enabled)return
-        if(failed.category in FAILOVER_BLOCKED)return
+        if(failed.category==null||failed.category in FAILOVER_BLOCKED)return
         val order=TvAutoFailoverPreferences.fallbackOrder.filter {it!=failed.profileId}
         if(order.isEmpty())return
         val state=TvFailoverState(enabled=true,fallbackOrder=TvAutoFailoverPreferences.fallbackOrder,
