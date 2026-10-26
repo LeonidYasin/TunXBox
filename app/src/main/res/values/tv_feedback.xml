@@ -38,4 +38,5 @@
     <string name="tv_auto_failover_save">Save</string>
     <string name="tv_auto_failover_disable">Turn off</string>
     <string name="tv_auto_failover_no_profiles">No profiles yet: add a profile first</string>
+    <string name="tv_auto_failover_switched">Auto-switch: %1$s</string>
 </resources>

@@ -30,6 +30,13 @@ object TvAutoFailoverPolicy {
 
     fun selectFallback(fallbackOrder: List<Long>, healthyIds: Set<Long>): Long? = fallbackOrder.firstOrNull { it in healthyIds }
 
+    /**
+     * Best candidate by last measured latency. Profiles without a successful saved result are
+     * not eligible: an unverified candidate must not be presented as a working fallback.
+     */
+    fun selectBestByPing(candidates: List<Long>, pingByProfile: Map<Long, Int>): Long? =
+        candidates.filter { (pingByProfile[it] ?: 0) > 0 }.minByOrNull { pingByProfile.getValue(it) }
+
     /** Stable preference encoding: positive profile ids only, user order preserved, no duplicates. */
     fun encodeFallbackOrder(ids: List<Long>): String = ids.filter { it > 0L }.distinct().joinToString(",")
 

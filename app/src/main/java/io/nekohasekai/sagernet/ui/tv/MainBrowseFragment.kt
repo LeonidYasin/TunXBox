@@ -41,6 +41,8 @@ class MainBrowseFragment : BrowseSupportFragment() {
     private val healthSession=TvHealthSession()
     private var healthResult: io.nekohasekai.sagernet.group.ConnectionTestResult?=null
     private var serviceEpoch=0L
+    private var failoverSwitches=0
+    private var failoverCooldownUntil=0L
     private var testJob: Job? = null
     private var extendedJob: Job?=null
     private var extendedProbe: suspend (android.content.Context,ProxyEntity,suspend (String)->Unit)->io.nekohasekai.sagernet.ui.diagnostics.ExtendedConnectionDiagnostics.Report = {context,profile,progress->io.nekohasekai.sagernet.ui.diagnostics.ExtendedConnectionDiagnostics.run(context,profile,progress)}
@@ -94,6 +96,14 @@ class MainBrowseFragment : BrowseSupportFragment() {
         private const val DIAGNOSTICS = 16L
         private const val APP_UPDATE = 17L
         private const val AUTO_FAILOVER = 18L
+        /** Trust/transport problems are not repaired by another profile; switching would hide them. */
+        private val FAILOVER_BLOCKED = setOf(
+            io.nekohasekai.sagernet.group.SubscriptionFailureCategory.TLS_TRUST,
+            io.nekohasekai.sagernet.group.SubscriptionFailureCategory.REALITY,
+            io.nekohasekai.sagernet.group.SubscriptionFailureCategory.UNSUPPORTED,
+            io.nekohasekai.sagernet.group.SubscriptionFailureCategory.INVALID,
+            io.nekohasekai.sagernet.group.SubscriptionFailureCategory.CHANGED,
+            io.nekohasekai.sagernet.group.SubscriptionFailureCategory.CORE)
         // Replaced by instrumentation before a fixture ranking. A cancelled screen must not
         // leave its unfinished probe occupying the next explicit test in the same process.
         internal var qualityWorker=io.nekohasekai.sagernet.group.BoundedConnectionCheck()
@@ -716,7 +726,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
     private fun syncHealthSession() {
         val changed=healthSession.sync(serviceReady&&phase==TvVpnPhase.CONNECTED,activeProfileId(),
             "$serviceEpoch:${SagerNet.underlyingNetwork}")
-        if(changed){healthJob?.cancel();extendedJob?.cancel();extendedReport=null;health="";healthResult=null;refreshConnectionCards()}
+        if(changed){healthJob?.cancel();extendedJob?.cancel();extendedReport=null;health="";healthResult=null;failoverSwitches=0;failoverCooldownUntil=0L;refreshConnectionCards()}
     }
     private fun maybeAutoCheck() {
         if(view==null||!isResumed)return
@@ -793,6 +803,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
                     io.nekohasekai.sagernet.group.ConnectionTestPresentation.save(result)
                     health=io.nekohasekai.sagernet.group.ConnectionTestPresentation.summary(requireContext(),result)
                     // Automatic checks are inline: never steal focus or require an error OK click.
+                    if(automatic)maybeAutoFailover(result)
                     if(!automatic&&isResumed) {
                         checkDialog?.dismiss();checkDialog=null
                         showConnectionDiagnostics()
@@ -805,6 +816,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
                         io.nekohasekai.sagernet.group.SubscriptionFailureCategory.fromThrowable(error))
                     healthResult=result;saveCheckResult(result);io.nekohasekai.sagernet.group.ConnectionTestPresentation.save(result)
                     health=io.nekohasekai.sagernet.group.ConnectionTestPresentation.summary(requireContext(),result)
+                    if(automatic)maybeAutoFailover(result)
                 }
             } finally {
                 ticker.cancel();checkStartedAt=0L;checkProgress=null
@@ -813,6 +825,34 @@ class MainBrowseFragment : BrowseSupportFragment() {
             }
         }
         refreshConnectionCards()
+    }
+    /**
+     * Opt-in only: after an automatic URL check failed, switch to the best verified fallback
+     * (lowest saved latency). Manual selection always wins; cooldown and a per-session cap stop
+     * reconnect loops, and trust/transport problems are not "fixed" by switching profiles.
+     */
+    private fun maybeAutoFailover(failed: io.nekohasekai.sagernet.group.ConnectionTestResult) {
+        if(failed.available||!TvAutoFailoverPreferences.enabled)return
+        if(failed.category==null||failed.category in FAILOVER_BLOCKED)return
+        val order=TvAutoFailoverPreferences.fallbackOrder.filter {it!=failed.profileId}
+        if(order.isEmpty())return
+        val state=TvFailoverState(enabled=true,fallbackOrder=TvAutoFailoverPreferences.fallbackOrder,
+            cooldownUntilMs=failoverCooldownUntil,switchesThisSession=failoverSwitches)
+        val now=SystemClock.elapsedRealtime()
+        launchWork {
+            val all=withContext(Dispatchers.IO){SagerDatabase.proxyDao.getAll()}
+            val pings=all.filter {it.status==1&&it.ping>0}.associate {it.id to it.ping}
+            val choice=TvAutoFailoverPolicy.selectBestByPing(order,pings) ?: return@launchWork
+            if(TvAutoFailoverPolicy.decide(currentHealthy=false,state=state,candidateId=choice,nowMs=now).action!=TvFailoverAction.SWITCH_TO)return@launchWork
+            if(phase!=TvVpnPhase.CONNECTED||activeProfileId()!=failed.profileId||!serviceReady)return@launchWork
+            val command=TvInteractionPolicy.primary(phase,choice,activeProfileId(),serviceReady)
+            if(command==TvVpnCommand.NONE)return@launchWork
+            val next=TvAutoFailoverPolicy.applySwitch(state,choice,now)
+            failoverSwitches=next.switchesThisSession;failoverCooldownUntil=next.cooldownUntilMs
+            selectProfile(choice)
+            toast(getString(R.string.tv_auto_failover_switched,all.firstOrNull {it.id==choice}?.displayName().orEmpty()))
+            execute(command)
+        }
     }
     private fun checkingLabel()=getString(R.string.diagnostic_check_progress,
         ((SystemClock.elapsedRealtime()-checkStartedAt).coerceAtLeast(0)/1000).toInt(),

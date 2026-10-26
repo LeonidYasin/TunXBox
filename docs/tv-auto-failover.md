@@ -37,3 +37,7 @@
 ## Реализация (начата)
 
 Реализован pure-решение принятия решений: [TvAutoFailoverPolicy](../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvAutoFailoverPolicy.kt) (enabled / fallbackOrder / currentHealthy / cooldown / per-session cap) и [тесты](../app/src/test/java/io/nekohasekai/sagernet/ui/tv/TvAutoFailoverPolicyTest.kt). Хранение opt-in и списка профилей: [TvAutoFailoverPreferences](../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvAutoFailoverPreferences.kt). UI: плитка «Включить автопереключение» в ряду «Подключение» и окно со списком всех профилей и чекбоксами (`MainBrowseFragment.showAutoFailover`). Интеграция решения в runtime (автоматическая смена профиля по событиям здоровья) — следующий шаг реализации; до неё плитка только сохраняет настройку и не меняет подключение.
+
+### Runtime (ТВ-экран)
+
+Автоматическая проверка, запущенная самим экраном, при неуспехе вызывает `MainBrowseFragment.maybeAutoFailover`: из включённого списка выбирается профиль с наименьшим сохранённым пингом (`selectBestByPing`, только профили с подтверждённым успешным результатом), затем применяются cooldown и лимит переключений за сессию. Ручной выбор всегда важнее; категории `TLS_TRUST`, `REALITY`, `UNSUPPORTED`, `INVALID`, `CHANGED`, `CORE` не переключаются — смена профиля не «лечит» доверие/транспорт и маскировала бы проблему. Переключение выполняется только при `Connected`, совпадении активного профиля и готовом сервисе, с видимым уведомлением.

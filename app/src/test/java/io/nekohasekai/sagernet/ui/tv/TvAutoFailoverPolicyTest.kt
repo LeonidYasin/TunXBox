@@ -69,6 +69,14 @@ class TvAutoFailoverPolicyTest {
         assertEquals(ids, TvAutoFailoverPolicy.decodeFallbackOrder(TvAutoFailoverPolicy.encodeFallbackOrder(ids)))
     }
 
+    @Test fun bestCandidateIsLowestKnownPingAndUnverifiedIsSkipped() {
+        val pings = mapOf(2L to 180, 3L to 90)
+        assertEquals(3L, TvAutoFailoverPolicy.selectBestByPing(listOf(2L, 3L), pings))
+        assertEquals(2L, TvAutoFailoverPolicy.selectBestByPing(listOf(2L, 4L), pings))
+        assertEquals(null, TvAutoFailoverPolicy.selectBestByPing(listOf(4L, 5L), pings))
+        assertEquals(null, TvAutoFailoverPolicy.selectBestByPing(emptyList(), pings))
+    }
+
     @Test fun bestFallbackIsFirstHealthyInUserOrderedList() {
         assertEquals(3L, TvAutoFailoverPolicy.selectFallback(fallbackOrder = listOf(3L, 2L), healthyIds = setOf(2L, 3L)))
         assertEquals(2L, TvAutoFailoverPolicy.selectFallback(fallbackOrder = listOf(3L, 2L), healthyIds = setOf(2L)))
