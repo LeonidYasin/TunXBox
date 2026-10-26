@@ -472,7 +472,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
     }
     private fun runGroupAction(group: ProxyGroup, action: TvGroupAction) {
         when (action) {
-            TvGroupAction.SELECT -> selectGroup(group.id)
+            TvGroupAction.SELECT -> selectGroupKeepingFocus(group.id)
             TvGroupAction.CHECK -> runGroupQuality(group.id)
             TvGroupAction.UPDATE -> updateSubscription(group.id)
             TvGroupAction.SORT -> showGroupSort(group)
@@ -481,11 +481,24 @@ class MainBrowseFragment : BrowseSupportFragment() {
             TvGroupAction.DELETE -> confirmGroupDelete(group)
         }
     }
+    /**
+     * The selected group is pinned first, so choosing it moves the whole row. Focus is restored
+     * by explicit row/item ids: the grid's own selection callbacks fire during that reorder and
+     * would otherwise leave the user on an unrelated tile.
+     */
+    private fun selectGroupKeepingFocus(groupId: Long) {
+        selectGroup(groupId)
+        val rowId = TvGroupRows.row(groupId)
+        val targetId = -TvGroupRows.BASE - groupId
+        view?.post { restoreFocus(rowId, targetId) }
+    }
     /** Collapsing keeps only the group tile visible; the state is per group and persisted. */
     private fun toggleGroupCollapsed(groupId: Long) {
         TvGroupViewPreferences.setCollapsed(groupId, !TvGroupViewPreferences.isCollapsed(groupId))
         refreshCards()
-        view?.post { restoreFocus() }
+        val rowId = TvGroupRows.row(groupId)
+        val targetId = -TvGroupRows.BASE - groupId
+        view?.post { restoreFocus(rowId, targetId) }
     }
     private fun showGroupSort(group: ProxyGroup) {
         val orders = TvGroupSort.orders
@@ -548,12 +561,12 @@ class MainBrowseFragment : BrowseSupportFragment() {
         requestSnapshot()
         toast(R.string.tv_group_delete_done)
     }
-    private fun restoreFocus() {
+    private fun restoreFocus(rowId: Long = focusedRow, targetId: Long = focusedId) {
         if (dialog?.isShowing == true || parentFragmentManager.findFragmentByTag("connection_report")!=null || parentFragmentManager.findFragmentByTag("diagnostic_share")!=null || view == null) return
-        val items=when {focusedRow>=TvGroupRows.BASE -> groupAdapters[focusedRow-TvGroupRows.BASE]?:actionsAdapter;focusedRow==ROW_TOOLS->toolsAdapter;focusedRow==ROW_OPERATIONS->operationsAdapter;focusedRow==ROW_CONNECTION->connectionAdapter;else->actionsAdapter}
+        val items=when {rowId>=TvGroupRows.BASE -> groupAdapters[rowId-TvGroupRows.BASE]?:actionsAdapter;rowId==ROW_TOOLS->toolsAdapter;rowId==ROW_OPERATIONS->operationsAdapter;rowId==ROW_CONNECTION->connectionAdapter;else->actionsAdapter}
         val ids = (0 until items.size()).map { itemId(items[it]) }
-        val index = TvInteractionPolicy.focusIndex(ids, focusedId)
-        val row=(0 until rowAdapter.size()).indexOfFirst {(rowAdapter[it] as ListRow).headerItem.id==focusedRow}.coerceAtLeast(0)
+        val index = TvInteractionPolicy.focusIndex(ids, targetId)
+        val row=(0 until rowAdapter.size()).indexOfFirst {(rowAdapter[it] as ListRow).headerItem.id==rowId}.coerceAtLeast(0)
         view?.post {
             if (view == null || dialog?.isShowing == true || parentFragmentManager.findFragmentByTag("connection_report")!=null || parentFragmentManager.findFragmentByTag("diagnostic_share")!=null) return@post
             // Browse's three-argument overload unconditionally starts a headers
