@@ -25,7 +25,8 @@
     "ABOUT": "О программе / полные сведения сборки",
     "RELEASE": "Встроенные сведения о выпуске и проверки",
     "DIAGNOSTICS": "Полный отчёт соединения",
-    "REPORT_PHONE": "QR → TXT на смартфон"
+    "REPORT_PHONE": "QR → TXT на смартфон",
+    "AUTO_FAILOVER": "Автопереключение при сбое (список профилей)"
   },
   "edges": [
     {
@@ -214,6 +215,12 @@
       "to": "UPDATER",
       "action": "APP_UPDATE",
       "confirm": 1
+    },
+    {
+      "from": "TV",
+      "to": "AUTO_FAILOVER",
+      "action": "AUTO_FAILOVER",
+      "confirm": 1
     }
   ],
   "rows": {
@@ -227,7 +234,8 @@
     "connection": [
       "STATUS",
       "DIAGNOSTICS",
-      "YOUTUBE"
+      "YOUTUBE",
+      "AUTO_FAILOVER"
     ],
     "tools": [
       "FULL_TOOLS"
