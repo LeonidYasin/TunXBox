@@ -30,6 +30,16 @@ object TvAutoFailoverPolicy {
 
     fun selectFallback(fallbackOrder: List<Long>, healthyIds: Set<Long>): Long? = fallbackOrder.firstOrNull { it in healthyIds }
 
+    /** Stable preference encoding: positive profile ids only, user order preserved, no duplicates. */
+    fun encodeFallbackOrder(ids: List<Long>): String = ids.filter { it > 0L }.distinct().joinToString(",")
+
+    fun decodeFallbackOrder(raw: String?): List<Long> = raw
+        ?.split(',')
+        ?.mapNotNull { it.trim().toLongOrNull() }
+        ?.filter { it > 0L }
+        ?.distinct()
+        ?: emptyList()
+
     fun decide(currentHealthy: Boolean, state: TvFailoverState, candidateId: Long, nowMs: Long): TvFailoverDecision {
         if (!state.enabled) return TvFailoverDecision(TvFailoverAction.NONE, reason = "disabled")
         if (state.fallbackOrder.isEmpty()) return TvFailoverDecision(TvFailoverAction.NONE, reason = "no-fallback")

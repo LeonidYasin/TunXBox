@@ -8,7 +8,7 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **866**.
+Всего tracked файлов: **867**.
 
 | Раздел | Файлов |
 |---|---|
@@ -137,7 +137,7 @@
 | `app/src/main/java/io/nekohasekai/sagernet/ui/diagnostics` | 7 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/lan` | 7 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/profile` | 16 |
-| `app/src/main/java/io/nekohasekai/sagernet/ui/tv` | 29 |
+| `app/src/main/java/io/nekohasekai/sagernet/ui/tv` | 30 |
 | `app/src/main/java/io/nekohasekai/sagernet/ui/update` | 9 |
 | `app/src/main/java/io/nekohasekai/sagernet/utils/Commandline.kt` | 1 |
 | `app/src/main/java/io/nekohasekai/sagernet/utils/CrashHandler.kt` | 1 |
@@ -818,6 +818,7 @@
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TransferProtocol.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TransferProtocol.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TransferSelection.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TransferSelection.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvAutoFailoverPolicy.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvAutoFailoverPolicy.kt)
+- [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvAutoFailoverPreferences.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvAutoFailoverPreferences.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvDiagnostics.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvDiagnostics.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvFunctionCatalog.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvFunctionCatalog.kt)
 - [`app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvGroupQuality.kt`](../../app/src/main/java/io/nekohasekai/sagernet/ui/tv/TvGroupQuality.kt)
