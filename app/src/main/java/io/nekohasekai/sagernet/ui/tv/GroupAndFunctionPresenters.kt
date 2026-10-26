@@ -7,11 +7,11 @@ class GroupCardPresenter: Presenter() {
  override fun onCreateViewHolder(parent: ViewGroup)=delegate.onCreateViewHolder(parent)
  override fun onBindViewHolder(holder: ViewHolder,item: Any?) {
   val group=item as TvGroupCard;val context=holder.view.context
-  delegate.onBindViewHolder(holder,TvAction(group.id,group.name,context.getString(R.string.tv_group_row_count,group.count)+"\n"+
-      context.getString(if(group.selected)R.string.tv_group_row_selected else R.string.tv_group_row_choose)+"\n"+
-      context.getString(R.string.tv_quality_group_hint),R.drawable.ic_remote_groups))
+  val count=context.getString(if(group.collapsed)R.string.tv_group_row_count_collapsed else R.string.tv_group_row_count,group.count)
+  val action=context.getString(if(group.selected)R.string.tv_group_row_selected else R.string.tv_group_row_choose)
+  delegate.onBindViewHolder(holder,TvAction(group.id,group.name,count+"\n"+action,R.drawable.ic_remote_groups))
   holder.view.isActivated=group.selected
-  holder.view.contentDescription=group.name+". "+context.getString(if(group.selected)R.string.tv_group_row_selected else R.string.tv_group_row_choose)+". "+context.getString(R.string.tv_quality_group_hint)
+  holder.view.contentDescription=group.name+". "+count+". "+action
  }
  override fun onUnbindViewHolder(holder: ViewHolder){holder.view.isActivated=false;delegate.onUnbindViewHolder(holder)}
 }

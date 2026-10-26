@@ -232,7 +232,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
                 is TvQualityCard -> showConnectionDiagnostics()
                 is TvConnectionCard -> showConnectionDiagnostics()
                 is TvProfileCard -> selectProfile(item.id)
-                is TvGroupCard -> {selectGroup(item.id);runGroupQuality(item.id)}
+                is TvGroupCard -> showGroupActions(item.id)
                 is TvFunctionCard -> openFullScreen(item.id)
                 is TvEmptyHint -> {if(item.groupId>0)selectGroup(item.groupId);showImportMethods()}
                 is TvAction -> if (item.available) handleAction(item.id) else toast(if (item.id == TOGGLE && DataStore.selectedProxy == 0L || item.id == PROFILE_ACTIONS) R.string.tv_choose_profile else if (item.id == UPDATE && groups.firstOrNull { it.id == DataStore.selectedGroup }?.type != GroupType.SUBSCRIPTION) R.string.tv_not_subscription else R.string.tv_wait)
@@ -366,12 +366,16 @@ class MainBrowseFragment : BrowseSupportFragment() {
                 .addClassPresenter(TvGroupCard::class.java,GroupCardPresenter())
                 .addClassPresenter(TvProfileCard::class.java,ProfileCardPresenter {openProfileActions(it)})
                 .addClassPresenter(TvEmptyHint::class.java,ProfileCardPresenter {openProfileActions(it)}))}
-            val cards: List<Any> = listOf(TvGroupCard(g.id,g.displayName(),groupProfiles[g.id].orEmpty().size,g.id==DataStore.selectedGroup))+
-                if(groupProfiles[g.id].isNullOrEmpty())listOf(TvEmptyHint(getString(R.string.tv_empty),g.id))
-                else groupProfiles[g.id].orEmpty().map {it.copy(selected=it.id==DataStore.selectedProxy,
-                    activePhase=if(it.id==activeProfileId()&&phase in setOf(TvVpnPhase.CONNECTING,TvVpnPhase.CONNECTED,TvVpnPhase.STOPPING))phase else null)}
+            val collapsed=TvGroupViewPreferences.isCollapsed(g.id)
+            val cards=mutableListOf<Any>(TvGroupCard(g.id,g.displayName(),groupProfiles[g.id].orEmpty().size,g.id==DataStore.selectedGroup,collapsed))
+            if (!collapsed) {
+                if(groupProfiles[g.id].isNullOrEmpty())cards.add(TvEmptyHint(getString(R.string.tv_empty),g.id))
+                else cards.addAll(groupProfiles[g.id].orEmpty().map {it.copy(selected=it.id==DataStore.selectedProxy,
+                    activePhase=if(it.id==activeProfileId()&&phase in setOf(TvVpnPhase.CONNECTING,TvVpnPhase.CONNECTED,TvVpnPhase.STOPPING))phase else null)})
+            }
             groupAdapter.setItems(cards,diff)
-            rows.add(ListRow(HeaderItem(TvGroupRows.row(g.id),g.displayName()),groupAdapter))
+            rows.add(ListRow(HeaderItem(TvGroupRows.row(g.id),
+                if (collapsed) getString(R.string.tv_group_header_collapsed,g.displayName()) else g.displayName()),groupAdapter))
         }
         rows.add(ListRow(HeaderItem(ROW_OPERATIONS,getString(R.string.tv_operations_row)),operationsAdapter))
         rows.add(ListRow(HeaderItem(ROW_TOOLS,getString(R.string.tv_all_functions)),toolsAdapter))
@@ -438,12 +442,131 @@ class MainBrowseFragment : BrowseSupportFragment() {
         // instead of leaving focus on the button row above it.
         show(builder).listView?.requestFocus()
     }
-    private fun restoreFocus() {
+    private fun showGroupActions(groupId: Long) = launchWork {
+        val group = groups.firstOrNull { it.id == groupId } ?: return@launchWork
+        val count = groupProfiles[groupId].orEmpty().size
+        val collapsed = TvGroupViewPreferences.isCollapsed(groupId)
+        val actions = TvGroupActionCatalog.entries(TvGroupActionState(
+            subscription = group.type == GroupType.SUBSCRIPTION,
+            selected = group.id == DataStore.selectedGroup,
+            collapsed = collapsed,
+            profileCount = count))
+        var menu: AlertDialog? = null
+        menu = show(AlertDialog.Builder(requireContext())
+            .setTitle(getString(R.string.tv_group_actions_title, group.displayName()))
+            .setItems(actions.map { getString(groupActionLabel(it, collapsed)) }.toTypedArray()) { _, index ->
+                // A list dialog does not dismiss itself; close it before the action may open another one.
+                menu?.dismiss()
+                try { runGroupAction(group, actions[index]) } catch (_: Exception) { toast(R.string.tv_operation_failed) }
+            }
+            .setNegativeButton(android.R.string.cancel, null))
+    }
+    private fun groupActionLabel(action: TvGroupAction, collapsed: Boolean): Int = when (action) {
+        TvGroupAction.SELECT -> R.string.tv_group_action_select
+        TvGroupAction.CHECK -> R.string.tv_group_action_check
+        TvGroupAction.UPDATE -> R.string.tv_group_action_update
+        TvGroupAction.SORT -> R.string.tv_group_action_sort
+        TvGroupAction.TOGGLE_PROFILES -> if (collapsed) R.string.tv_group_action_expand else R.string.tv_group_action_collapse
+        TvGroupAction.RENAME -> R.string.tv_group_action_rename
+        TvGroupAction.DELETE -> R.string.tv_group_action_delete
+    }
+    private fun runGroupAction(group: ProxyGroup, action: TvGroupAction) {
+        when (action) {
+            TvGroupAction.SELECT -> selectGroupKeepingFocus(group.id)
+            TvGroupAction.CHECK -> runGroupQuality(group.id)
+            TvGroupAction.UPDATE -> updateSubscription(group.id)
+            TvGroupAction.SORT -> showGroupSort(group)
+            TvGroupAction.TOGGLE_PROFILES -> toggleGroupCollapsed(group.id)
+            TvGroupAction.RENAME -> showGroupRename(group)
+            TvGroupAction.DELETE -> confirmGroupDelete(group)
+        }
+    }
+    /**
+     * The selected group is pinned first, so choosing it moves the whole row. Focus is restored
+     * by explicit row/item ids: the grid's own selection callbacks fire during that reorder and
+     * would otherwise leave the user on an unrelated tile.
+     */
+    private fun selectGroupKeepingFocus(groupId: Long) {
+        selectGroup(groupId)
+        val rowId = TvGroupRows.row(groupId)
+        val targetId = -TvGroupRows.BASE - groupId
+        view?.post { restoreFocus(rowId, targetId) }
+    }
+    /** Collapsing keeps only the group tile visible; the state is per group and persisted. */
+    private fun toggleGroupCollapsed(groupId: Long) {
+        TvGroupViewPreferences.setCollapsed(groupId, !TvGroupViewPreferences.isCollapsed(groupId))
+        refreshCards()
+        val rowId = TvGroupRows.row(groupId)
+        val targetId = -TvGroupRows.BASE - groupId
+        view?.post { restoreFocus(rowId, targetId) }
+    }
+    private fun showGroupSort(group: ProxyGroup) {
+        val orders = TvGroupSort.orders
+        show(AlertDialog.Builder(requireContext())
+            .setTitle(getString(R.string.tv_group_sort_title, group.displayName()))
+            .setSingleChoiceItems(orders.map { getString(groupSortLabel(it)) }.toTypedArray(), TvGroupSort.indexOf(group.order)) { current, index ->
+                current.dismiss()
+                applyGroupSort(group, orders[index])
+            }
+            .setNegativeButton(android.R.string.cancel, null))
+    }
+    private fun groupSortLabel(order: Int): Int = when (order) {
+        GroupOrder.BY_NAME -> R.string.tv_group_sort_name
+        GroupOrder.BY_DELAY -> R.string.tv_group_sort_delay
+        else -> R.string.tv_group_sort_origin
+    }
+    private fun applyGroupSort(group: ProxyGroup, order: Int) = launchWork {
+        if (group.order == order) return@launchWork
+        withContext(Dispatchers.IO) { group.order = order; GroupManager.updateGroup(group) }
+        toast(getString(R.string.tv_group_sort_applied, getString(groupSortLabel(order))))
+        requestSnapshot()
+    }
+    private fun showGroupRename(group: ProxyGroup) {
+        val density = resources.displayMetrics.density
+        val input = EditText(requireContext()).apply {
+            setText(group.displayName())
+            hint = getString(R.string.tv_group_rename_hint)
+            textSize = 20f
+            filters = arrayOf(android.text.InputFilter.LengthFilter(128))
+            setPadding((16 * density).toInt(), (12 * density).toInt(), (16 * density).toInt(), (12 * density).toInt())
+        }
+        show(AlertDialog.Builder(requireContext())
+            .setTitle(R.string.tv_group_rename_title)
+            .setView(input)
+            .setPositiveButton(R.string.tv_group_action_rename) { _, _ ->
+                val name = input.text.toString().trim()
+                if (name.isEmpty()) toast(R.string.tv_group_rename_empty)
+                else launchWork {
+                    withContext(Dispatchers.IO) { group.name = name; GroupManager.updateGroup(group) }
+                    requestSnapshot()
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null))
+    }
+    private fun confirmGroupDelete(group: ProxyGroup) {
+        val profileIds = groupProfiles[group.id].orEmpty().map { it.id }
+        if (phase in setOf(TvVpnPhase.CONNECTING, TvVpnPhase.CONNECTED, TvVpnPhase.STOPPING) && activeProfileId() in profileIds) {
+            toast(R.string.tv_group_delete_active); return
+        }
+        show(AlertDialog.Builder(requireContext())
+            .setTitle(R.string.tv_group_delete_title)
+            .setMessage(getString(R.string.tv_group_delete_message, group.displayName(), profileIds.size))
+            .setNegativeButton(android.R.string.cancel, null)
+            .setPositiveButton(R.string.yes) { _, _ -> deleteGroup(group, profileIds) }, true)
+    }
+    private fun deleteGroup(group: ProxyGroup, profileIds: List<Long>) = launchWork {
+        withContext(Dispatchers.IO) { GroupManager.deleteGroup(group.id) }
+        TvGroupViewPreferences.forget(listOf(group.id))
+        if (DataStore.selectedProxy in profileIds) DataStore.selectedProxy = 0L
+        requestSnapshot()
+        toast(R.string.tv_group_delete_done)
+    }
+    private fun restoreFocus(rowId: Long = focusedRow, targetId: Long = focusedId) {
         if (dialog?.isShowing == true || parentFragmentManager.findFragmentByTag("connection_report")!=null || parentFragmentManager.findFragmentByTag("diagnostic_share")!=null || view == null) return
-        val items=when {focusedRow>=TvGroupRows.BASE -> groupAdapters[focusedRow-TvGroupRows.BASE]?:actionsAdapter;focusedRow==ROW_TOOLS->toolsAdapter;focusedRow==ROW_OPERATIONS->operationsAdapter;focusedRow==ROW_CONNECTION->connectionAdapter;else->actionsAdapter}
+        val items=when {rowId>=TvGroupRows.BASE -> groupAdapters[rowId-TvGroupRows.BASE]?:actionsAdapter;rowId==ROW_TOOLS->toolsAdapter;rowId==ROW_OPERATIONS->operationsAdapter;rowId==ROW_CONNECTION->connectionAdapter;else->actionsAdapter}
         val ids = (0 until items.size()).map { itemId(items[it]) }
-        val index = TvInteractionPolicy.focusIndex(ids, focusedId)
-        val row=(0 until rowAdapter.size()).indexOfFirst {(rowAdapter[it] as ListRow).headerItem.id==focusedRow}.coerceAtLeast(0)
+        val index = TvInteractionPolicy.focusIndex(ids, targetId)
+        val row=(0 until rowAdapter.size()).indexOfFirst {(rowAdapter[it] as ListRow).headerItem.id==rowId}.coerceAtLeast(0)
         view?.post {
             if (view == null || dialog?.isShowing == true || parentFragmentManager.findFragmentByTag("connection_report")!=null || parentFragmentManager.findFragmentByTag("diagnostic_share")!=null) return@post
             // Browse's three-argument overload unconditionally starts a headers
@@ -563,8 +686,8 @@ class MainBrowseFragment : BrowseSupportFragment() {
                 selectGroup(choices[index].id);current.dismiss()
             }.setNegativeButton(android.R.string.cancel, null))
     }
-    private fun updateSubscription() {
-        val group = groups.firstOrNull { it.id == DataStore.selectedGroup }
+    private fun updateSubscription(groupId: Long = DataStore.selectedGroup) {
+        val group = groups.firstOrNull { it.id == groupId }
         if (group?.type != GroupType.SUBSCRIPTION) { toast(R.string.tv_not_subscription); return }
         if (GroupUpdater.updating.contains(group.id) || subscriptionJob?.isActive == true) { toast(R.string.tv_updating); return }
         updateDeclined = false

@@ -1,6 +1,5 @@
 <resources>
     <string name="tv_quality_title">Test and rank group</string>
-    <string name="tv_quality_group_hint">OK: test every profile and rank</string>
     <string name="tv_quality_update_hint">Stable / test channel; verified APK</string>
     <string name="tv_quality_age">Last URL check: %1$d s ago</string>
     <string name="tv_quality_rates">Now ↑ %1$s/s · ↓ %2$s/s</string>

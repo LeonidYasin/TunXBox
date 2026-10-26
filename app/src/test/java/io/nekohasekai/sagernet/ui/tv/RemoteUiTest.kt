@@ -38,16 +38,19 @@ class RemoteUiTest {
         assertEquals(3,holder.subtitle.minLines);assertEquals(3,holder.subtitle.maxLines)
         assertTrue(holder.view.isFocusable);assertTrue(holder.title.text.contains("REALITY"))
     }
-    @Test fun groupSelectorShowsChoiceAndClearsRecycledActivation() {
+    @Test fun groupTileShowsCollapseStateAndOpensActions() {
         val parent=FrameLayout(activity());val presenter=GroupCardPresenter()
         val holder=presenter.onCreateViewHolder(parent) as ActionPresenter.ActionViewHolder
         presenter.onBindViewHolder(holder,TvGroupCard(7,"Collection",3,true))
         assertTrue(holder.view.isActivated);assertEquals("Collection",holder.title.text.toString())
         assertTrue(holder.subtitle.text.contains(parent.context.getString(R.string.tv_group_row_selected)))
-        assertTrue(holder.subtitle.text.contains(parent.context.getString(R.string.tv_quality_group_hint)))
-        assertTrue(holder.view.contentDescription.contains(parent.context.getString(R.string.tv_quality_group_hint)))
+        assertTrue(holder.subtitle.text.contains(parent.context.getString(R.string.tv_group_row_count,3)))
+        assertTrue(holder.view.contentDescription.contains(parent.context.getString(R.string.tv_group_row_selected)))
+        presenter.onBindViewHolder(holder,TvGroupCard(7,"Collection",3,true,collapsed=true))
+        assertTrue(holder.subtitle.text.contains(parent.context.getString(R.string.tv_group_row_count_collapsed,3)))
         presenter.onBindViewHolder(holder,TvGroupCard(8,"Other",0,false))
         assertFalse(holder.view.isActivated);assertTrue(holder.view.isFocusable)
+        assertTrue(holder.subtitle.text.contains(parent.context.getString(R.string.tv_group_row_choose)))
         presenter.onUnbindViewHolder(holder);assertFalse(holder.view.isActivated)
     }
     @Test fun groupProfileAndEmptyHintHaveSeparateFocusNamespaces() {

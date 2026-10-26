@@ -1,6 +1,5 @@
 <resources>
     <string name="tv_quality_title">Проверить и отсортировать группу</string>
-    <string name="tv_quality_group_hint">OK: тест всех профилей и сортировка</string>
     <string name="tv_quality_update_hint">Релиз / тест; проверенный APK</string>
     <string name="tv_quality_age">URL-проверка: %1$d с назад</string>
     <string name="tv_quality_rates">Сейчас ↑ %1$s/с · ↓ %2$s/с</string>

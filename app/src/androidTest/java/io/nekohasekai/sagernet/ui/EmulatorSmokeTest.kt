@@ -222,7 +222,8 @@ class EmulatorSmokeTest {
                 assertEquals(4L,operations.headerItem.id)
                 assertEquals(listOf(4L,5L,15L,9L,11L,6L,13L,14L),(0 until operations.adapter.size()).map {(operations.adapter[it] as io.nekohasekai.sagernet.ui.tv.TvAction).id})
             }
-            device.pressDPadCenter()
+            // The group tile opens the actions menu; selecting is an explicit entry now.
+            openGroupMenuAndClick("Smoke row collection", R.string.tv_group_action_select)
             assertEquals(fixture.id,DataStore.selectedGroup)
             assertEquals(selected,DataStore.selectedProxy);assertEquals(state,DataStore.serviceState)
             device.pressDPadRight();device.pressDPadCenter();assertChooser()
@@ -305,7 +306,16 @@ class EmulatorSmokeTest {
                 installRankingWorker(browse)
             }
             DataStore.runningTest=false
-            device.pressDPadCenter()
+            // The group tile now opens the actions menu; collapsing keeps only that tile.
+            openGroupMenuAndClick("Quality smoke", R.string.tv_group_action_collapse)
+            assertEquals("Collapsed group must keep only its tile",1,groupAdapterSize(group.id))
+            assertNotNull(device.wait(Until.findObject(By.descContains(
+                context.getString(R.string.tv_group_row_count_collapsed,3))),timeout))
+            openGroupMenuAndClick("Quality smoke", R.string.tv_group_action_expand)
+            assertEquals("Expanded group must show every profile",4,groupAdapterSize(group.id))
+            // The ranking entry opens a progress dialog, so focus legitimately leaves the tile.
+            openGroupMenu("Quality smoke")
+            clickGroupMenuItem(R.string.tv_group_action_check)
             val completed=device.wait(Until.findObject(By.text(text(R.string.tv_test_complete))),timeout)
             if(completed==null) {
                 // Capture BEFORE finally closes ActivityScenario; a later Home screen
@@ -524,6 +534,34 @@ class EmulatorSmokeTest {
     }
     private fun text(id: Int) = context.getString(id)
     private fun visibleText(value: String): UiObject2 = requireNotNull(device.wait(Until.findObject(By.text(value)), timeout)) { "Missing UI text: $value" }
+    /** Opens the group tile menu, clicks one entry and verifies focus returns to the tile. */
+    private fun openGroupMenuAndClick(groupName: String, item: Int) {
+        openGroupMenu(groupName)
+        clickGroupMenuItem(item)
+        assertNotNull("Focus must return to the group tile", device.wait(Until.findObject(By.descStartsWith(groupName).focused(true)), timeout))
+    }
+    private fun openGroupMenu(groupName: String) {
+        assertNotNull("Group tile must have focus", device.wait(Until.findObject(By.descStartsWith(groupName).focused(true)), timeout))
+        device.pressDPadCenter()
+    }
+    private fun clickGroupMenuItem(item: Int) {
+        visibleText(text(item)).click()
+        assertTrue("Group menu must close after an action", device.wait(Until.gone(By.text(text(item))), timeout))
+        device.waitForIdle()
+    }
+    /** Row content size proves collapse/expand changed the real adapter, not just labels. */
+    private fun groupAdapterSize(groupId: Long): Int {
+        var size = -1
+        scenario!!.onActivity { activity ->
+            val browse=(activity as MainActivityTv).supportFragmentManager.findFragmentById(R.id.tv_container)
+                as io.nekohasekai.sagernet.ui.tv.MainBrowseFragment
+            @Suppress("UNCHECKED_CAST")
+            val adapters=browse.javaClass.getDeclaredField("groupAdapters").apply{isAccessible=true}
+                .get(browse) as Map<Long,androidx.leanback.widget.ArrayObjectAdapter>
+            size = adapters[groupId]?.size() ?: -1
+        }
+        return size
+    }
     private fun startTv() {
         scenario = ActivityScenario.launch<MainActivityTv>(Intent(context, MainActivityTv::class.java))
         visibleText(text(R.string.tv_start))
