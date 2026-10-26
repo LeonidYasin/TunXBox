@@ -38,4 +38,5 @@
     <string name="tv_auto_failover_save">Сохранить</string>
     <string name="tv_auto_failover_disable">Выключить</string>
     <string name="tv_auto_failover_no_profiles">Профилей пока нет: сначала добавьте профиль</string>
+    <string name="tv_auto_failover_switched">Автопереключение: %1$s</string>
 </resources>
