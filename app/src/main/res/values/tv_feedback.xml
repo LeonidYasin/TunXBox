@@ -29,4 +29,13 @@
 <string name="tv_test_active">Check current VPN</string>
 <string name="tv_test_active_ok">Last VPN check: succeeded, %1$d ms</string>
 <string name="tv_test_active_failed">Last VPN check: URL test failed; check network or logs.</string>
+    <string name="tv_auto_failover_off">Enable auto-switching</string>
+    <string name="tv_auto_failover_on">Auto-switching is on</string>
+    <string name="tv_auto_failover_hint_empty">Choose profiles that may be used automatically if the current connection fails</string>
+    <string name="tv_auto_failover_hint_count">Profiles in auto-switch: %1$d</string>
+    <string name="tv_auto_failover_title">Auto-switching on failure</string>
+    <string name="tv_auto_failover_message">Checked profiles may be selected automatically, best by ping first, when the current connection fails. A manual choice always wins and the switch is limited by cooldown and a per-session cap.</string>
+    <string name="tv_auto_failover_save">Save</string>
+    <string name="tv_auto_failover_disable">Turn off</string>
+    <string name="tv_auto_failover_no_profiles">No profiles yet: add a profile first</string>
 </resources>

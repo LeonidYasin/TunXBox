@@ -93,6 +93,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
         private const val SUBSCRIPTION_DIAGNOSTICS = 15L
         private const val DIAGNOSTICS = 16L
         private const val APP_UPDATE = 17L
+        private const val AUTO_FAILOVER = 18L
         // Replaced by instrumentation before a fixture ranking. A cancelled screen must not
         // leave its unfinished probe occupying the next explicit test in the same process.
         internal var qualityWorker=io.nekohasekai.sagernet.group.BoundedConnectionCheck()
@@ -391,7 +392,36 @@ class MainBrowseFragment : BrowseSupportFragment() {
                     ?:getString(R.string.diagnostic_unchecked_short),
                 if(statsAt==0L)getString(R.string.diagnostic_stats_waiting) else getString(R.string.tv_quality_rates,bytes(stats.txRateProxy),bytes(stats.rxRateProxy))))
         if (phase == TvVpnPhase.CONNECTED) statusCards.add(TvAction(YOUTUBE, getString(R.string.tv_youtube), getString(R.string.tv_youtube_hint), R.drawable.ic_baseline_more_vert_24))
+        val failoverOrder = TvAutoFailoverPreferences.fallbackOrder
+        statusCards.add(TvAction(AUTO_FAILOVER,
+            getString(if (TvAutoFailoverPreferences.enabled) R.string.tv_auto_failover_on else R.string.tv_auto_failover_off),
+            if (failoverOrder.isEmpty()) getString(R.string.tv_auto_failover_hint_empty)
+            else getString(R.string.tv_auto_failover_hint_count, failoverOrder.size),
+            R.drawable.ic_remote_groups))
         connectionAdapter.setItems(statusCards, diff)
+    }
+    private fun showAutoFailover() = launchWork {
+        val all = withContext(Dispatchers.IO) { SagerDatabase.proxyDao.getAll() }
+        if (all.isEmpty()) { toast(R.string.tv_auto_failover_no_profiles); return@launchWork }
+        val current = TvAutoFailoverPreferences.fallbackOrder.toSet()
+        val names = all.map { it.displayName().orEmpty() }.toTypedArray()
+        val checked = BooleanArray(all.size) { all[it].id in current }
+        val builder = AlertDialog.Builder(requireContext())
+            .setTitle(R.string.tv_auto_failover_title)
+            .setMessage(R.string.tv_auto_failover_message)
+            .setMultiChoiceItems(names, checked) { _, index, isChecked -> checked[index] = isChecked }
+            .setPositiveButton(R.string.tv_auto_failover_save) { _, _ ->
+                val ids = all.filterIndexed { index, _ -> checked[index] }.map { it.id }
+                TvAutoFailoverPreferences.fallbackOrder = ids
+                TvAutoFailoverPreferences.enabled = ids.isNotEmpty()
+                refreshCards()
+            }
+            .setNeutralButton(R.string.tv_auto_failover_disable) { _, _ ->
+                TvAutoFailoverPreferences.reset()
+                refreshCards()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+        show(builder)
     }
     private fun restoreFocus() {
         if (dialog?.isShowing == true || parentFragmentManager.findFragmentByTag("connection_report")!=null || parentFragmentManager.findFragmentByTag("diagnostic_share")!=null || view == null) return
@@ -455,6 +485,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
         }
         MORE -> showImportMethods()
         APP_UPDATE -> openFullScreen(R.id.nav_app_updates)
+        AUTO_FAILOVER -> showAutoFailover()
         PHONE_MODE -> switchPhoneMode()
         TESTS -> showTests()
         FULL_TOOLS -> showAllFunctions()
