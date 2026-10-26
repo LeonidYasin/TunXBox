@@ -416,9 +416,12 @@ class MainBrowseFragment : BrowseSupportFragment() {
         val current = TvAutoFailoverPreferences.fallbackOrder.toSet()
         val names = all.map { it.displayName().orEmpty() }.toTypedArray()
         val checked = BooleanArray(all.size) { all[it].id in current }
+        // A message and a list are mutually exclusive in the platform
+        // AlertDialog: AlertController shows the message and drops the
+        // ListView entirely, so setMessage() here hid the profile list on TV.
+        // The tile subtitle already explains what to select.
         val builder = AlertDialog.Builder(requireContext())
             .setTitle(R.string.tv_auto_failover_title)
-            .setMessage(R.string.tv_auto_failover_message)
             .setMultiChoiceItems(names, checked) { _, index, isChecked -> checked[index] = isChecked }
             .setPositiveButton(R.string.tv_auto_failover_save) { _, _ ->
                 val ids = all.filterIndexed { index, _ -> checked[index] }.map { it.id }
@@ -431,7 +434,9 @@ class MainBrowseFragment : BrowseSupportFragment() {
                 refreshCards()
             }
             .setNegativeButton(android.R.string.cancel, null)
-        show(builder)
+        // The list is the point of this dialog: put the remote there right away
+        // instead of leaving focus on the button row above it.
+        show(builder).listView?.requestFocus()
     }
     private fun restoreFocus() {
         if (dialog?.isShowing == true || parentFragmentManager.findFragmentByTag("connection_report")!=null || parentFragmentManager.findFragmentByTag("diagnostic_share")!=null || view == null) return

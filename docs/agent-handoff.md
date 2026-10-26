@@ -2,6 +2,13 @@
 
 Обновлено: 2026-10-24 UTC. Это проверенный снимок состояния, не обещание фоновой работы. Сначала перепроверьте GitHub refs, PR, runs и release assets: более поздние изменения имеют приоритет над этим текстом.
 
+## Цикл 1.7.0: авто-переключение профиля и диалог выбора — 2026-10-26
+
+- PR #25 (концепт), #26 (pure-политика `TvAutoFailoverPolicy` + 12 JVM-тестов), #27 (настройка `TvAutoFailoverPreferences`, плитка, граф навигации) и #28 (`maybeAutoFailover`/`selectBestByPing` в runtime) смержены в master; head — **`36070b8`**.
+- Опубликован rolling RC **`v1.7.0-rc.164`**: run [40260158319](https://github.com/LeonidYasin/TunXBox/actions/runs/40260158319) SUCCESS, тег `v1.7.0-rc` → `36070b85`, versionCode `49000164`, `apk-manifest.json` с `signatureVerified=true` и `upgradeCompatibleWithPrevious=true`; stable не тронут. Владелец установил RC на устройство; физическая приёмка авто-переключения ещё не завершена.
+- Дефект, найденный владельцем на устройстве: в окне «Автопереключение при сбое» не было списка профилей — только поясняющий текст. Причина платформенная: в `AlertController` при заданном `setMessage()` `ListView` из `setMultiChoiceItems()` не добавляется в диалог; сообщение и список взаимоисключающи. Ветка `fix/tv-failover-dialog` (от `36070b8`) убирает `setMessage()`, оставляет чекбокс-список и переводит фокус пульта в список; неиспользуемая строка `tv_auto_failover_message` удалена из en/ru. Это исправление требует нового RC — rc.164 остаётся с дефектом.
+- Отдельный docs-PR **#29** (`docs/lan-access.md`: обход LAN при включённом VPN) открыт 2026-10-26; первый прогон `validate-and-release` упал на флейке `EmulatorSmokeTest > aboutShowsBuildIdentitySupportAndFullLicense` (``Full license action must be reachable``, только API 36; API 35 — 19/19), упавшая джоба перезапущена. Изменение только в markdown, на код не влияет.
+
 ## Интеграция и стабильный 1.6.0 — 2026-10-24
 
 - PR #17 (diagnostics) merged в `fix/tv-pointer-scroll-1.6` как `da2a67e`; PR #19 (artifact-only workflow) — как `e2ac19f`. Release notes обновлены под rc.162 (`911fbbf`); финальный CI PR #12 зелёный (android-fdroid/source-checks/validate-and-release, run 39844942254 и 39844942232).
