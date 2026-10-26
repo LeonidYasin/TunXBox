@@ -56,6 +56,19 @@ class TvAutoFailoverPolicyTest {
         assertEquals(TvFailoverAction.SWITCH_TO, TvAutoFailoverPolicy.decide(currentHealthy = false, state = state, candidateId = 2L, nowMs = now + 2_000L).action)
     }
 
+    @Test fun fallbackOrderEncodingKeepsUserOrderAndDropsInvalidIds() {
+        assertEquals("3,2", TvAutoFailoverPolicy.encodeFallbackOrder(listOf(3L, 0L, 2L, 3L, -1L)))
+        assertEquals("", TvAutoFailoverPolicy.encodeFallbackOrder(emptyList()))
+    }
+
+    @Test fun fallbackOrderDecodingToleratesGarbageAndRoundTrips() {
+        assertEquals(emptyList<Long>(), TvAutoFailoverPolicy.decodeFallbackOrder(null))
+        assertEquals(emptyList<Long>(), TvAutoFailoverPolicy.decodeFallbackOrder(""))
+        assertEquals(listOf(2L, 3L), TvAutoFailoverPolicy.decodeFallbackOrder(" 2 , x ,3,2,"))
+        val ids = listOf(5L, 1L, 9L)
+        assertEquals(ids, TvAutoFailoverPolicy.decodeFallbackOrder(TvAutoFailoverPolicy.encodeFallbackOrder(ids)))
+    }
+
     @Test fun bestFallbackIsFirstHealthyInUserOrderedList() {
         assertEquals(3L, TvAutoFailoverPolicy.selectFallback(fallbackOrder = listOf(3L, 2L), healthyIds = setOf(2L, 3L)))
         assertEquals(2L, TvAutoFailoverPolicy.selectFallback(fallbackOrder = listOf(3L, 2L), healthyIds = setOf(2L)))
