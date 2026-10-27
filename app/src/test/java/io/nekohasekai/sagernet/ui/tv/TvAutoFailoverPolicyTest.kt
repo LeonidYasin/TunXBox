@@ -26,7 +26,7 @@ class TvAutoFailoverPolicyTest {
         assertEquals(TvFailoverAction.NONE, TvAutoFailoverPolicy.decide(currentHealthy = false, state = state, candidateId = 99L, nowMs = now).action)
     }
 
-    @Test fun failedCurrentConnectionSwitchesToBestEnabledFallback() {
+    @Test fun failedCurrentConnectionSwitchesToSelectedFallback() {
         val state = TvFailoverState(enabled = true, fallbackOrder = listOf(2L, 3L))
         val decision = TvAutoFailoverPolicy.decide(currentHealthy = false, state = state, candidateId = 3L, nowMs = now)
         assertEquals(TvFailoverAction.SWITCH_TO, decision.action)
@@ -40,6 +40,7 @@ class TvAutoFailoverPolicyTest {
         assertEquals(1, next.switchesThisSession)
         assertEquals(now + TvAutoFailoverPolicy.DEFAULT_COOLDOWN_MS, next.cooldownUntilMs)
         assertEquals(now, next.lastSwitchAtMs)
+        assertEquals(listOf(3L), next.triedIds)
     }
 
     @Test fun switchBeyondSessionCapIsRefused() {
@@ -69,17 +70,31 @@ class TvAutoFailoverPolicyTest {
         assertEquals(ids, TvAutoFailoverPolicy.decodeFallbackOrder(TvAutoFailoverPolicy.encodeFallbackOrder(ids)))
     }
 
-    @Test fun bestCandidateIsLowestKnownPingAndUnverifiedIsSkipped() {
-        val pings = mapOf(2L to 180, 3L to 90)
-        assertEquals(3L, TvAutoFailoverPolicy.selectBestByPing(listOf(2L, 3L), pings))
-        assertEquals(2L, TvAutoFailoverPolicy.selectBestByPing(listOf(2L, 4L), pings))
-        assertEquals(null, TvAutoFailoverPolicy.selectBestByPing(listOf(4L, 5L), pings))
-        assertEquals(null, TvAutoFailoverPolicy.selectBestByPing(emptyList(), pings))
+    @Test fun rotationWalksTheWholeUserListAfterTheFailedProfile() {
+        val order = listOf(2L, 3L, 4L)
+        assertEquals(3L, TvAutoFailoverPolicy.selectNextFallback(order, currentId = 2L, triedIds = setOf(2L)))
+        assertEquals(4L, TvAutoFailoverPolicy.selectNextFallback(order, currentId = 3L, triedIds = setOf(2L, 3L)))
+        assertEquals(null, TvAutoFailoverPolicy.selectNextFallback(order, currentId = 4L, triedIds = setOf(2L, 3L, 4L)))
     }
 
-    @Test fun bestFallbackIsFirstHealthyInUserOrderedList() {
-        assertEquals(3L, TvAutoFailoverPolicy.selectFallback(fallbackOrder = listOf(3L, 2L), healthyIds = setOf(2L, 3L)))
-        assertEquals(2L, TvAutoFailoverPolicy.selectFallback(fallbackOrder = listOf(3L, 2L), healthyIds = setOf(2L)))
-        assertEquals(null, TvAutoFailoverPolicy.selectFallback(fallbackOrder = listOf(3L, 2L), healthyIds = emptySet()))
+    @Test fun neverReturnsAProfileThatAlreadyFailedInThisChain() {
+        // The reported loop: Sweden fails, Switzerland works, Switzerland fails, Sweden is chosen
+        // again because it still has the lowest saved ping. The failed profile must stay excluded.
+        val order = listOf(2L, 3L, 4L)
+        val tried = setOf(3L, 2L)
+        val next = TvAutoFailoverPolicy.selectNextFallback(order, currentId = 3L, triedIds = tried)
+        assertEquals(4L, next)
+        assertNotEquals(2L, next)
+    }
+
+    @Test fun rotationWrapsAndStartsAtTheTopWhenCurrentIsNotInTheList() {
+        val order = listOf(2L, 3L, 4L)
+        assertEquals(2L, TvAutoFailoverPolicy.selectNextFallback(order, currentId = 4L, triedIds = setOf(4L)))
+        assertEquals(2L, TvAutoFailoverPolicy.selectNextFallback(order, currentId = 99L, triedIds = setOf(99L)))
+        assertEquals(3L, TvAutoFailoverPolicy.selectNextFallback(order, currentId = 99L, triedIds = setOf(99L, 2L)))
+    }
+
+    @Test fun emptyListHasNoFallback() {
+        assertEquals(null, TvAutoFailoverPolicy.selectNextFallback(emptyList(), currentId = 2L, triedIds = setOf(2L)))
     }
 }
