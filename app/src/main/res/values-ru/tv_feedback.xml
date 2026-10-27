@@ -32,10 +32,12 @@
     <string name="tv_auto_failover_off">Включить автопереключение</string>
     <string name="tv_auto_failover_on">Автопереключение включено</string>
     <string name="tv_auto_failover_hint_empty">Выберите профили, которые можно включать автоматически при сбое текущего подключения</string>
-    <string name="tv_auto_failover_hint_count">Профилей в автопереключении: %1$d</string>
+    <string name="tv_auto_failover_hint_count">Профилей в автопереключении: %1$d · OK — изменить или выключить</string>
     <string name="tv_auto_failover_title">Автопереключение при сбое</string>
     <string name="tv_auto_failover_save">Сохранить</string>
     <string name="tv_auto_failover_disable">Выключить</string>
     <string name="tv_auto_failover_no_profiles">Профилей пока нет: сначала добавьте профиль</string>
     <string name="tv_auto_failover_switched">Автопереключение: %1$s</string>
+    <string name="tv_auto_failover_disabled">Автопереключение выключено</string>
+    <string name="tv_auto_failover_exhausted">Автопереключение: все профили из списка не отвечают — нужна ручная проверка</string>
 </resources>

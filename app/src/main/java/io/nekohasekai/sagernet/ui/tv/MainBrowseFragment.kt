@@ -44,6 +44,9 @@ class MainBrowseFragment : BrowseSupportFragment() {
     private var serviceEpoch=0L
     private var failoverSwitches=0
     private var failoverCooldownUntil=0L
+    private val failoverTried=linkedSetOf<Long>()
+    private var failoverExhaustedNotified=false
+    private var lastNetworkEpoch: android.net.Network? = null
     private var testJob: Job? = null
     private var extendedJob: Job?=null
     private var extendedProbe: suspend (android.content.Context,ProxyEntity,suspend (String)->Unit)->io.nekohasekai.sagernet.ui.diagnostics.ExtendedConnectionDiagnostics.Report = {context,profile,progress->io.nekohasekai.sagernet.ui.diagnostics.ExtendedConnectionDiagnostics.run(context,profile,progress)}
@@ -235,7 +238,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
                 is TvQualityCard -> showConnectionDiagnostics()
                 is TvConnectionCard -> showConnectionDiagnostics()
                 is TvLanProxyCard -> showLanProxyDetails(item)
-                is TvProfileCard -> selectProfile(item.id)
+                is TvProfileCard -> {resetFailoverChain();selectProfile(item.id)}
                 is TvGroupCard -> showGroupActions(item.id)
                 is TvFunctionCard -> openFullScreen(item.id)
                 is TvEmptyHint -> {if(item.groupId>0)selectGroup(item.groupId);showImportMethods()}
@@ -441,10 +444,13 @@ class MainBrowseFragment : BrowseSupportFragment() {
                 val ids = all.filterIndexed { index, _ -> checked[index] }.map { it.id }
                 TvAutoFailoverPreferences.fallbackOrder = ids
                 TvAutoFailoverPreferences.enabled = ids.isNotEmpty()
+                resetFailoverChain()
                 refreshCards()
             }
             .setNeutralButton(R.string.tv_auto_failover_disable) { _, _ ->
                 TvAutoFailoverPreferences.reset()
+                resetFailoverChain()
+                toast(R.string.tv_auto_failover_disabled)
                 refreshCards()
             }
             .setNegativeButton(android.R.string.cancel, null)
@@ -888,9 +894,15 @@ class MainBrowseFragment : BrowseSupportFragment() {
         stats = value.copy(); statsAt = SystemClock.elapsedRealtime(); refreshConnectionCards();maybeAutoCheck()
     }
     private fun syncHealthSession() {
+        val network=SagerNet.underlyingNetwork
+        val networkChanged=network!=lastNetworkEpoch
+        lastNetworkEpoch=network
         val changed=healthSession.sync(serviceReady&&phase==TvVpnPhase.CONNECTED,activeProfileId(),
-            "$serviceEpoch:${SagerNet.underlyingNetwork}")
-        if(changed){healthJob?.cancel();extendedJob?.cancel();extendedReport=null;health="";healthResult=null;failoverSwitches=0;failoverCooldownUntil=0L;refreshConnectionCards()}
+            "$serviceEpoch:$network")
+        if(changed){healthJob?.cancel();extendedJob?.cancel();extendedReport=null;health="";healthResult=null;refreshConnectionCards()}
+        // A different underlying network is a new situation: every profile deserves a retry. A
+        // profile change made by failover itself is not a network change and must keep the chain.
+        if(networkChanged)resetFailoverChain()
     }
     private fun maybeAutoCheck() {
         if(view==null||!isResumed)return
@@ -965,6 +977,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
                     healthResult=result
                     saveCheckResult(result)
                     io.nekohasekai.sagernet.group.ConnectionTestPresentation.save(result)
+                    if(result.available)resetFailoverChain()
                     health=io.nekohasekai.sagernet.group.ConnectionTestPresentation.summary(requireContext(),result)
                     // Automatic checks are inline: never steal focus or require an error OK click.
                     if(automatic)maybeAutoFailover(result)
@@ -991,28 +1004,46 @@ class MainBrowseFragment : BrowseSupportFragment() {
         refreshConnectionCards()
     }
     /**
-     * Opt-in only: after an automatic URL check failed, switch to the best verified fallback
-     * (lowest saved latency). Manual selection always wins; cooldown and a per-session cap stop
+     * Opt-in only: after an automatic URL check failed, walk the user-ordered fallback list and
+     * switch to the next profile that has not failed in this chain yet. Rotation replaces the old
+     * "lowest saved ping" rule, which kept returning the profile that had just failed and made two
+     * profiles swap forever. Manual selection always wins; cooldown and a per-chain cap stop
      * reconnect loops, and trust/transport problems are not "fixed" by switching profiles.
      */
+    private fun resetFailoverChain() {
+        failoverTried.clear();failoverExhaustedNotified=false
+        failoverSwitches=0;failoverCooldownUntil=0L
+    }
     private fun maybeAutoFailover(failed: io.nekohasekai.sagernet.group.ConnectionTestResult) {
         if(failed.available||!TvAutoFailoverPreferences.enabled)return
         if(failed.category==null||failed.category in FAILOVER_BLOCKED)return
-        val order=TvAutoFailoverPreferences.fallbackOrder.filter {it!=failed.profileId}
+        val order=TvAutoFailoverPreferences.fallbackOrder
         if(order.isEmpty())return
-        val state=TvFailoverState(enabled=true,fallbackOrder=TvAutoFailoverPreferences.fallbackOrder,
-            cooldownUntilMs=failoverCooldownUntil,switchesThisSession=failoverSwitches)
-        val now=SystemClock.elapsedRealtime()
+        // The failed profile stays excluded for the rest of this chain: retrying it because of
+        // a stale saved ping is what made two profiles swap places forever.
+        failoverTried+=failed.profileId
+        val state=TvFailoverState(enabled=true,fallbackOrder=order,
+            cooldownUntilMs=failoverCooldownUntil,switchesThisSession=failoverSwitches,
+            maxSwitchesPerSession=order.size,triedIds=failoverTried.toList())
         launchWork {
-            val all=withContext(Dispatchers.IO){SagerDatabase.proxyDao.getAll()}
-            val pings=all.filter {it.status==1&&it.ping>0}.associate {it.id to it.ping}
-            val choice=TvAutoFailoverPolicy.selectBestByPing(order,pings) ?: return@launchWork
+            val choice=TvAutoFailoverPolicy.selectNextFallback(order,failed.profileId,failoverTried)
+            if(choice==null){
+                if(!failoverExhaustedNotified){failoverExhaustedNotified=true;toast(R.string.tv_auto_failover_exhausted)}
+                return@launchWork
+            }
+            // The cooldown is measured from the previous switch, while the next health check may
+            // finish earlier: wait it out instead of silently dropping the next profile.
+            val waitUntil=failoverCooldownUntil-SystemClock.elapsedRealtime()
+            if(waitUntil>0)delay(waitUntil)
+            val now=SystemClock.elapsedRealtime()
             if(TvAutoFailoverPolicy.decide(currentHealthy=false,state=state,candidateId=choice,nowMs=now).action!=TvFailoverAction.SWITCH_TO)return@launchWork
             if(phase!=TvVpnPhase.CONNECTED||activeProfileId()!=failed.profileId||!serviceReady)return@launchWork
             val command=TvInteractionPolicy.primary(phase,choice,activeProfileId(),serviceReady)
             if(command==TvVpnCommand.NONE)return@launchWork
+            val all=withContext(Dispatchers.IO){SagerDatabase.proxyDao.getAll()}
             val next=TvAutoFailoverPolicy.applySwitch(state,choice,now)
             failoverSwitches=next.switchesThisSession;failoverCooldownUntil=next.cooldownUntilMs
+            failoverTried+=choice
             selectProfile(choice)
             toast(getString(R.string.tv_auto_failover_switched,all.firstOrNull {it.id==choice}?.displayName().orEmpty()))
             execute(command)
