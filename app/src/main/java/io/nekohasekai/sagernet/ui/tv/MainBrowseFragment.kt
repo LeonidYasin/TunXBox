@@ -6,7 +6,10 @@ import android.os.Bundle
 import android.os.RemoteException
 import android.os.SystemClock
 import android.view.View
+import android.widget.ArrayAdapter
 import android.widget.EditText
+import android.widget.FrameLayout
+import android.widget.ListView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import android.app.AlertDialog
@@ -430,33 +433,61 @@ class MainBrowseFragment : BrowseSupportFragment() {
     private fun showAutoFailover() = launchWork {
         val all = withContext(Dispatchers.IO) { SagerDatabase.proxyDao.getAll() }
         if (all.isEmpty()) { toast(R.string.tv_auto_failover_no_profiles); return@launchWork }
-        val current = TvAutoFailoverPreferences.fallbackOrder.toSet()
-        val names = all.map { it.displayName().orEmpty() }.toTypedArray()
-        val checked = BooleanArray(all.size) { all[it].id in current }
-        // A message and a list are mutually exclusive in the platform
-        // AlertDialog: AlertController shows the message and drops the
-        // ListView entirely, so setMessage() here hid the profile list on TV.
-        // The tile subtitle already explains what to select.
-        val builder = AlertDialog.Builder(requireContext())
+        if (!TvAutoFailoverPreferences.enabled) { showAutoFailoverProfiles(all); return@launchWork }
+        // Two steps on purpose. The old dialog put a long multi-choice list and three buttons in
+        // one window, so on a 540dp-tall TV the button row slid off the bottom: only "Save" was
+        // visible and "Turn off" could not be reached at all.
+        var menu: AlertDialog? = null
+        menu = show(AlertDialog.Builder(requireContext())
             .setTitle(R.string.tv_auto_failover_title)
-            .setMultiChoiceItems(names, checked) { _, index, isChecked -> checked[index] = isChecked }
+            .setItems(arrayOf(
+                getString(R.string.tv_auto_failover_edit),
+                getString(R.string.tv_auto_failover_disable),
+            )) { _, index ->
+                menu?.dismiss()
+                if (index == 0) {
+                    showAutoFailoverProfiles(all)
+                } else {
+                    TvAutoFailoverPreferences.reset()
+                    resetFailoverChain()
+                    toast(R.string.tv_auto_failover_disabled)
+                    refreshCards()
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null))
+        menu.listView?.requestFocus()
+    }
+
+    /**
+     * Multi-choice profile list with a bounded, scrollable height: the Save/Cancel row stays on
+     * screen no matter how many profiles exist. Turning the mode off lives in the menu above.
+     */
+    private fun showAutoFailoverProfiles(all: List<ProxyEntity>) {
+        val context = requireContext()
+        val names = all.map { it.displayName().orEmpty() }.toTypedArray()
+        val selected = all.map { it.id in TvAutoFailoverPreferences.fallbackOrder }
+        val list = ListView(context).apply {
+            choiceMode = ListView.CHOICE_MODE_MULTIPLE
+            adapter = ArrayAdapter(context, android.R.layout.simple_list_item_multiple_choice, names)
+            selected.forEachIndexed { index, checked -> if (checked) setItemChecked(index, true) }
+        }
+        val density = resources.displayMetrics.density
+        val height = (TvLayoutPolicy.dialogListHeightDp(resources.configuration.screenHeightDp) * density).toInt()
+        val frame = FrameLayout(context).apply { addView(list, FrameLayout.LayoutParams(-1, height)) }
+        show(AlertDialog.Builder(context)
+            .setTitle(R.string.tv_auto_failover_title)
+            .setView(frame)
             .setPositiveButton(R.string.tv_auto_failover_save) { _, _ ->
-                val ids = all.filterIndexed { index, _ -> checked[index] }.map { it.id }
+                val checked = list.checkedItemPositions
+                val ids = all.filterIndexed { index, _ -> checked?.get(index, false) == true }.map { it.id }
                 TvAutoFailoverPreferences.fallbackOrder = ids
                 TvAutoFailoverPreferences.enabled = ids.isNotEmpty()
                 resetFailoverChain()
                 refreshCards()
             }
-            .setNeutralButton(R.string.tv_auto_failover_disable) { _, _ ->
-                TvAutoFailoverPreferences.reset()
-                resetFailoverChain()
-                toast(R.string.tv_auto_failover_disabled)
-                refreshCards()
-            }
-            .setNegativeButton(android.R.string.cancel, null)
-        // The list is the point of this dialog: put the remote there right away
-        // instead of leaving focus on the button row above it.
-        show(builder).listView?.requestFocus()
+            .setNegativeButton(android.R.string.cancel, null))
+        // A custom-view dialog has no AlertController list to focus, so move the remote ourselves.
+        list.post { if (list.isAttachedToWindow) list.requestFocus() }
     }
     private fun showGroupActions(groupId: Long) = launchWork {
         val group = groups.firstOrNull { it.id == groupId } ?: return@launchWork

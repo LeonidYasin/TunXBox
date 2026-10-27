@@ -7,6 +7,7 @@ import android.view.View
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.widget.TextViewCompat
 import androidx.leanback.widget.ArrayObjectAdapter
 import androidx.leanback.widget.ObjectAdapter
 import io.nekohasekai.sagernet.R
@@ -74,6 +75,29 @@ class RemoteUiTest {
         assertEquals(2,holder.addressLines.size)
         assertEquals("192.168.43.1",holder.addressLines[0].text.toString())
         assertEquals(View.GONE,holder.addressLines[1].visibility)
+    }
+    @Test fun longLanAddressShrinksInsteadOfBeingCutAtTheCardEdge() {
+        val parent=FrameLayout(activity());val presenter=LanProxyCardPresenter()
+        val holder=presenter.onCreateViewHolder(parent) as LanProxyCardPresenter.Holder
+        presenter.onBindViewHolder(holder,TvLanProxyCard(19,listOf(
+            LanProxyAddress.Entry("192.168.100.100","wlan0"),
+        ),10808))
+        val line=holder.addressLines.single()
+        assertEquals(View.VISIBLE,line.visibility)
+        assertEquals("192.168.100.100:10808",line.text.toString())
+        assertEquals(1,line.maxLines)
+        assertNull(line.ellipsize)
+        // Autosize must actually be active: with setSingleLine()/horizontally scrolling the text
+        // is measured unbounded and gets clipped ("192.168.100.100…") instead of shrinking.
+        assertEquals(TextViewCompat.AUTO_SIZE_TEXT_TYPE_UNIFORM,TextViewCompat.getAutoSizeTextType(line))
+    }
+    @Test fun longActionLabelsShrinkInsteadOfBeingCutInsideTheCard() {
+        val parent=FrameLayout(activity());val presenter=ActionPresenter()
+        val holder=presenter.onCreateViewHolder(parent) as ActionPresenter.ActionViewHolder
+        assertEquals(TextViewCompat.AUTO_SIZE_TEXT_TYPE_UNIFORM,TextViewCompat.getAutoSizeTextType(holder.title))
+        assertEquals(TextViewCompat.AUTO_SIZE_TEXT_TYPE_UNIFORM,TextViewCompat.getAutoSizeTextType(holder.subtitle))
+        presenter.onBindViewHolder(holder,TvAction(1,"Автопереключение","Включено · профилей: 3 · OK — изменить или выключить",R.drawable.ic_remote_groups))
+        assertEquals(2,holder.title.maxLines);assertEquals(3,holder.subtitle.maxLines)
     }
     @Test fun groupProfileAndEmptyHintHaveSeparateFocusNamespaces() {
         val group=TvGroupCard(1,"Group",1,false)

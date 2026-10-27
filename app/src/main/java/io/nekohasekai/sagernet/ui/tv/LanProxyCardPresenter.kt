@@ -73,7 +73,9 @@ class LanProxyCardPresenter : Presenter() {
             setTypeface(typeface, android.graphics.Typeface.BOLD)
             setIncludeFontPadding(false)
             maxLines = 1
-            setSingleLine(true)
+            // Do NOT call setSingleLine(): it turns on horizontally scrolling, and autosize then
+            // measures the text at unbounded width, so a long address is clipped at the card edge
+            // ("192.168.100.1…") instead of shrinking to fit.
             ellipsize = null
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f)
             TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(
