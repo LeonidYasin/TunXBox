@@ -20,6 +20,7 @@ import io.nekohasekai.sagernet.bg.BaseService
 import io.nekohasekai.sagernet.bg.SagerConnection
 import io.nekohasekai.sagernet.database.*
 import io.nekohasekai.sagernet.group.GroupUpdater
+import io.nekohasekai.sagernet.ui.LanProxyAddress
 import io.nekohasekai.sagernet.ui.MainActivity
 import io.nekohasekai.sagernet.ui.VpnRequestActivity
 import io.nekohasekai.sagernet.ui.profile.*
@@ -96,6 +97,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
         private const val DIAGNOSTICS = 16L
         private const val APP_UPDATE = 17L
         private const val AUTO_FAILOVER = 18L
+        private const val LAN_PROXY = 19L
         /** Trust/transport problems are not repaired by another profile; switching would hide them. */
         private val FAILOVER_BLOCKED = setOf(
             io.nekohasekai.sagernet.group.SubscriptionFailureCategory.TLS_TRUST,
@@ -221,6 +223,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
         connectionAdapter = ArrayObjectAdapter(ClassPresenterSelector()
             .addClassPresenter(TvAction::class.java,ActionPresenter())
             .addClassPresenter(TvConnectionCard::class.java,ConnectionCardPresenter())
+            .addClassPresenter(TvLanProxyCard::class.java,LanProxyCardPresenter())
             .addClassPresenter(TvQualityCard::class.java,QualityCardPresenter()))
         rowAdapter=ArrayObjectAdapter(StableTvRowPresenter(resources.configuration.screenWidthDp<600))
         adapter=rowAdapter
@@ -231,6 +234,7 @@ class MainBrowseFragment : BrowseSupportFragment() {
             when (item) {
                 is TvQualityCard -> showConnectionDiagnostics()
                 is TvConnectionCard -> showConnectionDiagnostics()
+                is TvLanProxyCard -> showLanProxyDetails(item)
                 is TvProfileCard -> selectProfile(item.id)
                 is TvGroupCard -> showGroupActions(item.id)
                 is TvFunctionCard -> openFullScreen(item.id)
@@ -405,6 +409,12 @@ class MainBrowseFragment : BrowseSupportFragment() {
                 result?.let {getString(R.string.tv_quality_age,((System.currentTimeMillis()-it.attemptedAt).coerceAtLeast(0)/1000))}
                     ?:getString(R.string.diagnostic_unchecked_short),
                 if(statsAt==0L)getString(R.string.diagnostic_stats_waiting) else getString(R.string.tv_quality_rates,bytes(stats.txRateProxy),bytes(stats.rxRateProxy))))
+        // Second tile: every address clients may enter, and only while the proxy can work.
+        if (phase == TvVpnPhase.CONNECTED && DataStore.allowAccess) {
+            currentLanEntries().takeIf { it.isNotEmpty() }?.let { entries ->
+                statusCards.add(1, TvLanProxyCard(LAN_PROXY, entries, DataStore.mixedPort))
+            }
+        }
         if (phase == TvVpnPhase.CONNECTED) statusCards.add(TvAction(YOUTUBE, getString(R.string.tv_youtube), getString(R.string.tv_youtube_hint), R.drawable.ic_baseline_more_vert_24))
         val failoverOrder = TvAutoFailoverPreferences.fallbackOrder
         statusCards.add(TvAction(AUTO_FAILOVER,
@@ -560,6 +570,32 @@ class MainBrowseFragment : BrowseSupportFragment() {
         if (DataStore.selectedProxy in profileIds) DataStore.selectedProxy = 0L
         requestSnapshot()
         toast(R.string.tv_group_delete_done)
+    }
+    /**
+     * Interface enumeration runs on the main thread and the connection row is rebuilt on every
+     * stats tick, so a short cache keeps the LAN tile cheap without showing a stale network for
+     * more than a few seconds after Wi-Fi/Ethernet changes.
+     */
+    private var lanEntries: List<LanProxyAddress.Entry> = emptyList()
+    private var lanEntriesAt = 0L
+    private fun currentLanEntries(): List<LanProxyAddress.Entry> {
+        val now = SystemClock.elapsedRealtime()
+        if (lanEntriesAt == 0L || now - lanEntriesAt > 3_000) {
+            lanEntries = LanProxyAddress.find()
+            lanEntriesAt = now
+        }
+        return lanEntries
+    }
+    /** Read-only card: the dialog lists every address with its interface and how to turn it off. */
+    private fun showLanProxyDetails(card: TvLanProxyCard) {
+        val lines = card.entries.map { entry ->
+            (LanProxyAddress.format(entry.host, card.port) ?: entry.host) + " (${entry.interfaceName})"
+        }
+        if (lines.isEmpty()) return
+        show(AlertDialog.Builder(requireContext())
+            .setTitle(R.string.tv_lan_proxy_label)
+            .setMessage(getString(R.string.tv_lan_proxy_details, lines.joinToString("\n")))
+            .setPositiveButton(android.R.string.ok, null))
     }
     private fun restoreFocus(rowId: Long = focusedRow, targetId: Long = focusedId) {
         if (dialog?.isShowing == true || parentFragmentManager.findFragmentByTag("connection_report")!=null || parentFragmentManager.findFragmentByTag("diagnostic_share")!=null || view == null) return

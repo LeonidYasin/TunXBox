@@ -148,7 +148,10 @@ class SettingsPreferenceFragment : PreferenceFragmentCompat() {
             true
         }
 
-        mixedPort.onPreferenceChangeListener = reloadListener
+        mixedPort.onPreferenceChangeListener = Preference.OnPreferenceChangeListener { preference, newValue ->
+            allowAccess.summary = lanAccessSummary(port = (newValue as? String)?.toIntOrNull() ?: DataStore.mixedPort)
+            reloadListener.onPreferenceChange(preference, newValue)
+        }
         appendHttpProxy.onPreferenceChangeListener = reloadListener
         showDirectSpeed.onPreferenceChangeListener = reloadListener
         trafficSniffing.onPreferenceChangeListener = reloadListener
@@ -162,7 +165,11 @@ class SettingsPreferenceFragment : PreferenceFragmentCompat() {
         enableDnsRouting.onPreferenceChangeListener = reloadListener
 
         ipv6Mode.onPreferenceChangeListener = reloadListener
-        allowAccess.onPreferenceChangeListener = reloadListener
+        allowAccess.summary = lanAccessSummary()
+        allowAccess.onPreferenceChangeListener = Preference.OnPreferenceChangeListener { preference, newValue ->
+            preference.summary = lanAccessSummary(enabled = newValue == true)
+            reloadListener.onPreferenceChange(preference, newValue)
+        }
 
         resolveDestination.onPreferenceChangeListener = reloadListener
         tunImplementation.onPreferenceChangeListener = reloadListener
@@ -179,6 +186,23 @@ class SettingsPreferenceFragment : PreferenceFragmentCompat() {
         if (::globalCustomConfig.isInitialized) {
             globalCustomConfig.notifyChanged()
         }
+        // The LAN address changes with Wi-Fi/Ethernet; never leave a stale one in the summary.
+        findPreference<Preference>(Key.ALLOW_ACCESS)?.summary = lanAccessSummary()
+    }
+
+    /**
+     * Every `host:port` other devices may enter while "Allow connections from the LAN" is on.
+     * The app cannot know which network a client reaches (Wi-Fi hotspot over mobile data,
+     * Ethernet, tethering), so all non-loopback addresses are listed instead of guessing one.
+     */
+    private fun lanAccessSummary(
+        enabled: Boolean = DataStore.allowAccess,
+        port: Int = DataStore.mixedPort,
+    ): CharSequence {
+        if (!enabled) return getString(R.string.allow_access_sum)
+        val addresses = LanProxyAddress.find().mapNotNull { entry -> LanProxyAddress.format(entry.host, port) }
+        if (addresses.isEmpty()) return getString(R.string.allow_access_no_lan_address)
+        return getString(R.string.allow_access_lan_address, addresses.joinToString(", "))
     }
 
 }

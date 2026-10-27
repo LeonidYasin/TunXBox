@@ -10,6 +10,7 @@ import android.widget.TextView
 import androidx.leanback.widget.ArrayObjectAdapter
 import androidx.leanback.widget.ObjectAdapter
 import io.nekohasekai.sagernet.R
+import io.nekohasekai.sagernet.ui.LanProxyAddress
 import io.nekohasekai.sagernet.ui.RemoteFocusHighlighter
 import org.junit.After
 import org.junit.Assert.*
@@ -52,6 +53,27 @@ class RemoteUiTest {
         assertFalse(holder.view.isActivated);assertTrue(holder.view.isFocusable)
         assertTrue(holder.subtitle.text.contains(parent.context.getString(R.string.tv_group_row_choose)))
         presenter.onUnbindViewHolder(holder);assertFalse(holder.view.isActivated)
+    }
+    @Test fun lanProxyCardListsEveryFullAddressWithoutEllipsis() {
+        val parent=FrameLayout(activity());val presenter=LanProxyCardPresenter()
+        val holder=presenter.onCreateViewHolder(parent) as LanProxyCardPresenter.Holder
+        presenter.onBindViewHolder(holder,TvLanProxyCard(19,listOf(
+            LanProxyAddress.Entry("192.168.43.1","wlan0"),
+            LanProxyAddress.Entry("10.76.41.155","rmnet_data0"),
+        ),2080))
+        assertEquals(parent.context.getString(R.string.tv_lan_proxy_label),holder.label.text.toString())
+        assertEquals(listOf("192.168.43.1:2080","10.76.41.155:2080"),holder.addressLines.map { it.text.toString() })
+        holder.addressLines.forEach { assertNull(it.ellipsize);assertEquals(1,it.maxLines);assertEquals(View.VISIBLE,it.visibility) }
+        assertTrue(holder.view.isFocusable)
+        assertTrue(holder.view.contentDescription.contains("10.76.41.155:2080"))
+        // A shorter list hides the stale extra line instead of leaving it on screen; an invalid
+        // port keeps the host readable rather than rendering a broken `host:0`.
+        presenter.onBindViewHolder(holder,TvLanProxyCard(19,listOf(
+            LanProxyAddress.Entry("192.168.43.1","wlan0"),
+        ),0))
+        assertEquals(2,holder.addressLines.size)
+        assertEquals("192.168.43.1",holder.addressLines[0].text.toString())
+        assertEquals(View.GONE,holder.addressLines[1].visibility)
     }
     @Test fun groupProfileAndEmptyHintHaveSeparateFocusNamespaces() {
         val group=TvGroupCard(1,"Group",1,false)

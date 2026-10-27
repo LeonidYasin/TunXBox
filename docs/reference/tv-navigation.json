@@ -29,7 +29,8 @@
     "AUTO_FAILOVER": "Автопереключение при сбое (список профилей)",
     "GROUP_ACTIONS": "Меню действий группы",
     "GROUP_SORT": "Сортировка профилей группы",
-    "GROUP_DELETE": "Подтверждение удаления группы"
+    "GROUP_DELETE": "Подтверждение удаления группы",
+    "LAN_PROXY": "Адрес прокси в локальной сети"
   },
   "edges": [
     {
@@ -254,6 +255,18 @@
       "to": "TV",
       "confirm": 0,
       "label": "Back; порядок сохранён"
+    },
+    {
+      "from": "CONNECTED",
+      "to": "LAN_PROXY",
+      "confirm": 1,
+      "label": "OK на плитке LAN-адреса (когда доступ из LAN включён)"
+    },
+    {
+      "from": "LAN_PROXY",
+      "to": "CONNECTED",
+      "confirm": 0,
+      "label": "Закрыть подсказку"
     }
   ],
   "rows": {
@@ -266,6 +279,7 @@
     ],
     "connection": [
       "STATUS",
+      "LAN_PROXY",
       "DIAGNOSTICS",
       "YOUTUBE",
       "AUTO_FAILOVER"
