@@ -19,7 +19,7 @@
 - Цепочка сбрасывается только при успешной автоматической проверке (`result.available`), ручном выборе профиля или смене underlying network; смена профиля самим failover больше счётчики не обнуляет.
 - Выключение: у включённой плитки подпись подсказывает «OK — изменить или выключить»; кнопка «Выключить» в окне сбрасывает режим и список и показывает подтверждение (`tv_auto_failover_disabled`).
 - Тесты: `TvAutoFailoverPolicyTest` переписан на ротацию (обход списка, запрет возврата к сбойному, переход через конец, старт с начала, если текущего нет в списке) + прежние проверки cooldown/лимита/сериализации. Документация: `docs/tv-auto-failover.md` (включая разбор дефекта), `docs/features.md` F02.
-- Статус: реализовано локально, локальные проверки зелёные; Kotlin/эмуляторы — в CI, физическая приёмка (сеть с двумя-тремя профилями, выключение режима) — за владельцем.
+- Статус: опубликовано в rolling RC. PR #33 смержен в master `72fd130`; проверки PR зелёные (`android-fdroid` 25 m 10 s, `validate-and-release` 19 m 27 s, `source-checks` 1 m 51 s). Публикация: run [40534522747](https://github.com/LeonidYasin/TunXBox/actions/runs/40534522747) SUCCESS из `ref=master` (artifact_only/check_only=false); тег `v1.7.0-rc` → `72fd130`, Release не draft/prerelease, сборка **rc.166**, versionCode **49000166**, `apk-manifest.json` (`commit=72fd130…`, `signatureVerified=true`, `upgradeCompatibleWithPrevious=true`, сертификат `34764328…b5ef`), три APK (arm64/armeabi-v7a/universal) скачаны, sha256 arm64 совпал с `SHA256SUMS.txt`; stable `v1.6.0` не тронут. Физическая приёмка (сеть с двумя-тремя профилями, выключение режима) — за владельцем.
 
 ## Управление группами на ТВ — 2026-10-26
 
