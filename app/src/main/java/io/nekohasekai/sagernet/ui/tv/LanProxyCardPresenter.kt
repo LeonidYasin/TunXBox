@@ -3,6 +3,7 @@ package io.nekohasekai.sagernet.ui.tv
 import android.graphics.Color
 import android.text.TextUtils
 import android.util.TypedValue
+import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
@@ -17,6 +18,11 @@ import io.nekohasekai.sagernet.ui.LanProxyAddress
  * The addresses are retyped on another device, so each one gets the full card width: one line,
  * no ellipsis, and the text shrinks inside 11..22sp instead of being cut. Every address the device
  * currently has is listed; nothing is filtered by a guess about "the" local network.
+ *
+ * The tile keeps exactly the width and height of its neighbours in the connection row. The address
+ * list takes the height the label and the hint leave over and splits it between the addresses,
+ * so a fourth or fifth address shrinks the autosized lines instead of making this one tile taller
+ * than the cards next to it.
  */
 class LanProxyCardPresenter : Presenter() {
     class Holder(
@@ -30,16 +36,17 @@ class LanProxyCardPresenter : Presenter() {
 
     override fun onCreateViewHolder(parent: ViewGroup): ViewHolder {
         val context = parent.context
-        val density = parent.resources.displayMetrics.density
-        fun dp(value: Int) = (value * density).toInt()
+        fun dp(value: Int) = TvCardMetrics.dp(context, value)
         val layout = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
+            // Not WRAP_CONTENT: a longer address list used to make this tile taller than the rest
+            // of the connection row. Also not raw dp: the width below is px, exactly like the
+            // other tiles, so a 1080p TV does not render this one at half width.
             layoutParams = ViewGroup.LayoutParams(
-                TvLayoutPolicy.cardWidthDp(parent.resources.configuration.screenWidthDp),
-                ViewGroup.LayoutParams.WRAP_CONTENT,
+                TvCardMetrics.widthPx(context),
+                TvCardMetrics.heightPx(context),
             )
-            minimumHeight = dp(124)
-            setPadding(dp(16), dp(14), dp(16), dp(14))
+            setPadding(dp(16), dp(16), dp(16), dp(16))
             setBackgroundResource(R.drawable.card_background_tv)
             isFocusable = true
             isFocusableInTouchMode = true
@@ -53,7 +60,8 @@ class LanProxyCardPresenter : Presenter() {
         }
         val addressList = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            layout.addView(this, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(2) })
+            // 0dp + weight: the list only gets the space the label and the hint leave over.
+            layout.addView(this, LinearLayout.LayoutParams(-1, 0, 1f).apply { topMargin = dp(2) })
         }
         val hint = TextView(context).apply {
             textSize = 13f
@@ -77,12 +85,17 @@ class LanProxyCardPresenter : Presenter() {
             // measures the text at unbounded width, so a long address is clipped at the card edge
             // ("192.168.100.1…") instead of shrinking to fit.
             ellipsize = null
+            gravity = Gravity.CENTER_VERTICAL
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 22f)
             TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(
                 this, 11, 22, 1, TypedValue.COMPLEX_UNIT_SP,
             )
         }
-        parent.addView(line, LinearLayout.LayoutParams(-1, -2).apply { topMargin = (density * 2).toInt() })
+        // Equal share of the list height: autosize then shrinks the line to the space it owns,
+        // so the card never needs to grow with the number of addresses.
+        parent.addView(line, LinearLayout.LayoutParams(-1, 0, 1f).apply {
+            topMargin = (density * 2).toInt()
+        })
         return line
     }
 

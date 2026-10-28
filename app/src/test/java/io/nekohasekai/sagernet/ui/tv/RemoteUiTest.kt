@@ -195,13 +195,61 @@ class RemoteUiTest {
     @Test @Config(qualifiers = "ru") fun russianStateLabelsAreActuallyLocalized() {
         val context = activity(); assertEquals("Подключено", context.getString(R.string.tv_connected)); assertEquals("Выбран", context.getString(R.string.tv_selected))
     }
-    @Test fun actionCardUsesReadableSecondaryTextAndWrapHeight() {
+    @Test fun actionCardUsesReadableSecondaryTextAndStableTileHeight() {
         val parent = FrameLayout(activity()); val presenter = ActionPresenter(); val holder = presenter.onCreateViewHolder(parent) as ActionPresenter.ActionViewHolder
         presenter.onBindViewHolder(holder, TvAction(1, "A long translated connection action", "Connected\nSelected: A long profile name\nActive: Other profile", R.drawable.ic_service_active))
         val scale = holder.view.resources.displayMetrics.scaledDensity
         assertTrue(holder.title.textSize / scale >= 20); assertTrue(holder.subtitle.textSize / scale >= 16)
-        assertEquals(android.view.ViewGroup.LayoutParams.WRAP_CONTENT, holder.view.layoutParams.height)
+        // Every tile family asks for the same explicit size: a wrap-content height let the LAN
+        // tile with its address list grow taller than the cards next to it.
+        assertEquals(TvCardMetrics.heightPx(parent.context), holder.view.layoutParams.height)
+        assertEquals(TvCardMetrics.widthPx(parent.context), holder.view.layoutParams.width)
         assertEquals(3, holder.subtitle.maxLines)
+    }
+    @Test @Config(qualifiers = "w960dp-h540dp-xhdpi")
+    fun everyConnectionTileHasTheSameWidthAndHeight() {
+        val parent = FrameLayout(activity()); val context = parent.context
+        val presenters = listOf(ConnectionCardPresenter(), LanProxyCardPresenter(), QualityCardPresenter(), ActionPresenter())
+        val widths = presenters.map { it.onCreateViewHolder(parent).view.layoutParams.width }
+        val heights = presenters.map { it.onCreateViewHolder(parent).view.layoutParams.height }
+        assertEquals("the LAN tile used dp as px and rendered at half width", 1, widths.toSet().size)
+        assertEquals(1, heights.toSet().size)
+        assertEquals(TvCardMetrics.widthPx(context), widths.first())
+        assertEquals(TvCardMetrics.heightPx(context), heights.first())
+        // 300dp at xhdpi: the address tile must not be 300 raw pixels wide.
+        assertEquals(600, widths.first())
+    }
+    @Test @Config(qualifiers = "w960dp-h540dp-xhdpi")
+    fun lanTileKeepsEveryAddressInsideTheSharedTileSize() {
+        val parent = FrameLayout(activity()); val context = parent.context
+        val presenter = LanProxyCardPresenter()
+        val holder = presenter.onCreateViewHolder(parent) as LanProxyCardPresenter.Holder
+        parent.addView(holder.view)
+        presenter.onBindViewHolder(holder, TvLanProxyCard(19, listOf(
+            LanProxyAddress.Entry("192.168.43.1", "wlan0"),
+            LanProxyAddress.Entry("10.76.41.155", "rmnet_data0"),
+            LanProxyAddress.Entry("172.19.0.1", "tun0"),
+            LanProxyAddress.Entry("192.168.100.100", "eth0"),
+        ), 2080))
+        val width = TvCardMetrics.widthPx(context); val height = TvCardMetrics.heightPx(context)
+        parent.measure(View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(height, View.MeasureSpec.EXACTLY))
+        parent.layout(0, 0, width, height)
+        assertEquals(width, holder.view.measuredWidth); assertEquals(height, holder.view.measuredHeight)
+        val visible = holder.addressLines.filter { it.visibility == View.VISIBLE }
+        assertEquals(4, visible.size)
+        val minLine = TvCardMetrics.lineHeightPx(context, 11f)
+        for (line in visible) {
+            assertEquals(1, line.maxLines); assertNull(line.ellipsize)
+            assertTrue("an address must not be cut at the card edge", line.width >= line.paint.measureText(line.text.toString()).toInt())
+            assertTrue("autosize must leave a readable line", line.measuredHeight >= minLine)
+        }
+        // Label + address list + hint have to fit the shared tile height, otherwise LinearLayout
+        // clips the last line instead of the tile growing.
+        val content = (0 until holder.view.childCount).sumOf { index ->
+            val child = holder.view.getChildAt(index)
+            child.measuredHeight + (child.layoutParams as LinearLayout.LayoutParams).topMargin
+        }
+        assertTrue("content $content must fit the $height px tile", content <= height)
     }
     @Test fun tvCatalogMatchesAllUpstreamMenuEntriesExceptRedundantTvSwitch() {
         val context = activity()

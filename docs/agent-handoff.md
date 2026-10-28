@@ -2,6 +2,26 @@
 
 Обновлено: 2026-10-28 UTC. Это проверенный снимок состояния, не обещание фоновой работы. Сначала перепроверьте GitHub refs, PR, runs и release assets: более поздние изменения имеют приоритет над этим текстом.
 
+## Плитки ТВ-режима разного размера — 2026-10-28
+
+Владелец сообщил, что в ТВ-режиме плитки разной ширины и высоты, сильнее всего — вторая плитка второго ряда (ряд **Connection**, адреса LAN-прокси). Ветка `fix/tv-tile-uniform-size` от master `221ef1b`; не смержена и не опубликована.
+
+Причины:
+
+- **Ширина.** `LanProxyCardPresenter` передавал `TvLayoutPolicy.cardWidthDp(...)` в `ViewGroup.LayoutParams` как пиксели, без `density`. На 1080p-ТВ (960dp при плотности 2.0) остальные плитки получали 300dp = 600px, а LAN-плитка — 300px = 150dp, то есть вдвое уже. На телефоне в ТВ-режиме (390dp, плотность ~2.75) — 300px ≈ 109dp. Отсюда же прежняя жалоба rc.166 «видно только начало адресов»: в узкую плитку адрес не влезал и сжимался до 11sp.
+- **Высота.** Leanback (`GridLayoutManager.measureChild`) меряет каждую плитку с её собственным `layoutParams.height`, а высоту ряда берёт по самой высокой (`processRowSizeSecondary`); `layoutChild` при `WRAP_CONTENT` не растягивает соседей. Поэтому `WRAP_CONTENT` у LAN-плитки (подпись + по строке на адрес + пояснение) делал её выше карточек рядом, а ряд — выше остальных. `ConnectionCardPresenter`/`QualityCardPresenter`/`ActionPresenter` при этом тоже расходились на ~10dp из-за разных надбавок на строки.
+
+Исправление:
+
+- Новый `TvCardMetrics` — одно место для размера плитки: `widthPx`/`heightPx` в пикселях (dp→px через плотность), `lineBoxPx` для фиксированных текстовых блоков. Высота = две строки 20sp + три строки 16sp + отступы, считается из реальных font metrics, поэтому большой системный шрифт увеличивает плитку, а не обрезает строку.
+- `ActionPresenter`, `ConnectionCardPresenter`, `QualityCardPresenter`, `LanProxyCardPresenter` задают одинаковые `widthPx`/`heightPx`; содержимое выравнивается по центру, текстовые блоки — фиксированной высоты.
+- LAN-плитка: ширина в px (как у остальных), фиксированная высота; список адресов получает `0dp` + `weight=1`, каждая строка — равную долю высоты списка, авто-размер 11–22sp уменьшает текст под свою долю. Число адресов больше не меняет размер плитки, все адреса остаются видимыми и не обрезаются по горизонтали.
+- `ProfileCardPresenter` использует тот же `TvCardMetrics.widthPx` (поведение не менялось).
+
+Тесты: `RemoteUiTest.everyConnectionTileHasTheSameWidthAndHeight` (все четыре презентера ряда Connection дают один `widthPx`/`heightPx`; на w960dp-xhdpi ширина 600px, а не 300), `RemoteUiTest.lanTileKeepsEveryAddressInsideTheSharedTileSize` (четыре адреса, содержимое влезает в высоту плитки, строки не обрезаны), обновлён `actionCardUsesReadableSecondaryTextAndStableTileHeight` (вместо `WRAP_CONTENT` — общий размер).
+
+Документация: `docs/lan-access.md` (размер плитки и причина дефекта). Статус: реализовано локально; Kotlin/JVM-тесты и Robolectric-проверки — только в CI (локально нет Android SDK), физическая приёмка на ТВ — за владельцем. Опубликованного APK нет.
+
 ## Публикация rolling RC 1.7.0-rc.167 — 2026-10-28
 
 - Source: master `66354a6ef9b45d47bb8d8d16020ca11301213718` — merge commit PR #35 (`fix/tv-failover-dialog-fit` → master); PR #35 смержен после SUCCESS CI (android-fdroid 25m45s, source-checks 1m53s, validate-and-release 25m26s; runs [40559925568](https://github.com/LeonidYasin/TunXBox/actions/runs/40559925568)/[40559925797](https://github.com/LeonidYasin/TunXBox/actions/runs/40559925797)).
