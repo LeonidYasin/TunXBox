@@ -10,6 +10,13 @@ class TvLayoutPolicyTest {
         }
     }
     @Test fun televisionKeepsLargeCards() { assertEquals(300, TvLayoutPolicy.cardWidthDp(960)) }
+    @Test fun dialogListHeightKeepsTitleAndButtonsOnScreen() {
+        for (height in listOf(360, 540, 720, 844)) {
+            val list = TvLayoutPolicy.dialogListHeightDp(height)
+            assertTrue("at least three profile rows must be reachable", list >= 3 * 48)
+            assertTrue("buttons must stay on a ${height}dp screen: list=$list", list + 150 <= height)
+        }
+    }
     @Test fun narrowPortraitQrStacksAndLandscapeStaysSideBySide() {
         assertTrue(TvLayoutPolicy.stackQr(390, true))
         assertFalse(TvLayoutPolicy.stackQr(844, false))

@@ -2,12 +2,14 @@ package io.nekohasekai.sagernet.ui.tv
 
 import android.graphics.Color
 import android.text.TextUtils
+import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.widget.TextViewCompat
 import androidx.leanback.widget.Presenter
 import io.nekohasekai.sagernet.R
 
@@ -36,11 +38,21 @@ class ActionPresenter : Presenter() {
             orientation = LinearLayout.VERTICAL
             layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
         }
-        val title = TextView(context).apply { id = R.id.action_title; textSize = 20f; setTextColor(Color.WHITE); minLines = 2; maxLines = 2; ellipsize = TextUtils.TruncateAt.END }
+        // A long localized word cannot wrap inside a 300dp card, so the title used to be cut at the
+        // card edge ("Автопереключение…"). Shrink down to 15sp instead of slicing the label, but
+        // keep the two-line box fixed so every tile in a row stays the same height.
+        val title = TextView(context).apply {
+            id = R.id.action_title; textSize = 20f; setTextColor(Color.WHITE); minLines = 2; maxLines = 2; ellipsize = TextUtils.TruncateAt.END
+            gravity = Gravity.CENTER_VERTICAL
+            TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(this, 15, 20, 1, TypedValue.COMPLEX_UNIT_SP)
+        }
+        title.layoutParams = LinearLayout.LayoutParams(-1, title.lineHeight * 2 + dp(2))
         val subtitle = TextView(context).apply {
             id = R.id.action_subtitle; textSize = 16f; setTextColor(0xFFCBD5E1.toInt()); maxLines = 3; ellipsize = TextUtils.TruncateAt.END
-            layoutParams = LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(6) }
+            minLines = 3
+            TextViewCompat.setAutoSizeTextTypeUniformWithConfiguration(this, 12, 16, 1, TypedValue.COMPLEX_UNIT_SP)
         }
+        subtitle.layoutParams = LinearLayout.LayoutParams(-1, subtitle.lineHeight * 3 + dp(2)).apply { topMargin = dp(6) }
         texts.addView(title); texts.addView(subtitle); layout.addView(icon); layout.addView(texts)
         // Leanback owns focus zoom. Do not compete with it using a second animator.
         return ActionViewHolder(layout, icon, title, subtitle)
