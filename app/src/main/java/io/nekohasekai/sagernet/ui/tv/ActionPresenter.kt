@@ -21,8 +21,9 @@ class ActionPresenter : Presenter() {
         fun dp(value: Int) = (value * density).toInt()
         val layout = LinearLayout(context).apply {
             orientation = LinearLayout.HORIZONTAL
-            layoutParams = ViewGroup.LayoutParams(dp(TvLayoutPolicy.cardWidthDp(parent.resources.configuration.screenWidthDp)), ViewGroup.LayoutParams.WRAP_CONTENT)
-            minimumHeight = dp(124)
+            // One size for every tile family: a wrap-content action tile next to the taller LAN
+            // tile made the whole connection row ragged.
+            layoutParams = ViewGroup.LayoutParams(TvCardMetrics.widthPx(context), TvCardMetrics.heightPx(context))
             setPadding(dp(16), dp(16), dp(16), dp(16))
             gravity = Gravity.CENTER_VERTICAL
             setBackgroundResource(R.drawable.card_background_tv)
