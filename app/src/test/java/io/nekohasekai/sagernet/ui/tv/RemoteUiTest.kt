@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.Application
 import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -245,8 +246,9 @@ class RemoteUiTest {
         }
         // Label + address list + hint have to fit the shared tile height, otherwise LinearLayout
         // clips the last line instead of the tile growing.
-        val content = (0 until holder.view.childCount).sumOf { index ->
-            val child = holder.view.getChildAt(index)
+        val container = holder.view as ViewGroup
+        val content = (0 until container.childCount).sumOf { index ->
+            val child = container.getChildAt(index)
             child.measuredHeight + (child.layoutParams as LinearLayout.LayoutParams).topMargin
         }
         assertTrue("content $content must fit the $height px tile", content <= height)
