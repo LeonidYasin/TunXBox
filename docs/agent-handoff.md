@@ -20,7 +20,13 @@
 
 Тесты: `RemoteUiTest.everyConnectionTileHasTheSameWidthAndHeight` (все четыре презентера ряда Connection дают один `widthPx`/`heightPx`; на w960dp-xhdpi ширина 600px, а не 300), `RemoteUiTest.lanTileKeepsEveryAddressInsideTheSharedTileSize` (четыре адреса, содержимое влезает в высоту плитки, строки не обрезаны), обновлён `actionCardUsesReadableSecondaryTextAndStableTileHeight` (вместо `WRAP_CONTENT` — общий размер).
 
-Документация: `docs/lan-access.md` (размер плитки и причина дефекта). Статус: реализовано локально; Kotlin/JVM-тесты и Robolectric-проверки — только в CI (локально нет Android SDK), физическая приёмка на ТВ — за владельцем. Опубликованного APK нет.
+Документация: `docs/lan-access.md` (размер плитки и причина дефекта). Статус: реализовано в PR [#37](https://github.com/LeonidYasin/TunXBox/pull/37) (`fix/tv-tile-uniform-size` → `master`), не смержено, APK не публиковался; физическая приёмка на ТВ — за владельцем.
+
+CI (только GitHub Actions, локального Android SDK нет):
+
+- Первый прогон по `c7bd257` — `Source preservation and F-Droid readiness` run [40715614561](https://github.com/LeonidYasin/TunXBox/actions/runs/40715614561) FAILURE: тест не компилировался (`RemoteUiTest.kt:248` `Unresolved reference 'childCount'`, `ViewHolder.view` имеет тип `View`). Ошибка оставлена видимой; исправлена кастом к `ViewGroup` в `40563fd`.
+- Итоговый прогон по `40563fd` — run [40717822825](https://github.com/LeonidYasin/TunXBox/actions/runs/40717822825) SUCCESS: `source-checks` и `android-fdroid` (F-Droid release + instrumentation compilation, unit-тесты, эмуляторные гейты 4KB API 35 и 16KB API 36).
+- `Verified Stable Release` по `40563fd` — run [40717819421](https://github.com/LeonidYasin/TunXBox/actions/runs/40717819421) SUCCESS (только валидация, stable не публиковался).
 
 ## Публикация rolling RC 1.7.0-rc.167 — 2026-10-28
 
