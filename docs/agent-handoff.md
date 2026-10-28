@@ -1,6 +1,16 @@
 # Передача разработки: TunXBox 1.6
 
-Обновлено: 2026-10-24 UTC. Это проверенный снимок состояния, не обещание фоновой работы. Сначала перепроверьте GitHub refs, PR, runs и release assets: более поздние изменения имеют приоритет над этим текстом.
+Обновлено: 2026-10-28 UTC. Это проверенный снимок состояния, не обещание фоновой работы. Сначала перепроверьте GitHub refs, PR, runs и release assets: более поздние изменения имеют приоритет над этим текстом.
+
+## Публикация rolling RC 1.7.0-rc.167 — 2026-10-28
+
+- Source: master `66354a6ef9b45d47bb8d8d16020ca11301213718` — merge commit PR #35 (`fix/tv-failover-dialog-fit` → master); PR #35 смержен после SUCCESS CI (android-fdroid 25m45s, source-checks 1m53s, validate-and-release 25m26s; runs [40559925568](https://github.com/LeonidYasin/TunXBox/actions/runs/40559925568)/[40559925797](https://github.com/LeonidYasin/TunXBox/actions/runs/40559925797)).
+- Validation: publication run [40613855675](https://github.com/LeonidYasin/TunXBox/actions/runs/40613855675) (`prerelease-from-pr.yml`, workflow_dispatch, `ref=master`, `artifact_only=false`, `check_only=false`) — **SUCCESS**; job `build-and-publish-prerelease` SUCCESS, recovery rc158 skipped.
+- Published: rolling [v1.7.0-rc](https://github.com/LeonidYasin/TunXBox/releases/tag/v1.7.0-rc) → rc.167 — version `1.7.0-rc.167`, versionCode **49000167**, commit `66354a6…`, manifest `commit=66354a6ef9b45d47bb8d8d16020ca11301213718`, `signatureVerified=true`, `upgradeCompatibleWithPrevious=true`, pinned signer `34764328dd73482587e64d56008a9ef7b860069087e279cb984f7b2e5055b5ef`; `installedVersionName=1.7.0-rc.167`.
+- Assets: APK `TunXBox-1.7.0-rc.167-android-tv-phone-arm64-v8a-preview-release-vc49000167-g66354a6e.apk` (sha256 `444b89e3…`, 15897059), `...-armeabi-v7a-preview-release-vc49000167-g66354a6e.apk` (sha256 `b8dfee8a…`, 16189711), universal (arm64-v8a/armeabi-v7a/x86/x86_64, sha256 `0b708915…`, 45070125); APK sha256 совпадают с `SHA256SUMS.txt`; все assets загружены 2026-10-28T01:32Z; release non-draft/prerelease, published 2026-10-28.
+- Defects rc.166 (failover dialog buttons off-screen / LAN tile squeezed / failover tile label clipped) fixed by PR #35 are delivered now as rc.167 through rolling test channel.
+- Stable 1.6.0 не тронут: non-draft/non-prerelease, published 2026-10-24T14:42:28Z, tag `v1.6.0`, source master.
+- Физическая приёмка на устройстве (rc.167: меню выключения, полный LAN IP, читаемый заголовок, сохранность данных) — за владельцем; следующий шаг — установить через TunXBox → «Обновление приложения» → channel test → Проверить → Скачать → install over.
 
 ## Дефекты rc.166: диалог автопереключения и обрезанный текст на плитках — 2026-10-27
 
