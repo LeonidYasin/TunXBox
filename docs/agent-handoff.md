@@ -2,9 +2,20 @@
 
 Обновлено: 2026-10-28 UTC. Это проверенный снимок состояния, не обещание фоновой работы. Сначала перепроверьте GitHub refs, PR, runs и release assets: более поздние изменения имеют приоритет над этим текстом.
 
+## Публикация rolling RC 1.7.0-rc.168 — 2026-10-28
+
+- Source: master `30e6a4de5f319f05e400227b753eb3680eedd57d` — merge PR #37 (`bd67067`, одинаковый размер плиток ТВ) и PR #38 (`30e6a4d`, переименование `guide/README.html` → `guide/docs-index.html`). Оба PR смержены после SUCCESS CI.
+- Validation: run [40727712392](https://github.com/LeonidYasin/TunXBox/actions/runs/40727712392) (`prerelease-from-pr.yml`, workflow_dispatch, `ref=master`, `artifact_only=false`, `check_only=false`), attempt 2 — **SUCCESS**: `Build debug instrumentation APKs`, `Test protocol and remote UI`, эмуляторные гейты 4KB API 35 и 16KB API 36, подпись, `Package verified APKs`.
+- Attempt 1 того же прогона — FAILURE на `Android 16 emulator smoke (16KB)`: тест `realSocketProbeAndRoomImportAreDuplicateSafeWithoutConnectingVpn` упал с пустым `<failure/>`, драйвер сообщил `Expected 19 tests, received 0`; в logcat эмулятора 92 срабатывания `lowmemorykiller` (`min/low watermark breached`), `crash-log.txt` пуст, `FATAL EXCEPTION`/`AndroidRuntime` нет. API 35 (4KB) в том же прогоне прошёл 19/19, а тот же код `app/**` проходил 16KB-гейт в run [40722928089](https://github.com/LeonidYasin/TunXBox/actions/runs/40722928089) — сбой эмулятора по памяти, не приложения. Перезапуск (attempt 2) не менял source SHA.
+- Published: rolling [v1.7.0-rc](https://github.com/LeonidYasin/TunXBox/releases/tag/v1.7.0-rc) → **rc.168**: `installedVersionName=1.7.0-rc.168`, versionCode **49000168**, `apk-manifest.json` `commit=30e6a4de5f319f05e400227b753eb3680eedd57d`, `signatureVerified=true`, `upgradeCompatibleWithPrevious=true`, pinned signer `34764328dd73482587e64d56008a9ef7b860069087e279cb984f7b2e5055b5ef`. Тег `v1.7.0-rc` указывает на `30e6a4d`.
+- Assets: arm64 `TunXBox-1.7.0-rc.168-android-tv-phone-arm64-v8a-preview-release-vc49000168-g30e6a4de.apk` (sha256 `19c367ac…`, 15897137), armeabi-v7a (`1c98711e…`, 16189799), universal (arm64-v8a/armeabi-v7a/x86/x86_64, `a3121b58…`, 45070203). Скачанный arm64 APK совпал по sha256 с `SHA256SUMS.txt` и манифестом; release non-draft/prerelease, имя «TunXBox 1.7.0-rc.168 (rolling pre-release)», assets обновлены 2026-10-28T17:16Z.
+- Stable 1.6.0 не тронут: non-draft/non-prerelease, published 2026-10-24T14:42:28Z.
+- Физическая приёмка (плитки одного размера в ряду Connection, полный адрес LAN, сохранность данных и профилей) — за владельцем: TunXBox → «Обновление приложения» → channel **test** → **Проверить** → **Скачать** → установка поверх.
+- Сайт: PR #38 смержен, но деплой GitHub Pages и проверка нового адреса `website/guide/docs-index.html` — за владельцем; старый `/guide/README.html` после деплоя будет отдавать 404.
+
 ## Плитки ТВ-режима разного размера — 2026-10-28
 
-Владелец сообщил, что в ТВ-режиме плитки разной ширины и высоты, сильнее всего — вторая плитка второго ряда (ряд **Connection**, адреса LAN-прокси). Ветка `fix/tv-tile-uniform-size` от master `221ef1b`; не смержена и не опубликована.
+Владелец сообщил, что в ТВ-режиме плитки разной ширины и высоты, сильнее всего — вторая плитка второго ряда (ряд **Connection**, адреса LAN-прокси). Ветка `fix/tv-tile-uniform-size` от master `221ef1b`; смержено через PR #37 (`bd67067`) и опубликовано в rolling `v1.7.0-rc` как rc.168 (см. запись выше).
 
 Причины:
 
