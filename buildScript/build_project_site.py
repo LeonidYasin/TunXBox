@@ -32,7 +32,8 @@ def build(out):
  sources=[ROOT/'README.md',*sorted((ROOT/'docs').rglob('*.md'))]
  # Large source inventory stays linked to GitHub, not replicated into the landing payload.
  sources=[p for p in sources if p.relative_to(ROOT).as_posix()!='docs/reference/repository-index.md']
- targets={p.relative_to(ROOT).as_posix():('guide/readme.html' if p==ROOT/'README.md' else 'guide/'+p.relative_to(ROOT/'docs').with_suffix('.html').as_posix()) for p in sources}
+ # docs/README.md would emit guide/README.html, which cannot coexist with guide/readme.html on case-insensitive filesystems (Windows, default macOS).
+ targets={p.relative_to(ROOT).as_posix():('guide/readme.html' if p==ROOT/'README.md' else 'guide/docs-index.html' if p==ROOT/'docs/README.md' else 'guide/'+p.relative_to(ROOT/'docs').with_suffix('.html').as_posix()) for p in sources}
  def href(url,source,target):
   d=urllib.parse.urlsplit(html.unescape(url))
   if d.scheme:

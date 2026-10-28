@@ -4,7 +4,7 @@
   "contact": "leonidyasin@gmail.com",
   "pages": [
     "guide/readme.html",
-    "guide/README.html",
+    "guide/docs-index.html",
     "guide/agent-handoff.html",
     "guide/app-updates.html",
     "guide/architecture.html",

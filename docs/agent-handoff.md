@@ -1,6 +1,18 @@
 # Передача разработки: TunXBox 1.6
 
-Обновлено: 2026-10-24 UTC. Это проверенный снимок состояния, не обещание фоновой работы. Сначала перепроверьте GitHub refs, PR, runs и release assets: более поздние изменения имеют приоритет над этим текстом.
+Обновлено: 2026-10-28 UTC. Это проверенный снимок состояния, не обещание фоновой работы. Сначала перепроверьте GitHub refs, PR, runs и release assets: более поздние изменения имеют приоритет над этим текстом.
+
+## Сайт: переименование guide/README.html → guide/docs-index.html — 2026-10-28
+
+`website/guide/` содержал два файла, различающихся только регистром: `README.html` (генерируется из `docs/README.md`) и `readme.html` (из корневого `README.md`). На файловых системах без учёта регистра (Windows, macOS по умолчанию) оба существовать одновременно не могут: `git clone` предупреждает о коллизии, на диске выживает только `readme.html`, а `README.html` постоянно числится фантомным изменением в `git status`; случайный коммит такого изменения уничтожил бы одну из страниц. Аудит `git ls-files` (lowercase-сравнение) показал: это единственная такая пара в дереве.
+
+Сделано в ветке `build/site-readme-case-collision` от master `66354a6`:
+
+- `buildScript/build_project_site.py`: `docs/README.md` теперь явно маппится в `guide/docs-index.html` (деривация имени по умолчанию давала `README.html`).
+- `website/guide/README.html` переименован в `website/guide/docs-index.html` (операция через git index — на Windows-копии оба файла рядом не существуют); canonical и og:url внутри страницы обновлены.
+- Входящие ссылки обновлены: `website/index.html`, `website/guide/readme.html` (ссылка «документация»), `website/sitemap.xml` (позиция — sort-порядок rglob генератора), `website/site-manifest.json`, реестр `docs/reference/repository-index.md` (`check_project_docs.py --update-index`).
+- Полная регенерация сайта в PR не выполнялась намеренно: она переписала бы pinned SOURCE_REF во всех страницах; следующий плановый `buildScript/build_project_site.py` воспроизводит новое имя автоматически.
+- Статус: реализовано локально; проверки локально — `python buildScript/test_project_site.py` и `python buildScript/check_project_docs.py`. Старый публичный URL `/TunXBox/guide/README.html` после деплоя Pages будет отдавать 404 (собственной 404.html на сайте нет); canonical и sitemap ведут на новый адрес. За владельцем: ревью, merge, деплой Pages, при желании — перевыпуск sitemap в Search Console.
 
 ## Дефекты rc.166: диалог автопереключения и обрезанный текст на плитках — 2026-10-27
 
