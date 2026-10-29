@@ -5,3 +5,4 @@ Read [AGENTS.md](AGENTS.md) and [docs/agent-handoff.md](https://github.com/Leoni
 Before any build, RC, device-test or release action, follow **Build delivery and publication — mandatory decision procedure** in `AGENTS.md`. Normal owner device testing and “auto-update/autopublication” mean a verified published rolling prerelease visible in TunXBox channel `test`; `artifact_only` is only for an explicitly requested manual/private candidate and does not satisfy in-app delivery. Stable requires separate explicit approval.
 
 For GitHub Actions, build logs, PRs, issues, and branches, use `scripts/github_mcp_cli.py` with `GITHUB_TOKEN`.
+Agents should check and merge open PRs autonomously using `scripts/github_mcp_cli.py` if all CI checks/tests pass and there are no conflicts or issues.

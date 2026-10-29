@@ -6,6 +6,7 @@ These entry files can also be installed on the default branch without integratin
 
 ## GitHub & Actions CLI Tool
 - GitHub Actions, build logs, PRs, issues, and branches can be inspected and managed using `scripts/github_mcp_cli.py` (pass `--token` or set `GITHUB_TOKEN` environment variable).
+- **PR Merge Policy**: Agents should verify PR status and merge PRs autonomously using `scripts/github_mcp_cli.py` if all CI tests/checks pass, there are no merge conflicts, and no issues are detected.
 
 ## Non-negotiable boundaries
 - Stable 1.5.0 and 1.6.0 are immutable; 1.6.0 was published from master SHA `5a7a2d1` (tag `v1.6.0`, run [40101906755](https://github.com/LeonidYasin/TunXBox/actions/runs/40101906755)). New 1.7 work lives in feature branches/PRs → `master`. No automatic merge/stable release merely because CI is green.
