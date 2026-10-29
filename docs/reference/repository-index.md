@@ -8,7 +8,7 @@
 
 Для обновления: `python3 buildScript/check_project_docs.py --update-index`. Для source archive можно явно передать JSON-массив путей через `--inventory`.
 
-Всего tracked файлов: **877**.
+Всего tracked файлов: **879**.
 
 | Раздел | Файлов |
 |---|---|
@@ -207,13 +207,14 @@
 | `app/src/main/res/values-zh-rTW` | 1 |
 | `app/src/main/res/xml` | 25 |
 | `app/src/test` | 33 |
-| `buildScript` | 50 |
+| `buildScript` | 51 |
 | `buildSrc` | 2 |
 | `docs` | 49 |
 | `fastlane` | 8 |
 | `fdroid` | 3 |
 | `gradle` | 2 |
 | `libcore` | 42 |
+| `scripts` | 1 |
 | `website` | 50 |
 | `Корень` | 19 |
 
@@ -1492,6 +1493,7 @@
 - [`buildScript/test_artifact_only_workflow.py`](../../buildScript/test_artifact_only_workflow.py)
 - [`buildScript/test_assets.py`](../../buildScript/test_assets.py)
 - [`buildScript/test_emulator_results.py`](../../buildScript/test_emulator_results.py)
+- [`buildScript/test_github_mcp_cli.py`](../../buildScript/test_github_mcp_cli.py)
 - [`buildScript/test_native_alignment.py`](../../buildScript/test_native_alignment.py)
 - [`buildScript/test_package_preview_apks.py`](../../buildScript/test_package_preview_apks.py)
 - [`buildScript/test_project_site.py`](../../buildScript/test_project_site.py)
@@ -1630,6 +1632,10 @@
 - [`libcore/stun/response.go`](../../libcore/stun/response.go)
 - [`libcore/stun/tests.go`](../../libcore/stun/tests.go)
 - [`libcore/stun/utils.go`](../../libcore/stun/utils.go)
+
+## scripts
+
+- [`scripts/github_mcp_cli.py`](../../scripts/github_mcp_cli.py)
 
 ## website
 
