@@ -7,8 +7,10 @@ package io.nekohasekai.sagernet.ui.tv
  * auto-switch mode with a fallback list, the active profile moves to the next entry of the
  * user-ordered list. Every profile of the list is tried at most once per failover chain, so a
  * dead provider cannot bounce the connection between the same two profiles: the chain walks the
- * whole list and then stops for manual diagnosis. A successful check or a manual selection
- * restarts the chain.
+ * whole list and then stops for manual diagnosis. Manual selection, a settings change or a
+ * success that stayed healthy after the last switch restart the chain; a single probe that passes
+ * right after a switch does not, because it used to bring a just-failed profile back before the
+ * circle was finished.
  *
  * Safety rails: manual override wins, cooldown plus hysteresis, and a per-session switch cap.
  */
@@ -32,6 +34,26 @@ data class TvFailoverState(
 
 object TvAutoFailoverPolicy {
     const val DEFAULT_COOLDOWN_MS: Long = 30_000L
+
+    /**
+     * A single successful check right after a switch proves almost nothing: the profile may pass
+     * one URL probe and fail the next second. Resetting the whole chain on such a check made the
+     * walk start over and pick a profile that had just failed, while the circle was not finished.
+     * The chain is reset only once a success has held for this long after the last switch.
+     */
+    const val STABLE_CONNECTION_MS: Long = 60_000L
+
+    /** True when a successful check is old enough to mean the switch actually worked. */
+    fun shouldResetChainOnSuccess(nowMs: Long, lastSwitchAtMs: Long, stableMs: Long = STABLE_CONNECTION_MS): Boolean =
+        lastSwitchAtMs <= 0L || nowMs - lastSwitchAtMs >= stableMs
+
+    /**
+     * The optimistic switch decision is made before the cooldown wait. The user may turn the mode
+     * off (or edit the list) while that wait is still running, so the candidate is re-checked
+     * against the live settings right before the switch is executed.
+     */
+    fun isCandidateStillAllowed(enabled: Boolean, order: List<Long>, candidateId: Long): Boolean =
+        enabled && candidateId in order
 
     /**
      * Next profile in the user's order after [currentId], wrapping around and skipping every

@@ -49,7 +49,8 @@ class MainBrowseFragment : BrowseSupportFragment() {
     private var failoverCooldownUntil=0L
     private val failoverTried=linkedSetOf<Long>()
     private var failoverExhaustedNotified=false
-    private var lastNetworkEpoch: android.net.Network? = null
+    private var failoverJob: Job?=null
+    private var failoverLastSwitchAt=0L
     private var testJob: Job? = null
     private var extendedJob: Job?=null
     private var extendedProbe: suspend (android.content.Context,ProxyEntity,suspend (String)->Unit)->io.nekohasekai.sagernet.ui.diagnostics.ExtendedConnectionDiagnostics.Report = {context,profile,progress->io.nekohasekai.sagernet.ui.diagnostics.ExtendedConnectionDiagnostics.run(context,profile,progress)}
@@ -122,9 +123,12 @@ class MainBrowseFragment : BrowseSupportFragment() {
     private fun itemId(item: Any?)=TvGroupRows.focus(item)
     private fun toast(message: String) { if (isAdded && view != null) Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show() }
     private fun toast(resource: Int) = toast(getString(resource))
-    private fun launchWork(work: suspend () -> Unit) {
-        if (view == null) return
-        viewLifecycleOwner.lifecycleScope.launch {
+    private fun launchWork(work: suspend () -> Unit) { launchWorkJob(work) }
+    // Failover must be revocable: turning the mode off cancels a switch that is still waiting out
+    // the cooldown instead of letting it run after the setting is already off.
+    private fun launchWorkJob(work: suspend () -> Unit): Job? {
+        if (view == null) return null
+        return viewLifecycleOwner.lifecycleScope.launch {
             try { work() } catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) { toast(R.string.tv_operation_failed) }
         }
@@ -171,7 +175,9 @@ class MainBrowseFragment : BrowseSupportFragment() {
                 io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnostic(DataStore.selectedProxy,System.currentTimeMillis(),
                     io.nekohasekai.sagernet.ui.diagnostics.DiagnosticStage.STARTUP,
                     io.nekohasekai.sagernet.group.SubscriptionFailureCategory.fromMessage(message)))
-            if(isResumed)showConnectionDiagnostics()
+            // A connection error must never take the screen. Auto-switching runs in the
+            // background, and even without it the failure is already visible on the status
+            // tile; the diagnostics report stays one OK press away.
         }
     }
 
@@ -432,8 +438,12 @@ class MainBrowseFragment : BrowseSupportFragment() {
     }
     private fun showAutoFailover() = launchWork {
         val all = withContext(Dispatchers.IO) { SagerDatabase.proxyDao.getAll() }
-        if (all.isEmpty()) { toast(R.string.tv_auto_failover_no_profiles); return@launchWork }
-        if (!TvAutoFailoverPreferences.enabled) { showAutoFailoverProfiles(all); return@launchWork }
+        // "Turn off" must stay reachable even after every profile was deleted, so the enabled
+        // mode opens its menu first; only opening the selection list requires profiles.
+        if (!TvAutoFailoverPreferences.enabled) {
+            if (all.isEmpty()) { toast(R.string.tv_auto_failover_no_profiles); return@launchWork }
+            showAutoFailoverProfiles(all); return@launchWork
+        }
         // Two steps on purpose. The old dialog put a long multi-choice list and three buttons in
         // one window, so on a 540dp-tall TV the button row slid off the bottom: only "Save" was
         // visible and "Turn off" could not be reached at all.
@@ -926,14 +936,14 @@ class MainBrowseFragment : BrowseSupportFragment() {
     }
     private fun syncHealthSession() {
         val network=SagerNet.underlyingNetwork
-        val networkChanged=network!=lastNetworkEpoch
-        lastNetworkEpoch=network
         val changed=healthSession.sync(serviceReady&&phase==TvVpnPhase.CONNECTED,activeProfileId(),
             "$serviceEpoch:$network")
         if(changed){healthJob?.cancel();extendedJob?.cancel();extendedReport=null;health="";healthResult=null;refreshConnectionCards()}
-        // A different underlying network is a new situation: every profile deserves a retry. A
-        // profile change made by failover itself is not a network change and must keep the chain.
-        if(networkChanged)resetFailoverChain()
+        // Deliberately no resetFailoverChain() here. The underlying-network callback keeps
+        // reporting a new identity while failover reconnects the VPN, and every such reset wiped
+        // the tried set: the walk then reconnected a profile that had just failed, before the
+        // circle was finished. The chain is reset by a manual choice, a settings change, or a
+        // success that proved stable.
     }
     private fun maybeAutoCheck() {
         if(view==null||!isResumed)return
@@ -1008,7 +1018,8 @@ class MainBrowseFragment : BrowseSupportFragment() {
                     healthResult=result
                     saveCheckResult(result)
                     io.nekohasekai.sagernet.group.ConnectionTestPresentation.save(result)
-                    if(result.available)resetFailoverChain()
+                    if(result.available&&TvAutoFailoverPolicy.shouldResetChainOnSuccess(
+                            SystemClock.elapsedRealtime(),failoverLastSwitchAt))resetFailoverChain()
                     health=io.nekohasekai.sagernet.group.ConnectionTestPresentation.summary(requireContext(),result)
                     // Automatic checks are inline: never steal focus or require an error OK click.
                     if(automatic)maybeAutoFailover(result)
@@ -1042,8 +1053,9 @@ class MainBrowseFragment : BrowseSupportFragment() {
      * reconnect loops, and trust/transport problems are not "fixed" by switching profiles.
      */
     private fun resetFailoverChain() {
+        failoverJob?.cancel();failoverJob=null
         failoverTried.clear();failoverExhaustedNotified=false
-        failoverSwitches=0;failoverCooldownUntil=0L
+        failoverSwitches=0;failoverCooldownUntil=0L;failoverLastSwitchAt=0L
     }
     private fun maybeAutoFailover(failed: io.nekohasekai.sagernet.group.ConnectionTestResult) {
         if(failed.available||!TvAutoFailoverPreferences.enabled)return
@@ -1056,25 +1068,32 @@ class MainBrowseFragment : BrowseSupportFragment() {
         val state=TvFailoverState(enabled=true,fallbackOrder=order,
             cooldownUntilMs=failoverCooldownUntil,switchesThisSession=failoverSwitches,
             maxSwitchesPerSession=order.size,triedIds=failoverTried.toList())
-        launchWork {
+        // Only one switch may be in flight: a newer failure supersedes a pending one, and the
+        // job stays cancellable so that disabling the mode or picking a profile stops it.
+        failoverJob?.cancel()
+        failoverJob=launchWorkJob {
             val choice=TvAutoFailoverPolicy.selectNextFallback(order,failed.profileId,failoverTried)
             if(choice==null){
                 if(!failoverExhaustedNotified){failoverExhaustedNotified=true;toast(R.string.tv_auto_failover_exhausted)}
-                return@launchWork
+                return@launchWorkJob
             }
             // The cooldown is measured from the previous switch, while the next health check may
             // finish earlier: wait it out instead of silently dropping the next profile.
             val waitUntil=failoverCooldownUntil-SystemClock.elapsedRealtime()
             if(waitUntil>0)delay(waitUntil)
+            // The wait can be long: the user may have turned the mode off or edited the list in
+            // the meantime, so the decision is re-checked against the live settings.
+            if(!TvAutoFailoverPolicy.isCandidateStillAllowed(TvAutoFailoverPreferences.enabled,
+                    TvAutoFailoverPreferences.fallbackOrder,choice))return@launchWorkJob
             val now=SystemClock.elapsedRealtime()
-            if(TvAutoFailoverPolicy.decide(currentHealthy=false,state=state,candidateId=choice,nowMs=now).action!=TvFailoverAction.SWITCH_TO)return@launchWork
-            if(phase!=TvVpnPhase.CONNECTED||activeProfileId()!=failed.profileId||!serviceReady)return@launchWork
+            if(TvAutoFailoverPolicy.decide(currentHealthy=false,state=state,candidateId=choice,nowMs=now).action!=TvFailoverAction.SWITCH_TO)return@launchWorkJob
+            if(phase!=TvVpnPhase.CONNECTED||activeProfileId()!=failed.profileId||!serviceReady)return@launchWorkJob
             val command=TvInteractionPolicy.primary(phase,choice,activeProfileId(),serviceReady)
-            if(command==TvVpnCommand.NONE)return@launchWork
+            if(command==TvVpnCommand.NONE)return@launchWorkJob
             val all=withContext(Dispatchers.IO){SagerDatabase.proxyDao.getAll()}
             val next=TvAutoFailoverPolicy.applySwitch(state,choice,now)
             failoverSwitches=next.switchesThisSession;failoverCooldownUntil=next.cooldownUntilMs
-            failoverTried+=choice
+            failoverTried+=choice;failoverLastSwitchAt=now
             selectProfile(choice)
             toast(getString(R.string.tv_auto_failover_switched,all.firstOrNull {it.id==choice}?.displayName().orEmpty()))
             execute(command)
