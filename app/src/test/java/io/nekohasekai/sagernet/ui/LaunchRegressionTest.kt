@@ -257,7 +257,7 @@ class LaunchRegressionTest {
             controller.get().supportFragmentManager.executePendingTransactions();shadowOf(Looper.getMainLooper()).idle()
             val entry=io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticJournal.read(before)
             assertNotNull(entry)
-            val text=entry!!.report(RuntimeEnvironment.getApplication())
+            val text=io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticReport.text(RuntimeEnvironment.getApplication(), entry)
             assertTrue(text.contains("NET_UNSUPPORTED"));assertFalse(text.contains("secret-url-token"))
             assertEquals(before,io.nekohasekai.sagernet.database.DataStore.selectedProxy)
         } finally {controller.pause().stop().destroy()}
