@@ -4,6 +4,9 @@ Before changing code, read [the current handoff](https://github.com/LeonidYasin/
 
 These entry files can also be installed on the default branch without integrating the candidate runtime. The 1.7 cycle works from `origin/master` (stable 1.6.0 published) in feature branches/PRs; do not assume any branch's app code is the latest RC build or that a green CI implies publication.
 
+## GitHub & Actions CLI Tool
+- GitHub Actions, build logs, PRs, issues, and branches can be inspected and managed using `scripts/github_mcp_cli.py` (pass `--token` or set `GITHUB_TOKEN` environment variable).
+
 ## Non-negotiable boundaries
 - Stable 1.5.0 and 1.6.0 are immutable; 1.6.0 was published from master SHA `5a7a2d1` (tag `v1.6.0`, run [40101906755](https://github.com/LeonidYasin/TunXBox/actions/runs/40101906755)). New 1.7 work lives in feature branches/PRs → `master`. No automatic merge/stable release merely because CI is green.
 - The 1.6 test channel `v1.6.0-rc` rolled to rc.162 (`60fcc08`). The 1.7 cycle uses rolling `v1.7.0-rc` from VERSION_CODE base 49. The updater reads the current rolling tag and does not automatically discover numbered recovery releases.

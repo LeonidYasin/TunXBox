@@ -7,7 +7,7 @@
 
 ## Продолжить разработку
 
-[AGENTS.md](AGENTS.md) → [актуальная передача работы](docs/agent-handoff.md) → [triage PR/issues](docs/release-triage.md). Стабильная **1.6.0** опубликована из master `5a7a2d1`; идёт цикл **1.7.0** (VERSION_CODE base 49, без автоматической стабильной публикации). [Стратегия extended/Xray/XHTTP](docs/core-extension-strategy.md) — отдельный проверяемый эксперимент, не функция текущего APK.
+[AGENTS.md](AGENTS.md) → [актуальная передача работы](docs/agent-handoff.md) → [triage PR/issues](docs/release-triage.md). Инструмент для GitHub Actions / логов / PR: `scripts/github_mcp_cli.py` (требует `GITHUB_TOKEN`). Стабильная **1.6.0** опубликована из master `5a7a2d1`; идёт цикл **1.7.0** (VERSION_CODE base 49, без автоматической стабильной публикации). [Стратегия extended/Xray/XHTTP](docs/core-extension-strategy.md) — отдельный проверяемый эксперимент, не функция текущего APK.
 
 ## Скачать и проверить
 
