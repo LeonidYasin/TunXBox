@@ -6,6 +6,7 @@ import android.os.Looper
 import kotlinx.coroutines.launch
 import io.nekohasekai.sagernet.SagerNet
 import io.nekohasekai.sagernet.R
+import io.nekohasekai.sagernet.ktx.isPreview
 import io.nekohasekai.sagernet.ui.tv.MainBrowseFragment
 import io.nekohasekai.sagernet.ui.tv.TvUiPreferences
 import org.junit.Assert.*
@@ -136,6 +137,7 @@ class LaunchRegressionTest {
         val controller = Robolectric.buildActivity(MainActivity::class.java, Intent(Intent.ACTION_MAIN))
         try {
             controller.setup().visible()
+            if (isPreview) org.robolectric.shadows.ShadowDialog.getLatestDialog()?.dismiss()
             controller.get().supportFragmentManager.executePendingTransactions()
             shadowOf(Looper.getMainLooper()).idle()
             assertTrue(controller.get().supportFragmentManager.findFragmentById(R.id.fragment_holder) is ConfigurationFragment)
@@ -253,8 +255,9 @@ class LaunchRegressionTest {
             val method=MainBrowseFragment::class.java.getDeclaredMethod("updateService",io.nekohasekai.sagernet.bg.BaseService.State::class.java,String::class.java,String::class.java).apply {isAccessible=true}
             method.invoke(fragment,io.nekohasekai.sagernet.bg.BaseService.State.Stopped,"fixture","Unsupported V2Ray transport: XHTTP. secret-url-token")
             controller.get().supportFragmentManager.executePendingTransactions();shadowOf(Looper.getMainLooper()).idle()
-            val dialog=controller.get().supportFragmentManager.findFragmentByTag("connection_report") as io.nekohasekai.sagernet.ui.diagnostics.DiagnosticDialog
-            val text=dialog.requireDialog().findViewById<android.widget.TextView>(R.id.diagnostic_report_text).text.toString()
+            val entry=io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticJournal.read(before)
+            assertNotNull(entry)
+            val text=io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticReport.text(RuntimeEnvironment.getApplication(), entry)
             assertTrue(text.contains("NET_UNSUPPORTED"));assertFalse(text.contains("secret-url-token"))
             assertEquals(before,io.nekohasekai.sagernet.database.DataStore.selectedProxy)
         } finally {controller.pause().stop().destroy()}
@@ -512,6 +515,7 @@ class LaunchRegressionTest {
         TvUiPreferences.phoneMode = true
         val controller=Robolectric.buildActivity(MainActivity::class.java,Intent(RuntimeEnvironment.getApplication(),MainActivity::class.java).putExtra("force_phone_mode",true)).setup().visible()
         try {
+            if (isPreview) org.robolectric.shadows.ShadowDialog.getLatestDialog()?.dismiss()
             controller.get().supportFragmentManager.executePendingTransactions()
             val menu=controller.get().navigation.menu
             assertEquals(R.id.nav_restart_app,menu.getItem(menu.size()-2).itemId)
@@ -785,6 +789,7 @@ class LaunchRegressionTest {
         val controller = Robolectric.buildActivity(MainActivity::class.java, Intent(Intent.ACTION_MAIN)).setup().visible()
         var task: kotlinx.coroutines.Job? = null
         try {
+            if (isPreview) org.robolectric.shadows.ShadowDialog.getLatestDialog()?.dismiss()
             val activity = controller.get()
             activity.supportFragmentManager.executePendingTransactions(); shadowOf(Looper.getMainLooper()).idle()
             val callback = io.nekohasekai.sagernet.group.GroupInterfaceAdapter(activity)
@@ -1075,6 +1080,7 @@ class LaunchRegressionTest {
     @Test fun connectionFailureDialogIsPersistentSafeAndCloseFocused() {
         val controller = Robolectric.buildActivity(MainActivity::class.java, Intent(Intent.ACTION_MAIN)).setup().visible()
         try {
+            if (isPreview) org.robolectric.shadows.ShadowDialog.getLatestDialog()?.dismiss()
             val result = io.nekohasekai.sagernet.group.ConnectionTestResult(1,1234,-1,
                 io.nekohasekai.sagernet.group.SubscriptionFailureCategory.CLOSED)
             val dialog = io.nekohasekai.sagernet.group.ConnectionTestPresentation.show(controller.get(),result)
