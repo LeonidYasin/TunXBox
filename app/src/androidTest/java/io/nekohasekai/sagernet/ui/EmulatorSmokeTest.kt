@@ -564,6 +564,10 @@ class EmulatorSmokeTest {
     }
     private fun startTv() {
         scenario = ActivityScenario.launch<MainActivityTv>(Intent(context, MainActivityTv::class.java))
+        if (isPreview && device.hasObject(By.text(text(R.string.preview_version_hint)))) {
+            visibleText(text(android.R.string.ok)).click()
+            device.wait(Until.gone(By.text(text(R.string.preview_version_hint))), timeout)
+        }
         visibleText(text(R.string.tv_start))
         assertTrue("App must remain foreground", device.wait(Until.hasObject(By.pkg(context.packageName)), timeout))
     }
@@ -813,6 +817,10 @@ class EmulatorSmokeTest {
         val tv = requireNotNull(device.wait(Until.findObject(By.res(context.packageName, "mode_choose_tv")), timeout))
         assertNotNull(device.findObject(By.res(context.packageName, "mode_choose_phone")))
         tv.click()
+        if (isPreview && device.hasObject(By.text(text(R.string.preview_version_hint)))) {
+            visibleText(text(android.R.string.ok)).click()
+            device.wait(Until.gone(By.text(text(R.string.preview_version_hint))), timeout)
+        }
         visibleText(text(R.string.tv_start))
         assertFalse(TvUiPreferences.phoneMode)
         assertFalse(device.hasObject(By.pkg("com.android.intentresolver")))
@@ -848,6 +856,10 @@ class EmulatorSmokeTest {
         reach("release_checks",true);reach("release_limits",true)
         reach("release_about",false)
         device.pressDPadCenter()
+        if (isPreview && device.hasObject(By.text(text(R.string.preview_version_hint)))) {
+            visibleText(text(android.R.string.ok)).click()
+            device.wait(Until.gone(By.text(text(R.string.preview_version_hint))), timeout)
+        }
         assertNotNull(device.wait(Until.findObject(By.res(context.packageName,"mal_recyclerview")),timeout))
         val scroll=UiScrollable(UiSelector().resourceId(context.packageName+":id/mal_recyclerview")).setAsVerticalList().setMaxSearchSwipes(30)
         scroll.setSwipeDeadZonePercentage(0.25)
