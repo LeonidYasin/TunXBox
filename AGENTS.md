@@ -4,9 +4,10 @@ Before changing code, read [the current handoff](https://github.com/LeonidYasin/
 
 These entry files can also be installed on the default branch without integrating the candidate runtime. The 1.7 cycle works from `origin/master` (stable 1.6.0 published) in feature branches/PRs; do not assume any branch's app code is the latest RC build or that a green CI implies publication.
 
-## GitHub & Actions CLI Tool
-- GitHub Actions, build logs, PRs, issues, and branches can be inspected and managed using `scripts/github_mcp_cli.py` (pass `--token` or set `GITHUB_TOKEN` environment variable).
-- **PR Merge Policy**: Agents should verify PR status and merge PRs autonomously using `scripts/github_mcp_cli.py` if all CI tests/checks pass, there are no merge conflicts, and no issues are detected.
+## Task Pool & Autonomous Agent Protocol
+- **Task Pool**: The repository task pool is tracked in [`docs/task-pool.md`](docs/task-pool.md). Agents pick open tasks from the backlog, create feature/fix branches, run tests, and manage task statuses.
+- **GitHub & Actions CLI Tool**: GitHub Actions, build logs, PRs, issues, and branches can be inspected and managed using `scripts/github_mcp_cli.py` (pass `--token` or set `GITHUB_TOKEN` environment variable).
+- **Autonomous PR Verification & Merge Policy**: Agents must check CI test results and merge PRs autonomously using `scripts/github_mcp_cli.py` if all tests pass, there are no merge conflicts, and no problems are found. Update `docs/task-pool.md` accordingly.
 
 ## Non-negotiable boundaries
 - Stable 1.5.0 and 1.6.0 are immutable; 1.6.0 was published from master SHA `5a7a2d1` (tag `v1.6.0`, run [40101906755](https://github.com/LeonidYasin/TunXBox/actions/runs/40101906755)). New 1.7 work lives in feature branches/PRs → `master`. No automatic merge/stable release merely because CI is green.

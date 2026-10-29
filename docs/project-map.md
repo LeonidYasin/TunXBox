@@ -60,6 +60,7 @@ mindmap
 | Roadmap | Stable first; аудит старых веток; discovery/TV fixes/failover отдельными PR | [Этапы и критерии](roadmap.md), [аудит веток](branch-audit.md) |
 | Будущее | Прямой Happ/Incy импорт; новый непрерывный health/failover; расширение реальных-device проверок | [Честные границы](features.md#не-считать-реализованным) |
 | Каждый файл | Исходники, AIDL, XML, ресурсы/языки, изображения, тесты, скрипты, workflow, лицензии, metadata | [Полный реестр](reference/repository-index.md) |
+| Пул задач и регламент агентов | Автономный выбор задач, правила проверки, CI и слияние PR | [Пул задач](task-pool.md) |
 
 ## Навигация по слоям
 
