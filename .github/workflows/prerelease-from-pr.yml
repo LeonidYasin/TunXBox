@@ -241,6 +241,17 @@ jobs:
           PY
           ./gradlew --stop
 
+      - name: Upload unit-test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: TunXBox-ui-test-reports-${{ steps.actual_sha.outputs.sha }}
+          path: |
+            app/build/reports/tests/testPreviewDebugUnitTest/
+            app/build/test-results/testPreviewDebugUnitTest/
+          if-no-files-found: ignore
+          retention-days: 14
+
       - name: Enable hardware-accelerated emulator
         run: |
           test -c /dev/kvm
@@ -333,17 +344,6 @@ jobs:
 
       - name: Verify native 16KB page alignment
         run: python3 buildScript/verify_native_alignment.py app/build/outputs/apk/preview/release/*.apk
-
-      - name: Upload unit-test reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: TunXBox-ui-test-reports-${{ steps.actual_sha.outputs.sha }}
-          path: |
-            app/build/reports/tests/testPreviewDebugUnitTest/
-            app/build/test-results/testPreviewDebugUnitTest/
-          if-no-files-found: ignore
-          retention-days: 14
 
       - name: Package verified APKs
         if: github.event.inputs.check_only != 'true'

@@ -136,6 +136,7 @@ class LaunchRegressionTest {
         val controller = Robolectric.buildActivity(MainActivity::class.java, Intent(Intent.ACTION_MAIN))
         try {
             controller.setup().visible()
+            if (io.nekohasekai.sagernet.ktx.isPreview) org.robolectric.shadows.ShadowDialog.getLatestDialog()?.dismiss()
             controller.get().supportFragmentManager.executePendingTransactions()
             shadowOf(Looper.getMainLooper()).idle()
             assertTrue(controller.get().supportFragmentManager.findFragmentById(R.id.fragment_holder) is ConfigurationFragment)
@@ -513,6 +514,7 @@ class LaunchRegressionTest {
         TvUiPreferences.phoneMode = true
         val controller=Robolectric.buildActivity(MainActivity::class.java,Intent(RuntimeEnvironment.getApplication(),MainActivity::class.java).putExtra("force_phone_mode",true)).setup().visible()
         try {
+            if (io.nekohasekai.sagernet.ktx.isPreview) org.robolectric.shadows.ShadowDialog.getLatestDialog()?.dismiss()
             controller.get().supportFragmentManager.executePendingTransactions()
             val menu=controller.get().navigation.menu
             assertEquals(R.id.nav_restart_app,menu.getItem(menu.size()-2).itemId)
@@ -786,6 +788,7 @@ class LaunchRegressionTest {
         val controller = Robolectric.buildActivity(MainActivity::class.java, Intent(Intent.ACTION_MAIN)).setup().visible()
         var task: kotlinx.coroutines.Job? = null
         try {
+            if (io.nekohasekai.sagernet.ktx.isPreview) org.robolectric.shadows.ShadowDialog.getLatestDialog()?.dismiss()
             val activity = controller.get()
             activity.supportFragmentManager.executePendingTransactions(); shadowOf(Looper.getMainLooper()).idle()
             val callback = io.nekohasekai.sagernet.group.GroupInterfaceAdapter(activity)
@@ -1076,6 +1079,7 @@ class LaunchRegressionTest {
     @Test fun connectionFailureDialogIsPersistentSafeAndCloseFocused() {
         val controller = Robolectric.buildActivity(MainActivity::class.java, Intent(Intent.ACTION_MAIN)).setup().visible()
         try {
+            if (io.nekohasekai.sagernet.ktx.isPreview) org.robolectric.shadows.ShadowDialog.getLatestDialog()?.dismiss()
             val result = io.nekohasekai.sagernet.group.ConnectionTestResult(1,1234,-1,
                 io.nekohasekai.sagernet.group.SubscriptionFailureCategory.CLOSED)
             val dialog = io.nekohasekai.sagernet.group.ConnectionTestPresentation.show(controller.get(),result)
