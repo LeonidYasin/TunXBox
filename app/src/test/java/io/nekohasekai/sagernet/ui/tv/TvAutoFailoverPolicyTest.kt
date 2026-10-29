@@ -97,4 +97,35 @@ class TvAutoFailoverPolicyTest {
     @Test fun emptyListHasNoFallback() {
         assertEquals(null, TvAutoFailoverPolicy.selectNextFallback(emptyList(), currentId = 2L, triedIds = setOf(2L)))
     }
+
+    @Test fun immediateSuccessAfterSwitchDoesNotRestartTheChain() {
+        // A probe that passes one second after a switch used to clear triedIds and bring a
+        // just-failed profile back before the circle was finished.
+        assertFalse(TvAutoFailoverPolicy.shouldResetChainOnSuccess(now, lastSwitchAtMs = now - 1_000L))
+        assertFalse(TvAutoFailoverPolicy.shouldResetChainOnSuccess(now, lastSwitchAtMs = now - 1L))
+    }
+
+    @Test fun successThatHeldAfterTheSwitchRestartsTheChain() {
+        assertTrue(TvAutoFailoverPolicy.shouldResetChainOnSuccess(now, lastSwitchAtMs = now - TvAutoFailoverPolicy.STABLE_CONNECTION_MS))
+        assertTrue(TvAutoFailoverPolicy.shouldResetChainOnSuccess(now, lastSwitchAtMs = now - TvAutoFailoverPolicy.STABLE_CONNECTION_MS - 1L))
+        // No switch happened yet in this chain, so a success is an ordinary reset.
+        assertTrue(TvAutoFailoverPolicy.shouldResetChainOnSuccess(now, lastSwitchAtMs = 0L))
+    }
+
+    @Test fun pendingCandidateIsRejectedAfterTheModeIsDisabledOrTheListIsEdited() {
+        val order = listOf(2L, 3L, 4L)
+        assertTrue(TvAutoFailoverPolicy.isCandidateStillAllowed(enabled = true, order = order, candidateId = 3L))
+        assertFalse(TvAutoFailoverPolicy.isCandidateStillAllowed(enabled = false, order = order, candidateId = 3L))
+        assertFalse(TvAutoFailoverPolicy.isCandidateStillAllowed(enabled = true, order = listOf(2L, 4L), candidateId = 3L))
+        assertFalse(TvAutoFailoverPolicy.isCandidateStillAllowed(enabled = true, order = emptyList(), candidateId = 3L))
+    }
+
+    @Test fun cancelledChainKeepsTheWholeCircleBeforeRevisitingAFailedProfile() {
+        // Regression for rc.167: the chain used to be reset by flapping network identity and by a
+        // spurious success, so the walk returned to the profile that had just failed. With the
+        // chain kept intact, a three-profile circle has to finish before anything is revisited.
+        val order = listOf(2L, 3L, 4L)
+        val tried = linkedSetOf(2L, 3L, 4L)
+        assertEquals(null, TvAutoFailoverPolicy.selectNextFallback(order, currentId = 4L, triedIds = tried))
+    }
 }
