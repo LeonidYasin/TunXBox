@@ -228,7 +228,8 @@ jobs:
 
       - name: Test protocol and remote UI
         run: |
-          ./gradlew app:testPreviewDebugUnitTest --stacktrace
+          mkdir -p app/build/outputs/logs
+          ./gradlew app:testPreviewDebugUnitTest --stacktrace 2>&1 | tee app/build/outputs/logs/gradle-build-error.txt
           python3 - <<'PY'
           import glob, xml.etree.ElementTree as ET
           totals = dict(tests=0, failures=0, errors=0, skipped=0)
