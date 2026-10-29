@@ -253,8 +253,9 @@ class LaunchRegressionTest {
             val method=MainBrowseFragment::class.java.getDeclaredMethod("updateService",io.nekohasekai.sagernet.bg.BaseService.State::class.java,String::class.java,String::class.java).apply {isAccessible=true}
             method.invoke(fragment,io.nekohasekai.sagernet.bg.BaseService.State.Stopped,"fixture","Unsupported V2Ray transport: XHTTP. secret-url-token")
             controller.get().supportFragmentManager.executePendingTransactions();shadowOf(Looper.getMainLooper()).idle()
-            val dialog=controller.get().supportFragmentManager.findFragmentByTag("connection_report") as io.nekohasekai.sagernet.ui.diagnostics.DiagnosticDialog
-            val text=dialog.requireDialog().findViewById<android.widget.TextView>(R.id.diagnostic_report_text).text.toString()
+            val entry=io.nekohasekai.sagernet.ui.diagnostics.ConnectionDiagnosticJournal.read(before)
+            assertNotNull(entry)
+            val text=entry!!.report(RuntimeEnvironment.getApplication())
             assertTrue(text.contains("NET_UNSUPPORTED"));assertFalse(text.contains("secret-url-token"))
             assertEquals(before,io.nekohasekai.sagernet.database.DataStore.selectedProxy)
         } finally {controller.pause().stop().destroy()}
